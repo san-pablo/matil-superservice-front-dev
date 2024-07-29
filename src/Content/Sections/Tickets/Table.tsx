@@ -134,17 +134,19 @@ const Table = ({ data, updateData, filters, section, maxWidth, selectedView, all
         return () => {window.removeEventListener('resize', actualizarAltura)}
     }, [selectedElements])
 
+
+    //SCROLL ON CHANGING TO AN ELEMENT OUT OF THE SCROLL VIEW
     const scrollIntoView = (index: number) => {
         if (tableBoxRef.current) {
           const item = tableBoxRef.current.querySelector(`[data-index="${index}"]`)
           if (item) {
             const itemTop = (item as HTMLElement).offsetTop - tableBoxRef.current.getBoundingClientRect().top
-            const itemBottom = itemTop + (item as HTMLElement).offsetHeight;
-            const containerTop = tableBoxRef.current.scrollTop;
-            const containerBottom = containerTop + tableBoxRef.current.offsetHeight;
+            const itemBottom = itemTop + (item as HTMLElement).offsetHeight
+            const containerTop = tableBoxRef.current.scrollTop
+            const containerBottom = containerTop + tableBoxRef.current.offsetHeight
         
-            if (itemTop < containerTop) tableBoxRef.current.scrollTop = itemTop;
-            else if (itemBottom > containerBottom) tableBoxRef.current.scrollTop = itemBottom - tableBoxRef.current.offsetHeight;
+            if (itemTop < containerTop) tableBoxRef.current.scrollTop = itemTop
+            else if (itemBottom > containerBottom) tableBoxRef.current.scrollTop = itemBottom - tableBoxRef.current.offsetHeight
         }
       }}
     
