@@ -33,7 +33,7 @@ const ShortCutsList = ({setShowShowShortcuts}:{setShowShowShortcuts:Dispatch<Set
     }
 
     return (
-    <Flex flexDir='column' justifyContent={'space-between'} height={'90vh'}> 
+    <Flex flexDir='column' justifyContent={'space-between'} maxH={'90vh'}> 
         <Box p='20px'>
             <Text fontSize={'1.2em'} fontWeight={'medium'}>Atajos del teclado</Text>        
         </Box>
@@ -48,14 +48,15 @@ const ShortCutsList = ({setShowShowShortcuts}:{setShowShowShortcuts:Dispatch<Set
                     <KeyElement keys={['Ctrl', 'Alt', 'b']} description="Acceder a empresas de contacto"/>
                     <KeyElement keys={['Ctrl', 'Alt', 't']} description="Acceder a estadísticas"/>
                     <KeyElement keys={['Ctrl', 'Alt', 'a']} description="Acceder a ajustes"/>
+                    <KeyElement keys={['Ctrl', 'Alt', 'w']} description="Cerrar pestaña actual"/>
+                    <KeyElement keys={['Ctrl', 'Alt', IoMdArrowDropleft]} description="Ir a la anterior pestaña"/>
+                    <KeyElement keys={['Ctrl', 'Alt', IoMdArrowDropright]} description="Ir a la próxima pestaña"/>
 
                     <Text  fontWeight={'medium'} fontSize={'.9em'} mt='3vh' color='gray.600' >Se usan en las listas (vistas, resultados, etc.)</Text>      
                     <KeyElement keys={[IoMdArrowDropup, IoMdArrowDropdown]} description="Subir o bajar"/>
                     <KeyElement keys={[IoMdArrowDropleft, IoMdArrowDropright]} description="Desplazarse a la izquierda o a la derecha"/>
                     <KeyElement keys={['Enter']} description="Clicar en el elemento seleccionado"/>
                     <KeyElement keys={['Espacio']} description="Marcar el elemento actual"/>
-
-
                 </Box>
                 
                 <Box>
@@ -64,12 +65,7 @@ const ShortCutsList = ({setShowShowShortcuts}:{setShowShowShortcuts:Dispatch<Set
                     <KeyElement keys={['Ctrl', 'Alt', 'r']} description="Abrir respuesta pública"/>
                     <KeyElement keys={['Ctrl', 'Alt', 'n']} description="Abrir nota interna"/>
                     <KeyElement keys={['Ctrl', 'Alt', 'h']} description="Ocultar o mostrar pestaña de cliente"/>
-
-                    <Text  fontWeight={'medium'} fontSize={'.9em'} mt='3vh' color='gray.600' >Se usan al cambiar de un ticket a otro</Text>        
-                    <KeyElement keys={['Ctrl', 'Alt', 'w']} description="Cerrar pestaña actual"/>
-                    <KeyElement keys={['Ctrl', 'Alt', IoMdArrowDropleft]} description="Ir al próximo ticket anterior"/>
-                    <KeyElement keys={['Ctrl', 'Alt', IoMdArrowDropright]} description="Ir al próximo ticket"/>
-
+                   
                     <Text  fontWeight={'medium'} fontSize={'.9em'} mt='3vh' color='gray.600' >Se usan al guardar o actualizar un ticket</Text>        
                     <KeyElement keys={['Ctrl', 'Alt', 'u']} description="Guardar con el estado actual"/>
                     <KeyElement keys={['Ctrl', 'Alt', 'o']} description="Guardar como abierto"/>

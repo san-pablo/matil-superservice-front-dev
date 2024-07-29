@@ -112,6 +112,8 @@ const Table = ({ data, updateData, filters, section, maxWidth, selectedView, all
     const isDeleteView = selectedView && selectedView.type === 'deleted'
     const navigate = useNavigate()
    
+    const tableBoxRef = useRef<HTMLDivElement>(null)
+
     //DELETE TICKETS LIST LOGIC
     const [showConfirmDelete, setShowConfirmDelete] = useState<boolean>(false)
     const [waitingDelete, setWaitingDelete] = useState<boolean>(false)
@@ -119,6 +121,7 @@ const Table = ({ data, updateData, filters, section, maxWidth, selectedView, all
     //CALCULATE DYNAMIC HEIGHT OF TABLE
     const headerRef = useRef<HTMLDivElement>(null)
     const [alturaCaja, setAlturaCaja] = useState<number>(0)
+    const [selectedIndex, setSelectedIndex] = useState<number>(-1)
     const [selectedElements, setSelectedElements] = useState<number[]>([])
     useEffect(() => {
         const actualizarAltura = () => {
@@ -131,6 +134,49 @@ const Table = ({ data, updateData, filters, section, maxWidth, selectedView, all
         return () => {window.removeEventListener('resize', actualizarAltura)}
     }, [selectedElements])
 
+    const scrollIntoView = (index: number) => {
+        if (tableBoxRef.current) {
+          const item = tableBoxRef.current.querySelector(`[data-index="${index}"]`)
+          if (item) {
+            const itemTop = (item as HTMLElement).offsetTop - tableBoxRef.current.getBoundingClientRect().top
+            const itemBottom = itemTop + (item as HTMLElement).offsetHeight;
+            const containerTop = tableBoxRef.current.scrollTop;
+            const containerBottom = containerTop + tableBoxRef.current.offsetHeight;
+        
+            if (itemTop < containerTop) tableBoxRef.current.scrollTop = itemTop;
+            else if (itemBottom > containerBottom) tableBoxRef.current.scrollTop = itemBottom - tableBoxRef.current.offsetHeight;
+        }
+      }}
+    
+    //SHORTCUTS
+    useEffect(() => {
+
+        const handleKeyDown = (event:KeyboardEvent) => {
+            if (event.code === 'ArrowUp') {
+                setSelectedIndex(prev => {
+                    const newIndex = Math.max(prev - 1, 0);
+                    scrollIntoView(newIndex)
+                    return newIndex
+                  })
+            }
+            else if (event.code === 'ArrowDown') 
+             setSelectedIndex(prev => {
+                const newIndex = Math.min(prev + 1, (data?.length || 0) - 1);
+                scrollIntoView(newIndex)
+                return newIndex
+              })
+            else if (event.code === 'Space' && data && 0 <= selectedIndex && selectedIndex   <= data.length - 1) {
+                handleCheckboxChange(data[selectedIndex].id, !selectedElements.includes(data[selectedIndex].id))
+            }
+            else if (event.code === 'Enter' && data) handleClickColumn(data[selectedIndex])
+        }
+        
+        window.addEventListener('keydown', handleKeyDown)
+
+        return () => {window.removeEventListener('keydown', handleKeyDown)}
+    }, [selectedElements, selectedIndex, data])
+
+
     //OBTAIN COLUMNS
     const excludeKeys = ['id', 'conversation_id', 'end_client_id',  'is_matilda_engaged']
     const columns = useMemo(() => {
@@ -139,6 +185,7 @@ const Table = ({ data, updateData, filters, section, maxWidth, selectedView, all
           : []
       }, [data])
     const totalWidth = useMemo(() => {return columns.reduce((acc, value) => acc + columnsTicketsMap[value as TicketColumn][1] + 20, 0) + 20}, [columns])
+
     //SELECT ROWS
     const handleCheckboxChange = (element:number, isChecked:boolean) => {
         if (isChecked) setSelectedElements(prevElements => [...prevElements, element])
@@ -147,7 +194,6 @@ const Table = ({ data, updateData, filters, section, maxWidth, selectedView, all
   
     //SORT LOGIC
     const requestSort = (key: string) => {
-        console.log(filters)
         const direction = (filters.sort_by === key && filters.order === 'asc') ? 'desc' : 'asc';
         updateData({...filters, sort_by: key as TicketColumn, order: direction as 'asc' | 'desc'})
      }
@@ -185,6 +231,7 @@ const Table = ({ data, updateData, filters, section, maxWidth, selectedView, all
         setSelectedElements([])
     }
 
+    //Component for confirming the deletio of elements
     const ConfirmDeleteBox = () => {
         
         const [showWaitingDeletePermanently, setShowWaitingDeletePermanently] = useState<boolean>(false)
@@ -211,6 +258,7 @@ const Table = ({ data, updateData, filters, section, maxWidth, selectedView, all
     </>)
     }
 
+    //Select all elments logic
     const selectAllElments = async(addElements:boolean) => {
         if (addElements) {
             if (allIds) setSelectedElements(allIds)
@@ -230,12 +278,13 @@ const Table = ({ data, updateData, filters, section, maxWidth, selectedView, all
             <Box borderRadius={'.5rem'} maxW={maxWidth} bg='gray.50' borderColor={'gray.200'} borderWidth={'1px'} p='15px'>    
                 <Text fontWeight={'medium'} fontSize={'1.1em'}>No hay tickets disponibles</Text>
             </Box>: 
-        <Box overflow={'scroll'} maxW={maxWidth} >    
+        <Box  overflow={'scroll'} maxW={maxWidth} >    
             <Flex position={'sticky'} borderTopRadius={'.5rem'} minWidth={`${totalWidth}px`}  borderColor={'gray.300'} borderWidth={'1px'} gap='20px' ref={headerRef} alignItems={'center'}  color='gray.500' p='10px' fontSize={'1em'} bg='gray.100' fontWeight={'medium'}> 
                 {section === 'tickets' && <Flex alignItems={'center'} width='10px' > 
                     <Checkbox isChecked={selectedElements.length >= data.length} onChange={(e) => selectAllElments(e?.target?.checked)}/>  
                 </Flex>}
-                {Object.keys(columnsTicketsMap).filter(column => column !== 'id').map((column) => (<Fragment key={`header-${column}`}>
+                {Object.keys(columnsTicketsMap).filter(column => column !== 'id').map((column) => (
+                <Fragment key={`header-${column}`}>
                     {column in data[0] &&
                         <Flex alignItems={'center'} flex={`${columnsTicketsMap[column as TicketColumn][1]/10} 0 ${columnsTicketsMap[column as TicketColumn][1]}px`}> 
                         <Text cursor='pointer'   onClick={() => requestSort(column)}>{columnsTicketsMap[column as TicketColumn][0]}</Text>
@@ -243,9 +292,10 @@ const Table = ({ data, updateData, filters, section, maxWidth, selectedView, all
                     </Flex>}
                 </Fragment>))}
             </Flex>
-            <Box minWidth={`${totalWidth}px`} overflowX={'hidden'}  overflowY={'scroll'} maxH={alturaCaja}> 
+            <Box minWidth={`${totalWidth}px`}  overflowX={'hidden'} ref={tableBoxRef}  overflowY={'scroll'} maxH={alturaCaja}> 
                 {data.map((row:TicketsTableProps, index:number) =>( 
-                    <Flex gap='20px' minWidth={`${totalWidth}px`} borderRadius={index === data.length - 1?'0 0 .5rem .5rem':'0'} borderWidth={'0 1px 1px 1px'}  cursor={isDeleteView?'not-allowed':'pointer'} onClick={() => handleClickColumn(row)} key={`row-${index}`}  bg={selectedElements.includes(row.id)?'blue.100':index%2 === 1?'#FCFCFC':'white'} alignItems={'center'}  fontSize={'.9em'} color='black' p='10px' borderBottomWidth={'1px'} borderColor={'gray.300'} _hover={{bg:selectedElements.includes(row.id)?'blue.100':'blue.50'}}  > 
+                    <Flex data-index={index}  position={'relative'} overflow={'hidden'} gap='20px' minWidth={`${totalWidth}px`} borderRadius={index === data.length - 1?'0 0 .5rem .5rem':'0'} borderWidth={'0 1px 1px 1px'}  cursor={isDeleteView?'not-allowed':'pointer'} onClick={() => handleClickColumn(row)} key={`row-${index}`}  bg={selectedIndex === index ? 'blue.50':selectedElements.includes(row.id)?'blue.100':index%2 === 1?'#FCFCFC':'white'} alignItems={'center'}  fontSize={'.9em'} color='black' p='10px' borderBottomWidth={'1px'} borderColor={'gray.300'} _hover={{bg:selectedElements.includes(row.id)?'blue.100':'blue.50'}}  > 
+                         {selectedIndex === index && <Box position='absolute' left={0} top={0} height={'100%'} width={'2px'} bg='blue.400'/>}
                          {section === 'tickets' && <Flex alignItems={'center'} onClick={(e) => e.stopPropagation()}> 
                             <Checkbox onChange={(e) => handleCheckboxChange(row.id, e.target.checked)} isChecked={selectedElements.includes(row.id)}/>  
                         </Flex>}
@@ -259,10 +309,11 @@ const Table = ({ data, updateData, filters, section, maxWidth, selectedView, all
                     </Flex>
                 ))}
             </Box>
-
-        <AnimatePresence> 
+        </Box>
+    }
+    <AnimatePresence> 
             {selectedElements.length > 0 && 
-            <motion.div initial={{bottom:-200}} animate={{bottom:0}} exit={{bottom:-200}} transition={{duration:.2}} style={{backgroundColor:'#F7FAFC',display:'flex', justifyContent:'space-between', alignItems:'center',padding:'0 2vw 0 2vw', height:'80px', gap:'20px',position:'absolute', marginLeft:'-2vw',  borderTop:' 1px solid #E2E8F0', overflow:'scroll', width:`calc(100vw - 380px)`}}>
+            <motion.div initial={{bottom:-200}} animate={{bottom:0}} exit={{bottom:-200}} transition={{duration:.2}} style={{backgroundColor:'#F7FAFC',display:'flex', justifyContent:'space-between', alignItems:'center',padding:'0 2vw 0 2vw', height:'80px', gap:'20px',position:'fixed', marginLeft:'-2vw',  borderTop:' 1px solid #E2E8F0', overflow:'scroll', width:`calc(100vw - 380px)`}}>
                 <Flex gap='1vw' alignItems={'center'}> 
                     <Text whiteSpace={'nowrap'} fontWeight={'medium'}>{selectedElements.length} ticket{selectedElements.length > 1 ? 's':''}</Text>
                     <Button onClick={() => setSelectedElements([])} size='sm' bg='transparent' borderColor={'transparent'} color='blue.400' _hover={{bg:'gray.100', color:'blue.500'}} leftIcon={<MdDeselect/>}>Deseleccionar</Button> 
@@ -276,8 +327,7 @@ const Table = ({ data, updateData, filters, section, maxWidth, selectedView, all
                 <Button sx={{ whiteSpace: 'nowrap', minWidth: 'auto' }} size='sm' color='red' onClick={() => setSelectedElements([])} _hover={{color:'red.700'}}>Cancelar</Button>
             </motion.div>}
         </AnimatePresence>
-    </Box>
-    }
+
       {showConfirmDelete && 
         <ConfirmBox setShowBox={setShowConfirmDelete}> 
                <ConfirmDeleteBox/>

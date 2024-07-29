@@ -3,7 +3,7 @@
 */
 
 //REACT
-import { useState, useRef, useEffect, Dispatch, SetStateAction, Fragment, ChangeEvent } from "react"
+import { useState, useRef, useEffect, Dispatch, SetStateAction, Fragment, ChangeEvent, memo, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../../../AuthContext"
 import { useSession } from "../../../SessionContext"
@@ -62,6 +62,86 @@ interface MergeBoxProps {
 //MOTION BOx
 const MotionBox = motion(Box)
 
+  //COMPONENT FOR GETTING A MESSAGE STYLE DEPENDING ON THE TYPE, SENDER AND CHANNEL
+  const MessageComponent = memo(({con, navigate, sender, isScheduled = false}:{con:any, navigate:any, sender:string, isScheduled?:boolean}) => {
+
+    const [showAttachments, setShowAttachments] = useState<boolean>(false)
+    
+    return(<> 
+
+
+
+    {isScheduled ?  <>  
+        {con.timestamp >= new Date().toISOString() && <>
+                <Box width={'25px'} height={'25px'} className='hover-effect'  > 
+                    <Image src="/images/matil.svg"  /> 
+                </Box>
+                <Box width={'100%'} > 
+                    <Flex gap='10px' alignItems={'center'} justifyContent={'space-between'}> 
+                        <Text  fontWeight={'medium'}>Matilda</Text>
+                            <Flex gap='5px'> 
+                            <Icon color='blue.400' as={FaClockRotateLeft}/>
+                            <Countdown timestamp={con.timestamp}/>
+                        </Flex>
+                        </Flex>
+
+                    <Box mt='10px' borderColor={'blue.100'} borderWidth={'1px'}  borderRadius={'.3rem'} bg={'blue.50'} p={'10px'} width={'100%'}> 
+                        <ShowMessages  content={con.content} type={con.type}/>
+                    </Box>
+                </Box>
+            </>}</>
+            :
+            <Flex   fontSize='.9em' gap='10px'  >
+                {con.sender_type === -3 ?
+
+                <Flex width={'100%'} py='10px' px='5px' gap='15px' alignItems={'center'}>
+                    <Box height={'1px'} width={'100%'} bg='gray.300'/>
+                    <GetSystemMessage message={con.content} navigate={navigate}/>
+                    <Box height={'1px'} width={'100%'} bg='gray.300'/>
+                </Flex>
+                :
+                <>
+                    {con.sender_type === -1 ? 
+                        <Box width={'25px'} height={'25px'} className='hover-effect'  > 
+                            <Image src="/images/matil.svg"  /> 
+                        </Box>
+                        :
+                        <Avatar width={'25px'} height={'25px'} size='xs' name={sender}/>
+                    }
+                    <Box width={'100%'} > 
+                        <Flex mb='1vh' justifyContent={'space-between'}> 
+                            <Flex gap='30px' alignItems={'center'}> 
+                                <Text fontWeight={'medium'}>{sender}</Text>
+                                {(con.content.attachments && con.content.attachments.length > 0)&& 
+                                    <Flex gap='5px' onClick={() => setShowAttachments(!showAttachments)} cursor={'pointer'} alignItems={'center'} _hover={{bg:'underline'}}>
+                                        <Icon as={HiOutlinePaperClip}/>
+                                        <Text>{con.content.attachments.length} adjunto{con.content.attachments.length === 1 ? '':'s'}</Text>
+                                        <IoIosArrowDown className={showAttachments ? "rotate-icon-up" : "rotate-icon-down"}/>
+                                    </Flex>
+                                }
+                            </Flex>
+                            <Text fontWeight={'medium'} color='gray.600' fontSize={'.85em'}>{timeAgo(con.timestamp)}</Text>
+                        </Flex>
+
+                        <Box borderColor={con.sender_type === -2?'yellow.200':''} mt={con.sender_type === -2?'10px':''} borderWidth={con.sender_type === -2?'1px':''}  borderRadius={'.3rem'} bg={con.sender_type === -2?'yellow.100':''} p={con.sender_type === -2?'10px':'0'} width={'100%'}>
+                            {showAttachments && 
+                                <>
+                                {con.content.attachments.map((file:{file_name:string, url:string, size:number}, index:number) => (
+                                    <Flex maxW='600px' onClick={() => downloadFile(file.url)} mt='.5vh' cursor={'pointer'} key={`attachment-message-${index}`} _hover={{bg:'gray.200'}} justifyContent={'space-between'} p='5px' bg='gray.100' borderRadius={'.5em'} borderWidth={'1px'}>
+                                        <Text flex='1' minW={0}  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{file.file_name}</Text>
+                                        <Text fontSize={'.9em'}>{formatFileSize(file.size || 0)}</Text>
+                                    </Flex>
+                                ))}
+                                </>} 
+                            <ShowMessages  content={con.content} type={con.type}/>
+                        </Box>
+                    </Box>
+                </>} 
+            </Flex>
+        }
+    </>)})
+
+  
 //MAIN FUNCTION
 function TicketResponse ( {ticketData, setTicketData, clientTickets, setClientTickets, messagesList, setMessagesList, clientData, setClientData, clientId, deleteHeaderSection, socket }:RespuestaProps) {
 
@@ -193,7 +273,7 @@ function TicketResponse ( {ticketData, setTicketData, clientTickets, setClientTi
     const handleInputNotesChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
         setClientDataEdit(prevData => prevData ? ({ ...prevData, notes:DOMPurify.sanitize(event.target.value)}) as ClientData : null)           
     }
-    useEffect(() =>{if (clientData) adjustTextareaHeight(textareaNotasRef.current)}, [clientData?.notes])
+    useEffect(() =>{if (clientDataEdit) adjustTextareaHeight(textareaNotasRef.current)}, [clientDataEdit?.notes])
 
     //UPDATE DATA ON CHANGE
     const updateData = async(section:'ticket' | 'client', newData?:TicketData | null) => {       
@@ -266,61 +346,7 @@ function TicketResponse ( {ticketData, setTicketData, clientTickets, setClientTi
         </>)
     }
 
-    //COMPONENT FOR GETTING A MESSAGE STYÑE DEPENDING ON THE TYPE, SENDER AND CHANNEL
-    const MessageComponent = ({con, index}:{con:any, index:number}) => {
-
-        const [showAttachments, setShowAttachments] = useState<boolean>(false)
-        return(
-            <Flex ref={index === (messagesList?.messages.length || 0) - 1 ? lastMessageRef : null} fontSize='.9em' gap='10px' mt={index === 0?0:'5vh'} key={`previous-messages-${index}`}>
-                {con.sender_type === -3 ?
-  
-                 <Flex width={'100%'} py='10px' px='5px' gap='15px' alignItems={'center'}>
-                    <Box height={'1px'} width={'100%'} bg='gray.300'/>
-                    <GetSystemMessage message={con.content} navigate={navigate}/>
-                    <Box height={'1px'} width={'100%'} bg='gray.300'/>
-                </Flex>
-                 :
-                <>
-                    {con.sender_type === -1 ? 
-                        <Box width={'25px'} height={'25px'} className='hover-effect'  > 
-                            <Image src="/images/matil.svg"  /> 
-                        </Box>
-                        :
-                        <Avatar width={'25px'} height={'25px'} size='xs' name={con.sender_type === -2?'Nota Interna':con.sender_type === 0?clientDataEdit?.name:auth.authData?.users?.[parseInt(con.sender_type)].name}/>
-                    }
-                    <Box width={'100%'} > 
-                        <Flex mb='1vh' justifyContent={'space-between'}> 
-                            <Flex gap='30px' alignItems={'center'}> 
-                                <Text fontWeight={'medium'}>{con.sender_type === -2?'Nota Interna':con.sender_type === 0?clientDataEdit?.name:con.sender_type === -1?'Matilda':auth.authData?.users?.[parseInt(con.sender_type)].name}</Text>
-                                {(con.content.attachments && con.content.attachments.length > 0)&& 
-                                    <Flex gap='5px' onClick={() => setShowAttachments(!showAttachments)} cursor={'pointer'} alignItems={'center'} _hover={{bg:'underline'}}>
-                                        <Icon as={HiOutlinePaperClip}/>
-                                        <Text>{con.content.attachments.length} adjunto{con.content.attachments.length === 1 ? '':'s'}</Text>
-                                        <IoIosArrowDown className={showAttachments ? "rotate-icon-up" : "rotate-icon-down"}/>
-                                    </Flex>
-                                }
-                            </Flex>
-                            <Text fontWeight={'medium'} color='gray.600' fontSize={'.85em'}>{timeAgo(con.timestamp)}</Text>
-                        </Flex>
-
-                        <Box borderColor={con.sender_type === -2?'yellow.200':''} mt={con.sender_type === -2?'10px':''} borderWidth={con.sender_type === -2?'1px':''}  borderRadius={'.3rem'} bg={con.sender_type === -2?'yellow.100':''} p={con.sender_type === -2?'10px':'0'} width={'100%'}>
-                            {showAttachments && 
-                                <>
-                                {con.content.attachments.map((file:{file_name:string, url:string, size:number}, index:number) => (
-                                    <Flex maxW='600px' onClick={() => downloadFile(file.url)} mt='.5vh' cursor={'pointer'} key={`attachment-message-${index}`} _hover={{bg:'gray.200'}} justifyContent={'space-between'} p='5px' bg='gray.100' borderRadius={'.5em'} borderWidth={'1px'}>
-                                        <Text flex='1' minW={0}  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{file.file_name}</Text>
-                                        <Text fontSize={'.9em'}>{formatFileSize(file.size || 0)}</Text>
-                                    </Flex>
-                                ))}
-                                </>} 
-                            <ShowMessages  content={con.content} type={con.type}/>
-                        </Box>
-                    </Box>
-                </>} 
-            </Flex>
-        )
-    }
-
+   
     //FRONT
     return(<> 
  
@@ -397,28 +423,16 @@ function TicketResponse ( {ticketData, setTicketData, clientTickets, setClientTi
                             {(messagesList === null ) ? <> {Array.from({ length: 8 }).map((_, index) => (<Skeleton key={`skeleton-${index}`} height="1em" mt='10px' />))}</>
                             : 
                             <>
-                                {messagesList.messages.map((con:any, index:number) => (<Fragment key={`message-${index}`}> <MessageComponent con={con} index={index}/></Fragment>))}
-                                {messagesList.scheduled_messages.map((con:any, index:number) => (<>
-                                    {con.timestamp >= new Date().toISOString() && 
-                                       <Flex ref={index === messagesList.messages.length - 1 ? lastMessageRef : null} fontSize='.9em' gap='10px' mt={'5vh'} key={`previous-messages-${index}`}>
-                                        <Box width={'25px'} height={'25px'} className='hover-effect'  > 
-                                            <Image src="/images/matil.svg"  /> 
-                                        </Box>
-                                        <Box width={'100%'} > 
-                                            <Flex gap='10px' alignItems={'center'} justifyContent={'space-between'}> 
-                                                <Text  fontWeight={'medium'}>Matilda</Text>
-                                                    <Flex gap='5px'> 
-                                                    <Icon color='blue.400' as={FaClockRotateLeft}/>
-                                                    <Countdown timestamp={con.timestamp}/>
-                                                </Flex>
-                                                </Flex>
-                         
-                                            <Box mt='10px' borderColor={'blue.100'} borderWidth={'1px'}  borderRadius={'.3rem'} bg={'blue.50'} p={'10px'} width={'100%'}> 
-                                                <ShowMessages  content={con.content} type={con.type}/>
-                                            </Box>
-                                        </Box>
-                                    </Flex>}
-                                </>))}
+                                {messagesList.messages.map((con:any, index:number) => (               
+                                <Box  mt={index === 0?0:'5vh'} key={`message-${index}`} ref={index === (messagesList?.messages.length || 0) - 1 ? lastMessageRef : null}> 
+                                    <MessageComponent con={con} sender={(con.sender_type === -3?'':con.sender_type === -2?'Nota Interna':con.sender_type === -1?'Matilda':con.sender_type === 0?clientDataEdit?.name:auth.authData?.users?.[parseInt(con.sender_type)].name) || ''} navigate={navigate}/>
+                                </Box>))}
+
+                                {messagesList.scheduled_messages.map((con:any, index:number) => (
+                                    <Box  mt={'5vh'} gap='10px'  key={`scheduled-message-${index}`} ref={index === (messagesList?.messages.length || 0) - 1 ? lastMessageRef : null}> 
+                                        <MessageComponent con={con} isScheduled={true} navigate={navigate} sender={(con.sender_type === -3?'':con.sender_type === -2?'Nota Interna':con.sender_type === -1?'Matilda':con.sender_type === 0?clientDataEdit?.name:auth.authData?.users?.[parseInt(con.sender_type)].name) || ''} />
+                                    </Box>
+                                ))}
                             </>}
                         </Box>
                         {ticketDataEdit && <TextEditor ticketData={ticketDataEdit} updateData={updateData} takeConversationControl={takeConversationControl}  deleteHeaderSection={deleteHeaderSection} clientName={clientDataEdit?.name}/>}

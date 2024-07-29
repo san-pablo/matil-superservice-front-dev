@@ -23,6 +23,7 @@ import EditText from './Components/EditText'
 import ConfirmBox from './Components/ConfirmBox'
 import CallWidget from './Components/CallWidget'
 import ShortCutsList from './Components/ShortCutsList'
+import SendFeedBack from './Components/SendFeedback'
 //FUNCTIONS
 import useOutsideClick from './Functions/clickOutside'
 import DetermineTicketViews from './MangeData/DetermineTicketViews'
@@ -34,8 +35,9 @@ import { IoIosSettings, IoIosArrowDown } from "react-icons/io"
 import { RxCross2 } from "react-icons/rx"
 import { FiPlus } from "react-icons/fi"
 import { BiSolidBuildings } from 'react-icons/bi'
-import { PiBuildingApartmentFill } from "react-icons/pi"
+import { PiBuildingApartmentFill, PiKeyReturn } from "react-icons/pi"
 import { TbArrowBack } from 'react-icons/tb'
+import { VscFeedback } from "react-icons/vsc"
 //TYPING 
 import { Organization, TicketData, userInfo, Views } from './Constants/typing'
 import { IconType } from 'react-icons'
@@ -133,7 +135,7 @@ function Content ({userInfo}:{userInfo:userInfo}) {
 
     //INITIALIZE SOCKET
     useEffect(() => {
-
+                    
         if (Notification.permission !== 'granted') Notification.requestPermission()
 
         const section = localStorage.getItem('currentSection')
@@ -220,37 +222,112 @@ function Content ({userInfo}:{userInfo:userInfo}) {
     const [showMoreHeaderSectionsBox, setShowMoreHeaderSectionsBox] = useState<boolean>(false)
     useOutsideClick({ref1:showMoreHeaderSectionsButtonRef, ref2:showMoreHeaderSectionsBoxRef, onOutsideClick:setShowMoreHeaderSectionsBox})
     useLayoutEffect(() => {
-        const handleResize = () => {
-        if (containerRef.current) {
-            const containerWidth = containerRef.current.offsetWidth
-    
-            const maxWidth = 280
-            const minWidth = 120
-            let totalWidth = 0
-            let sectionsToShow = 0
-            let moreFlag = false
-            const sectionCount = headerSections.length
 
-            for (const section of headerSections) totalWidth += maxWidth
-            let availableWidth = containerWidth - containerWidth * 0.5
+        const handleKeyDown = (event:KeyboardEvent) => {
+            if (event.ctrlKey && event.altKey) {
+                let currentIndex = -1;
     
-            if (totalWidth > availableWidth) {
-                const perSectionWidth = availableWidth / sectionCount
-                const finalWidth = perSectionWidth < minWidth ? minWidth : perSectionWidth
-                if (finalWidth === minWidth && totalWidth > availableWidth) moreFlag = true
-                    headerSections.forEach((section, index) => {if ((index + 1) * finalWidth <= availableWidth) sectionsToShow += 1 })
+                 if (event.code === 'KeyW' || event.code === 'ArrowLeft' || event.code === 'ArrowRight') {
 
-            } else sectionsToShow = headerSections.length
-            setVisibleSectionsIndex(sectionsToShow)
-            setShowMoreHeaderSections(moreFlag)
+                  currentIndex = headerSections.findIndex(element => {
+                    const sectionToSelect = element.type === 'ticket'
+                      ? `tickets/ticket/${element.code}`
+                      : element.type === 'client'
+                      ? `clients/client/${element.code}`
+                      : `contact-businesses/business/${element.code}`
+                    return location.startsWith(`/${sectionToSelect}/`) || location === `/${sectionToSelect}`
+                  })
+                }
+
+                console.log(currentIndex)
+                console.log(headerSections)
+
+              switch (event.code) {
+                
+                case 'KeyV':
+                    navigate('tickets')
+                    break
+                case 'KeyC':
+                    navigate('clients')
+                    break
+                case 'KeyB':
+                    navigate('contact-businesses')
+                    break
+                case 'KeyT':
+                    navigate('stats')
+                    break
+                case 'KeyA':
+                    navigate('settings')
+                    break
+                case 'KeyW':    
+                    if (currentIndex !== -1) deleteHeaderSection(headerSections[currentIndex],currentIndex)
+                    break
+    
+                case 'ArrowLeft': 
+                    if (currentIndex > 0) {
+                        const previousSection = headerSections[currentIndex - 1]
+                        const previousPath = previousSection.type === 'ticket'
+                        ? `tickets/ticket/${previousSection.code}`
+                        : previousSection.type === 'client'
+                        ? `clients/client/${previousSection.code}`
+                        : `contact-businesses/business/${previousSection.code}`
+                        navigate(`/${previousPath}`)
+                    }
+      
+                    break
+                  case 'ArrowRight': 
+                    if (currentIndex < headerSections.length - 1) {
+                        const nextSection = headerSections[currentIndex + 1];
+                        const nextPath = nextSection.type === 'ticket'
+                        ? `tickets/ticket/${nextSection.code}`
+                        : nextSection.type === 'client'
+                        ? `clients/client/${nextSection.code}`
+                        : `contact-businesses/business/${nextSection.code}`;
+                        navigate(`/${nextPath}`);
+                    }
+                    break
+        
+                default:
+                  break
+              }
+            }
         }
+        window.addEventListener('keydown', handleKeyDown)
+
+        const handleResize = () => {
+            if (containerRef.current) {
+                const containerWidth = containerRef.current.offsetWidth
+        
+                const maxWidth = 280
+                const minWidth = 120
+                let totalWidth = 0
+                let sectionsToShow = 0
+                let moreFlag = false
+                const sectionCount = headerSections.length
+
+                for (const section of headerSections) totalWidth += maxWidth
+                let availableWidth = containerWidth - containerWidth * 0.5
+        
+                if (totalWidth > availableWidth) {
+                    const perSectionWidth = availableWidth / sectionCount
+                    const finalWidth = perSectionWidth < minWidth ? minWidth : perSectionWidth
+                    if (finalWidth === minWidth && totalWidth > availableWidth) moreFlag = true
+                        headerSections.forEach((section, index) => {if ((index + 1) * finalWidth <= availableWidth) sectionsToShow += 1 })
+
+                } else sectionsToShow = headerSections.length
+                setVisibleSectionsIndex(sectionsToShow)
+                setShowMoreHeaderSections(moreFlag)
+            }
         }
 
         const resizeObserver = new ResizeObserver(handleResize)
         if (containerRef.current) resizeObserver.observe(containerRef.current)
         handleResize()
-        return () => {if (containerRef.current) resizeObserver.unobserve(containerRef.current)}
-      }, [headerSections])
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown)
+            if (containerRef.current) resizeObserver.unobserve(containerRef.current)
+        }
+      }, [headerSections, location])
  
     //DRAGGING VISIBLE HEADER COMPONENTS
     const onDragEnd = (result:any) => {
@@ -511,13 +588,21 @@ const LogoutBox = ({ userInfoApp, auth }:{userInfoApp:userInfo, auth:any}) => {
     //VIEW SHORTCUTS
     const [showShortcuts, setShowShortcuts] = useState<boolean>(false)
 
+    //VIEW FEEDBACK
+    const [showFeedback, setShowFeedback] = useState<boolean>(false)
     //FRONT
     return (<> 
 
-    {showShortcuts && 
+        {showShortcuts && 
         <ConfirmBox maxW={'80vw'} setShowBox={setShowShortcuts}>
             <ShortCutsList setShowShowShortcuts={setShowShortcuts}/>
         </ConfirmBox>}
+
+        {showFeedback && 
+        <ConfirmBox maxW={'80vw'} setShowBox={setShowFeedback}>
+            <SendFeedBack setShowFeedback={setShowFeedback}/>
+        </ConfirmBox>}
+
 
         <Flex  alignItems='center' flexDir='column' position='relative' onMouseEnter={handleMouseEnter}  onMouseLeave={handleMouseLeave} >
             <Box position={'relative'}> 
@@ -560,19 +645,19 @@ const LogoutBox = ({ userInfoApp, auth }:{userInfoApp:userInfo, auth:any}) => {
                     <Box bg='gray.200' height='1px' width='100%' mb='7px' mt='10px' />
 
                     <Flex p='7px' gap='10px'  justifyContent={'space-between'} alignItems='center' color='gray.600' cursor='pointer' _hover={{ bg: 'brand.hover_gray', color:'black' }} borderRadius='.4rem' onClick={() => {setShowLogout(false);setShowShortcuts(true)}}>
-                         <Text fontSize='.8em' whiteSpace='nowrap'>Atajos</Text>
-                         <Icon as={FaRegKeyboard} />
+                         <Text fontSize='.9em' whiteSpace='nowrap'>Atajos</Text>
+                         <Icon as={PiKeyReturn} />
                     </Flex>
 
-                    <Flex p='7px' gap='10px'  justifyContent={'space-between'} alignItems='center' color='gray.600' cursor='pointer' _hover={{ bg: 'brand.hover_gray', color:'black' }} borderRadius='.4rem' onClick={() => {}}>
-                         <Text fontSize='.8em' whiteSpace='nowrap'>Feedback</Text>
-                         <Icon as={FaBoxOpen} />
+                    <Flex p='7px' gap='10px'  justifyContent={'space-between'} alignItems='center' color='gray.600' cursor='pointer' _hover={{ bg: 'brand.hover_gray', color:'black' }} borderRadius='.4rem' onClick={() => {setShowLogout(false);setShowFeedback(true)}}>
+                         <Text fontSize='.9em' whiteSpace='nowrap'>Feedback</Text>
+                         <Icon as={VscFeedback} />
                     </Flex>
                            
                     <Box bg='gray.200' height='1px' width='100%' mb='7px' mt='10px' />
 
                     <Flex p='7px' gap='10px'  justifyContent={'space-between'} alignItems='center' color='red.500' cursor='pointer' _hover={{ bg: 'red.50', color:'red.600' }} borderRadius='.4rem' onClick={() => auth.signOut()}>
-                         <Text fontSize='.8em' whiteSpace='nowrap'>Cerrar sesión</Text>
+                         <Text fontSize='.9em' whiteSpace='nowrap'>Cerrar sesión</Text>
                          <Icon boxSize={'13px'} as={FaArrowRightToBracket} />
                     </Flex>
                 </MotionBox>
