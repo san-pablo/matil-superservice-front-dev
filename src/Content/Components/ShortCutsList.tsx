@@ -65,14 +65,17 @@ const ShortCutsList = ({setShowShowShortcuts}:{setShowShowShortcuts:Dispatch<Set
                     <KeyElement keys={['Ctrl', 'Alt', 'r']} description="Abrir respuesta pública"/>
                     <KeyElement keys={['Ctrl', 'Alt', 'n']} description="Abrir nota interna"/>
                     <KeyElement keys={['Ctrl', 'Alt', 'h']} description="Ocultar o mostrar pestaña de cliente"/>
+                    <KeyElement keys={['Ctrl', 'Alt', 'u']} description="Tomar control de la conversación"/>
+
                    
                     <Text  fontWeight={'medium'} fontSize={'.9em'} mt='3vh' color='gray.600' >Se usan al guardar o actualizar un ticket</Text>        
-                    <KeyElement keys={['Ctrl', 'Alt', 'u']} description="Guardar con el estado actual"/>
+                    <KeyElement keys={['Enter']} description="Guardar con el estado actual"/>
                     <KeyElement keys={['Ctrl', 'Alt', 'o']} description="Guardar como abierto"/>
                     <KeyElement keys={['Ctrl', 'Alt', 'p']} description="Guardar como pendiente"/>
                     <KeyElement keys={['Ctrl', 'Alt', 's']} description="Guardar como resuelto"/>
 
-                    <Text  fontWeight={'medium'} fontSize={'.9em'} mt='3vh' color='gray.600' >Se usan al escribir</Text>        
+                    <Text  fontWeight={'medium'} fontSize={'.9em'} mt='3vh' color='gray.600' >Se usan al escribir</Text>      
+                    <KeyElement keys={['Cmd/Ctrl', 'Enter']} description="Insertar salto de línea"/>
                     <KeyElement keys={['Cmd/Ctrl', 'm']} description="Insertar imagen"/>
                     <KeyElement keys={['Cmd/Ctrl', 'k']} description="Insertar link"/>
                     <KeyElement keys={['Cmd/Ctrl', 'b']} description="Insertar negrita"/>

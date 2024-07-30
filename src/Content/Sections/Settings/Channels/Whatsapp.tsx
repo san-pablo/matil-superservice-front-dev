@@ -1,5 +1,5 @@
 //REACT
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { useAuth } from "../../../../AuthContext"
 //FETCH DATA
 import fetchData from "../../../API/fetchData"
@@ -17,6 +17,23 @@ import { FaPlus } from "react-icons/fa6"
 //TYPING
 import { configProps } from "../../../Constants/typing"
  
+
+const CreateNewAccount = ({callNewWhatsapp}:{callNewWhatsapp:() => void}) => {
+    const [name, setName] = useState<string>('')
+    
+    return(
+        <Box p='15px'> 
+            <Text fontWeight={'medium'} fontSize={'.9em'}>Nombre de la cuenta</Text>
+            <Box mb='2vh' mt='1vh'> 
+                <EditText placeholder="Cuenta de Whatsapp" value={name} setValue={setName} hideInput={false}/>
+            </Box>
+            <Flex flexDir={'row-reverse'}> 
+                <FacebookLoginButton name={name} loadDataFunc={() => callNewWhatsapp()}/>
+            </Flex>
+        </Box>)
+ }
+
+
 //MAIN FUNCTION
 function Whatsapp () {
 
@@ -45,20 +62,6 @@ function Whatsapp () {
         setShowCreateAccount(false)
     }
 
-     const CreateNewAccount = () => {
-        const [name, setName] = useState<string>('')
-       
-        return(
-        <Box p='15px'> 
-            <Text fontWeight={'medium'} fontSize={'.9em'}>Nombre de la cuenta</Text>
-            <Box mb='2vh' mt='1vh'> 
-                <EditText placeholder="Cuenta de Whatsapp" value={name} setValue={setName} hideInput={false}/>
-            </Box>
-            <FacebookLoginButton name={name} loadDataFunc={() => callNewWhatsapp()}/>
-        </Box>)
-     }
- 
-
     const handleNameChange = (index:number, value:string) => {
         const updatedData = data.map((bot, i) =>i === index ? { ...bot, name: value } : bot)
         setData(updatedData)
@@ -72,12 +75,17 @@ function Whatsapp () {
         )
     }
 
+    const memoizedCreateBox = useMemo(() => (
+        <ConfirmBox setShowBox={setShowCreateAccount} isSectionWithoutHeader={true}>
+          <CreateNewAccount callNewWhatsapp={callNewWhatsapp} />
+        </ConfirmBox>
+    ), [showCreateAccount])
+    
 
     return(<>
-    {showCreateAccount && 
-        <ConfirmBox setShowBox={setShowCreateAccount} isSectionWithoutHeader={true}>
-           <CreateNewAccount/>
-        </ConfirmBox>}
+    
+        {showCreateAccount && memoizedCreateBox}
+
         <Box> 
             <Flex justifyContent={'space-between'}> 
                 <Text fontSize={'1.4em'} fontWeight={'medium'}>Cuentas activas (Whatsapp)</Text>

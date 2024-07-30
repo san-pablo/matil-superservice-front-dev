@@ -57,7 +57,7 @@ function Mail () {
           newData[index] = {...newData[index], matilda_configuration: newConfig}
           return newData}
       )
-  }
+    } 
 
     //FRONT 
     return(

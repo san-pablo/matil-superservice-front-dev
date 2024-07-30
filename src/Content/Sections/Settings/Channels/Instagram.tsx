@@ -1,5 +1,5 @@
 //REACT
-import { useState, useEffect, useRef, memo } from "react"
+import { useState, useEffect, useRef, memo, useMemo } from "react"
 import { useAuth } from "../../../../AuthContext"
 //FETCH DATA
 import fetchData from "../../../API/fetchData"
@@ -152,11 +152,16 @@ const Instagram = memo(() => {
         navigate('/settings/channels/instagram')
     }
 
-      return(<>
-       {(location.pathname.split('/')[4] === 'success_auth') && 
+
+    const memoizedCreateBox = useMemo(() => (
         <ConfirmBox setShowBox={returnToInsta} isSectionWithoutHeader={true}>
-           <SuccessPage  name={newAccountNameRef.current}  callNewData={callNewWInstagram}/>
-        </ConfirmBox>}
+            <SuccessPage  name={newAccountNameRef.current}  callNewData={callNewWInstagram}/>
+        </ConfirmBox>
+    ), [location])
+
+    return(<>
+       
+    {(location.pathname.split('/')[4] === 'success_auth') && memoizedCreateBox}
 
     {showCreateAccount && 
         <ConfirmBox setShowBox={setShowCreateAccount} isSectionWithoutHeader={true}>

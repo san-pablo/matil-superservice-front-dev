@@ -392,6 +392,8 @@ function TextEditor({clientName, ticketData, updateData, deleteHeaderSection, ta
         }
     }
 
+ 
+    
     // Efecto para escuchar los eventos del teclado
     useEffect(() => {
         const handleKeyPress = (event:KeyboardEvent) => {
@@ -400,30 +402,46 @@ function TextEditor({clientName, ticketData, updateData, deleteHeaderSection, ta
                     handleButtonClick('pending')
                     event.preventDefault()
                     event.stopPropagation()
-                } else if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+                } 
+                else if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+                 
                     event.preventDefault()
                     event.stopPropagation()
-                if (ticketData?.channel_type !== 'email' && textAreaRef.current) {
-                    const start = textAreaRef.current.selectionStart
-                    const end = textAreaRef.current.selectionEnd
-                    const text = textValueRef.current
-                    const before = text.substring(0, start)
-                    const after = text.substring(end, text.length)
-                    setTextValue(before + '\n' + after)
-                    setTimeout(() => {
-                        if (textAreaRef.current) {
-                            textAreaRef.current.selectionStart = start + 1;
-                            textAreaRef.current.selectionEnd = start + 1;
+                    if (ticketData?.channel_type !== 'email' && textAreaRef.current) {
+                        const start = textAreaRef.current.selectionStart
+                        const end = textAreaRef.current.selectionEnd
+                        const text = textValueRef.current
+                        const before = text.substring(0, start)
+                        const after = text.substring(end, text.length)
+                        setTextValue(before + '\n' + after)
+                        setTimeout(() => {
+                            if (textAreaRef.current) {
+                                textAreaRef.current.selectionStart = start + 1;
+                                textAreaRef.current.selectionEnd = start + 1;
+                            }
+                        }, 0)
+                    } else if (ticketData?.channel_type === 'email' && quillRef.current) {
+                        const quill = quillRef.current.getEditor();
+                        const range = quill.getSelection(true);
+                        if (range) {
+                            quill.insertText(range.index, '\n');
                         }
-                    }, 0);
-                } else if (ticketData?.channel_type === 'email' && quillRef.current) {
-                    const quill = quillRef.current.getEditor();
-                    const range = quill.getSelection(true);
-                    if (range) {
-                        quill.insertText(range.index, '\n');
                     }
                 }
-            }
+                else if (event.metaKey || event.ctrlKey) {
+                    if (event.code === 'KeyR'){
+                        setIsInternalNote(false)
+                        setShowSelector(false)
+                    }
+                    else if (event.code === 'KeyN'){
+                        setIsInternalNote(true)
+                        setShowSelector(false)
+                    }
+                    else if (event.code === 'KeyO') handleButtonClick('open')
+                    else if (event.code === 'KeyP') handleButtonClick('pending')
+                    else if (event.code === 'KeyS') handleButtonClick('solved')
+                }
+
             }
         }
         document.addEventListener('keydown', handleKeyPress)
@@ -450,7 +468,7 @@ function TextEditor({clientName, ticketData, updateData, deleteHeaderSection, ta
             }
             window.addEventListener('keydown', handleKeyDown)
             return () => {window.removeEventListener('keydown', handleKeyDown)}
-          }, [])
+        }, [])
 
         return(
             <Box position={'fixed'}fontSize={'.85em'} left={position.left} bottom={position.bottom} maxH='40vh' maxW={'400px'} overflow={'scroll'}  boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
@@ -526,7 +544,7 @@ function TextEditor({clientName, ticketData, updateData, deleteHeaderSection, ta
                     <ReactQuill modules={modules} ref={quillRef} theme="snow" value={htmlValue} onChange={handleChange} className={toolbarVisible ? '' : 'hidden-toolbar'} style={{ height: '100%', display: 'flex', flexDirection: 'column-reverse'}} />
                     </>
                     :
-                    <textarea ref={textAreaRef} value={textValue} onChange={(e) => {setTextValue(e.target.value); handleShortcuts(e.target.value, {index: e.target.selectionStart}) }}  style={{ height: '100%', width: '100%', padding:'20px',  outline: 'none', border:'none', resize:'none', fontSize:'.9em'}} />
+                    <textarea ref={textAreaRef} value={textValue} onChange={(e) => {setTextValue(e.target.value); handleShortcuts(e.target.value, {index: e.target.selectionStart}) }}  style={{ height: '100%', width: '100%', padding:'20px', background:'transparent', outline: 'none', border:'none', resize:'none', fontSize:'.9em'}} />
                     }
                     <Flex overflowX={'scroll'}  ref={sendPanelRef} maxW={'100%'} justifyContent={'space-between'} position={'absolute'} bottom={0} px='15px' py='10px' gap='15px' alignItems={'center'} borderTopColor={'gray.100'} borderTopWidth={'1px'} bg='gray.50' width={'100%'}>
                         <Flex gap='10px'> 

@@ -10,17 +10,20 @@ import { Clients, TicketColumn,  Channels , Tickets, TicketData, ClientColumn, C
 //TICKETS TABLE DATA TYPE
 type TicketsTable = {
     data:Tickets
+    selectedIndex:number
     view:{view_type:'shared' | 'private' | 'deleted', view_index:number}
     filters:{page_index:number, sort_by?:TicketColumn | 'not_selected', search:string, order:'asc' | 'desc'}
 }
 //CLIENTS TABLE DATA TYPE
 type ClientsTable = {
-    data: Clients | null,
+    data: Clients
+    selectedIndex:number
     filters: {page_index:number,  channel_types:Channels[], sort_by?:ClientColumn, search?:string, order?:'asc' | 'desc'}
 }
 //CONTACT BUSINESSES TABLE DATA TYPE
 type ContactBusinessesSection = {
-    data: ContactBusinessesProps,
+    data: ContactBusinessesProps
+    selectedIndex:number
     filters:{page_index:number, sort_by?:ClientColumn, search?:string, order?:'asc' | 'desc'}
 }
 //HEADER SECTIONS DATA TYPE (CLIENTS OR TICKETS)
@@ -91,15 +94,32 @@ const sessionReducer = (state: SessionData, action: { type: string; payload: any
             if (index !== -1) {
                 updatedTicketsActivity[index] = action.payload
                 return { ...state, ticketsTable: updatedTicketsActivity }
-            } else return { ...state, ticketsTable: [...state.ticketsTable, action.payload] };
-            
+            } else return { ...state, ticketsTable: [...state.ticketsTable, action.payload] }
+        
+        case 'UPDATE_TICKETS_TABLE_SELECTED_ITEM':
+                let updatedTicketsActivity2 = state.ticketsTable
+                const index2 = state.ticketsTable.findIndex(ticket =>
+                    ticket.view.view_type === action.payload.view.view_type &&
+                    ticket.view.view_index === action.payload.view.view_index
+                )
+                if (index2 !== -1) {
+                    updatedTicketsActivity2[index2].selectedIndex = action.payload.index
+                    return { ...state, ticketsTable: updatedTicketsActivity2 }
+                } else return { ...state, ticketsTable: [...state.ticketsTable, action.payload] }
+
         //SAVE CLIENTS TABLE INFORMATION
         case 'UPDATE_CLIENTS_TABLE':
             return { ...state, clientsTable: { ...state.clientsTable, ...action.payload }}
+        case 'UPDATE_CLIENTS_TABLE_SELECTED_ITEM':
+            if (state.clientsTable) return { ...state, clientsTable: { ...state.clientsTable, selectedIndex:action.payload.index }}
+            else return state
 
         //SAVE CONTACT BUSINESSES TABLE INFORMATION
         case 'UPDATE_BUSINESSES_TABLE':
             return { ...state, contactBusinessesTable: { ...state.contactBusinessesTable, ...action.payload } }
+        case 'UPDATE_BUSINESSES_TABLE_SELECTED_ITEM':
+            if (state.contactBusinessesTable) return { ...state, contactBusinessesTable: { ...state.contactBusinessesTable, selectedIndex:action.payload.index }}
+            else return state
 
         //ADD A NEW HEADER SECTION (TICKET, CLIENT, CONTACT_BUSINESS)
         case 'UPDATE_HEADER_SECTIONS':

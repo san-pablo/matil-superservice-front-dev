@@ -2,6 +2,7 @@
 import { useEffect, useState, KeyboardEvent } from 'react'
 import { useAuth } from './AuthContext'
 import { BrowserRouter as Router } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 //FETCH DATA
 import CryptoJS from 'crypto-js'
 import axios, { AxiosError, isAxiosError } from 'axios'
@@ -88,7 +89,10 @@ const mailRegex = /^[\w\.-]+@[\w\.-]+\.\w+$/
 //MAIN FUNCTION
 const App: React.FC = () => { 
 
-    //AUTH DATA
+    //TRANSLATION
+    const { t } = useTranslation()
+
+     //AUTH DATA
     const { authData, setAuthData, signIn, signOut, isSignedIn } = useAuth()
 
     //USER CONFIGURATIONS AND WAIT BOOLEAN
@@ -221,7 +225,7 @@ const App: React.FC = () => {
               <LoadingIcon/>
           </Flex>:
           <>
-              {(isSignedIn && authData.accessToken && authData.views && authData.users)?
+              {(isSignedIn && authData.accessToken && ((authData.views && authData.users) || !authData.organizationId))?
                 <Router> 
                   <Content userInfo={userInfo} />
                   <ToastContainer />
@@ -229,7 +233,7 @@ const App: React.FC = () => {
                 <>
                   <Flex justifyContent={'center'} alignItems={'center'} height={'100vh'} width={'100vw'} bg='linear-gradient(to right, #C6D8FE, #93B6FF)'> 
                     <Box width={'400px'} boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.09)'} borderRadius={'1em'} bg='white' zIndex={100} p={'40px'} >
-                      <Text textAlign={'center'} fontWeight={'medium'} fontSize={'1.6em'} color='gray.600'>{showCode?'Registrarse':'Iniciar sesión'}</Text>
+                      <Text textAlign={'center'} fontWeight={'medium'} fontSize={'1.6em'} color='gray.600'>{showCode?'Registrarse':t('login-1')}</Text>
                          <Stack spacing={'2vh'} color='color.500' mt='6vh'>
                           {showCode?
                             <>  

@@ -1,5 +1,5 @@
 //REACT
-import { useState, useEffect, useRef, memo } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { useAuth } from "../../../../AuthContext"
 //FETCH DATA
 import fetchData from "../../../API/fetchData"
@@ -71,12 +71,15 @@ function Google () {
         )
     }
 
+    const memoizedCreateBox = useMemo(() => (
+        <ConfirmBox setShowBox={setShowCreateAccount} isSectionWithoutHeader={true}>
+            <CreateNewAccount/>
+        </ConfirmBox>
+    ), [showCreateAccount])
+
 
     return(<>
-    {showCreateAccount && 
-        <ConfirmBox setShowBox={setShowCreateAccount} isSectionWithoutHeader={true}>
-           <CreateNewAccount/>
-        </ConfirmBox>}
+        {showCreateAccount && memoizedCreateBox}
 
         <SaveData data={data} setData={setData} dataRef={dataRef} channel={'google_business'} />
 

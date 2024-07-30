@@ -1,6 +1,6 @@
 
 //REACT
-import  { useState, useEffect, Dispatch, SetStateAction, Fragment } from 'react'
+import  { useState, useEffect, Dispatch, SetStateAction, Fragment, useMemo } from 'react'
 import { useAuth } from '../../../../AuthContext'
 //FETCH DATA
 import fetchData from "../../../API/fetchData"
@@ -138,10 +138,14 @@ function AdminUsers () {
         setShowConfirmDelete(false)
     }
 
-    return(<>
-    <>        
-        {showConfirmDelete &&  
-            <ConfirmmBox setShowBox={setShowConfirmDelete} isSectionWithoutHeader={true}> 
+    const memoizedNewUserBox = useMemo(() => (
+        <ConfirmmBox setShowBox={setShowCreateNewUser} isSectionWithoutHeader={true}> 
+            <NewUserBox userData={userData} setUserData={setUserData} setShowCreateNewUser={setShowCreateNewUser}/>
+        </ConfirmmBox>
+    ), [showCreateNewUser])
+
+    const memoizedDeleteBox = useMemo(() => (
+        <ConfirmmBox setShowBox={setShowConfirmDelete} isSectionWithoutHeader={true}> 
               <Box p='15px'> 
                 <Text width={'400px'}  fontWeight={'medium'}>¿Estás seguro que deseas eliminar al siguiente usuario de la organización?</Text>
                 <Box maxH='30vh' overflow={'scroll'} mt='2vh'>
@@ -158,14 +162,12 @@ function AdminUsers () {
                     <Button  size='sm' onClick={()=>setShowConfirmDelete(false)}>Cancelar</Button>
                 </Flex>
             </ConfirmmBox>
-        }
+    ), [showConfirmDelete])
 
-
-        {showCreateNewUser && 
-            <ConfirmmBox setShowBox={setShowCreateNewUser} isSectionWithoutHeader={true}> 
-                <NewUserBox userData={userData} setUserData={setUserData} setShowCreateNewUser={setShowCreateNewUser}/>
-            </ConfirmmBox>
-        }
+    return(<>
+    <>        
+        {showConfirmDelete && memoizedDeleteBox}
+        {showCreateNewUser && memoizedNewUserBox}
 
         <Text fontSize={'1.4em'} fontWeight={'medium'}>Tabla de usuarios</Text>
         <Text color='gray.600' fontSize={'.9em'}>Administra la información de tus usuarios.</Text>

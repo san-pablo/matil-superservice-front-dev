@@ -345,7 +345,6 @@ function TicketResponse ( {ticketData, setTicketData, clientTickets, setClientTi
             </Flex>
         </>)
     }
-
    
     //FRONT
     return(<> 
@@ -583,7 +582,7 @@ const ShowMessages = ({type, content}:{type:string, content:any}) => {
     else if (type === 'site') return <Link href={content.site_link} isExternal>{content.url}</Link>;
 
     //IMAGE LINK
-    else if (type === 'image') return <Image maxWidth='100%' src={content.url} />
+    else if (type === 'image') return <Image maxWidth='50%' src={content.url} />
   
     //DOC LINK (PDF, FILE, VIDEO)
     else if (type === 'pdf' || type === 'file' || type === 'video') {

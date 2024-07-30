@@ -3,6 +3,7 @@ import { IconType } from "react-icons"
 import { IoMdMail, IoLogoWhatsapp } from "react-icons/io"
 import { IoChatboxEllipses, IoLogoGoogle } from "react-icons/io5"
 import { AiFillInstagram } from "react-icons/ai"
+import { FaPhone } from "react-icons/fa"
 
 //USER INFO AND ORGANIZATION
 export interface Organization {
@@ -44,13 +45,11 @@ export interface Views {
 }
 export interface ViewType {type:'private' | 'shared' | 'deleted', index:number, name:string}
 
-
 //HEADER SECTIONS
 export type HeaderSectionType = (description: string, code: number, section: 'ticket' | 'client' | 'contact-business', local_id?:number) => void
 export type DeleteHeaderSectionType = (element:{description: string, code: number, local_id?:number, type: string}) => void
 
 
- 
 //TICKETS TABLE
 export type TicketColumn = 
     'id'
@@ -67,7 +66,6 @@ export type TicketColumn =
   | 'deletion_date'
   | 'unseen_changes'
   | 'closed_at'
-
 
   
 
@@ -271,7 +269,7 @@ export const statesMap =
 }
 
 //FILTERS AND MAPPING
-export type Channels = 'email' | 'whatsapp' | 'instagram' | 'webchat' | 'google_business'
+export type Channels = 'email' | 'whatsapp' | 'instagram' | 'webchat' | 'google_business' | 'phone'
 export const logosMap:{[key in Channels]: [string, IconType, string]} = 
     {
         'email':['Mail', IoMdMail, 'red.600'],
@@ -279,6 +277,8 @@ export const logosMap:{[key in Channels]: [string, IconType, string]} =
         'whatsapp':['Whatsapp',IoLogoWhatsapp, 'green'], 
         'instagram': ['Instagram', AiFillInstagram, 'pink.700'], 
         'google_business':['Google Business', IoLogoGoogle, 'blue.400'],
+        'phone':['Llamada telefónica', FaPhone, 'blue.400']
+
     }
 export type ContactChannel = 'email_address' | 'phone_number' |  'instagram_username' | 'webchat_uuid' |  'google_business_id'
 export const contactDicRegex:{[key in ContactChannel]:[string, RegExp, number, Channels]} = {

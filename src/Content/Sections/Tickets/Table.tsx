@@ -38,6 +38,7 @@ interface TableProps{
     filters:{page_index:number, sort_by?:TicketColumn | 'not_selected', search?:string, order?:'asc' | 'desc'}
     section: 'tickets' | 'clients'
     maxWidth:string
+    currentIndex?:number
     selectedView?:ViewType
     allIds?:number[]
 }
@@ -104,7 +105,7 @@ const CellStyle = ({column, element, auth}:{column:TicketColumn, element:string 
 }
 
 //MAIN FUNCTION
-const Table = ({ data, updateData, filters, section, maxWidth, selectedView, allIds}:TableProps ) =>{
+const Table = ({ data, updateData, filters, section, maxWidth, selectedView, allIds, currentIndex = -1}:TableProps ) =>{
      
     //AUTH CONSTANT
     const auth = useAuth()
@@ -121,7 +122,10 @@ const Table = ({ data, updateData, filters, section, maxWidth, selectedView, all
     //CALCULATE DYNAMIC HEIGHT OF TABLE
     const headerRef = useRef<HTMLDivElement>(null)
     const [alturaCaja, setAlturaCaja] = useState<number>(0)
-    const [selectedIndex, setSelectedIndex] = useState<number>(-1)
+    const [selectedIndex, setSelectedIndex] = useState<number>(currentIndex)
+    useEffect(() => {setSelectedIndex(currentIndex)},[currentIndex])
+
+
     const [selectedElements, setSelectedElements] = useState<number[]>([])
     useEffect(() => {
         const actualizarAltura = () => {
@@ -170,7 +174,7 @@ const Table = ({ data, updateData, filters, section, maxWidth, selectedView, all
             else if (event.code === 'Space' && data && 0 <= selectedIndex && selectedIndex   <= data.length - 1) {
                 handleCheckboxChange(data[selectedIndex].id, !selectedElements.includes(data[selectedIndex].id))
             }
-            else if (event.code === 'Enter' && data) handleClickColumn(data[selectedIndex])
+            else if (event.code === 'Enter' && data) handleClickColumn(data[selectedIndex], selectedIndex)
         }
         
         window.addEventListener('keydown', handleKeyDown)
@@ -205,7 +209,8 @@ const Table = ({ data, updateData, filters, section, maxWidth, selectedView, all
     }
 
     //NAVIGATE TO THE CLICKED TICKET AND SHOW IT IN THE HEADER
-    const handleClickColumn  = (row:TicketsTableProps) => {
+    const handleClickColumn  = (row:TicketsTableProps, index:number) => {
+        session.dispatch({type:'UPDATE_TICKETS_TABLE_SELECTED_ITEM', payload:{view:{view_type:selectedView?.type, view_index:selectedView?.index}, index}})
         if (isDeleteView) {showToast({message:'No se puede acceder a un ticket de la papelera.', type:'failed'});return}
         navigate(`/tickets/ticket/${row.id}`) 
     }
@@ -296,7 +301,7 @@ const Table = ({ data, updateData, filters, section, maxWidth, selectedView, all
             </Flex>
             <Box minWidth={`${totalWidth}px`}  overflowX={'hidden'} ref={tableBoxRef}  overflowY={'scroll'} maxH={alturaCaja}> 
                 {data.map((row:TicketsTableProps, index:number) =>( 
-                    <Flex data-index={index}  position={'relative'} overflow={'hidden'} gap='20px' minWidth={`${totalWidth}px`} borderRadius={index === data.length - 1?'0 0 .5rem .5rem':'0'} borderWidth={'0 1px 1px 1px'}  cursor={isDeleteView?'not-allowed':'pointer'} onClick={() => handleClickColumn(row)} key={`row-${index}`}  bg={selectedIndex === index ? 'blue.50':selectedElements.includes(row.id)?'blue.100':index%2 === 1?'#FCFCFC':'white'} alignItems={'center'}  fontSize={'.9em'} color='black' p='10px' borderBottomWidth={'1px'} borderColor={'gray.300'} _hover={{bg:selectedElements.includes(row.id)?'blue.100':'blue.50'}}  > 
+                    <Flex data-index={index}  position={'relative'} overflow={'hidden'} gap='20px' minWidth={`${totalWidth}px`} borderRadius={index === data.length - 1?'0 0 .5rem .5rem':'0'} borderWidth={'0 1px 1px 1px'}  cursor={isDeleteView?'not-allowed':'pointer'} onClick={() => handleClickColumn(row, index)} key={`row-${index}`}  bg={selectedIndex === index ? 'blue.50':selectedElements.includes(row.id)?'blue.100':index%2 === 1?'#FCFCFC':'white'} alignItems={'center'}  fontSize={'.9em'} color='black' p='10px' borderBottomWidth={'1px'} borderColor={'gray.300'} _hover={{bg:selectedElements.includes(row.id)?'blue.100':'blue.50'}}  > 
                          {selectedIndex === index && <Box position='absolute' left={0} top={0} height={'100%'} width={'2px'} bg='blue.400'/>}
                          {section === 'tickets' && <Flex alignItems={'center'} onClick={(e) => e.stopPropagation()}> 
                             <Checkbox onChange={(e) => handleCheckboxChange(row.id, e.target.checked)} isChecked={selectedElements.includes(row.id)}/>  
