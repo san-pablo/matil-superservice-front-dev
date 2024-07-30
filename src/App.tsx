@@ -221,7 +221,7 @@ const App: React.FC = () => {
               <LoadingIcon/>
           </Flex>:
           <>
-              {(isSignedIn && authData.accessToken && authData.views && authData.users)?
+              {(isSignedIn && authData.accessToken && ((authData.views && authData.users) || !authData.organizationId))?
                 <Router> 
                   <Content userInfo={userInfo} />
                   <ToastContainer />

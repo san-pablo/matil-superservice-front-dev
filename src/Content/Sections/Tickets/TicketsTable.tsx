@@ -59,6 +59,8 @@ function TicketsTable({socket}:{socket:any}) {
     //TICKET DATA AND SELECTED VIEW
     const [tickets, setTickets] = useState<Tickets | null>(null)
     const [selectedView, setSelectedView] = useState<ViewType>((localStorage.getItem('currentView') && JSON.parse(localStorage.getItem('currentView') as string)) || getFirstView(auth.authData.views as Views))
+    const [selectedIndex, setSelectedIndex] = useState<number>(-1)
+
  
     //SOCKET FOR RELOADING VIEWS ON A NEW TICKET
     useEffect(() => {
@@ -92,10 +94,12 @@ function TicketsTable({socket}:{socket:any}) {
             const ticketsList = session.sessionData.ticketsTable
             const foundTicket = ticketsList.find(ticket => ticket.view.view_type === selectedView.type && ticket.view.view_index === selectedView.index)
 
+            
             //SECTION FOUND
             if (foundTicket){
                 setTickets(foundTicket.data)
                 setFilters(foundTicket.filters)
+                setSelectedIndex(foundTicket.selectedIndex || -1)
                 setWaitingInfo(false)
             } 
 
@@ -104,13 +108,14 @@ function TicketsTable({socket}:{socket:any}) {
 
                 //CLEAR THE FILTERS
                 setFilters({page_index:1})
+                setSelectedIndex(-1)
                 
                 //CALL THE BIN
                 if (selectedView.type === 'deleted') {
                     const response1 = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/tickets/bin`, setValue:setTickets, setWaiting:setWaitingInfo, params:{page_index:1}, auth})
                     if (response1?.status === 200) {      
-                        const newTicket:{data:TicketsTableProps[] | null, view:{view_type:'shared' | 'private' | 'deleted', view_index:number}, filters:TicketFilters} = 
-                        {data:response1.data, view: {view_type: selectedView.type, view_index: selectedView.index}, filters: {page_index:1}}
+                        const newTicket:{data:TicketsTableProps[] | null, view:{view_type:'shared' | 'private' | 'deleted', view_index:number}, selectedIndex:number, filters:TicketFilters} = 
+                        {data:response1.data, view: {view_type: selectedView.type, view_index: selectedView.index}, filters: {page_index:1}, selectedIndex:-1}
                         session.dispatch({ type: 'UPDATE_TICKETS_TABLE', payload: newTicket })
                     }
                 }
@@ -119,8 +124,8 @@ function TicketsTable({socket}:{socket:any}) {
                 else {
                     const response2 = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/tickets`, setValue:setTickets, setWaiting:setWaitingInfo, params:{page_index:1, view_type:selectedView.type, view_index:selectedView.index}, auth})
                     if (response2?.status === 200) {
-                        const newTicket:{data:TicketsTableProps[] | null, view:{view_type:'shared' | 'private' | 'deleted', view_index:number}, filters:TicketFilters} = 
-                        {data:response2.data, view: {view_type: selectedView.type, view_index: selectedView.index}, filters: {page_index:1}}
+                        const newTicket:{data:TicketsTableProps[] | null, view:{view_type:'shared' | 'private' | 'deleted', view_index:number}, selectedIndex:number, filters:TicketFilters} = 
+                        {data:response2.data, view: {view_type: selectedView.type, view_index: selectedView.index}, selectedIndex:-1, filters: {page_index:1}}
                         session.dispatch({ type: 'UPDATE_TICKETS_TABLE', payload: newTicket })
                     }
                 }
@@ -149,8 +154,8 @@ function TicketsTable({socket}:{socket:any}) {
         const response = await fetchData({endpoint, setValue:setTickets, setWaiting:setWaitingInfo, params:{...viewsToSend, ...selectedFilters}, auth})
         if (response?.status === 200) {
             setFilters(selectedFilters)
-            const newTicket:{data:TicketsTableProps[] | null, view:{view_type:'shared' | 'private' | 'deleted', view_index:number}, filters:{page_index:number, sort_by?:TicketColumn | 'not_selected', search?:string, order?:'asc' | 'desc'}} = 
-            {data:response.data, view: {view_type: selectedView.type, view_index: selectedView.index}, filters: selectedFilters}
+            const newTicket:{data:TicketsTableProps[] | null, view:{view_type:'shared' | 'private' | 'deleted', view_index:number}, selectedIndex:number, filters:{page_index:number, sort_by?:TicketColumn | 'not_selected', search?:string, order?:'asc' | 'desc'}} = 
+            {data:response.data, view: {view_type: selectedView.type, view_index: selectedView.index}, selectedIndex:-1, filters: selectedFilters}
             session.dispatch({ type: 'UPDATE_TICKETS_TABLE', payload: newTicket })
          }
     }
@@ -283,7 +288,7 @@ function TicketsTable({socket}:{socket:any}) {
                     <IconButton isRound size='xs' aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={filters.page_index === 1} onClick={() => fetchTicketDataWithFilter({...filters,page_index:filters.page_index - 1})}/>
                 </Flex>
                 <Skeleton isLoaded={!waitingInfo}>
-                    <Table data={tickets?.page_data} allIds={tickets?.ticket_ids} updateData={fetchTicketDataWithFilter}filters={filters}  maxWidth="calc(96vw - 380px)" section={'tickets'}  selectedView={selectedView}/> 
+                    <Table data={tickets?.page_data} allIds={tickets?.ticket_ids} updateData={fetchTicketDataWithFilter} filters={filters} currentIndex={selectedIndex} maxWidth="calc(96vw - 380px)" section={'tickets'}  selectedView={selectedView}/> 
                 </Skeleton >             
             </Box>
          </Box>

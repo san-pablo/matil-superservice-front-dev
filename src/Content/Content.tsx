@@ -223,12 +223,47 @@ function Content ({userInfo}:{userInfo:userInfo}) {
     useOutsideClick({ref1:showMoreHeaderSectionsButtonRef, ref2:showMoreHeaderSectionsBoxRef, onOutsideClick:setShowMoreHeaderSectionsBox})
     useLayoutEffect(() => {
 
+        const handleResize = () => {
+            if (containerRef.current) {
+                const containerWidth = containerRef.current.offsetWidth
+        
+                const maxWidth = 280
+                const minWidth = 120
+                let totalWidth = 0
+                let sectionsToShow = 0
+                let moreFlag = false
+                const sectionCount = headerSections.length
+
+                for (const section of headerSections) totalWidth += maxWidth
+                let availableWidth = containerWidth - containerWidth * 0.5
+        
+                if (totalWidth > availableWidth) {
+                    const perSectionWidth = availableWidth / sectionCount
+                    const finalWidth = perSectionWidth < minWidth ? minWidth : perSectionWidth
+                    if (finalWidth === minWidth && totalWidth > availableWidth) moreFlag = true
+                        headerSections.forEach((section, index) => {if ((index + 1) * finalWidth <= availableWidth) sectionsToShow += 1 })
+
+                } else sectionsToShow = headerSections.length
+                setVisibleSectionsIndex(sectionsToShow)
+                setShowMoreHeaderSections(moreFlag)
+            }
+        }
+
+        const resizeObserver = new ResizeObserver(handleResize)
+        if (containerRef.current) resizeObserver.observe(containerRef.current)
+        handleResize()
+        return () => {
+            if (containerRef.current) resizeObserver.unobserve(containerRef.current)
+        }
+      }, [headerSections])
+ 
+    useEffect(() => {
+
         const handleKeyDown = (event:KeyboardEvent) => {
             if (event.ctrlKey && event.altKey) {
                 let currentIndex = -1;
     
-                 if (event.code === 'KeyW' || event.code === 'ArrowLeft' || event.code === 'ArrowRight') {
-
+                if (event.code === 'KeyW' || event.code === 'ArrowLeft' || event.code === 'ArrowRight') {
                   currentIndex = headerSections.findIndex(element => {
                     const sectionToSelect = element.type === 'ticket'
                       ? `tickets/ticket/${element.code}`
@@ -239,11 +274,7 @@ function Content ({userInfo}:{userInfo:userInfo}) {
                   })
                 }
 
-                console.log(currentIndex)
-                console.log(headerSections)
-
-              switch (event.code) {
-                
+              switch (event.code) {           
                 case 'KeyV':
                     navigate('tickets')
                     break
@@ -294,41 +325,12 @@ function Content ({userInfo}:{userInfo:userInfo}) {
         }
         window.addEventListener('keydown', handleKeyDown)
 
-        const handleResize = () => {
-            if (containerRef.current) {
-                const containerWidth = containerRef.current.offsetWidth
-        
-                const maxWidth = 280
-                const minWidth = 120
-                let totalWidth = 0
-                let sectionsToShow = 0
-                let moreFlag = false
-                const sectionCount = headerSections.length
-
-                for (const section of headerSections) totalWidth += maxWidth
-                let availableWidth = containerWidth - containerWidth * 0.5
-        
-                if (totalWidth > availableWidth) {
-                    const perSectionWidth = availableWidth / sectionCount
-                    const finalWidth = perSectionWidth < minWidth ? minWidth : perSectionWidth
-                    if (finalWidth === minWidth && totalWidth > availableWidth) moreFlag = true
-                        headerSections.forEach((section, index) => {if ((index + 1) * finalWidth <= availableWidth) sectionsToShow += 1 })
-
-                } else sectionsToShow = headerSections.length
-                setVisibleSectionsIndex(sectionsToShow)
-                setShowMoreHeaderSections(moreFlag)
-            }
-        }
-
-        const resizeObserver = new ResizeObserver(handleResize)
-        if (containerRef.current) resizeObserver.observe(containerRef.current)
-        handleResize()
         return () => {
             window.removeEventListener('keydown', handleKeyDown)
-            if (containerRef.current) resizeObserver.unobserve(containerRef.current)
         }
-      }, [headerSections, location])
- 
+    },[headerSections, location])
+
+
     //DRAGGING VISIBLE HEADER COMPONENTS
     const onDragEnd = (result:any) => {
       if (!result.destination) return

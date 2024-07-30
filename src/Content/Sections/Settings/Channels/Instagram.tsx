@@ -152,7 +152,7 @@ const Instagram = memo(() => {
         navigate('/settings/channels/instagram')
     }
 
-      return(<>
+    return(<>
        {(location.pathname.split('/')[4] === 'success_auth') && 
         <ConfirmBox setShowBox={returnToInsta} isSectionWithoutHeader={true}>
            <SuccessPage  name={newAccountNameRef.current}  callNewData={callNewWInstagram}/>

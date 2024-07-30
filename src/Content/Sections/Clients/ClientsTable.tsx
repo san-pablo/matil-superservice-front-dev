@@ -43,6 +43,7 @@ function ClientsTable ({addHeaderSection}:{addHeaderSection:HeaderSectionType}) 
     //SELECT DATA LOGIC
     const [clients, setClients] = useState<Clients | null>(null)
     const [filters, setFilters] = useState<ClientsFilters>({page_index:1, channel_types:[]})
+    const [selectedIndex, setSelectedIndex] = useState<number>(-1)
 
     //FETCH DATA ON FIRST RENDER
     useEffect(() => {
@@ -53,22 +54,24 @@ function ClientsTable ({addHeaderSection}:{addHeaderSection:HeaderSectionType}) 
             if (session.sessionData.clientsTable) {
                 setClients(session.sessionData.clientsTable.data)
                 setFilters(session.sessionData.clientsTable.filters)
+                setSelectedIndex(session.sessionData.clientsTable.selectedIndex)
                 setWaitingInfo(false)
             }
             else {
                 const clientResponse = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/clients`, setValue:setClients, setWaiting:setWaitingInfo, params:{page_index:1},auth:auth})
-                if (clientResponse?.status === 200) session.dispatch({type:'UPDATE_CLIENTS_TABLE',payload:{data:clientResponse?.data, filters}})
+                if (clientResponse?.status === 200) session.dispatch({type:'UPDATE_CLIENTS_TABLE',payload:{data:clientResponse?.data, filters, selectedIndex:-1}})
             }
         }    
         fetchClientsData()
     }, [])
- 
+
+
     //FETCH NEW DATA ON FILTERS CHANGE
     const fetchClientDataWithFilter = async (filters:{page_index:number, channel_types:Channels[], sort_by?:ClientColumn, search?:string, order?:'asc' | 'desc'}) => {
         setFilters(filters)
         const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/clients`, setValue:setClients, setWaiting:setWaitingInfo, params:filters, auth})
         if (response?.status === 200) {            
-            session.dispatch({ type: 'UPDATE_CLIENTS_TABLE', payload: {data:response.data, filters:filters} })
+            session.dispatch({ type: 'UPDATE_CLIENTS_TABLE', payload: {data:response.data, filters:filters, selectedIndex} })
          }
     }
 
@@ -81,7 +84,7 @@ function ClientsTable ({addHeaderSection}:{addHeaderSection:HeaderSectionType}) 
 
     //FRONT
     return(
-        <Box bg='white' height={'calc(100vh - 60px)'} maxW={'calc(100vw - 60px)'} overflowX={'scroll'} p='2vw'>
+        <Box bg='white' height={'calc(100vh - 60px)'} maxW={'calc(100vw - 60px)'} overflowX={'scroll'} overflowY={'hidden'}  p='2vw'>
     
             <Flex justifyContent={'space-between'} alignItems={'end'}> 
                 <Text fontWeight={'medium'} fontSize={'1.5em'}>Clientes</Text>
@@ -112,7 +115,7 @@ function ClientsTable ({addHeaderSection}:{addHeaderSection:HeaderSectionType}) 
                 </Flex>
             
                 <Skeleton isLoaded={!waitingInfo}> 
-                    <Table data={clients?.page_data} updateData={fetchClientDataWithFilter} filters={filters}   maxWidth={'calc(96vw - 60px)'}/>
+                    <Table data={clients?.page_data} updateData={fetchClientDataWithFilter} filters={filters} currentIndex={selectedIndex}  maxWidth={'calc(96vw - 60px)'}/>
                 </Skeleton>
             </Box>
     

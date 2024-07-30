@@ -5,6 +5,7 @@
 //REACT
 import { useState, useMemo, useRef, useEffect, Fragment } from "react"
 import { useNavigate } from "react-router-dom"
+import { useSession } from "../../../SessionContext"
 //FRONT
 import { Flex, Box, Text, Icon, Tooltip } from '@chakra-ui/react'
 //ICONS
@@ -15,13 +16,14 @@ import timeStampToDate from "../../Functions/timeStampToString"
 import copyToClipboard from "../../Functions/copyTextToClipboard"
 //TYPING
 import { columnsClientsMap, ContactChannel, languagesFlags, contactDicRegex, logosMap, ClientColumn, ClientData, Channels } from "../../Constants/typing" 
- 
+  
 //TYPING
 interface TableProps{
     data: ClientData[] | undefined
     updateData:any
     maxWidth:string
     filters:{page_index:number, channel_types:Channels[], search?:string, sort_by?:ClientColumn, order?:'asc' | 'desc'}
+    currentIndex?:number
 }
 
 
@@ -60,12 +62,14 @@ else return ( <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'}  fontWeight=
 }
 
 //MAIN FUNCTION
-const Table = ({ data, updateData, maxWidth, filters }:TableProps ) =>{
+const Table = ({ data, updateData, maxWidth, filters, currentIndex = -1 }:TableProps ) =>{
      
     //NAVIGATE FUNCTION
     const navigate = useNavigate()
-    
+    const session = useSession()
+
     //CALCULATE DYNAMIC HEIGHT OF TABLE
+    const tableBoxRef = useRef<HTMLDivElement>(null)
     const headerRef = useRef<HTMLDivElement>(null)
     const [alturaCaja, setAlturaCaja] = useState<number>(0)
     useEffect(() => {
@@ -88,16 +92,66 @@ const Table = ({ data, updateData, maxWidth, filters }:TableProps ) =>{
       }, [data])
     const totalWidth = useMemo(() => {return columns.reduce((acc, value) => acc + columnsClientsMap[value as ClientColumn][1] + 20, 0) + 20 + 150}, [columns])
 
+    const [selectedIndex, setSelectedIndex] = useState<number>(currentIndex)
+    useEffect(() => {setSelectedIndex(currentIndex)},[currentIndex])
+
+    const scrollIntoView = (index: number) => {
+
+        if (tableBoxRef.current) {
+          const item = tableBoxRef.current.querySelector(`[data-index="${index}"]`)
+          if (item) {
+            const itemTop = (item as HTMLElement).offsetTop - tableBoxRef.current.getBoundingClientRect().top
+            const itemBottom = itemTop + (item as HTMLElement).offsetHeight
+            const containerTop = tableBoxRef.current.scrollTop
+            const containerBottom = containerTop + tableBoxRef.current.offsetHeight
+        
+            console.log(itemTop)
+            console.log(itemBottom)
+
+            if (itemTop < containerTop) tableBoxRef.current.scrollTop = itemTop
+            else if (itemBottom > containerBottom) tableBoxRef.current.scrollTop = itemBottom - tableBoxRef.current.offsetHeight
+        }
+      }}
+
+    useEffect(() => {
+        const handleKeyDown = (event:KeyboardEvent) => {
+            if (event.code === 'ArrowUp') {
+                setSelectedIndex(prev => {
+                    const newIndex = Math.max(prev - 1, 0);
+                    scrollIntoView(newIndex)
+                    return newIndex
+                  })
+            }
+            else if (event.code === 'ArrowDown') 
+             setSelectedIndex(prev => {
+                const newIndex = Math.min(prev + 1, (data?.length || 0) - 1);
+                scrollIntoView(newIndex)
+                return newIndex
+              })
+         
+            else if (event.code === 'Enter' && data) clickRow(data[selectedIndex]?.id, selectedIndex)
+        }
+        
+        window.addEventListener('keydown', handleKeyDown)
+
+        return () => {window.removeEventListener('keydown', handleKeyDown)}
+    }, [selectedIndex, data])
+
   
     //SORT LOGIC
     const requestSort = (key: string) => {
-        console.log(filters)
         const direction = (filters.sort_by === key && filters.order === 'asc') ? 'desc' : 'asc';
         updateData({...filters, sort_by: key as ClientColumn, order: direction as 'asc' | 'desc'})
      }
     const getSortIcon = (header: string) => {
         if (filters.sort_by === header) return filters.order === 'asc' ? <IoMdArrowDropup size='20px' /> : <IoMdArrowDropdown size='20px' />
         return null
+    }
+
+
+    const clickRow = (id:number, index:number) => {
+        session.dispatch({type:'UPDATE_CLIENTS_TABLE_SELECTED_ITEM', payload:{index}})
+        navigate(`/clients/client/${id}`)
     }
 
     //FRONT
@@ -121,10 +175,11 @@ const Table = ({ data, updateData, maxWidth, filters }:TableProps ) =>{
                     }
                 </Fragment>))}
             </Flex>
-            <Box minWidth={`${totalWidth}px`} overflowX={'hidden'}  overflowY={'scroll'} maxH={alturaCaja}> 
-                {data.map((row:any, index) => ( 
-                    
-                    <Flex alignItems={'center'}  key={`clients-row-${index}`}  onClick={() => {navigate(`/clients/client/${row.id}`)}} cursor='pointer' borderRadius={index === data.length - 1?'0 0 .5rem .5rem':'0'} borderWidth={'0 1px 1px 1px'} borderColor={'gray.300'} bg={index%2 === 1?'#FCFCFC':'white'} gap='20px' fontSize={'.9em'} color='black' p='10px' _hover={{bg:'blue.50'}} > 
+            <Box minWidth={`${totalWidth}px`} overflowX={'hidden'}  overflowY={'scroll'} ref={tableBoxRef} maxH={alturaCaja}> 
+                {data.map((row:any, index) => (         
+                    <Flex overflow={'hidden'} data-index={index}  alignItems={'center'} position={'relative'}  key={`clients-row-${index}`}  onClick={() => clickRow(row.id, index)} cursor='pointer' borderRadius={index === data.length - 1?'0 0 .5rem .5rem':'0'} borderWidth={'0 1px 1px 1px'} borderColor={'gray.300'} bg={selectedIndex === index ? 'blue.50':index%2 === 1?'#FCFCFC':'white'} gap='20px' fontSize={'.9em'} color='black' p='10px' _hover={{bg:'blue.50'}} > 
+                        {selectedIndex === index && <Box position='absolute' left={0} top={0} height={'100%'} width={'2px'} bg='blue.400'/>}
+
                         {Object.keys(columnsClientsMap).map((column:string, index2:number) => {
                             
                             const cellKey = `clients-cell-${index}-${index2}`;
@@ -142,7 +197,8 @@ const Table = ({ data, updateData, maxWidth, filters }:TableProps ) =>{
                                     </Fragment>
                                 ))}
                             </Flex>)
-                            else if (!row.hasOwnProperty(column)) return null
+                            else if (!row
+                                .hasOwnProperty(column)) return null
 
                             else return (
                             <Fragment key={cellKey}> 
