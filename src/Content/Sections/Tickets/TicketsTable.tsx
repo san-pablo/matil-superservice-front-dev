@@ -132,7 +132,7 @@ function TicketsTable({socket}:{socket:any}) {
     const navigate = useNavigate()
 
     //TABLE MAPPING
-    const columnsTicketsMap:{[key in TicketColumn]:[string, number]} = {id: [t('id'), 50], local_id: [t('local_id'), 50], status:  [t('status'), 100], channel_type: [t('channel_type'), 150], subject:  [t('subject'), 200], user_id: [t('user_id'), 200], created_at: [t('created_at'), 150],updated_at: [t('updated_at'), 150], solved_at: ['solved_at', 150],closed_at: [t('closed_at'), 150],title: [t('title'), 300], urgency_rating: [t('urgency_rating'), 130], deletion_date: [t('deletion_date'), 180], unseen_changes: [t('unseen_changes'), 200]}
+    const columnsTicketsMap:{[key in TicketColumn]:[string, number]} = {id: [t('id'), 50], local_id: [t('local_id'), 50], status:  [t('status'), 100], channel_type: [t('channel_type'), 150], subject:  [t('subject'), 200], user_id: [t('user_id'), 200], created_at: [t('created_at'), 150],updated_at: [t('updated_at'), 150], solved_at: [t('solved_at'), 150],closed_at: [t('closed_at'), 150],title: [t('title'), 300], urgency_rating: [t('urgency_rating'), 130], deletion_date: [t('deletion_date'), 180], unseen_changes: [t('unseen_changes'), 200]}
     
     //WAIT INFO AND FORCE TH REUPDATE OF THE TABLE ON DELETE
     const [waitingInfo, setWaitingInfo] = useState<boolean>(true)
