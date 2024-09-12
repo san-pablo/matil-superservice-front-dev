@@ -27,7 +27,7 @@ import { BsTrash3Fill, BsClipboard2Check } from "react-icons/bs"
 import { RxCross2 } from "react-icons/rx"
 //TYPING
 import { FunctionsData } from "../../Constants/typing"
-import { useLocation } from "react-router-dom"
+import { useLocation, useNavigate } from "react-router-dom"
 
 //TYPING
 type variables = 'bool' | 'int' | 'float' | 'str' | 'timestamp'
@@ -116,6 +116,8 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction }:{selectedUuid:string, o
     //CONSTATNS
     const { t } = useTranslation('settings')
     const auth = useAuth()
+    const location = useLocation().pathname
+    const navigate = useNavigate()
     const variablesMap:{[key in variables]:string} = {'bool':t('bool'), 'int':t('int'), 'float':t('float'), 'str':t('str'), 'timestamp':t('timestamp')}
     const boolDict = {"True":t('true'), "False":t('false')}
     const datesMap = {'{today}':t('today'), '{yesterday}':t('yesterday'), '{start_of_week}':t('start_of_week'),'{start_of_month}':t('start_of_month')}
@@ -146,7 +148,6 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction }:{selectedUuid:string, o
             if (selectedUuid === '-1') setFunctionData(newFunction)
             else {
                 const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/functions/${selectedUuid}`, setValue:setFunctionData, auth})
-                console.log(response?.data)
             }
         }
         fetchInitialData()
@@ -162,9 +163,7 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction }:{selectedUuid:string, o
         setWaitingEdit(true)
         const isNew = selectedUuid === '-1' 
         let response
-        if (isNew) {
-            response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/functions`, setWaiting:setWaitingEdit, method:'post', requestForm:functionData as FunctionType, auth, toastMessages:{'works':t('CorrectAddedFunction'), 'failed':t('FailedAddedFunction')}})
-         }
+        if (isNew) response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/functions`, setWaiting:setWaitingEdit, method:'post', requestForm:functionData as FunctionType, auth, toastMessages:{'works':t('CorrectAddedFunction'), 'failed':t('FailedAddedFunction')}})  
         else response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/functions/${selectedUuid}`, setWaiting:setWaitingEdit, method:'put', requestForm:functionData as FunctionType, auth, toastMessages:{'works':t('CorrectEditedFunction'), 'failed':t('FailedEditedFunction')}})
 
         if (response?.status == 200) onSaveFunction('save')          
@@ -232,7 +231,7 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction }:{selectedUuid:string, o
                 <Box minW={'500px'}  p='10px' left={'1vw'}  top='1vw' zIndex={100} position={'absolute'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} maxH={'calc(100vh - 10vw)'} overflow={'scroll'} bg='white' borderRadius={'.5rem'}  > 
                     <Flex flex={1} gap='20px' alignItems={'center'}> 
                         <Tooltip label={'Atrás'}  placement='bottom' hasArrow bg='black'  color='white'  borderRadius='.4rem' fontSize='.75em' p='4px'> 
-                            <IconButton aria-label='go-back' size='sm' bg='transparent' border='none' onClick={() => onSaveFunction('go-back')} icon={<IoIosArrowBack size='20px'/>}/>
+                            <IconButton aria-label='go-back' size='sm' bg='transparent' border='none' onClick={() => {if (location.split('/')[3]) {navigate(`/flows-functions/flows/flow/${location.split('/')[4]}`)};onSaveFunction('go-back')}} icon={<IoIosArrowBack size='20px'/>}/>
                         </Tooltip>
                         <Box flex={1}> 
                             <EditText nameInput={true} size='md' value={functionData?.name} setValue={(value) =>editFunctionData('name', value)}/>

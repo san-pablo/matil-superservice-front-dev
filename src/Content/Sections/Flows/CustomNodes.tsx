@@ -85,6 +85,7 @@ interface FunctionNodeData {
   next_node_index:number | undefined 
   functions: {
     functionsDict:{[key:string]:string}
+    flowId:string
     editSimpleFlowData:(nodeId:string | undefined, keyToUpdate:string, newData:any ) => void
     setShowNodesAction:Dispatch<SetStateAction<null | {nodeId:string, actionType:actionTypesDefinition, actionData:any}>>
     addNewNode:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}, targetType:nodeTypesDefinition | '', nodeId?:string) => void
@@ -607,7 +608,7 @@ export const FunctionNode = ({id, data}:{id:string, data:FunctionNodeData}) => {
               </Flex>
               <Text mt='20px' fontSize='.7em' color='gray.600' fontWeight={'medium'} >{t('FunctionToRun')}:</Text>
               <Text fontSize={data.uuid === ''?'.8em':'.9em'} fontWeight={data.uuid === ''?'normal':'medium'}>{data.uuid === ''?t('NoFunction'):data.functions.functionsDict[data.uuid]}</Text>
-              <Button leftIcon={<FaRegEdit/>} width={'100%'} size='xs' mt='10px' onClick={() => {if (data.uuid !== '') {navigate(`/flows-functions/functions/${data.uuid}`)}}}>{data.uuid === ''?t('SelectFunction'):t('EditFunction')}</Button>
+              <Button leftIcon={<FaRegEdit/>} width={'100%'} size='xs' mt='10px' onClick={() => {if (data.uuid !== '') {navigate(`/flows-functions/functions/${data.uuid}/${data.functions.flowId}`)}}}>{data.uuid === ''?t('SelectFunction'):t('EditFunction')}</Button>
               
               {data.uuid !== '' && <>
                 <Text  mt='10px' color='gray.600' fontSize={'.7em'} fontWeight={'medium'}>{t('VariableArgs')}</Text>

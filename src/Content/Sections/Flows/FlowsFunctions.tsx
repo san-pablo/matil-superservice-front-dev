@@ -29,17 +29,21 @@ function FlowsFunctions () {
         document.title = `${t(selectedSection)} - ${auth.authData.organizationName} - Matil`
         localStorage.setItem('currentSection', 'flows-functions')
         localStorage.setItem('currentSectionFunctionsFlows', selectedSection)
-        navigate(selectedSection)
+
+        let section = '/flows-functions/flows'
+        if (selectedSection === 'functions') section = '/flows-functions/functions'
+        navigate(section)
     }, [selectedSection])
 
     //FRONT
     return(
         <Box> 
-            {!location.startsWith('/flows-functions/flows/flow/') && <Flex gap='20px' height={'60px'} px='2vw' borderBottomWidth={'1px'} borderBottomColor={'gray.300'} bg='gray.50'>
+            {!location.startsWith('/flows-functions/flows/flow/') && 
+            <Flex gap='20px' height={'60px'} px='2vw' borderBottomWidth={'1px'} borderBottomColor={'gray.300'} bg='gray.50'>
                 {sectionsList.map((section, index)=>{
-                    const isSelected = selectedSection === section[0]
+                    const isSelected = location.split('/')[2] === section[0]
                     return(
-                    <Flex alignItems={'center'} color={'black'} key={`secciones-${index}`}   onClick={() => {setSelectedSection(section[0])}} >
+                    <Flex alignItems={'center'} color={'black'} key={`secciones-${index}`}   onClick={() => {console.log(section[0]);setSelectedSection(section[0])}} >
                         <Button size='sm' border='none' bg={isSelected?'blue.100':'transparent'}  color={isSelected?'black':'gray.600'}  _hover={{bg:isSelected?'blue.100':'transparent', color:'black'}} leftIcon={section[1]}> {t(section[0])}</Button>
                     </Flex>)
                     })}

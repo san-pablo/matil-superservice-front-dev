@@ -114,7 +114,6 @@ const Flow = () => {
     const currentMessagesRef = useRef<{type:string, content:any, sent_by:'business' | 'client'}[]>([])
     const isActiveRef = useRef<boolean>(true)
 
-    console.log(currentChannelIdRef.current)
     //UPDATE VARIABLES FROM NODES
     useEffect(() => {
         setNodes((nds) => {
@@ -156,7 +155,7 @@ const Flow = () => {
                 case 'transfer': return {groupsList:groupsListRef.current, setShowNodesAction, editMessage, editSimpleFlowData, deleteNode}
                 case 'reset': return {flowVariables:flowVariablesRef.current, setShowNodesAction, editSimpleFlowData, editMessage, deleteNode, addNewNode, getAvailableNodes}
                 case 'flow_swap': return {flowsIds:flowsListRef.current, setShowNodesAction, editMessage, addNewNode, deleteNode, editSimpleFlowData} 
-                case 'function': return {functionsDict:functionsNameMap.current, setShowNodesAction, editSimpleFlowData, addNewNode, deleteNode, getAvailableNodes}
+                case 'function': return {flowId:location.split('/')[location.split('/').length - 1], functionsDict:functionsNameMap.current,  setShowNodesAction, editSimpleFlowData, addNewNode, deleteNode, getAvailableNodes}
                 case 'motherstructure_updates': return {setShowNodesAction, editFieldAction, addNewNode, deleteNode, getAvailableNodes}
                 default:{}
             }
@@ -303,7 +302,7 @@ const Flow = () => {
             else if (type === 'transfer') newNodeObjectData = {user_id:0, group_id:0, messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:{groupsList:groupsListRef.current, setShowNodesAction, editMessage, editSimpleFlowData, deleteNode}}
             else if (type === 'reset') newNodeObjectData = {variable_indices:[],next_node_index:null, messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:{flowVariables:flowVariablesRef.current, setShowNodesAction, editMessage, addNewNode, deleteNode, editSimpleFlowData, getAvailableNodes}}
             else if (type === 'flow_swap') newNodeObjectData = {new_flow_uuid:'-1', messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:{flowsIds: flowsListRef.current, setShowNodesAction, editMessage, addNewNode, deleteNode, editSimpleFlowData}}
-            else if (type === 'function') newNodeObjectData = {uuid:'', variable_args:{}, motherstructure_args:{}, hardcoded_args:{}, error_nodes_ids:{}, next_node_index:null, output_to_variables:{}, functions:{functionsDict:functionsNameMap.current, setShowNodesAction, editSimpleFlowData, addNewNode, deleteNode, getAvailableNodes}}
+            else if (type === 'function') newNodeObjectData = {uuid:'', variable_args:{}, motherstructure_args:{}, hardcoded_args:{}, error_nodes_ids:{}, next_node_index:null, output_to_variables:{}, functions:{flowId:location.split('/')[location.split('/').length - 1], functionsDict:functionsNameMap.current, setShowNodesAction, editSimpleFlowData, addNewNode, deleteNode, getAvailableNodes}}
             else if (type === 'motherstructure_updates') newNodeObjectData = {updates:[], next_node_index:null, functions:{setShowNodesAction, editFieldAction, addNewNode, deleteNode, getAvailableNodes}}
             return {id, position, data: newNodeObjectData, type:targetType}
         }
@@ -1002,7 +1001,7 @@ const Flow = () => {
     const memoizedNodesEditor = useMemo(() => (
         <AnimatePresence> 
         {showNodesAction && <>
-            <MotionBox initial={{right:-400}} animate={{right:0}}  exit={{right:-400}} transition={{ duration: '.15' }} position='fixed' top={0} width='700px' height='100vh'  backgroundColor='white' zIndex={201} display='flex' justifyContent='space-between' flexDirection='column'> 
+            <MotionBox initial={{right:-1000}} animate={{right:0}}  exit={{right:-1000}} transition={{ duration: '.2' }} position='fixed' top={0} width='700px' height='100vh'  backgroundColor='white' zIndex={201} display='flex' justifyContent='space-between' flexDirection='column'> 
                 <NodesEditBox/>
             </MotionBox>
          </>}
@@ -1227,7 +1226,7 @@ const Flow = () => {
             <Box left={'1vw'} ref={nameInputRef} top='1vw' zIndex={100} position={'absolute'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.1)'} maxH={'calc(100vh - 2vw)'} overflow={'scroll'} bg='white' borderRadius={'.5rem'} borderWidth={'1px'} borderColor={'gray.300'} > 
                 <Flex gap='10px' alignItems={'center'} p='10px'> 
                     <Tooltip label={t('GoBack')}  placement='bottom' hasArrow bg='black'  color='white'  borderRadius='.4rem' fontSize='.75em' p='4px'> 
-                        <IconButton aria-label='go-back' size='sm' bg='transparent' border='none' onClick={() => navigate(-1)} icon={<IoIosArrowBack size='20px'/>}/>
+                        <IconButton aria-label='go-back' size='sm' bg='transparent' border='none' onClick={() => navigate('/flows-functions/flows')} icon={<IoIosArrowBack size='20px'/>}/>
                     </Tooltip>
                     <Box width={'300px'} > 
                         <EditText nameInput={true} hideInput={true} size='md' maxLength={70}  value={flowName} setValue={setFlowName}/>
