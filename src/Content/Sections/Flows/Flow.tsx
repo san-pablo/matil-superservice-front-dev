@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next'
 //FETCH DATA
 import fetchData from '../../API/fetchData'
 //FRONT
-import { Flex, Box, Button, IconButton, NumberInput, NumberInputField, Text, Textarea, Portal, Icon, Skeleton } from '@chakra-ui/react'
+import { Flex, Box, Button, IconButton, NumberInput, NumberInputField, Text, Textarea, Portal, Icon, Skeleton, Tooltip } from '@chakra-ui/react'
 import { motion, AnimatePresence } from 'framer-motion'
 //FLOWS
 import ReactFlow, { Controls, Background, useNodesState, useEdgesState, ControlButton, SelectionMode, useReactFlow } from 'reactflow'
@@ -36,7 +36,7 @@ import determineBoxStyle from '../../Functions/determineBoxStyle.js'
 //ICONS
 import { RxCross2 } from 'react-icons/rx'
 import { FaPlus } from 'react-icons/fa'
-import { IoIosArrowDown, IoIosWarning } from 'react-icons/io'
+import { IoIosArrowDown, IoIosWarning, IoIosArrowBack } from 'react-icons/io'
 import { BsTrash3Fill } from 'react-icons/bs'
 //TYPING
 import { languagesFlags, actionTypesDefinition, nodeTypesDefinition, DataTypes, Branch, FlowMessage, FieldAction, FunctionType } from '../../Constants/typing.js'
@@ -112,7 +112,9 @@ const Flow = () => {
     const channelsListRef = useRef<{id:string, display_id:string, name:string, channel_type:string, is_active:boolean}[]>([])
     const currentChannelIdRef = useRef<string | null>(null)
     const currentMessagesRef = useRef<{type:string, content:any, sent_by:'business' | 'client'}[]>([])
+    const isActiveRef = useRef<boolean>(true)
 
+    console.log(currentChannelIdRef.current)
     //UPDATE VARIABLES FROM NODES
     useEffect(() => {
         setNodes((nds) => {
@@ -594,12 +596,12 @@ const Flow = () => {
             else {
                  const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/flows/${flowId}`, setWaiting, auth})
                 if (response?.status === 200){
-                    console.log(response.data.nodes)
                     flowVariablesRef.current = response.data.variables
                     setFlowName(response.data.name)
                     setFlowDescription(response.data.description)
                     setFlowVariables(response.data.variables)
                     setFlowInterpreterConfig(response.data.interpreter_configuration)
+                    isActiveRef.current === response.data.is_active
                     setNodes([{id:'0', position:{x:0, y:0}, data:{channels:response.data.channel_ids, functions:{channelIds:channelsIds, editSimpleFlowData}}, type:'trigger'}, ...parseNodesFromBack(response.data.nodes)])
                 }
             }
@@ -1020,7 +1022,7 @@ const Flow = () => {
     const memoizedTestBox = useMemo(() => (<> 
         {showTest && 
             <ConfirmBox max maxW={'80vw'} setShowBox={setShowTest} isSectionWithoutHeader={true}> 
-                <TestChat flowId={location.split('/')[location.split('/').length - 1]} channelIds={nodes[0].data.channels} flowName={flowName}  channelsList={channelsListRef.current} currentChannelId={currentChannelIdRef} currentMessages={currentMessagesRef}/>
+                <TestChat flowId={location.split('/')[location.split('/').length - 1]} channelIds={nodes[0].data.channels} flowName={flowName}  channelsList={channelsListRef.current} currentChannelId={currentChannelIdRef} currentMessages={currentMessagesRef} setShowTest={setShowTest}/>
             </ConfirmBox>
          }
      </>), [showTest, nodes, flowName])
@@ -1153,7 +1155,7 @@ const Flow = () => {
             setWaitingSave(true)
             const flowId = location.split('/')[location.split('/').length - 1]
             const parsedNodes = parseDataToBack(nodes)
-            const newFlow = {name:flowName, description:flowDescription, variables:flowVariables, interpreter_configuration:flowInterpreterConfig, nodes:parsedNodes.nodes, channel_ids:parsedNodes.channels }
+            const newFlow = {is_active:isActiveRef.current, name:flowName, description:flowDescription, variables:flowVariables, interpreter_configuration:flowInterpreterConfig, nodes:parsedNodes.nodes, channel_ids:parsedNodes.channels }
             if (location.endsWith('create')) {
                 const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/flows`, auth, method:'post', setWaiting:setWaitingSave, requestForm:newFlow, toastMessages:{works:t('CorrectCreateFlow'), failed:t('FailedCreateFlow')}})
                 navigate(-1)
@@ -1224,6 +1226,9 @@ const Flow = () => {
             <> 
             <Box left={'1vw'} ref={nameInputRef} top='1vw' zIndex={100} position={'absolute'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.1)'} maxH={'calc(100vh - 2vw)'} overflow={'scroll'} bg='white' borderRadius={'.5rem'} borderWidth={'1px'} borderColor={'gray.300'} > 
                 <Flex gap='10px' alignItems={'center'} p='10px'> 
+                    <Tooltip label={t('GoBack')}  placement='bottom' hasArrow bg='black'  color='white'  borderRadius='.4rem' fontSize='.75em' p='4px'> 
+                        <IconButton aria-label='go-back' size='sm' bg='transparent' border='none' onClick={() => navigate(-1)} icon={<IoIosArrowBack size='20px'/>}/>
+                    </Tooltip>
                     <Box width={'300px'} > 
                         <EditText nameInput={true} hideInput={true} size='md' maxLength={70}  value={flowName} setValue={setFlowName}/>
                     </Box>

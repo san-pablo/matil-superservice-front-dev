@@ -1,11 +1,12 @@
 
 //FRONT
-import { Flex, Box, Icon, Text } from '@chakra-ui/react'
-import { useEffect, useState, useRef, MutableRefObject } from 'react'
+import { Flex, Box, Icon, Text, Tooltip, IconButton } from '@chakra-ui/react'
+import { useEffect, useState, useRef, MutableRefObject, Dispatch, SetStateAction } from 'react'
 import fetchData from '../../API/fetchData'
 import { useAuth } from '../../../AuthContext'
 import { useTranslation } from 'react-i18next'
 import { logosMap, Channels } from '../../Constants/typing'
+import { IoIosArrowBack } from 'react-icons/io'
 
 interface TestFlowData {
   flowId:string
@@ -14,24 +15,25 @@ interface TestFlowData {
   channelsList:{id:string, display_id:string, name:string, channel_type:string, is_active:boolean}[]
   currentChannelId:MutableRefObject<string | null>
   currentMessages:MutableRefObject<{type:string, content:any, sent_by:'business' | 'client'}[]>
+  setShowTest:Dispatch<SetStateAction<boolean>>
 }
 
 
-const TestChat = ({flowId, channelIds, flowName, channelsList, currentChannelId, currentMessages }:TestFlowData) => {
+const TestChat = ({flowId, channelIds, flowName, channelsList, currentChannelId, currentMessages, setShowTest }:TestFlowData) => {
 
   //CONSTANTS
   const auth = useAuth()
   const { t } = useTranslation('flows')
   //MESSAGES
   const [waitingMessage, setWaitingMessage] = useState<boolean>(false)
-  const [messages, setMessages] = useState<{type:string, content:any, sent_by:'business' | 'client'}[]>([])
+  const [messages, setMessages] = useState<{type:string, content:any, sent_by:'business' | 'client'}[]>(currentMessages.current ? currentMessages.current:[])
   useEffect(() => {currentMessages.current = messages},[messages])
 
   const [flowState, setFlowState] = useState<any>({})
   const [motherStructureUpdates, setMotherStructureUpdates] = useState<any>({})
 
   //SELECTED CHANNEL
-  const [selectedChannelId, setSelectedChannelId] = useState<string | null>(channelIds.length === 1 ?channelIds[0] :null)
+  const [selectedChannelId, setSelectedChannelId] = useState<string | null>(currentChannelId.current ? currentChannelId.current:channelIds.length === 1 ?channelIds[0] :null)
   useEffect(() => {currentChannelId.current = selectedChannelId},[selectedChannelId])
 
   //EDIT TEXT
@@ -93,7 +95,10 @@ const TestChat = ({flowId, channelIds, flowName, channelsList, currentChannelId,
 
    <Flex height='90vh'  width='100%'  flexDir='column' >  
         {selectedChannelId ?<> 
-          <Flex borderBottomWidth={'1px'} width={'100%'} borderBottomColor={'gray.300'} fontSize={'.9em'} alignItems={'center'} p='20px'height={'80px'} bg='gray.100' justifyContent={'space-between'} >
+          <Flex borderBottomWidth={'1px'} width={'100%'} borderBottomColor={'gray.300'} fontSize={'.9em'} alignItems={'center'} p='10px'height={'80px'} bg='gray.100' gap='10px'>
+            <Tooltip label={t('GoBack')}  placement='bottom' hasArrow bg='black'  color='white'  borderRadius='.4rem' fontSize='.75em' p='4px'> 
+                <IconButton aria-label='go-back' size='sm' bg='transparent' border='none' onClick={() => setShowTest(false)} icon={<IoIosArrowBack size='20px'/>}/>
+            </Tooltip>
             <Box> 
               <Text><span style={{fontWeight:500}}>{t('Flow')}:</span> {flowName}</Text>
               <Text><span style={{fontWeight:500}}> {t('Channel')}:</span> {selectedChannelId}</Text>
