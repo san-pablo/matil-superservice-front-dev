@@ -700,7 +700,7 @@ const Flow = () => {
                 },[confirmationMessage])
 
                 useEffect(()=> {
-                    setMessageData(prev => ({...prev, confirmation_message:instructionMessage}))
+                    setMessageData(prev => ({...prev, message:instructionMessage}))
                 },[instructionMessage])
 
                 useEffect(()=> {
