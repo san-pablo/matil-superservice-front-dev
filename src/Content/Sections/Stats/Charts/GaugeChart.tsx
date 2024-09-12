@@ -60,22 +60,7 @@ const GaugeChartComponent = ({ currentValue, maxValue}: GaugeChartProps) => {
               top: 0,
               bottom: 20,
             }}
-            slotProps={{
-              legend: {
-                labelStyle: {
-                  fontSize: 12,
-                  fontWeight:500,
-                  fill: '#4A5568',
-                },
-                direction: 'column',
-                position: { vertical: 'top', horizontal: 'right' },
-                padding: 0,
-                itemMarkWidth: 10,
-                itemMarkHeight: 10,
-                markGap: 4,
-                itemGap: 10,
-               },
-            }}
+            
             text={
                 ({ value, valueMax }) => `${value}/${valueMax}`
              }

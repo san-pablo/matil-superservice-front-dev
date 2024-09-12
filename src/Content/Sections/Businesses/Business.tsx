@@ -13,7 +13,7 @@ import { Flex, Box, Text, Icon, Textarea, Avatar, Skeleton, IconButton} from '@c
 //FETCH DATA
 import fetchData from "../../API/fetchData"
 //COMPONENTS
-import Table from "../Clients/Table"
+import Table from "../../Components/Reusable/Table"
 import EditText from "../../Components/Reusable/EditText"
 //FUNCTIONS
 import timeAgo from "../../Functions/timeAgo"
@@ -294,7 +294,7 @@ function Business ({comesFromTicket, socket, addHeaderSection, businessData, set
                     <IconButton isRound size='xs' aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={clientsFilters.page_index === 1} onClick={() => updateTable({...clientsFilters,page_index:clientsFilters.page_index - 1})}/>
                 </Flex>
             <Skeleton isLoaded={businessClientsEdit !== null}> 
-                <Table data={businessClientsEdit?.page_data} updateData={updateTable} filters={clientsFilters} maxWidth="calc(96vw - 380px)"/>
+                {/*<Table data={businessClientsEdit?.page_data} updateData={updateTable} filters={clientsFilters} maxWidth="calc(96vw - 380px)"/>*/}
             </Skeleton>
         </Box>
         </Flex>

@@ -303,8 +303,9 @@ function Chatbot () {
 export default Chatbot
 
 const ChatbotComponent = ({customInfo}:{customInfo:ChatBotData}) => {
+    const t_formats = useTranslation('formats').t
+    const messages = [{sender_type:-1, timestamp: new Date().toISOString() , text:customInfo?.welcome_message } ]
 
-    const messages = [{sender_type:-1, timestamp: new Date().toISOString() , text:customInfo?.welcome_message }, ]
   // TEXTAREA COMPONENT
   const TextAreaContainer = () => {
     return (          
@@ -365,7 +366,7 @@ const ChatbotComponent = ({customInfo}:{customInfo:ChatBotData}) => {
           const mostrarBarraNuevoDia = diaMensajeAnterior !== null && diaMensajeActual !== diaMensajeAnterior;
 
           return(<div key={`message-${index}`}>
-            {mostrarBarraNuevoDia && <div style={{marginTop:index>0?'15px':'0px',fontSize:'.7em', color:'#718096', textAlign: 'center' }}>{timeStampToDate(message.timestamp)}</div>}
+            {mostrarBarraNuevoDia && <div style={{marginTop:index>0?'15px':'0px',fontSize:'.7em', color:'#718096', textAlign: 'center' }}>{timeStampToDate(message.timestamp, t_formats)}</div>}
             <div style={{ marginTop: index === 0 ? '0px' : (message.sender_type === messages[index - 1].sender_type? '3px':'15px')}}> 
             
             {(!isLastMessageBot && message.sender_type !== 0) && <span style={{fontSize:'.75em',color:'#718096', marginLeft:'35px'}}>{customInfo?.company_name}</span>}
