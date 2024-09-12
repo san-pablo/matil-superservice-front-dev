@@ -9,8 +9,8 @@ import { useLocation, useNavigate } from "react-router-dom"
 import DOMPurify from 'dompurify'
 import { useTranslation } from 'react-i18next'
 //FRONT
-import { Flex, Box, Text, Icon, Textarea, Avatar, Button, Skeleton, IconButton, Tooltip } from '@chakra-ui/react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { Flex, Box, Text, Icon, Textarea, Avatar, Button, Skeleton, IconButton, Tooltip, chakra } from '@chakra-ui/react'
+import { motion, AnimatePresence, isValidMotionProp } from 'framer-motion'
 //FETCH DATA
 import fetchData from "../../API/fetchData"
 //COMPONENTS
@@ -19,7 +19,7 @@ import CustomSelect from "../../Components/Reusable/CustomSelect"
 import Table from "../../Components/Reusable/Table"
 import EditText from "../../Components/Reusable/EditText"
 import ConfirmmBox from "../../Components/Reusable/ConfirmBox"
-import CreateBusiness from "../Businesses/CreateBusiness"
+import CreateBusiness from "../Businesses/CreateBusiness" 
 import StateMap from "../../Components/Reusable/StateMap"
 //FUNCTIONS
 import useOutsideClick from "../../Functions/clickOutside"
@@ -59,7 +59,7 @@ type Status = 'new' | 'open' | 'solved' | 'pending' | 'closed'
 const validStatuses: Status[] = ['new', 'open', 'solved', 'pending', 'closed']
 
 //MOTION BOX
-const MotionBox = motion(Box)
+const MotionBox = chakra(motion.div, {shouldForwardProp: isValidMotionProp})
  
 //ALERT LEVEL COMPONENT
 const AlertLevel = ({t,  rating }:{t:any, rating:number}) => {
@@ -435,7 +435,7 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
             
             <AnimatePresence> 
                 {showSearch && 
-                <MotionBox initial={{ opacity: 5, marginTop: -5 }} animate={{ opacity: 1, marginTop: 5 }}  exit={{ opacity: 0,marginTop:-5}} transition={{ duration: 0.2,  ease: [0.0, 0.9, 0.9, 1.0],   opacity: {duration: 0.2,  ease: [0.0, 0.9, 0.9, 1.0]}}}
+                <MotionBox initial={{ opacity: 5, marginTop: -5 }} animate={{ opacity: 1, marginTop: 5 }}  exit={{ opacity: 0,marginTop:-5}} transition={{ duration: '0.2',  ease: '[0.0, 0.9, 0.9, 1.0]'}}
                  maxH='30vh' overflow={'scroll'} width='140%' gap='10px' ref={boxRef} fontSize={'.9em'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000} position={'absolute'} right={0} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
                     <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Buscar..." style={{border:'none', outline:'none', background:'transparent', padding:'10px'}}/>
                     <Box height={'1px'} width={'100%'} bg='gray.200'/>
@@ -560,7 +560,7 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
                             <Text fontSize={'.85em'} onClick={() => setShowAddNewChannel(!showAddNewChannel)}>{t('AddContact')}</Text>
                         </Flex>
                         {showAddNewChannel && 
-                            <MotionBox initial={{ opacity: 0, height:0}} animate={{ opacity: 1, height:'auto' }}  transition={{ duration: 0.15,  ease: [0.0, 0.9, 0.9, 1.0]}}
+                            <MotionBox initial={{ opacity: 0, height:0}} animate={{ opacity: 1, height:'auto' }}  transition={{ duration: '0.15',  ease: '[0.0, 0.9, 0.9, 1.0]'}}
                              maxH={'40vh'} overflowY={'scroll'} mt='5px' position='absolute' ref={addNewChannelBoxRef} bg='white'  zIndex={1000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.300' borderWidth='1px' borderRadius='.5rem'>         
                                 {Object.keys(contactDicRegex).map((con, index) => (
                                 <Fragment key={`select-channel-${index}`}> 

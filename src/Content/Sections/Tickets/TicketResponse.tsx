@@ -12,14 +12,14 @@ import { useTranslation } from 'react-i18next'
 //FETCH DATA
 import fetchData from "../../API/fetchData"
 //FRONT
-import { Flex, Box, Text, Avatar, Icon, Skeleton, Button, IconButton, Tooltip, Textarea, Link, Image, NumberInput, NumberInputField } from '@chakra-ui/react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { Flex, Box, Text, Avatar, Icon, Skeleton, Button, IconButton, Tooltip, Textarea, Link, Image, NumberInput, NumberInputField, chakra } from '@chakra-ui/react'
+import { motion, AnimatePresence, isValidMotionProp } from 'framer-motion'
 import '../../Components/styles.css'
 //COMPONENTS
 import LoadingIconButton from "../../Components/Reusable/LoadingIconButton"
 import TextEditor from "./TextEditor"
 import CustomSelect from "../../Components/Reusable/CustomSelect"
-import ConfirmmBox from "../../Components/Reusable/ConfirmBox"
+import ConfirmmBox from "../../Components/Reusable/ConfirmBox" 
 import Countdown from "../../Components/Once/CountDown"
 //FUNCTIONS
 import timeAgo from "../../Functions/timeAgo"
@@ -60,8 +60,7 @@ interface MergeBoxProps {
 }
 
 //MOTION BOX
-const MotionBox = motion(Box)
-
+const MotionBox = chakra(motion.div, {shouldForwardProp: isValidMotionProp})
  
 //MAIN FUNCTION
 function TicketResponse ( {ticketData, setTicketData, clientTickets, setClientTickets, messagesList, setMessagesList, clientData, setClientData, clientId, deleteHeaderSection, socket }:RespuestaProps) {
@@ -318,7 +317,7 @@ function TicketResponse ( {ticketData, setTicketData, clientTickets, setClientTi
 
             </Box>
 
-            <MotionBox bg='white' overflowX={'auto'} width={sendBoxWidth}  initial={{ width: sendBoxWidth  }} animate={{ width: sendBoxWidth}} exit={{ width: sendBoxWidth }} transition={{ duration: .2 }} 
+            <MotionBox bg='white' overflowX={'auto'} width={sendBoxWidth}  initial={{ width: sendBoxWidth  }} animate={{ width: sendBoxWidth}} exit={{ width: sendBoxWidth }} transition={{ duration: '.2' }} 
                 overflowY={'hidden'}  borderRightWidth={'1px'} borderRightColor='gray.200' >
                 <Flex height={'calc(100vh - 120px)'} flexDir={'column'}> 
                  
@@ -380,13 +379,13 @@ function TicketResponse ( {ticketData, setTicketData, clientTickets, setClientTi
                 </Flex>
             </MotionBox>
             
-            <MotionBox width={clientBoxWidth + 'px'}  overflowY={'scroll'} initial={{ width: clientBoxWidth + 'px' }} animate={{ width: clientBoxWidth + 'px' }} exit={{ width: clientBoxWidth + 'px' }} transition={{ duration: .2 }} 
+            <MotionBox width={clientBoxWidth + 'px'}  overflowY={'scroll'} initial={{ width: clientBoxWidth + 'px' }} animate={{ width: clientBoxWidth + 'px' }} exit={{ width: clientBoxWidth + 'px' }} transition={{ duration: '.2'}} 
                 bg='gray.50' py='2vw' px={clientBoxWidth === 360 ?'2vw':'8px'} ref={scrollRef2} overflowX={'hidden'}>
 
                 <AnimatePresence>
                     {clientBoxWidth === 360 ?<> 
                   
-                    <MotionBox whiteSpace={'nowrap'} overflow={'hidden'} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}  transition={{ duration: .3 }} > 
+                    <MotionBox whiteSpace={'nowrap'} overflow={'hidden'} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}  transition={{ duration: '.3' }} > 
                              
                             <Flex justifyContent={'space-between'} mb='2vh' alignItems={'center'}> 
                                 <Flex flex='1'   minW={0}     gap='15px' alignItems={'center'}>
@@ -470,7 +469,7 @@ function TicketResponse ( {ticketData, setTicketData, clientTickets, setClientTi
                         </Skeleton>
                     </MotionBox>
                     </>:
-                    <MotionBox initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}  transition={{ duration: .3 }} > 
+                    <MotionBox initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}  transition={{ duration: '.3'}} > 
                        <Tooltip label={t('ExpandClient')}  hasArrow={true} placement='left' bg='black'  borderRadius='.4rem' fontSize='.75em' p='5px'>
                             <Flex justifyContent='center' alignItems='center' width={'36px'} height={'36px'}  cursor='pointer' borderRadius='.4rem' color='gray.700' _hover={{bg:'blue.50', color:'blue.300'  }} onClick={() => setClientBoxWidth(360)}>
                                 <Icon as={BsPersonFill} boxSize='18px'/>

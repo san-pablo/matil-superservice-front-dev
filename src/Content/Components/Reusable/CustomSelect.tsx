@@ -5,8 +5,8 @@
 //REACT
 import { useState, useRef, RefObject, CSSProperties } from 'react'
 //FRONT
-import { Flex, Text, Box, Icon, Portal } from '@chakra-ui/react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { Flex, Text, Box, Icon, Portal,  chakra } from '@chakra-ui/react'
+import { motion, AnimatePresence, isValidMotionProp  } from 'framer-motion'
 import '../styles.css'
 //FUNCTIONS
 import determineBoxStyle from '../../Functions/determineBoxStyle'
@@ -17,7 +17,7 @@ import { FaCheck } from 'react-icons/fa'
 import { IconType } from 'react-icons'
 
 //TYPING
-interface CustomSelectProps<T extends string | number>  {
+interface CustomSelectProps<T extends string | number>  { 
     options: T[]
     selectedItem: T | undefined
     setSelectedItem: (key: T) => void
@@ -31,7 +31,7 @@ interface CustomSelectProps<T extends string | number>  {
 }
 
 //MOTION BOX
-const MotionBox = motion(Box)
+const MotionBox = chakra(motion.div, {shouldForwardProp: isValidMotionProp,})
 
 //MAIN FUNCTION
 const CustomSelect = <T extends string | number>({options, selectedItem, setSelectedItem, hide, updateData=() => {},  labelsMap=null ,iconsMap=null, containerRef, isDisabled = false, disabledOptions}: CustomSelectProps<T>) => {
@@ -60,7 +60,7 @@ const CustomSelect = <T extends string | number>({options, selectedItem, setSele
             <AnimatePresence> 
                 {showList && 
                     <Portal>
-                        <MotionBox initial={{ opacity: 0, marginTop: boxPosition === 'bottom'?-10:10 }} animate={{ opacity: 1, marginTop: 0 }}  exit={{ opacity: 0,marginTop: boxPosition === 'bottom'?-10:10}} transition={{ duration: 0.2,  ease: [0.0, 0.9, 0.9, 1.0],   opacity: {duration: 0.2,  ease: [0.0, 0.9, 0.9, 1.0]}}}
+                        <MotionBox as="div" initial={{ opacity: 0, marginTop: boxPosition === 'bottom'?-10:10 }} animate={{ opacity: 1, marginTop: 0 }}  exit={{ opacity: 0,marginTop: boxPosition === 'bottom'?-10:10}} transition={{ duration: '.2',  ease: '[0.0, 0.9, 0.9, 1.0]'}}
                         top={boxStyle.top} bottom={boxStyle.bottom}right={boxStyle.right} width={boxStyle.width} maxH='40vh' overflow={'scroll'} gap='10px' ref={boxRef} fontSize={'.9em'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000}   position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
                             {options.map((option:T, index:number) => (
                                 <Flex key={`${selectedItem}-option-${index}`} px='10px' bg={disabledOptions?.includes(option)?'gray.200':'transparent'}   py='7px' cursor={disabledOptions?.includes(option)?'not-allowed':'pointer'} justifyContent={'space-between'} alignItems={'center'} color={selectedItem === option?'blue.500':'black'} _hover={{bg:disabledOptions?.includes(option)?'gray.200':'brand.hover_gray'}}

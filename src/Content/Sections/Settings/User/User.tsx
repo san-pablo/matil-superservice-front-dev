@@ -2,11 +2,9 @@
 import { useEffect, useRef, useState } from "react"
 import { useAuth } from "../../../../AuthContext"
 import { useTranslation } from "react-i18next"
-//FETCH DATA
-import fetchData from "../../../API/fetchData"
 //FRONT
-import { Text, Box, Flex, Button, Icon,Avatar } from "@chakra-ui/react"
-import {motion} from 'framer-motion'
+import { Text, Box, Flex, Button, Icon, Avatar, chakra } from "@chakra-ui/react"
+import { motion, isValidMotionProp} from 'framer-motion'
 //COMPONENTS
 import EditText from "../../../Components/Reusable/EditText"
 import CustomSelect from "../../../Components/Reusable/CustomSelect"
@@ -32,7 +30,7 @@ interface UserData {
     }
 
 //MOTION BOX
-const MotionBox = motion(Box)
+const MotionBox = chakra(motion.div, {shouldForwardProp: isValidMotionProp})
 
 const availableLanguages = ['Español', 'English']
 
@@ -143,7 +141,7 @@ const User = () => {
                     </Box>
                 </Flex>
                 {showStatusList &&
-                    <MotionBox initial={{ opacity: 0, top: 10}} animate={{ opacity: 1, top: 0 }}  exit={{ opacity: 0, top: -10}} transition={{ duration: 0.2,  ease: [0.0, 0.9, 0.9, 1.0]}} 
+                    <MotionBox initial={{ opacity: 0, top: 10}} animate={{ opacity: 1, top: 0 }}  exit={{ opacity: 0, top: -10}} transition={{ duration: '0.2',  ease: '[0.0, 0.9, 0.9, 1.0]'}} 
                     overflow={'hidden'} ml={'calc(100% + 5px)'} width={'100%'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={1000}   position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
                     {['connected', 'out', 'disconnected'].map((status, index) => (
                         <Flex key={`status-list-${index}`} bg={status === userData.organizationData.calls_status?'blue.50':''} color={phoneMap[status][2]} p='7px' gap='10px' alignItems='center' cursor='pointer' _hover={{ bg: status === userData.organizationData.calls_status?'blue.100':'brand.hover_gray' }} onClick={() => {setShowStatusList(!showStatusList)}}>

@@ -6,8 +6,8 @@ import { useTranslation } from 'react-i18next'
 //FETCH DATA
 import fetchData from "../../../API/fetchData"
 //FRONT
-import { Flex, Text, Box, Button, Skeleton, Tooltip, IconButton, Textarea, Avatar, } from "@chakra-ui/react"
-import {AnimatePresence, motion} from 'framer-motion'
+import { Flex, Text, Box, Button, Skeleton, Tooltip, IconButton, Textarea, Avatar, chakra } from "@chakra-ui/react"
+import { AnimatePresence, motion, isValidMotionProp } from 'framer-motion'
 //COMPONENTS
 import EditText from '../../../Components/Reusable/EditText'
 import LoadingIconButton from '../../../Components/Reusable/LoadingIconButton'
@@ -30,7 +30,8 @@ interface GroupData  {
 }
 
 //MOTION BOX
-const MotionBox = motion(Box)
+const MotionBox = chakra(motion.div, {shouldForwardProp: isValidMotionProp})
+
 
 //MAIN FUNCTION
 function Groups () {
@@ -256,7 +257,7 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
             </Box>
             <AnimatePresence> 
                 {showResults && 
-                <MotionBox initial={{ opacity: 5, marginTop: -5 }} animate={{ opacity: 1, marginTop: 5 }}  exit={{ opacity: 0,marginTop:-5}} transition={{ duration: 0.2,  ease: [0.0, 0.9, 0.9, 1.0],   opacity: {duration: 0.2,  ease: [0.0, 0.9, 0.9, 1.0]}}}
+                <MotionBox initial={{ opacity: 5, marginTop: -5 }} animate={{ opacity: 1, marginTop: 5 }}  exit={{ opacity: 0,marginTop:-5}} transition={{ duration: '0.2',  ease: '[0.0, 0.9, 0.9, 1.0]'}}
                  maxH='30vh' overflow={'scroll'} width='140%' gap='10px' ref={boxRef} fontSize={'.9em'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000} position={'absolute'} left={0} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
                         <Box maxH='30vh'>
                             {filteredUsers.length === 0? 

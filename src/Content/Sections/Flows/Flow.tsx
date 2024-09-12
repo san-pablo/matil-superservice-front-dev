@@ -6,8 +6,8 @@ import { useTranslation } from 'react-i18next'
 //FETCH DATA
 import fetchData from '../../API/fetchData'
 //FRONT
-import { Flex, Box, Button, IconButton, NumberInput, NumberInputField, Text, Textarea, Portal, Icon, Skeleton, Tooltip } from '@chakra-ui/react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { Flex, Box, Button, IconButton, NumberInput, NumberInputField, Text, Textarea, Portal, Icon, Skeleton, Tooltip, chakra } from '@chakra-ui/react'
+import { motion, AnimatePresence, isValidMotionProp } from 'framer-motion'
 //FLOWS
 import ReactFlow, { Controls, Background, useNodesState, useEdgesState, ControlButton, SelectionMode, useReactFlow } from 'reactflow'
 import 'reactflow/dist/style.css'
@@ -48,7 +48,7 @@ const panOnDrag = [1, 2]
 type VariableType = {name:string, type:DataTypes, description:string, examples:any[], values:any[], ask_for_confirmation:boolean}
 
 //MOTION BOX
-const MotionBox = motion(Box)
+const MotionBox = chakra(motion.div, {shouldForwardProp: isValidMotionProp})
 
 //MAIN FUNCTION
 const Flow = () => {
@@ -893,7 +893,7 @@ const Flow = () => {
                             <AnimatePresence> 
                                 {showAdd && 
                                 <Portal>
-                                    <MotionBox initial={{ opacity: 0, marginTop: boxPosition === 'bottom'?-10:10 }} animate={{ opacity: 1, marginTop: 0 }}  exit={{ opacity: 0,marginTop: boxPosition === 'bottom'?-10:10}} transition={{ duration: 0.2,  ease: [0.0, 0.9, 0.9, 1.0],   opacity: {duration: 0.2,  ease: [0.0, 0.9, 0.9, 1.0]}}}
+                                    <MotionBox initial={{ opacity: 0, marginTop: boxPosition === 'bottom'?-10:10 }} animate={{ opacity: 1, marginTop: 0 }}  exit={{ opacity: 0,marginTop: boxPosition === 'bottom'?-10:10}} transition={{ duration: '0.2',  ease: '[0.0, 0.9, 0.9, 1.0]'}}
                                     top={boxStyle.top} bottom={boxStyle.bottom}right={boxStyle.right} width={boxStyle.width} maxH='40vh' overflow={'scroll'} gap='10px' ref={boxRef} fontSize={'.9em'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000} position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
                                         {(argType === 'output_to_variables' ? selectableOutputs:selectableArgs).map((arg, index) => (
                                             <Flex p='5px' _hover={{bg:'brand.hover_gray'}} key={`arg-${index}`} onClick={() => {setShowAdd(false);editArg(argType, 'add')}}>
@@ -1002,7 +1002,7 @@ const Flow = () => {
     const memoizedNodesEditor = useMemo(() => (
         <AnimatePresence> 
         {showNodesAction && <>
-            <MotionBox initial={{right:-400}} animate={{right:0}}  exit={{right:-400}} transition={{ duration: .15 }} position='fixed' top={0} width='700px' height='100vh'  backgroundColor='white' zIndex={201} display='flex' justifyContent='space-between' flexDirection='column'> 
+            <MotionBox initial={{right:-400}} animate={{right:0}}  exit={{right:-400}} transition={{ duration: '.15' }} position='fixed' top={0} width='700px' height='100vh'  backgroundColor='white' zIndex={201} display='flex' justifyContent='space-between' flexDirection='column'> 
                 <NodesEditBox/>
             </MotionBox>
          </>}
@@ -1189,7 +1189,7 @@ const Flow = () => {
                     
                     <AnimatePresence> 
                         {showWarningBox && (
-                        <MotionBox initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}  transition={{ duration: 0.1,  ease: [0.0, 0.9, 0.9, 1.0],   opacity: {duration: 0.1 }, scale: {duration: 0.1,  ease: [0.0, 0.9, 0.9, 1.0]}}}
+                        <MotionBox initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}  transition={{ duration: '0.1',  ease: '[0.0, 0.9, 0.9, 1.0]'}}
                         style={{ transformOrigin: 'top' }} width={`${window.innerWidth * 0.98 - (iconRef.current?.getBoundingClientRect().left || 0)}px`} maxH={'calc(100vh - 4vw - 45px)'} overflow={'scroll'}  position='absolute' bg='transparent' left={0}  top='45px' zIndex={1000}  borderRadius='.5rem' >
                             {endWarning.map((war, index) => (
                                 <Flex onClick={() => clickWarning('navigate', war.id)}  cursor={'pointer'} key={`end-warning-${index}`} mt='10px' bg='white' borderWidth={'0px 0px 0px 5px'} borderColor={'#E53E3E'} p='10px' borderRadius={'.5rem'} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' >
@@ -1485,7 +1485,7 @@ const EditMessage = ({scrollRef, messageData, setMessageData}:{scrollRef:RefObje
             <AnimatePresence> 
                 {showLanguagesBox && 
                 <Portal>
-                    <MotionBox initial={{ opacity: 0, marginTop: boxPosition === 'bottom'?-10:10 }} animate={{ opacity: 1, marginTop: 0 }}  exit={{ opacity: 0,marginTop: boxPosition === 'bottom'?-10:10}} transition={{ duration: 0.2,  ease: [0.0, 0.9, 0.9, 1.0],   opacity: {duration: 0.2,  ease: [0.0, 0.9, 0.9, 1.0]}}}
+                    <MotionBox initial={{ opacity: 0, marginTop: boxPosition === 'bottom'?-10:10 }} animate={{ opacity: 1, marginTop: 0 }}  exit={{ opacity: 0,marginTop: boxPosition === 'bottom'?-10:10}} transition={{ duration: '0.2',  ease: '[0.0, 0.9, 0.9, 1.0]'}}
                     top={boxStyle.top} bottom={boxStyle.bottom}right={boxStyle.right} width={boxStyle.width} maxH='40vh' overflow={'scroll'} gap='10px' ref={boxRef} fontSize={'.9em'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000} position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
                         {availableLanguage.map((option:string, index:number) => (
                             <Flex key={`option-${index}`} px='10px'  py='7px' cursor={'pointer'} justifyContent={'space-between'} alignItems={'center'} _hover={{bg:'brand.hover_gray'}}

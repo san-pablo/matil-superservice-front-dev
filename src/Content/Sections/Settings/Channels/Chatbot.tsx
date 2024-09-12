@@ -6,9 +6,9 @@ import { useTranslation } from 'react-i18next'
 //FETCH DATA
 import fetchData from "../../../API/fetchData"
 //FRONT
-import { Flex, Text, Box, IconButton, Image, Icon, Button, Skeleton, Radio } from "@chakra-ui/react"
+import { Flex, Text, Box, IconButton, Image, Icon, Button, Skeleton, chakra } from "@chakra-ui/react"
 import '../../../Components/styles.css'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, isValidMotionProp } from 'framer-motion'
 //COMPONENTS
 import EditText from '../../../Components/Reusable/EditText'
 import ImageUpload from '../../../Components/Once/ImageUpload'
@@ -39,7 +39,7 @@ interface ChatBotData  {
     'options': string[]
   }
 
-const MotionBox = motion(Box)
+  const MotionBox = chakra(motion.div, {shouldForwardProp: isValidMotionProp})
 
 //MAIN FUNCTION
 function Chatbot () {
@@ -281,10 +281,10 @@ function Chatbot () {
          <Flex zIndex={1000} style={showChat ? { animation: 'bounceButton 0.6s forwards' } : {}} onClick={() => setShowChat(!showChat)} alignItems={'center'} height={'67px'} width={'67px'} justifyContent={'center'} borderRadius={'full'} bg={`linear-gradient(to right, ${chatBotData?.header_background[0]},${chatBotData?.header_background[1]})`} color={chatBotData?.header_color} position={'fixed'} bottom='2vh' right='2vh' boxShadow={'2px 4px 10px rgba(0, 0, 0, 0.35)'}>
          
             <Box position="relative" width="27px" height="27px">
-                <MotionBox initial={{ y: 0 }} animate={{ y: showChat ? -60 : 0 }} transition={{ duration: .2 }}> 
+                <MotionBox initial={{ y: 0 }} animate={{ y: showChat ? -60 : 0 }} transition={{ duration: '.2' }}> 
                     <Icon as={PiChatsBold} color='white' boxSize="27px"/>
                 </MotionBox>
-                <MotionBox initial={{ y: -60 }} animate={{ y: showChat ? -32 : 60 }} transition={{ duration: .2 }}> 
+                <MotionBox initial={{ y: -60 }} animate={{ y: showChat ? -32 : 60 }} transition={{ duration: '.2' }}> 
                     <Icon as={IoIosArrowDown} boxSize="27px" position="absolute"/>
                 </MotionBox>
             </Box>        
@@ -292,7 +292,7 @@ function Chatbot () {
 
         <AnimatePresence> 
                 {showChat && 
-                    <MotionBox  transition={{ duration: 0.2,  ease: [0.0, 0.9, 0.9, 1.0],   opacity: {duration: 0.2 }, scale: {duration: 0.2,  ease: [0.0, 0.9, 0.9, 1.0]}}} overflow={'hidden'} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)'  borderRadius={'1rem'} initial={{bottom:'-300px', opacity:0}} animate={{bottom:'90px', opacity:1}} exit={{bottom:'-300px', opacity:0}} position={'fixed'} bg='white' width='360px' height='650px' right='2vh' maxHeight='calc(100vh - 104px)' >
+                    <MotionBox  transition={{ duration: '0.2',  ease: '[0.0, 0.9, 0.9, 1.0]' }} overflow={'hidden'} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)'  borderRadius={'1rem'} initial={{bottom:'-300px', opacity:0}} animate={{bottom:'90px', opacity:1}} exit={{bottom:'-300px', opacity:0}} position={'fixed'} bg='white' width='360px' height='650px' right='2vh' maxHeight='calc(100vh - 104px)' >
                         <ChatbotComponent customInfo={chatBotData as ChatBotData}/>
                     </MotionBox>}
         </AnimatePresence>

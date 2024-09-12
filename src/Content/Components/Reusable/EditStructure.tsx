@@ -18,7 +18,7 @@ import { IoIosArrowBack } from 'react-icons/io'
 import { RxCross2 } from 'react-icons/rx'
 //TYPING 
 import { FieldAction, ActionsType } from '../../Constants/typing'
-
+ 
 
 
 const EditStructure = ({data, setData, operationTypesDict, scrollRef}:{data:FieldAction, setData:(structure:'motherstructure' | 'is_customizable' | 'name' | 'op' | 'value', value:any) => void,operationTypesDict:{[key:string]:string[]}, scrollRef:RefObject<HTMLDivElement> }) => {

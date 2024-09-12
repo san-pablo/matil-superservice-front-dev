@@ -18,7 +18,7 @@
         hideInput?: boolean
         maxLength?: number
         regex?: RegExp
-        type?:string
+        type?:string 
         placeholder?:string
         size?:string
         fontSize?:string | null

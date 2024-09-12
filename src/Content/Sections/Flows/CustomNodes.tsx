@@ -3,8 +3,8 @@ import { Dispatch, SetStateAction, useEffect, useRef, useState, Fragment } from 
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../AuthContext.js'
 //FRONT
-import { Flex, Icon, Box, Text, Checkbox, Grid, Button, NumberInput, NumberInputField, Radio } from '@chakra-ui/react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { Flex, Icon, Box, Text, Checkbox, Grid, Button, NumberInput, NumberInputField, Radio, chakra } from '@chakra-ui/react'
+import { motion, AnimatePresence, isValidMotionProp } from 'framer-motion'
 import { Handle, Position } from 'reactflow'
 //COMPONENTS
 import CustomSelect from '../../Components/Reusable/CustomSelect.js'
@@ -24,7 +24,6 @@ import { useNavigate } from 'react-router-dom'
  
 //VARIABLE TYPE
 type VariableType = {name:string, type:DataTypes, description:string, examples:any[], values:any[], ask_for_confirmation:boolean}
-type ChannelId = {name:string, id:string}
 
 //FIRST NODE DATA
 interface TriggerNodeData {
@@ -163,7 +162,7 @@ interface MotherStructureUpdateNodeData {
 }
 
 //MOTION BOX
-const MotionBox = motion(Box)
+const MotionBox = chakra(motion.div, {shouldForwardProp: isValidMotionProp})
  
 //FIRST NODE
 export const FirstNode = ({id, data}:{id:string, data:TriggerNodeData}) => {
@@ -786,7 +785,7 @@ const NodesBox = ({disabledNodes, sourceData, addNewNode, clickFunc, getAvailabl
 
    return(
     <AnimatePresence> 
-      <MotionBox initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.95 }}  transition={{ duration: 0.1,  ease: [0.0, 0.9, 0.9, 1.0],   opacity: {duration: 0.1 }, scale: {duration: 0.1,  ease: [0.0, 0.9, 0.9, 1.0]}}}
+      <MotionBox initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.95 }}  transition={{ duration: '0.1',  ease: '[0.0, 0.9, 0.9, 1.0]'}}
       style={{ transformOrigin: 'bottom left' }} className="nowheel" textAlign={'start'} minW={'180px'}  maxH='45vh' overflow={'scroll'} bg='white' p='15px' zIndex={1000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.300' borderWidth='1px' borderRadius='.5rem'>
             {availableCustomNodes.length > 0 && <Text fontWeight={'medium'} fontSize={'.8em'} >{t('CreatedNodes')}</Text>}
             {availableCustomNodes.map((id, index) => (
@@ -853,7 +852,7 @@ const NodeHeader = ({nodeId, nodeType, isExpanded, setIsExpanded, deleteNode, ge
           </Flex>
           <AnimatePresence> 
             {showDelete && 
-              <MotionBox initial={{ opacity: 0, marginTop: -10 }} animate={{ opacity: 1, marginTop: 0 }}  exit={{ opacity: 0,marginTop: -10}} transition={{ duration: 0.2,  ease: [0.0, 0.9, 0.9, 1.0], opacity: {duration: 0.2,  ease: [0.0, 0.9, 0.9, 1.0]}}}
+              <MotionBox initial={{ opacity: 0, marginTop: -10 }} animate={{ opacity: 1, marginTop: 0 }}  exit={{ opacity: 0,marginTop: -10}} transition={{ duration: '0.2',  ease: '[0.0, 0.9, 0.9, 1.0]'}}
                 maxH='40vh' p='7px' overflow={'scroll'} gap='10px' ref={boxRef} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='gray.50' zIndex={100000}   position={'absolute'} borderRadius={'.3rem'} >
                 <Flex color='black'  fontSize={'.9em'}  _hover={{bg:'gray.200'}} borderRadius={'.5rem'} p='5px' cursor={'pointer'}  alignItems={'center'} gap='10px' onClick={() => deleteNode(nodeId)}>
                     <Icon as={BsTrash3Fill}/>
