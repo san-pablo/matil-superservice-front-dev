@@ -268,13 +268,28 @@ export const ExtactorNode = ({id, data}:{id:string, data:ExtractorNodeData}) => 
   const EditorComponent = ({variable, index}:{variable:{index:number, message:FlowMessage}, index:number}) => {
 
     const [isHovering, setIsHovering] = useState<boolean>(false)
+    const messagesTypeDict = {'generative':t('GeneratedByMatilda'), 'preespecified':t('Literal')}
 
     return(
       <Box position='relative' onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}> 
         <Box cursor={'pointer'}  mt='15px' boxShadow={'0 0 5px 1px rgba(0, 0, 0, 0.15)'}p='10px' borderRadius={'.3rem'} borderTopColor={'#4A5568'} borderTopWidth='3px' key={`variable-${index}`} onClick={() => data.functions.setShowNodesAction({nodeId:id, actionType:'extract', actionData:{index}})}>
-          <Text fontSize='.7em' fontWeight={'medium'}>{t(data.functions.flowVariables.length === 0?t('NoVariable'):data.functions.flowVariables[variable.index].name)}</Text>
-          <Text fontSize='.5em'  style={{overflow: 'hidden',display: '-webkit-box',WebkitLineClamp: 3, WebkitBoxOrient: 'vertical'}} ><span style={{fontWeight:500, color:'black'}}> {t('Instructions')}:</span> {variable.message.generation_instructions}</Text>
+          <Text fontSize='.9em' color='black' mb='7px' fontWeight={'medium'}>{t(data.functions.flowVariables.length === 0?t('NoVariable'):data.functions.flowVariables[variable.index].name)}</Text>
+
+          <Text fontSize='.7em' ><span style={{fontWeight:500}}>{t('Type')}:</span> {messagesTypeDict[variable.message.type]}</Text>
+          {variable.message.type === 'generative' ?<> 
+          <Text fontSize={'.5em '} style={{overflow: 'hidden',display: '-webkit-box',WebkitLineClamp: 3, WebkitBoxOrient: 'vertical'}} ><span style={{fontWeight:500, color:'black', fontSize:'.7em'}}> {t('GenerationInstructions')}:</span> {variable.message.generation_instructions}</Text>
+          </>:
+          <Box overflowY={'scroll'}>
+            {Object.keys(variable.message.preespecified_messages).map((lng, index) => (
+              <Flex mt='3px' key={`message-${index}-${lng}`} gap='5px' alignItems={'center'}>
+                <Text fontSize={'.8em'}>{languagesFlags[lng][1]}</Text>
+                <Text textOverflow={'ellipsis'} overflow={'hidden'} whiteSpace={'nowrap'} fontSize={'.5em'}>{variable.message.preespecified_messages[lng]}</Text>
+              </Flex>
+            ))}
+          </Box>}
+
         </Box>
+        
         {(isHovering) && 
           <Flex alignItems={'center'} position={'absolute'} borderRadius={'full'} p='3px' top={'-7px'} zIndex={100} bg='white' boxShadow={'0 0 5px 1px rgba(0, 0, 0, 0.15)'} right={'-7px'} justifyContent={'center'} cursor={'pointer'} onClick={() => data.functions.editExtractor(id, index, 'remove')}>
             <Icon boxSize={'10px'} as={BsTrash3Fill} color='red'/>
@@ -297,6 +312,7 @@ export const ExtactorNode = ({id, data}:{id:string, data:ExtractorNodeData}) => 
           {data.variables.map((variable, index) => (
             <EditorComponent key={`editor-${index}`} variable={variable} index={index}/>
           ))}
+          
           <Flex flexDir={'row-reverse'}> 
             <Button mt='15px' leftIcon={<FaPlus/>} size='xs'  onClick={() => data.functions.editExtractor(id, -1, 'add')}>{t('AddData')}</Button>
           </Flex>

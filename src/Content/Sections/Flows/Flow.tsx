@@ -673,9 +673,9 @@ const Flow = () => {
                                 <Box flex='4'>
                                     <CustomSelect containerRef={scrollRef} labelsMap={inequalitiesMap} hide={false} selectedItem={condition.op} setSelectedItem={(value) => editBranchData(index, 'edit',{...condition, op:value})} options={columnInequalities[flowVariables[condition.variable_index].type]}/>
                                 </Box>
-                                <Box flex='5'>
+                                {condition.op !== 'exists' && <Box flex='5'>
                                     <InputType inputType={flowVariables[condition.variable_index].type} value={condition.value} setValue={(value) => editBranchData(index, 'edit',{...condition, value})}/>
-                                </Box>
+                                </Box>}
                                 <IconButton bg='transaprent' border='none' size='sm' _hover={{bg:'gray.200'}} icon={<RxCross2/>} aria-label='delete-all-condition' onClick={() => editBranchData(index, 'remove')}/>
                             </Flex>
                             {index !== branchData.conditions.length - 1 && <Text mt='1vh' mb='1vh' fontWeight='medium' textAlign={'center'}>{t('And')}</Text>}
@@ -688,11 +688,17 @@ const Flow = () => {
 
             case 'extract': {
                 const [messageData, setMessageData] = useState<{index:number, message:FlowMessage, require_confirmation:boolean, confirmation_message:FlowMessage}>(node?.data.variables[showNodesAction?.actionData.index])
+                
+                const [instructionMessage, setInstructionMessage] = useState<FlowMessage>(messageData.message)
                 const [confirmationMessage, setConfirmationMessage] = useState<FlowMessage>(messageData.confirmation_message)
 
                 useEffect(()=> {
                     setMessageData(prev => ({...prev, confirmation_message:confirmationMessage}))
                 },[confirmationMessage])
+
+                useEffect(()=> {
+                    setMessageData(prev => ({...prev, confirmation_message:instructionMessage}))
+                },[instructionMessage])
 
                 useEffect(()=> {
                     editExtractor(showNodesAction?.nodeId, showNodesAction?.actionData.index, 'edit', messageData)
@@ -707,13 +713,11 @@ const Flow = () => {
                     <Text mb='1vh'color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('VariableType')}</Text>
                     <CustomSelect containerRef={scrollRef} hide={false} selectedItem={messageData.index} setSelectedItem={(value) => setMessageData((prev) => ({...prev, index: value}))} options={Array.from({length: flowVariables.length}, (v, i) => i)} labelsMap={variablesLabelsMap} />
                     <Box bg='gray.300' width={'100%'} height={'1px'} mt='2vh' mb='2vh'/>
-                    <Text color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('VariableInstructions')}</Text>
-                    <Textarea mt='1vh'  maxLength={2000} height={'auto'} placeholder={`${t('VariableInstructionsPlaceholder')}...`} maxH='300px' value={messageData.message.generation_instructions} onChange={(e) => setMessageData((prev) => ({...prev, message:{...prev.message, generation_instructions:e.target.value}}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
-                    <Text  mt='2vh' color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('AskConfirmation')}</Text>
-                    <Flex  gap='10px' mt='5px'>
-                        <Button bg={messageData.require_confirmation?'brand.gradient_blue':'gray.200'} color={messageData.require_confirmation?'white':'black'} size='sm' _hover={{bg:messageData.require_confirmation?'brand.gradient_blue_hover':'gray.300'}} onClick={() => setMessageData((prev) => ({...prev, require_confirmation:true}))} >{t('Yes')}</Button>
-                        <Button bg={!messageData.require_confirmation?'brand.gradient_blue':'gray.200'} color={!messageData.require_confirmation?'white':'black'} size='sm' _hover={{bg:!messageData.require_confirmation?'brand.gradient_blue_hover':'gray.300'}} onClick={() => setMessageData((prev) => ({...prev, require_confirmation:false}))}>{t('No')}</Button>
-                    </Flex> 
+                    
+                    <Text color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('VariableInstructions')}</Text>        
+                    <EditMessage scrollRef={scrollRef} messageData={instructionMessage} setMessageData={setInstructionMessage}/>
+               
+
                     {messageData.require_confirmation && <>
                         <Text  mt='2vh' color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('ConfirmationMessage')}</Text>
                         <EditMessage scrollRef={scrollRef} messageData={confirmationMessage} setMessageData={setConfirmationMessage}/>

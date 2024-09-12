@@ -94,7 +94,7 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort,  columnsMap, exclu
     //OBTAIN COLUMNS
     const columns = useMemo(() => {
         return data?.length
-          ? Object.keys(data[0]).filter((key) => !excludedKeys.includes(key))
+          ? Object.keys(data[0]).filter((key) => ![...excludedKeys].includes(key))
           : []
       }, [data])
     const totalWidth = useMemo(() => {return columns.reduce((acc, value) => acc + columnsTicketsMap[value as TicketColumn] + 20, 0) + 20}, [columns])
@@ -146,7 +146,8 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort,  columnsMap, exclu
     }, [data, sortConfig])
 
     const dataToWork = (requestSort)? data : sortedData
-    
+
+
     //FRONT
     return(
         <> 
@@ -162,32 +163,34 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort,  columnsMap, exclu
                         <Checkbox isChecked={selectedElements.length >= data.length} onChange={(e) => onInternalSelectAllElements(e?.target?.checked)}/>  
                     </Flex>}
                     {Object.keys(columnsMap).filter(column => column !== 'id').map((column) => (
-                    <Fragment key={`header-${column}`}>
-                        {column in data[0] &&
-                            <Flex alignItems={'center'} flex={`${columnsMap[column][1]/10} 0 ${columnsMap[column][1]}px`}> 
-                            <Text cursor='pointer' onClick={() => requestInternalSort(column)}>{columnsMap[column][0]}</Text>
-                            {getSortIcon(column) === null ? null : getSortIcon(column) ? <IoMdArrowDropup size='20px' /> : <IoMdArrowDropdown size='20px' />}
-                        </Flex>}
-                    </Fragment>))}
+                        <Fragment key={`header-${column}`}>
+                            {column in data[0] &&
+                                <Flex alignItems={'center'} flex={`${columnsMap[column][1]/10} 0 ${columnsMap[column][1]}px`}> 
+                                <Text cursor='pointer' onClick={() => requestInternalSort(column)}>{columnsMap[column][0]}</Text>
+                                {getSortIcon(column) === null ? null : getSortIcon(column) ? <IoMdArrowDropup size='20px' /> : <IoMdArrowDropdown size='20px' />}
+                            </Flex>}
+                        </Fragment>))
+                    }
                 </Flex>
                 <Box minWidth={`${totalWidth}px`} overflowX={'hidden'} ref={tableBoxRef} overflowY={'scroll'} maxH={boxHeight}> 
                     {dataToWork.map((row:any, index:number) => {  
                         
-                    return (
-                        <Flex data-index={index}  position={'relative'} overflow={'hidden'} gap='20px' minWidth={`${totalWidth}px`} borderRadius={index === data.length - 1?'0 0 .5rem .5rem':'0'} borderWidth={'0 1px 1px 1px'}  cursor={onClickRow?'pointer':'not-allowed'} onClick={() => {if (onClickRow) onClickRow(row, index)}} key={`row-${index}`}  bg={selectedIndex === index ? 'blue.50':(selectedElements || []).includes(row.id)?'blue.100':index%2 === 1?'#FCFCFC':'white'} alignItems={'center'}  fontSize={'.9em'} color='black' p='10px' borderColor={'gray.200'} _hover={{bg:(selectedElements || [] ).includes(row.id)?'blue.100':'blue.50'}}  > 
-                            {selectedIndex === index && <Box position='absolute' left={0} top={0} height={'100%'} width={'2px'} bg='blue.400'/>}
-                            {selectedElements &&
-                            <Flex alignItems={'center'} onClick={(e) => e.stopPropagation()}> 
-                                <Checkbox onChange={(e) => handleCheckboxChange(index, e.target.checked)} isChecked={selectedElements.includes(index)}/>  
-                            </Flex>}
-                            {Object.keys(columnsMap).map((column:string, index:number) => (
-                            <Fragment key={`header-${index}`}>
-                                <Flex minW={0} alignItems={'center'} flex={`${(columnsMap?.[column][1] || 0)/10} 0 ${(columnsMap?.[column][1] || 0)}px`}> 
-                                    <CellStyle column={column} element={row[column]}/>
-                                </Flex>
-                            </Fragment>))}
-                        </Flex>)
-                    })}
+                        return (
+                            <Flex data-index={index}  position={'relative'} overflow={'hidden'} gap='20px' minWidth={`${totalWidth}px`} borderRadius={index === data.length - 1?'0 0 .5rem .5rem':'0'} borderWidth={'0 1px 1px 1px'}  cursor={onClickRow?'pointer':'not-allowed'} onClick={() => {if (onClickRow) onClickRow(row, index)}} key={`row-${index}`}  bg={selectedIndex === index ? 'blue.50':(selectedElements || []).includes(row.id)?'blue.100':index%2 === 1?'#FCFCFC':'white'} alignItems={'center'}  fontSize={'.9em'} color='black' p='10px' borderColor={'gray.200'} _hover={{bg:(selectedElements || [] ).includes(row.id)?'blue.100':'blue.50'}}  > 
+                                {selectedIndex === index && <Box position='absolute' left={0} top={0} height={'100%'} width={'2px'} bg='blue.400'/>}
+                                {selectedElements &&
+                                <Flex alignItems={'center'} onClick={(e) => e.stopPropagation()}> 
+                                    <Checkbox onChange={(e) => handleCheckboxChange(index, e.target.checked)} isChecked={selectedElements.includes(index)}/>  
+                                </Flex>}
+                                {Object.keys(columnsMap).map((column:string, index:number) => (
+                                    <Fragment key={`header-${index}`}>
+                                        {(!(excludedKeys.includes(column)) && column in row) && 
+                                        <Flex minW={0} alignItems={'center'} flex={`${(columnsMap?.[column][1] || 0)/10} 0 ${(columnsMap?.[column][1] || 0)}px`}> 
+                                            <CellStyle column={column} element={row[column]}/>
+                                        </Flex>}
+                                </Fragment>))}
+                            </Flex>)
+                        })}
                 </Box>
             </Box>
  

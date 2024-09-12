@@ -90,9 +90,8 @@ const CellStyle = ({column, element}:{column:string, element:any}) => {
     const { t } = useTranslation('tickets')
     const t_formats = useTranslation('formats').t
 
-
     if (column === 'local_id') return  <Text color='gray' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>#{element}</Text>
-    else if (column === 'user_id') return  <Text fontWeight={'medium'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element === -1 ?'Matilda':element === 0 ? t('NoAgent'):(auth?.authData?.users?.[element as string | number].name || '')}</Text>
+    else if (column === 'user_id')  {console.log(element);return  <Text fontWeight={'medium'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element === -1 ?'Matilda':element === 0 ? t('NoAgent'):(auth?.authData?.users?.[element as string | number].name || '')}</Text>}
     else if (column === 'unseen_changes') 
         return(
         <Flex color={element?'red':'green'} alignItems={'center'} gap='5px'> 
