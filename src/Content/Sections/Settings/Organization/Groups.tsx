@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next'
 //FETCH DATA
 import fetchData from "../../../API/fetchData"
 //FRONT
-import { Flex, Text, Box, Button, Skeleton, Tooltip, IconButton, Textarea, Avatar, chakra } from "@chakra-ui/react"
+import { Flex, Text, Box, Button, Skeleton, Tooltip, IconButton, Textarea, Avatar, chakra, shouldForwardProp } from "@chakra-ui/react"
 import { AnimatePresence, motion, isValidMotionProp } from 'framer-motion'
 //COMPONENTS
 import EditText from '../../../Components/Reusable/EditText'
@@ -30,7 +30,7 @@ interface GroupData  {
 }
 
 //MOTION BOX
-const MotionBox = chakra(motion.div, {shouldForwardProp: isValidMotionProp})
+const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
 
 
 //MAIN FUNCTION

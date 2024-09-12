@@ -91,6 +91,9 @@ const UserCellStyles = ({column, element}:{column:string, element:any}) => {
 
     const { t } = useTranslation('settings')
 
+    console.log(column)
+    console.log(element)
+
     switch (column) {
         case 'name':
         case 'surname':

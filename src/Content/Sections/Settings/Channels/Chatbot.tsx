@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next'
 //FETCH DATA
 import fetchData from "../../../API/fetchData"
 //FRONT
-import { Flex, Text, Box, IconButton, Image, Icon, Button, Skeleton, chakra } from "@chakra-ui/react"
+import { Flex, Text, Box, IconButton, Image, Icon, Button, Skeleton, chakra, shouldForwardProp } from "@chakra-ui/react"
 import '../../../Components/styles.css'
 import { motion, AnimatePresence, isValidMotionProp } from 'framer-motion'
 //COMPONENTS
@@ -39,7 +39,7 @@ interface ChatBotData  {
     'options': string[]
   }
 
-  const MotionBox = chakra(motion.div, {shouldForwardProp: isValidMotionProp})
+const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
 
 //MAIN FUNCTION
 function Chatbot () {

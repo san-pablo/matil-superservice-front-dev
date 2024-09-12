@@ -3,7 +3,7 @@ import { Dispatch, SetStateAction, useEffect, useRef, useState, Fragment } from 
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../AuthContext.js'
 //FRONT
-import { Flex, Icon, Box, Text, Checkbox, Grid, Button, NumberInput, NumberInputField, Radio, chakra } from '@chakra-ui/react'
+import { Flex, Icon, Box, Text, Checkbox, Grid, Button, NumberInput, NumberInputField, Radio, chakra, shouldForwardProp } from '@chakra-ui/react'
 import { motion, AnimatePresence, isValidMotionProp } from 'framer-motion'
 import { Handle, Position } from 'reactflow'
 //COMPONENTS
@@ -162,7 +162,7 @@ interface MotherStructureUpdateNodeData {
 }
 
 //MOTION BOX
-const MotionBox = chakra(motion.div, {shouldForwardProp: isValidMotionProp})
+const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
  
 //FIRST NODE
 export const FirstNode = ({id, data}:{id:string, data:TriggerNodeData}) => {

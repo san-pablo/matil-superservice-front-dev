@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next'
 //FETCH DATA
 import fetchData from "../../API/fetchData"
 //FRONT
-import { Flex, Box, Text, Avatar, Icon, Skeleton, Button, IconButton, Tooltip, Textarea, Link, Image, NumberInput, NumberInputField, chakra } from '@chakra-ui/react'
+import { Flex, Box, Text, Avatar, Icon, Skeleton, Button, IconButton, Tooltip, Textarea, Link, Image, NumberInput, NumberInputField, chakra, shouldForwardProp } from '@chakra-ui/react'
 import { motion, AnimatePresence, isValidMotionProp } from 'framer-motion'
 import '../../Components/styles.css'
 //COMPONENTS
@@ -60,7 +60,7 @@ interface MergeBoxProps {
 }
 
 //MOTION BOX
-const MotionBox = chakra(motion.div, {shouldForwardProp: isValidMotionProp})
+const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
  
 //MAIN FUNCTION
 function TicketResponse ( {ticketData, setTicketData, clientTickets, setClientTickets, messagesList, setMessagesList, clientData, setClientData, clientId, deleteHeaderSection, socket }:RespuestaProps) {

@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next'
 import fetchData from './API/fetchData'
 import io from 'socket.io-client' 
 //FRONT
-import { Flex, Box, Icon, Avatar, Text, Tooltip, Image, Button, chakra } from '@chakra-ui/react'
+import { Flex, Box, Icon, Avatar, Text, Tooltip, Image, Button, chakra, shouldForwardProp } from '@chakra-ui/react'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import './Components/styles.css'
 import { motion, AnimatePresence, isValidMotionProp } from 'framer-motion' 
@@ -70,8 +70,7 @@ interface Section {
 }
 
 //MOTION BOX
-const MotionBox = chakra(motion.div, {shouldForwardProp: isValidMotionProp})
-
+const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
 
 //MAX WAIT TIME FOR PUSHING A HEADER SECTION
 const MAX_WAIT_TIME = 3000

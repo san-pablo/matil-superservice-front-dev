@@ -9,7 +9,7 @@ import { useLocation, useNavigate } from "react-router-dom"
 import DOMPurify from 'dompurify'
 import { useTranslation } from 'react-i18next'
 //FRONT
-import { Flex, Box, Text, Icon, Textarea, Avatar, Button, Skeleton, IconButton, Tooltip, chakra } from '@chakra-ui/react'
+import { Flex, Box, Text, Icon, Textarea, Avatar, Button, Skeleton, IconButton, Tooltip, chakra, shouldForwardProp } from '@chakra-ui/react'
 import { motion, AnimatePresence, isValidMotionProp } from 'framer-motion'
 //FETCH DATA
 import fetchData from "../../API/fetchData"
@@ -59,7 +59,7 @@ type Status = 'new' | 'open' | 'solved' | 'pending' | 'closed'
 const validStatuses: Status[] = ['new', 'open', 'solved', 'pending', 'closed']
 
 //MOTION BOX
-const MotionBox = chakra(motion.div, {shouldForwardProp: isValidMotionProp})
+const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
  
 //ALERT LEVEL COMPONENT
 const AlertLevel = ({t,  rating }:{t:any, rating:number}) => {

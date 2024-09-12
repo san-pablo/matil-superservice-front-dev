@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next'
 //FETCH DATA
 import fetchData from '../../API/fetchData'
 //FRONT
-import { Flex, Box, Button, IconButton, NumberInput, NumberInputField, Text, Textarea, Portal, Icon, Skeleton, Tooltip, chakra } from '@chakra-ui/react'
+import { Flex, Box, Button, IconButton, NumberInput, NumberInputField, Text, Textarea, Portal, Icon, Skeleton, Tooltip, chakra, shouldForwardProp } from '@chakra-ui/react'
 import { motion, AnimatePresence, isValidMotionProp } from 'framer-motion'
 //FLOWS
 import ReactFlow, { Controls, Background, useNodesState, useEdgesState, ControlButton, SelectionMode, useReactFlow } from 'reactflow'
@@ -48,7 +48,7 @@ const panOnDrag = [1, 2]
 type VariableType = {name:string, type:DataTypes, description:string, examples:any[], values:any[], ask_for_confirmation:boolean}
 
 //MOTION BOX
-const MotionBox = chakra(motion.div, {shouldForwardProp: isValidMotionProp})
+const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
 
 //MAIN FUNCTION
 const Flow = () => {

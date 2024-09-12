@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom'
 import { useSession } from '../../../SessionContext'
 import { useTranslation } from 'react-i18next'
 //FRONT
-import { Box, Flex, Button, IconButton, Icon, Text, Avatar, Image, Portal, chakra } from '@chakra-ui/react'
+import { Box, Flex, Button, IconButton, Icon, Text, Avatar, Image, Portal, chakra, shouldForwardProp } from '@chakra-ui/react'
 import { AnimatePresence, motion, isValidMotionProp } from 'framer-motion'
 import '../../Components/styles.css'
 import EmojiPicker, { EmojiClickData } from 'emoji-picker-react'
@@ -43,7 +43,8 @@ interface TextEditorProps {
 }
 
 //MOTION BOX
-const MotionBox = chakra(motion.div, {shouldForwardProp: isValidMotionProp})
+const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
+
 
 //MAIN FUNCTION
 function TextEditor({clientName, ticketData, updateData, deleteHeaderSection, takeConversationControl }:TextEditorProps) {

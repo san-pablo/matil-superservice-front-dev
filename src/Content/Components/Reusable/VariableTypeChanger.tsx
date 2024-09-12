@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 //FETCH DATA
 import fetchData from '../../API/fetchData.js'
 //FRONT
-import { NumberInput, NumberInputField, Flex, Box, Text, Icon, chakra } from '@chakra-ui/react'
+import { NumberInput, NumberInputField, Flex, Box, Text, Icon, chakra, shouldForwardProp } from '@chakra-ui/react'
 import { motion, AnimatePresence, isValidMotionProp } from 'framer-motion'
 //COMPONENTS
 import EditText from './EditText.js'
@@ -21,7 +21,7 @@ import { languagesFlags, ContactBusinessesTable} from '../../Constants/typing.js
  
 
 //MOTIOSN BOX
-const MotionBox = chakra(motion.div, {shouldForwardProp: isValidMotionProp})
+const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
 
 //FIND BUSINESS COMPONENT
 const FindBusinessComponent = ({value, setValue, auth}:{value:number, setValue:any, auth:any}) => {

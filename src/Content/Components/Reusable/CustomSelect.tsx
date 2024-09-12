@@ -5,7 +5,7 @@
 //REACT
 import { useState, useRef, RefObject, CSSProperties } from 'react'
 //FRONT
-import { Flex, Text, Box, Icon, Portal,  chakra } from '@chakra-ui/react'
+import { Flex, Text, Box, Icon, Portal,  chakra, shouldForwardProp } from '@chakra-ui/react'
 import { motion, AnimatePresence, isValidMotionProp  } from 'framer-motion'
 import '../styles.css'
 //FUNCTIONS
@@ -31,7 +31,7 @@ interface CustomSelectProps<T extends string | number>  {
 }
 
 //MOTION BOX
-const MotionBox = chakra(motion.div, {shouldForwardProp: isValidMotionProp,})
+const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
 
 //MAIN FUNCTION
 const CustomSelect = <T extends string | number>({options, selectedItem, setSelectedItem, hide, updateData=() => {},  labelsMap=null ,iconsMap=null, containerRef, isDisabled = false, disabledOptions}: CustomSelectProps<T>) => {

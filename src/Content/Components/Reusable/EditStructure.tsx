@@ -1,21 +1,16 @@
 
 //REACT
-import  { useState, useEffect, useRef, Dispatch, SetStateAction, Ref, RefObject } from 'react'
+import  { RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 //FETCH DATA
 import fetchData from "../../API/fetchData"
 //FRONT
-import { Flex, Text, Box, Button, Skeleton, Tooltip, IconButton, Textarea, Avatar, } from "@chakra-ui/react"
+import { Flex, Text, Box, Button } from "@chakra-ui/react"
 import { motion} from 'framer-motion'
 //COMPONENTS
 import CustomSelect from './CustomSelect'
 import VariableTypeChanger from './VariableTypeChanger'
-//ICONS
-import { BsTrash3Fill } from "react-icons/bs"
-import { FaPlus } from 'react-icons/fa6'
-import { IoIosArrowBack } from 'react-icons/io'
-import { RxCross2 } from 'react-icons/rx'
 //TYPING 
 import { FieldAction, ActionsType } from '../../Constants/typing'
  
