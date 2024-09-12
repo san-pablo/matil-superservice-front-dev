@@ -97,7 +97,7 @@ const fetchData = async ({endpoint, setValue, setWaiting, auth, requestForm = {}
                 return refreshedResponse
             } 
             //LOGOUT IF REFRESH TOKEN INVALID
-            catch (error) {console.log('HOAL')}
+            catch (error) {}
         }
 
         //HANDLE ANOTHER ERROR

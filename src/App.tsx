@@ -14,12 +14,13 @@ import showToast from './Content/Components/ToastNotification'
 //CONTENT
 import Content from './Content/Content'
 //COMPONENTS
-import LoadingIcon from './Content/Components/LoadingIcon'
-import FloatingLabelInput from './Content/Components/FormInputs'
+import LoadingIcon from './Content/Components/Once/LoadingIcon'
+import FloatingLabelInput from './Content/Components/Once/FormInputs'
 //ICONS
 import { IoPersonCircleOutline } from "react-icons/io5"
 import { MdOutlineMailOutline, MdLockOutline } from "react-icons/md"
 import { TbArrowBack } from 'react-icons/tb'
+import { TiFlowMerge } from "react-icons/ti"
 //TYPING
 import { userInfo, Organization } from './Content/Constants/typing'
 
@@ -45,7 +46,6 @@ const theme = extendTheme({
     },
     colors: {
       brand: {
-        clear_black: '#1A202C', 
         gray: '#4A5568',
         hover_gray:'#F2F5F9',
         gradient_blue:'linear-gradient(to right, rgba(0, 102, 204, 1),rgba(51, 153, 255, 1))',
@@ -61,7 +61,7 @@ const theme = extendTheme({
       }
     },
     components: {
-      Button: {baseStyle: {fontWeight:'medium'}},
+      Button: { baseStyle: {fontWeight:'medium', bg: "#BCC0C4" }},
       Skeleton: skeletonTheme,
       Radio: {
         baseStyle: {control: {borderRadius: "full"}},
@@ -90,7 +90,7 @@ const mailRegex = /^[\w\.-]+@[\w\.-]+\.\w+$/
 const App: React.FC = () => { 
 
     //TRANSLATION
-    const { t } = useTranslation()
+    const { t } = useTranslation('login')
 
      //AUTH DATA
     const { authData, setAuthData, signIn, signOut, isSignedIn } = useAuth()
@@ -117,18 +117,19 @@ const App: React.FC = () => {
     const handleSignIn = async () => {
        if (showCode) {
         try {
+          console.log({'name':registerName, 'surname':registerSurname, 'email':registerMail, 'password':registerPassword})
           const response = await axios.post(URL + 'user', {'name':registerName, 'surname':registerSurname, 'email':registerMail, 'password':registerPassword})
-          showToast({message:'Cuenta registrada con éxito'})
+          showToast({message:t('RegisteredAccount')})
           setShowCode(false)
         }
-        catch (error) {showToast({message:'Hubo un error el el registro', type:'failed'})}}
+        catch (error) {showToast({message:t('RegisterError'), type:'failed'})}}
       else{
          try {
           const response = await axios.post(URL + 'user/login', {email: usernameLogin, password: passwordLogin})
           setAuthData({email:usernameLogin, accessToken:response.data.access_token, refreshToken:response.data.refresh_token})
           fetchData(response.data.access_token, response.data.refresh_token,usernameLogin)
-          const encryptedAccessToken = CryptoJS.AES.encrypt(response.data.access_token, TOKENS_KEY).toString();
-          const encryptedRefreshToken = CryptoJS.AES.encrypt(response.data.refresh_token, TOKENS_KEY).toString();
+          const encryptedAccessToken = CryptoJS.AES.encrypt(response.data.access_token, TOKENS_KEY).toString()
+          const encryptedRefreshToken = CryptoJS.AES.encrypt(response.data.refresh_token, TOKENS_KEY).toString()
         
           localStorage.setItem('accessToken', encryptedAccessToken)
           localStorage.setItem('refreshToken', encryptedRefreshToken)
@@ -233,32 +234,32 @@ const App: React.FC = () => {
                 <>
                   <Flex justifyContent={'center'} alignItems={'center'} height={'100vh'} width={'100vw'} bg='linear-gradient(to right, #C6D8FE, #93B6FF)'> 
                     <Box width={'400px'} boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.09)'} borderRadius={'1em'} bg='white' zIndex={100} p={'40px'} >
-                      <Text textAlign={'center'} fontWeight={'medium'} fontSize={'1.6em'} color='gray.600'>{showCode?'Registrarse':t('login-1')}</Text>
+                      <Text textAlign={'center'} fontWeight={'medium'} fontSize={'1.6em'} color='gray.600'>{showCode?t('SignUp'):t('SignIn')}</Text>
                          <Stack spacing={'2vh'} color='color.500' mt='6vh'>
                           {showCode?
                             <>  
-                                <FloatingLabelInput leftIcon={IoPersonCircleOutline} value={registerName} setValue={setRegisterName}maxLength={100} placeholder='Nombre'/>
+                                <FloatingLabelInput leftIcon={IoPersonCircleOutline} value={registerName} setValue={setRegisterName }maxLength={100} placeholder={t('Name')}/>
                                 <Box mt='3vh'>
-                                  <FloatingLabelInput leftIcon={IoPersonCircleOutline} value={registerSurname} setValue={setRegisterSurname}maxLength={100} placeholder='Apellidos'/>
+                                  <FloatingLabelInput leftIcon={IoPersonCircleOutline} value={registerSurname} setValue={setRegisterSurname}maxLength={100} placeholder={t('Surname')}/>
                                 </Box>
 
                                 <Box mt='3vh'>
-                                  <FloatingLabelInput regex={mailRegex} leftIcon={MdOutlineMailOutline} value={registerMail} setValue={setRegisterMail}  maxLength={100}placeholder='Email'/>
+                                  <FloatingLabelInput regex={mailRegex} leftIcon={MdOutlineMailOutline} value={registerMail} setValue={setRegisterMail}  maxLength={100}placeholder={t('Mail')}/>
                                 </Box>
 
                                 <Box mt='3vh'>
-                                  <FloatingLabelInput isPassword={true} regex={passwordRegex} leftIcon={MdLockOutline} value={registerPassword} setValue={setRegisterPassword} maxLength={100} placeholder='Contraseña'/>
+                                  <FloatingLabelInput isPassword={true} regex={passwordRegex} leftIcon={MdLockOutline} value={registerPassword} setValue={setRegisterPassword} maxLength={100} placeholder={t('Password')}/>
                                 </Box>
 
                                 <Box mt='3vh' mb='2vh'>
-                                  <FloatingLabelInput isPassword={true} regex={passwordRegex} leftIcon={MdLockOutline} value={registerPassword2} setValue={setRegisterPassword2} maxLength={100} placeholder='Repetir contraseña'/>
+                                  <FloatingLabelInput isPassword={true} regex={passwordRegex} leftIcon={MdLockOutline} value={registerPassword2} setValue={setRegisterPassword2} maxLength={100} placeholder={t('RepeatPassword')}/>
                                 </Box>
                             </> 
                             :
                             <form onKeyDown={handleKeyDown} autoComplete='off'> 
-                              <FloatingLabelInput  leftIcon={MdOutlineMailOutline} value={usernameLogin} setValue={setUsernameLogin} placeholder='Email'/>            
+                              <FloatingLabelInput  leftIcon={MdOutlineMailOutline} value={usernameLogin} setValue={setUsernameLogin} placeholder={t('Mail')}/>            
                               <Box mt='5vh' mb='2vh'>
-                                <FloatingLabelInput isPassword={true} leftIcon={MdLockOutline} value={passwordLogin} setValue={setPasswordLogin} placeholder='Contraseña'/>
+                                <FloatingLabelInput isPassword={true} leftIcon={MdLockOutline} value={passwordLogin} setValue={setPasswordLogin} placeholder={t('Password')}/>
                               </Box>
                             </form>
                             }
@@ -268,16 +269,16 @@ const App: React.FC = () => {
                             </Text>
                               )}
                             <Button px='25px' width='fit-content'fontWeight={'medium'} isDisabled={showCode ?(registerName === '' || registerSurname === '' || registerMail === '' || registerPassword === '' || (registerPassword !== registerPassword2) || !mailRegex.test(registerMail) || !passwordRegex.test(registerPassword)) : (usernameLogin === '' || passwordLogin === '')} display={'inline-flex'} fontStyle={'jost'} borderRadius={'2rem'} color='white'   onClick={handleSignIn} bg='brand.gradient_blue' _hover={{bg:'brand.gradient_blue_hover'}}>
-                              {showCode?'Registrarse':'Iniciar sesión'}
+                              {showCode?t('SignUp'):t('SignIn')}
                             </Button>
                      
                           {showCode ? 
                           <Flex  mt='1vh' onClick={() => setShowCode(false)} alignItems={'center'} gap='5px' color='#1a73e8' cursor={'pointer'}  width='fit-content'> 
                             <Icon as={TbArrowBack} mt='2px'/>
-                            <Text fontSize={'.9em'} >Volver atrás</Text>
+                            <Text fontSize={'.9em'} >{t('Return')}</Text>
                           </Flex>
                           :
-                          <Text mt='1vh' fontSize={'.9em'} >¿No tienes una cuenta? <span onClick={() => setShowCode(true)} style={{color:'#1a73e8', cursor:'pointer'}} >Registrarse</span></Text>
+                          <Text mt='1vh' fontSize={'.9em'} >{t('Account')} <span onClick={() => setShowCode(true)} style={{color:'#1a73e8', cursor:'pointer'}} >{t('SignUp')}</span></Text>
                           }
                       </Stack>
                     </Box>

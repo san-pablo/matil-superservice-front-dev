@@ -1,6 +1,6 @@
 
 import { Text } from '@chakra-ui/react'
-import EditText from '../../../../Components/EditText'
+import EditText from '../../../../Components/Reusable/EditText'
 
 interface ChannelInfoProps {
     value:string

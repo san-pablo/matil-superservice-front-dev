@@ -3,9 +3,9 @@
 */
 
 //REACT
-import { createContext, useContext, useReducer, ReactNode } from 'react'
+import { createContext, useContext, useReducer, ReactNode, Dispatch } from 'react'
 //TYPING
-import { Clients, TicketColumn,  Channels , Tickets, TicketData, ClientColumn, ClientData, ContactBusinessesProps, ContactBusinessesTable, MessagesData, MessagesProps } from './Content/Constants/typing'
+import { Clients, TicketColumn,  Channels , Tickets, TicketData, ClientColumn, ClientData, ContactBusinessesProps, ContactBusinessesTable, FlowsData ,FunctionsData, MessagesData, MessagesProps } from './Content/Constants/typing'
 
 //TICKETS TABLE DATA TYPE
 type TicketsTable = {
@@ -37,7 +37,7 @@ type HeaderSections = {
         clientData:ClientData | null, 
         clientTickets:Tickets | null,
         businessData:ContactBusinessesTable | null, 
-        businessClients:Clients | null
+        businessClients:Clients | null,
     }
 }
 //STATS SECTION DATA TYPE
@@ -53,6 +53,7 @@ type SessionData = {
     ticketsTable:TicketsTable[]
     clientsTable:ClientsTable | null
     contactBusinessesTable:ContactBusinessesSection | null
+    flowsFunctions:{flows:FlowsData[] | null, functions:FunctionsData[] | null},
     headerSectionsData:HeaderSections[]
     statsSectionData:StatsSectionData
 }
@@ -60,18 +61,17 @@ type SessionData = {
 //AUTH CONTEXT TYPE DEFINITION
 type AuthContextType = {
     sessionData: SessionData
-    dispatch: React.Dispatch<any>
+    dispatch: Dispatch<any>
 }
-
 
 const SessionContext = createContext<AuthContextType | undefined>(undefined)
 
-
-//SESSION DATA
+//INITIAL SESSION DATA
 const initialState: SessionData = {
     ticketsTable: [],
     clientsTable: null,
     contactBusinessesTable:null,
+    flowsFunctions:{flows:null, functions:null},
     headerSectionsData: [],
     statsSectionData: {
         tickets: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } },
@@ -80,7 +80,7 @@ const initialState: SessionData = {
     }
 }
 
- 
+//REDUCER
 const sessionReducer = (state: SessionData, action: { type: string; payload: any }): SessionData => {
     switch (action.type) {
 
@@ -94,8 +94,7 @@ const sessionReducer = (state: SessionData, action: { type: string; payload: any
             if (index !== -1) {
                 updatedTicketsActivity[index] = action.payload
                 return { ...state, ticketsTable: updatedTicketsActivity }
-            } else return { ...state, ticketsTable: [...state.ticketsTable, action.payload] }
-        
+            } else return { ...state, ticketsTable: [...state.ticketsTable, action.payload] }     
         case 'UPDATE_TICKETS_TABLE_SELECTED_ITEM':
                 let updatedTicketsActivity2 = state.ticketsTable
                 const index2 = state.ticketsTable.findIndex(ticket =>
@@ -120,6 +119,12 @@ const sessionReducer = (state: SessionData, action: { type: string; payload: any
         case 'UPDATE_BUSINESSES_TABLE_SELECTED_ITEM':
             if (state.contactBusinessesTable) return { ...state, contactBusinessesTable: { ...state.contactBusinessesTable, selectedIndex:action.payload.index }}
             else return state
+
+        //SAVE FLOWS AND FUNCTIONS INFORMATION
+        case 'UPDATE_FLOWS':
+            return { ...state, flowsFunctions: { ...state.flowsFunctions, flows:action.payload.data }}
+        case 'UPDATE_FUNCTIONS':
+            return { ...state, flowsFunctions: { ...state.flowsFunctions, functions:action.payload.data }}
 
         //ADD A NEW HEADER SECTION (TICKET, CLIENT, CONTACT_BUSINESS)
         case 'UPDATE_HEADER_SECTIONS':
@@ -240,6 +245,7 @@ const sessionReducer = (state: SessionData, action: { type: string; payload: any
                 ticketsTable: [],
                 clientsTable: null,
                 contactBusinessesTable:null,
+                flowsFunctions:{flows:null, functions:null},
                 headerSectionsData: [],
                 statsSectionData: {
                     tickets: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } },
@@ -271,21 +277,19 @@ const sessionReducer = (state: SessionData, action: { type: string; payload: any
     }
 }
 
+//SESSION PROVIDER
 export const SessionProvider = ({ children }: { children: ReactNode }) => {
     const [sessionData, dispatch] = useReducer(sessionReducer, initialState)
-
-        return (
+    return (
         <SessionContext.Provider value={{ sessionData, dispatch }}>
             {children}
         </SessionContext.Provider>
-    );
-};
+    )
+}
 
 // CUSTOM HOOK
 export const useSession = () => {
     const context = useContext(SessionContext)
-    if (!context) {
-        throw new Error('useAuth must be used within an SessionProvider')
-    }
+    if (!context) throw new Error('useAuth must be used within an SessionProvider')
     return context
 }

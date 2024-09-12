@@ -6,6 +6,7 @@ import { useState, useRef, useEffect, ChangeEvent, KeyboardEvent, Dispatch, SetS
 import { useAuth } from "../../../AuthContext"
 import { useSession } from "../../../SessionContext"
 import { useLocation, useNavigate } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import DOMPurify from 'dompurify'
 //FRONT
 import { Flex, Box, Text, Icon, Textarea, Avatar, Skeleton, IconButton} from '@chakra-ui/react'
@@ -13,7 +14,7 @@ import { Flex, Box, Text, Icon, Textarea, Avatar, Skeleton, IconButton} from '@c
 import fetchData from "../../API/fetchData"
 //COMPONENTS
 import Table from "../Clients/Table"
-import EditText from "../../Components/EditText"
+import EditText from "../../Components/Reusable/EditText"
 //FUNCTIONS
 import timeAgo from "../../Functions/timeAgo"
 //ICONS
@@ -44,6 +45,10 @@ function Business ({comesFromTicket, socket, addHeaderSection, businessData, set
     const session = useSession()
     const location = useLocation().pathname
     const navigate = useNavigate()
+    const { t } = useTranslation('business')
+    
+    const t_formats = useTranslation('formats').t
+
     
     //SCROLL REFS
     const scrollRef1 = useRef<HTMLDivElement>(null)
@@ -254,7 +259,7 @@ function Business ({comesFromTicket, socket, addHeaderSection, businessData, set
                             <Text fontSize='.8em' fontWeight={'medium'} color='gray' >Creado</Text>
                         </Box>
                         <Skeleton   flex='1'isLoaded={businessDataEdit !== null}> 
-                           <Text fontSize={'.9em'}>{timeAgo(businessDataEdit?.created_at)}</Text>
+                           <Text fontSize={'.9em'}>{timeAgo(businessDataEdit?.created_at, t_formats)}</Text>
                         </Skeleton>
                     </Flex>
 
@@ -263,7 +268,7 @@ function Business ({comesFromTicket, socket, addHeaderSection, businessData, set
                             <Text fontSize='.8em' fontWeight={'medium'} color='gray' >Última interacción</Text>
                         </Box>
                         <Skeleton   flex='1'isLoaded={businessDataEdit !== null}> 
-                           <Text fontSize={'.9em'}>{timeAgo(businessDataEdit?.last_interaction_at)}</Text>
+                           <Text fontSize={'.9em'}>{timeAgo(businessDataEdit?.last_interaction_at, t_formats)}</Text>
                         </Skeleton>
                     </Flex>
             </Box>

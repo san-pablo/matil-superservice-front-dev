@@ -1,0 +1,13 @@
+{
+    "SignIn": "Sign In",
+    "Mail": "Email",
+    "Password": "Password",
+    "Account": "Don't have an account?",
+    "SignUp": "Sign Up",
+    "Name": "Name",
+    "Surname": "Surname",
+    "RepeatPassword": "Repeat Password",
+    "Return": "Go Back",
+    "RegisterError": "There was an error during registration",
+    "RegisteredAccount": "Account successfully registered"
+}

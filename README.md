@@ -10,6 +10,8 @@ Super Service is a React application built with TypeScript and Vite.
 - [Project Structure](#project-structure)
 - [Configuration](#configuration)
 - [Routing Diagram and Corresponding Sections](#routing)
+- [Shared Styles Across the Application](#styles)
+
 
 ## Installation
 
@@ -150,4 +152,42 @@ Ensure these variables are set before running the application.
 - **/channels/mail**  
   *Mail Accounts Data*
 
+## Shared Styles Across the Application
+
+To maintain a cohesive and consistent visual design throughout the application, we use a set of shared styles that are applied globally. These include common colors, typography, spacing, shadows, and other design elements. This approach ensures uniformity and improves the maintainability of the codebase.
  
+### Color
+
+- Primary text: "black"
+- Primary text: "gray.600"
+- Text thath will turn black on hover: ""
+- For hovering white elements with gray: "brand.hover_gray" (#F2F5F9)
+- For important buttons: "brand.gradient_blue" (linear-gradient(to right, rgba(0, 102, 204, 1),rgba(51, 153, 255, 1)))
+- For hovering important buttons: "brand.gradient_blue" (linear-gradient(to right, rgba(0, 72, 204, 1),rgba(51, 133, 255, 1)))
+- For normal buttons: "gray.200"
+- For normal buttons hover: "gray.300"
+- For cancel and delete text: "red.500"
+- For cancel and delete buttons hover, when white background: "red.100"
+- For selected items: "blue.100"
+- For selected items hovering: "blue.200"
+
+- ### Box Shadow
+
+- For white items over a white background: "shadow1" (0px 0px 10px rgba(0, 0, 0, 0.15))
+- For important floating boxes:  "shadow2" (0px 0px 10px rgba(0, 0, 0, 0.2))
+- For dragging components: "dragging-shadow" (0 4px 8px rgba(0, 0, 0, 0.3))
+
+- ### Padding ands gaps
+
+- "px1" (5px) - small components
+- "px2" (7px) - items in a list padding
+- "px3" (10px) - some gaps
+- "px4" (15px) - some gaps and padding for small boxes
+- "px5" (20px) - padding for boxes
+- "px6" (30px) - padding for big boxes and sections gaps
+
+- ### Border Radius
+
+- ".3rem" - some items and small boxes
+- ".5rem" - selectors, inputs, some boxes
+- ".7rem" - big boxes

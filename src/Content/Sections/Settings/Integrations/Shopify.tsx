@@ -6,10 +6,10 @@ import fetchData from "../../../API/fetchData"
 //FRONT
 import { Text, Box, Skeleton, Flex, Button } from "@chakra-ui/react"
 //COMPONENTS
-import ConfirmBox from "../../../Components/ConfirmBox"
+import ConfirmBox from "../../../Components/Reusable/ConfirmBox"
 import ShopifyLoginButton from "./ShopifyLoginButton"
-import EditText from "../../../Components/EditText"
-import LoadingIconButton from "../../../Components/LoadingIconButton"
+import EditText from "../../../Components/Reusable/EditText"
+import LoadingIconButton from "../../../Components/Reusable/LoadingIconButton"
 import ChannelInfo from "../Channels/Components/Channelnfo"
 //ICONS
 import { FaPlus } from "react-icons/fa6"

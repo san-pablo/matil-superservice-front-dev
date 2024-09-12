@@ -1,5 +1,6 @@
 //REACT
 import { useRef, useState, RefObject} from 'react'
+import { useTranslation } from 'react-i18next'
 import useResizeObserver from '@react-hook/resize-observer'
 //MUI THEME
 import { ThemeProvider, createTheme } from '@mui/material/styles'
@@ -37,12 +38,15 @@ const useSize = (target: RefObject<HTMLElement>) => {
 //COLUMN CHART 
 const ColumnChart = ({ xaxis, yaxis1, yaxis2 = [], ytitle1, ytitle2 = '', type = '', isChannels = false}: ColumnChartProps) => {
   
+  //TRANSLATION
+  const { t } = useTranslation('stats')
+
   //RESIZING
   const target = useRef(null)
   const size = useSize(target)
  
   //MAP WEEKDAYS
-  const WeekDaysList = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+  const WeekDaysList = [t('Day_1'), t('Day_2'), t('Day_3'), t('Day_4'), t('Day_5'), t('Day_6'), t('Day_7')]
  
   //FRONT
   return (
@@ -64,7 +68,7 @@ const ColumnChart = ({ xaxis, yaxis1, yaxis2 = [], ytitle1, ytitle2 = '', type =
         {size  && 
         <>
         {yaxis1.length === 0 ? 
-        <span style={{color:'#4A5568'}}>No hay datos para mostrar</span>:
+        <span style={{color:'#4A5568'}}>{t('NoData')}</span>:
         (
           <BarChart
             width={size.width}
@@ -73,7 +77,7 @@ const ColumnChart = ({ xaxis, yaxis1, yaxis2 = [], ytitle1, ytitle2 = '', type =
             xAxis={[
               {
                 id: 'categories',
-                data: (type && type === 'weekdays' )? WeekDaysList.slice(0, xaxis.length): isChannels? xaxis.map(channel => logosMap[channel as Channels][0]): xaxis,
+                data: (type && type === 'weekdays' )? WeekDaysList.slice(0, xaxis.length): isChannels? xaxis.map(channel => t(channel)): xaxis,
                 scaleType: 'band',
               }
             ]}

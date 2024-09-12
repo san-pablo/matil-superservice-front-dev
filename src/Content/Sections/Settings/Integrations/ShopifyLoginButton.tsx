@@ -1,7 +1,7 @@
 import {useEffect, useState } from 'react'
 import { Button } from '@chakra-ui/react'
 import { FaShopify } from "react-icons/fa"
-import LoadingIconButton from '../../../Components/LoadingIconButton'
+import LoadingIconButton from '../../../Components/Reusable/LoadingIconButton'
 import axios from 'axios';
 
 declare global {

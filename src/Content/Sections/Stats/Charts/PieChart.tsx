@@ -1,10 +1,11 @@
 //REACT
-import { useRef, useState, RefObject } from 'react';
-import useResizeObserver from '@react-hook/resize-observer';
+import { useRef, useState, RefObject } from 'react'
+import useResizeObserver from '@react-hook/resize-observer'
+import { useTranslation } from 'react-i18next'
 //MUI THEME
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { ThemeProvider, createTheme } from '@mui/material/styles'
 //MUI CHARTS
-import { PieChart, pieArcLabelClasses } from '@mui/x-charts/PieChart';
+import { PieChart, pieArcLabelClasses } from '@mui/x-charts/PieChart'
 import { Flex, Box, Text } from '@chakra-ui/react'
 
 //TYPING
@@ -40,6 +41,9 @@ const gradients = [
 //PIE CHART 
 const PieChartComponent = ({ labels, data, mapData }: PieChartProps) => {
   
+  //TRANSLATION
+  const { t } = useTranslation('stats')
+
   //RESIZING
   const target = useRef(null)
   const size = useSize(target)
@@ -77,7 +81,7 @@ const PieChartComponent = ({ labels, data, mapData }: PieChartProps) => {
         {size && 
         <>
         {data.length === 0 ? 
-        <span style={{color:'#4A5568'}}>No hay datos para mostrar</span>:
+        <span style={{color:'#4A5568'}}>{t('NoData')}</span>:
           (<><PieChart
             width={size.width * 0.7}
             height={size.height * 0.9  }

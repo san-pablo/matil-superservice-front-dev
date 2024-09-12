@@ -1,3 +1,31 @@
+/* FONTS */
+@font-face {
+  font-family: 'MyFont1';
+  src: url('/fonts/font1.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'MyFont2';
+  src: url('/fonts/font2.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* ANIMATE HOVER STYLES */
+.animatable {
+  transition: transform 0.1s cubic-bezier(0.0, 0.9, 0.9, 1.0), opacity 0.1s cubic-bezier(0.0, 0.9, 0.9, 1.0);
+  transform: scale(1);
+  opacity: 1
+}
+.animatable:hover {
+  transform: scale(1.1);
+  opacity: 0.9
+}
+
+
+
 /*LOADING ICON BUTTON*/
 .bounce-dot {
     width: 8px;
@@ -48,32 +76,6 @@
   transition: transform 0.3s ease;
   transform: rotate(0deg)
 }
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-30px)
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0)
-  }
-}
-@keyframes slideUp {
-  from {
-    opacity: 1;
-    transform: translateY(30px)
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0)
-  }
-}
-.slide-down {
-  animation: slideDown 0.15s ease-in-out
-}
-.slide-up {
-  animation: slideUp 0.15s ease-in-out
-}
 
 /* CHAT STYLES */
 @keyframes showBox {
@@ -117,7 +119,6 @@
   from { transform: translateY(47px)}
   to { transform: translateY(60px)}
 }
-
 
 /*Input styles*/
 .text-area-custom {
@@ -174,9 +175,13 @@
       display: none; 
   }
 
-  
+  textarea::placeholder {
+    color: #abacaf; 
+    opacity: 1; 
+    font-weight: 500; 
+  }
 
-  /* MAIL EDITOR STYLES */
+/* MAIL EDITOR STYLES */
 .ql-container {
     flex: 1;
     display: flex;
@@ -1444,4 +1449,43 @@ text-decoration: underline;
   50% {
     transform: translateY(-10px);
   }
+}
+
+/*NODES BOX ANIMATION*/
+/* Define la animación para deslizar desde la derecha */
+@keyframes slideInRight {
+  from {
+    right: -600px;
+  }
+  to {
+    right: 0;
+  }
+}
+
+/* Define la animación para deslizar hacia la derecha */
+@keyframes slideOutRight {
+  from {
+    right: 0;
+  }
+  to {
+    right: -600px;
+  }
+}
+
+/* Clase para la animación de entrada */
+.slide-in {
+  animation: slideInRight 0.15s forwards;
+}
+
+/* Clase para la animación de salida */
+.slide-out {
+  animation: slideOutRight 0.15s forwards;
+}
+
+
+/*CODE EDITOR*/
+
+.cm-theme {
+  height: 100%;
+  border-radius: .5rem;
 }

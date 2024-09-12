@@ -1,0 +1,54 @@
+{
+    "timeAgo": {
+        "lessThanMinute": "Hace menos de un minuto",
+        "minutesAgo_one": "Hace {{count}} minuto",
+        "minutesAgo_other": "Hace {{count}} minutos",
+        "hoursAgo_one": "Hace {{count}} hora",
+        "hoursAgo_other": "Hace {{count}} horas",
+        "daysAgo_one": "Hace {{count}} día",
+        "daysAgo_other": "Hace {{count}} días",
+        "weeksAgo_one": "Hace {{count}} semana",
+        "weeksAgo_other": "Hace {{count}} semanas",
+        "monthsAgo_one": "Hace {{count}} mes",
+        "monthsAgo_other": "Hace {{count}} meses",
+        "moreThanYear": "Hace más de un año"
+    },
+    "months": {
+        "0": "enero",
+        "1": "febrero",
+        "2": "marzo",
+        "3": "abril",
+        "4": "mayo",
+        "5": "junio",
+        "6": "julio",
+        "7": "agosto",
+        "8": "septiembre",
+        "9": "octubre",
+        "10": "noviembre",
+        "11": "diciembre"
+      },
+      "dateFormat": "{{day}} de {{month}} de {{year}} a las {{time}}",
+      "timeUntil": {
+        "seconds_one": "en 1 segundo",
+        "seconds_other": "en {{count}} segundos",
+        "minutes_one": "en 1 minuto",
+        "minutes_other": "en {{count}} minutos",
+        "hours_one": "en 1 hora",
+        "hours_other": "en {{count}} horas",
+        "days_one": "en 1 día",
+        "days_other": "en {{count}} días",
+        "weeks_one": "en 1 semana",
+        "weeks_other": "en {{count}} semanas",
+        "months_one": "en 1 mes",
+        "months_other": "en {{count}} meses",
+        "years": "en más de un año"
+      },
+      "formatTime": {
+        "hours_one": "1 h",
+        "hours_other": "{{count}} h",
+        "minutes_one": "1 min",
+        "minutes_other": "{{count}} min",
+        "seconds_one": "1 s",
+        "seconds_other": "{{count}} s"
+      }
+}

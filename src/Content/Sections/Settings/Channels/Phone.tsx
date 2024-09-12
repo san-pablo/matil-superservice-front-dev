@@ -7,10 +7,10 @@ import fetchData from "../../../API/fetchData"
 import { Text, Box, Skeleton, Flex, Button, NumberInput, NumberInputField, IconButton } from "@chakra-ui/react"
 //COMPONENTS
 import ChannelInfo from "./Components/Channelnfo"
-import ConfirmBox from "../../../Components/ConfirmBox"
+import ConfirmBox from "../../../Components/Reusable/ConfirmBox"
 import FacebookLoginButton from "./SignUp-Buttons/FacebookLoginButton"
 import GetMatildaConfig from "./GetMatildaConfig"
-import EditText from "../../../Components/EditText"
+import EditText from "../../../Components/Reusable/EditText"
 import SaveData from "./Components/SaveData"
 //ICONS
 import { FaPlus } from "react-icons/fa6"

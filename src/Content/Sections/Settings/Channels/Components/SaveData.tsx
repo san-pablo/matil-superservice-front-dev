@@ -8,7 +8,7 @@ import showToast from '../../../../Components/ToastNotification'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Flex, Button, Text  } from '@chakra-ui/react'
 //COMPONENTS
-import LoadingIconButton from '../../../../Components/LoadingIconButton'
+import LoadingIconButton from '../../../../Components/Reusable/LoadingIconButton'
  
 const SaveData = ({data, setData, dataRef, channel}:{data:any, setData:Dispatch<SetStateAction<any>>, dataRef:any, channel:string}) => {
 

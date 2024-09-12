@@ -3,15 +3,17 @@
 import  { Fragment, useEffect } from 'react'
 import { useNavigate } from "react-router-dom" 
 import { useAuth } from '../../../AuthContext'
+import { useTranslation } from 'react-i18next'
 //FRONT
 import { Flex, Text, Box, Icon, Grid } from "@chakra-ui/react"
 //ICONS
 import { IconType } from "react-icons"
-import { IoPeopleSharp } from "react-icons/io5"
+import { IoPerson } from "react-icons/io5"
+import { BsLightningFill } from "react-icons/bs"
 import { BiSolidBuildings } from "react-icons/bi"
 import { FaDoorOpen, FaPlug } from "react-icons/fa"
 import { HiChatAlt2 } from "react-icons/hi"
-
+import { FaDiagramProject } from "react-icons/fa6"
 //TYPING
 import { IconKey, SubSectionProps, SectionsListProps } from "../../Constants/typing"
  
@@ -27,6 +29,9 @@ interface SectionBoxProps {
 //MAIN FUNCTION
 function Main ({subSections, sectionsList}:MainProps) {
    
+    //TRANSLATION
+    const { t } = useTranslation('settings')
+
     const auth = useAuth()
     useEffect (() => {
         document.title = `Ajustes - Inicio - ${auth.authData.organizationName} - Matil`
@@ -34,9 +39,11 @@ function Main ({subSections, sectionsList}:MainProps) {
 
     //COMPONENT FOR EACH BOX SECTION
     const SectionBox = ({section, subSections}:SectionBoxProps) => {
-        const sectionsMap: SectionsListProps = {'organization':'Organización','people':'Usuarios','channels': 'Canales', 'integrations':'Integraciones', 'main':'Inicio'}
-        const sectionsExplanationMap: SectionsListProps = {'organization':'Gestiona el personal y los datos de tu organización.','people':'Configura tus propias vistas y atajos.','channels': 'Gestiona los canales de comunicación y contenido.','integrations':'Integra y gestiona tus aplicaciones y servicios externos.', 'main':'Inicio'}
-        const iconsMap: Record<IconKey, IconType> = {organization: BiSolidBuildings, people: IoPeopleSharp, channels: HiChatAlt2, integrations:FaPlug, main:FaDoorOpen}
+        const sectionsMap: SectionsListProps = {'organization':t('Organization'), 'user':t('User'), 'rules':t('BusinessRules'),  'actions':t('Actions'), 'channels': t('Channels'), 'integrations':t('Integrations'),'main':t('Main')}
+        const iconsMap: Record<IconKey, IconType> = {organization: BiSolidBuildings, rules:FaDiagramProject, user: IoPerson, actions:BsLightningFill, channels: HiChatAlt2, integrations:FaPlug, main:FaDoorOpen}
+    
+        const sectionsExplanationMap: SectionsListProps = {'organization':t('Organization_Exp'),'user':t('User_Exp'), 'rules':t('BusinessRulesExp'), 'actions':t('Actions_Exp'), 'channels': t('Channels_Exp'),'integrations':t('Integrations_Exp'), 'main':t('Main')}
+      
         const navigate = useNavigate()
 
         return(

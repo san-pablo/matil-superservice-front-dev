@@ -2,6 +2,7 @@
 //REACT
 import  {useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../../../AuthContext'
+import { useTranslation } from 'react-i18next'
 //FETCH DATA
 import fetchData from "../../../API/fetchData"
 //FRONT
@@ -9,10 +10,10 @@ import { Flex, Text, Box, IconButton, Image, Icon, Button, Skeleton, Radio } fro
 import '../../../Components/styles.css'
 import { motion, AnimatePresence } from 'framer-motion'
 //COMPONENTS
-import EditText from '../../../Components/EditText'
-import ImageUpload from '../../../Components/ImageUpload'
-import LoadingIconButton from '../../../Components/LoadingIconButton'
-import ColorPicker from '../../../Components/ColorPicker'
+import EditText from '../../../Components/Reusable/EditText'
+import ImageUpload from '../../../Components/Once/ImageUpload'
+import LoadingIconButton from '../../../Components/Reusable/LoadingIconButton'
+import ColorPicker from '../../../Components/Once/ColorPicker'
 import GetMatildaConfig from './GetMatildaConfig'
 //FUNCTIONS
 import timeStampToDate from '../../../Functions/timeStampToString'
@@ -21,10 +22,9 @@ import { RxCross2 } from 'react-icons/rx'
 import { IoIosArrowDown, IoMdArrowRoundForward } from 'react-icons/io'
 import { PiChatsBold } from "react-icons/pi"
 import { FaPlus } from 'react-icons/fa6'
- 
 //TYPING
 import { configProps } from '../../../Constants/typing'
-
+ 
 //TYPING
 interface ChatBotData  {
     'welcome_message':string
@@ -46,6 +46,7 @@ function Chatbot () {
 
     //CONSTANTS
     const auth = useAuth()
+    const { t } = useTranslation('settings')
 
     //REF FOR ALL THE COLOR PICKER CONTAINERS
     const containerRef = useRef<HTMLDivElement>(null)
@@ -104,7 +105,7 @@ function Chatbot () {
 
         return(<Box mt='1vh'>
             {!showAddOption && <Flex   flexDir={'row-reverse'}>
-                <Button leftIcon={<FaPlus/>} size='xs' onClick={() => setShowAddOption(!showAddOption)}>Añadir atajo</Button>
+                <Button leftIcon={<FaPlus/>} size='xs' onClick={() => setShowAddOption(!showAddOption)}>{t('AddShortcut')}</Button>
             </Flex>}
             {showAddOption && 
             <Flex> 
@@ -127,7 +128,7 @@ function Chatbot () {
             }
         }
         fetchInitialData()
-        document.title = `Canales - Chatbot - ${auth.authData.organizationName} - Matil`
+        document.title = `${t('Channels')} - ${t('Web')} - ${auth.authData.organizationName} - Matil`
      }, [])
 
 
@@ -146,8 +147,8 @@ function Chatbot () {
 
     
         <Flex justifyContent={'space-between'}> 
-            <Text fontSize={'1.4em'} fontWeight={'medium'}>Configuración del Chatbot (Chat Web)</Text>
-            <Button size='sm'  isDisabled={(JSON.stringify(chatbotDataRef.current) === JSON.stringify(chatBotData)) && (JSON.stringify(matildaConfigRef.current) === JSON.stringify(matildaConfig))} onClick={sendChatBotCofig}>{waitingSend?<LoadingIconButton/>:'Guardar cambios'}</Button>
+            <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('WebConfig')}</Text>
+            <Button size='sm'  isDisabled={(JSON.stringify(chatbotDataRef.current) === JSON.stringify(chatBotData)) && (JSON.stringify(matildaConfigRef.current) === JSON.stringify(matildaConfig))} onClick={sendChatBotCofig}>{waitingSend?<LoadingIconButton/>:t('SaveChanges')}</Button>
         </Flex>            
         <Box height={'1px'} width={'100%'} bg='gray.300' mt='1vh' mb='2vh'/>
     
@@ -156,20 +157,20 @@ function Chatbot () {
                 <Flex gap='80px' flex='1' overflow={'scroll'} ref={containerRef} px='2px' > 
                     <Box flex='1' > 
 
-                    <Text fontWeight={'medium'}>Nombre de la compañía</Text>
-                    <Text fontSize={'.8em'} color='gray.500'>Nombre que aparecerá en el encabezado</Text>
+                    <Text fontWeight={'medium'}>{t('CompanyName')}</Text>
+                    <Text fontSize={'.8em'} color='gray.500'>{t('CompanyNameDes')}</Text>
                     <Box width='300px' mt='1vh'> 
                         <EditText hideInput={false} value={chatBotData?.company_name} setValue={(value) => setChatBotData({...chatBotData as ChatBotData, company_name:value})}/>
                     </Box>
 
-                    <Text fontWeight={'medium'} mt='2vh'>Logo de la compañía</Text>
-                    <Text fontSize={'.8em'} color='gray.500'>Se situará a la izquierda del nombre de la compañía, en el encabezado. Utilice un archivo JPG, PNG o GIF de menos de 100 KB. 50px por 50px es lo ideal.</Text>
+                    <Text fontWeight={'medium'} mt='2vh'>{t('CompanyLogo')}</Text>
+                    <Text fontSize={'.8em'} color='gray.500'>{t('CompanyLogoDes')}</Text>
                     <Box width='300px' mt='1vh'> 
                         <ImageUpload id={0} initialImage={chatBotData?.company_logo} onImageUpdate={(file) => handleImageUpdate('company_logo', file as File)}/>
                     </Box>
 
-                    <Text fontWeight={'medium'} mt='2vh'>Posición del chat</Text>
-                    <Text fontSize={'.8em'} color='gray.500'>El chat y el botón se alinearán en el borde izquierdo o derecho de la página web final, según tu elección.</Text>
+                    <Text fontWeight={'medium'} mt='2vh'>{t('ChatPosition')}</Text>
+                    <Text fontSize={'.8em'} color='gray.500'>{t('ChatPositionDes')}</Text>
                     <Flex gap='30px' mt='1vh'>
                         <Flex   bg={chatBotData?.chat_position === 'left' ? 'blue.50':'gray.50'}cursor={'pointer'} alignItems={'end'} borderColor={'gray.200'} borderWidth={'1px'} borderRadius={'.7em'} p='10px' height={'150px'} flex='1' onClick={(e) => setChatBotData({...chatBotData as ChatBotData, 'chat_position':'left'})} >
                             <Flex flexDir={'column'} >
@@ -177,10 +178,8 @@ function Chatbot () {
                                 <Box mt='5px' height={'20px'} borderRadius={'50%'} width={'20px'}  bg='gray.200' alignItems={'end'}  borderColor={'gray.300'} borderWidth={'1px'} />
                              </Flex>
                         </Flex>
-        
                         <Flex bg={chatBotData?.chat_position === 'right' ? 'blue.50':'gray.50'} cursor={'pointer'} alignItems={'end'} justifyContent={'end'}  borderColor={'gray.200'} borderWidth={'1px'} borderRadius={'.7em'} p='10px' height={'150px'} flex='1' onClick={(e) => setChatBotData({...chatBotData as ChatBotData, 'chat_position':'right'})} >
                             <Flex alignItems={'end'} flexDir={'column'}>
-                         
                                 <Flex alignItems={'end'} flexDir={'column'} >
                                     <Box height={'80px'} borderRadius={'.5em'} width={'50px'}  bg='gray.200' alignItems={'end'}  borderColor={'gray.300'} borderWidth={'1px'} />
                                     <Box mt='5px' height={'20px'} borderRadius={'50%'} width={'20px'}  bg='gray.200' alignItems={'end'}  borderColor={'gray.300'} borderWidth={'1px'} />
@@ -189,14 +188,14 @@ function Chatbot () {
                         </Flex>
                     </Flex>
 
-                    <Text fontWeight={'medium'}  mt='2vh'>Mensaje de bienvenida</Text>
-                    <Text fontSize={'.8em'} color='gray.500'>Mensaje inicial que le aprecerá al usario cada vez que abra una nuevo conversación</Text>
+                    <Text fontWeight={'medium'}  mt='2vh'>{t('WelcomeMessage')}</Text>
+                    <Text fontSize={'.8em'} color='gray.500'>{t('WelcomeMessageDes')}</Text>
                     <Box width='100%' mt='1vh'> 
                         <EditText hideInput={false} value={chatBotData?.welcome_message} setValue={(value) => setChatBotData({...chatBotData as ChatBotData, welcome_message:value})}/>
                     </Box>
 
-                    <Text fontWeight={'medium'} mt='2vh'>Color del fondo</Text>
-                    <Text fontSize={'.8em'} color='gray.500'>El fondo del encabezado y del botón para desplegar el chat serán de este color. Se recomienda utilizar el color de la marca.</Text>
+                    <Text fontWeight={'medium'} mt='2vh'>{t('BackgroundColor')}</Text>
+                    <Text fontSize={'.8em'} color='gray.500'>{t('BackgroundColor')}</Text>
                     <Flex mt='1vh' alignItems={'center'} gap='10px'> 
                         <Box flex='1' > 
                             <ColorPicker containerRef={containerRef} color={chatBotData?.header_background[0]} 
@@ -217,20 +216,20 @@ function Chatbot () {
                         </Box>
                     </Flex>
 
-                    <Text fontWeight={'medium'} mt='2vh'>Color del texto</Text>
-                    <Text fontSize={'.8em'} color='gray.500'>El texto del encabezado y el icono del botón para desplegar el chat serán de este color. Se recomienda que haya cierto contraste con el color de fondo, para que el texto sea legible.</Text>
+                    <Text fontWeight={'medium'} mt='2vh'>{t('TextColor')}</Text>
+                    <Text fontSize={'.8em'} color='gray.500'>{t('TextColorDes')}</Text>
                     <Box width='300px' mt='1vh'> 
                         <ColorPicker containerRef={containerRef} color={chatBotData?.header_color} setColor={(value) => setChatBotData({...chatBotData as ChatBotData, header_color:value})}/>
                     </Box>
 
-                    <Text fontWeight={'medium'} mt='2vh'>Avatar del chat</Text>
-                    <Text fontSize={'.8em'} color='gray.500'>En caso de no escoger ningún avatar, se utilizará el predeterminado de MATIL. Utilice un archivo JPG, PNG o GIF de menos de 100 KB. 50px por 50px es lo ideal.</Text>
+                    <Text fontWeight={'medium'} mt='2vh'>{t('Avatar')}</Text>
+                    <Text fontSize={'.8em'} color='gray.500'>{t('AvatarDes')}</Text>
                     <Box width='300px' mt='1vh'> 
                         <ImageUpload id={1} initialImage={chatBotData?.chat_avatar} onImageUpdate={(file) => handleImageUpdate('chat_avatar', file as File)}/>
                     </Box>
 
-                    <Text fontWeight={'medium'} mt='2vh'>Color de fondo de los mensajes</Text>
-                    <Text fontSize={'.8em'} color='gray.500'>Se aplicará a los mensajes que mande el usuario y a los atajos.</Text>
+                    <Text fontWeight={'medium'} mt='2vh'>{t('BackgroundColorMessages')}</Text>
+                    <Text fontSize={'.8em'} color='gray.500'>{t('BackgroundColorMessagesDes')}</Text>
                     <Flex mt='1vh' alignItems={'center'} gap='10px'> 
                         <Box flex='1' > 
                             <ColorPicker containerRef={containerRef} color={chatBotData?.client_background[0]} 
@@ -251,14 +250,14 @@ function Chatbot () {
                         </Box>
                     </Flex>
 
-                    <Text fontWeight={'medium'} mt='2vh'>Color del texto de los mensajes</Text>
-                    <Text fontSize={'.8em'} color='gray.500'>Se aplicará a los mensajes que mande el usuario y a los atajos.</Text>
+                    <Text fontWeight={'medium'} mt='2vh'>{t('TextColorMessages')}</Text>
+                    <Text fontSize={'.8em'} color='gray.500'>{t('TextColorMessagesDes')}</Text>
                     <Box width='300px' mt='1vh'> 
                         <ColorPicker containerRef={containerRef} color={chatBotData?.client_color} setColor={(value) => setChatBotData({...chatBotData as ChatBotData, client_color:value})}/>
                     </Box>
 
-                    <Text fontWeight={'medium'} mt='2vh'>Atajos</Text>
-                    <Text fontSize={'.8em'} color='gray.500'>Opciones que estarán presentes al inciar una conversación con un usuario.</Text>
+                    <Text fontWeight={'medium'} mt='2vh'>{t('Shortcuts')}</Text>
+                    <Text fontSize={'.8em'} color='gray.500'>{t('ShortcutsDes')}</Text>
                     <Box width={'100%'} mt='2vh'> 
                         {chatBotData?.options.map((option, index) => (
                             <Flex key={`option-${index}`} mt={index === 0?'0':'1vh'} justifyContent={'space-between'} alignItems={'center'} p='5px' borderRadius=".5em" borderColor="gray.300" borderWidth="1px" bg="gray.50">

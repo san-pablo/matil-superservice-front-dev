@@ -1,0 +1,13 @@
+{
+    "SignIn":"Iniciar sesión",
+    "Mail":"Correo electrónico",
+    "Password":"Contraseña",
+    "Account":"¿No tienes cuenta?",
+    "SignUp":"Registrarse",
+    "Name":"Nombre",
+    "Surname":"Apellidos",
+    "RepeatPassword":"Repetir contraseña",
+    "Return":"Volver atrás",
+    "RegisterError":"Hubo un error el el registro",
+    "RegisteredAccount":"Cuenta registrada con éxito"
+ }

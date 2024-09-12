@@ -3,7 +3,7 @@ import { Button } from '@chakra-ui/react'
 import { FaFacebookSquare } from "react-icons/fa"
 import fetchData from '../../../../API/fetchData'
 import { useAuth } from '../../../../../AuthContext'
-import LoadingIconButton from '../../../../Components/LoadingIconButton'
+import LoadingIconButton from '../../../../Components/Reusable/LoadingIconButton'
 declare global {
     interface Window {
       FB: any

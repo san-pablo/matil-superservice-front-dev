@@ -5,7 +5,7 @@
 //REACT
 import { useState } from 'react'
 //DESKTOP NOTIFICATIONS
-import showNotification from './DesktopNotification'
+import showNotification from './Once/DesktopNotification'
 //FRONT
 import { toast, ToastPosition } from 'react-toastify'
 import { Text, Flex } from '@chakra-ui/react'

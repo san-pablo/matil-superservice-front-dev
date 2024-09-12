@@ -1,4 +1,4 @@
-
+//ICONS
 import { IconType } from "react-icons"
 import { IoMdMail, IoLogoWhatsapp } from "react-icons/io"
 import { IoChatboxEllipses, IoLogoGoogle } from "react-icons/io5"
@@ -29,8 +29,8 @@ interface Order {
     order: string
 }
 export interface View {
-    created_at:string
-    name: string
+    created_at?:string
+    name?: string
     columns: TicketColumn[]
     all_conditions: Condition[]
     any_conditions: Condition[]
@@ -44,6 +44,7 @@ export interface Views {
     number_of_tickets_in_bin?:number
 }
 export interface ViewType {type:'private' | 'shared' | 'deleted', index:number, name:string}
+ 
 
 //HEADER SECTIONS
 export type HeaderSectionType = (description: string, code: number, section: 'ticket' | 'client' | 'contact-business', local_id?:number) => void
@@ -69,24 +70,23 @@ export type TicketColumn =
 
   
 
-type ColumnsTicketsMap = {[key in TicketColumn]: [string, number]}
+type ColumnsTicketsMap = {[key in TicketColumn]: number}
   
 export const columnsTicketsMap: ColumnsTicketsMap = {
-    id: ['Id', 50],
-    local_id: ['Id', 50],
-    status: ['Estado', 100],
-    channel_type: ['Canal', 150],
-    subject: ['Tema', 200],
-    user_id: ['Agente asignado', 200],
-    created_at: ['Creado', 150],
-    updated_at: ['Última interacción', 150],
-    solved_at: ['Resuelto', 150],
-    closed_at: ['Cerrado', 150],
-    title: ['Descripción', 300],
-    urgency_rating: ['Prioridad', 130],
-    deletion_date: ['Fecha de eliminación', 180],
-    unseen_changes: ['Mensajes no leídos', 250],
- 
+    id: 50,
+    local_id: 50 ,
+    status:  100,
+    channel_type: 150,
+    subject:  200,
+    user_id: 200,
+    created_at: 150,
+    updated_at: 150,
+    solved_at: 150,
+    closed_at: 150,
+    title: 300,
+    urgency_rating: 130,
+    deletion_date: 180,
+    unseen_changes: 250,
   }
 
 export interface TicketsTableProps {
@@ -146,48 +146,47 @@ export type ClientColumn =
 
 
 interface ColumnsMap {
-    [key:string]: [string, number];
+    [key:string]: number;
 }
 
 export const columnsClientsMap: ColumnsMap = {
-    name: ["Nombre", 200],
-    contact: ["Contacto", 150],
-    labels: ["Etiquetas", 350],
-    last_interaction_at: ["Última interacción", 150],
-    created_at: ["Creado", 150],
-    rating: ["Rating", 60],
-    language: ["Idioma", 150],
-    notes: ["Notas", 350],
-    is_blocked: ["Estado", 150]
+    name: 200,
+    contact: 150,
+    labels: 350,
+    last_interaction_at: 150,
+    created_at: 150,
+    rating: 60,
+    language: 150,
+    notes: 350,
+    is_blocked: 150
  }
 
  export const languagesFlags: {[key: string]: [string, string]} = {
-    "EN": ["Inglés", "🇬🇧"], 
+    "EN": ["English", "🇬🇧"], 
     "ES": ["Español", "🇪🇸"],  
-    "EU": ["Euskera", "🇪🇸"],  
-    "CA": ["Catalán", "🇪🇸"],  
-    "GL": ["Gallego", "🇪🇸"],  
-    "ZH": ["Chino Mandarín", "🇨🇳"],  
-    "HI": ["Hindú", "🇮🇳"], 
-    "AR": ["Árabe", "🇸🇦"],  
-    "FR": ["Francés", "🇫🇷"],  
-    "RU": ["Ruso", "🇷🇺"],  
-    "PT": ["Portugués", "🇵🇹"], 
-    "DE": ["Alemán", "🇩🇪"], 
-    "JA": ["Japonés", "🇯🇵"],  
+    "EU": ["Euskara", "🇪🇸"],  
+    "CA": ["Català", "🇪🇸"],  
+    "GL": ["Galego", "🇪🇸"],  
+    "ZH": ["中文", "🇨🇳"],  
+    "HI": ["हिन्दी", "🇮🇳"], 
+    "AR": ["العربية", "🇸🇦"],  
+    "FR": ["Français", "🇫🇷"],  
+    "RU": ["Русский", "🇷🇺"],  
+    "PT": ["Português", "🇵🇹"], 
+    "DE": ["Deutsch", "🇩🇪"], 
+    "JA": ["日本語", "🇯🇵"],  
     "IT": ["Italiano", "🇮🇹"], 
-    "KO": ["Coreano", "🇰🇷"], 
-    "TR": ["Turco", "🇹🇷"],  
-    "VI": ["Vietnamita", "🇻🇳"], 
-    "BN": ["Bengalí", "🇧🇩"], 
-    "ID": ["Indonesio", "🇮🇩"], 
-    "SV": ["Sueco", "🇸🇪"],  
-    "NL": ["Holandés", "🇳🇱"], 
-    "EL": ["Griego", "🇬🇷"], 
-    "HE": ["Hebreo", "🇮🇱"],  
-    "UNKNOWN":["No reconocido", "🏴"]
+    "KO": ["한국어", "🇰🇷"], 
+    "TR": ["Türkçe", "🇹🇷"],  
+    "VI": ["Tiếng Việt", "🇻🇳"], 
+    "BN": ["বাংলা", "🇧🇩"], 
+    "ID": ["Bahasa Indonesia", "🇮🇩"], 
+    "SV": ["Svenska", "🇸🇪"],  
+    "NL": ["Nederlands", "🇳🇱"], 
+    "EL": ["Ελληνικά", "🇬🇷"], 
+    "HE": ["עברית", "🇮🇱"],  
+    "UNKNOWN": ["Unrecognized", "🏴"]
 }
-
 
 export interface ClientData {
     id:number
@@ -214,12 +213,11 @@ export interface Clients {
 
 //CONTACT BUSINESSSES TABLE
 export const columnsBusinessesMap: ColumnsMap = {
-    name: ["Nombre", 200],
-    labels: ["Etiquetas", 350],
-    created_at: ["Creado", 150],
-    last_interaction_at: ["Última interacción", 150],
-    notes: ["Notas", 350],
-
+    name: 200,
+    labels:  350,
+    created_at:  150,
+    last_interaction_at:  150,
+    notes: 350,
  }
 
 export interface ContactBusinessesTable {
@@ -244,6 +242,73 @@ export interface ContactBusiness {
     'last_interaction_at': string
 }
 
+//FLOWS
+export type FlowsColumn = 
+  | 'id'
+  | 'name'
+  | 'description'
+  | 'is_active'
+  | 'number_of_channels'
+  | 'created_at'
+  | 'updated_at'
+
+export interface FlowsData {
+    id:number
+    name: string
+    description:string
+    is_active: boolean
+    number_of_channels:number
+    created_at:string
+    updated_at:string
+  }
+export const columnsFlowsMap: ColumnsMap = {
+    name: 200,
+    description:  350,
+    is_active: 100,
+    number_of_channels:180,
+    created_at:  180,
+    updated_at: 180
+ }
+
+ //FUNCTIONS
+ export interface FunctionsData {
+    uuid:string
+    name:string
+    description:string
+    number_of_errors:number
+}
+
+ 
+export type nodeTypesDefinition = 'add' | 'extractor' | 'brancher' | 'sender' | 'function' | 'terminator' | 'transfer' | 'reset' | 'flow_swap' | 'motherstructure_updates'
+export type actionTypesDefinition = 'message' | 'condition' | 'extract' | 'flow_result' | 'edit_fields' | 'function'
+export type Branch = {
+    name:string, 
+    conditions:{variable_index:number, op:string, value:any}[],
+    next_node_index:number
+  }
+export type FlowMessage = {
+    type:'generative' | 'preespecified',
+    generation_instructions:string,
+    preespecified_messages:{[key: string]:string}
+}
+
+export type FieldAction = {
+    motherstructure:'ticket' | 'client' | 'contact_business'
+    is_customizable:boolean
+    name:string
+    op:string
+    value:any
+}
+export type FunctionType = {
+    uuid:string
+    variable_args:{[key:string]:number}
+    motherstructure_args:{[key:string]:{motherstructure:'ticket' | 'client' | 'contact_business',is_customizable:boolean, name:string }}
+    hardcoded_args:{[key:string]:string}
+    error_nodes_ids:{[key:number]:number | null}
+    next_node_index:string | null
+    output_to_variables:{[key:string]:number}
+}
+
 //MESSAGES
 export type MessagesProps = {
     id:number
@@ -259,25 +324,25 @@ export type MessagesData = {
 }
 
 //STATES MAP
-export const statesMap = 
+export const statesMap:{[key in 'new' | 'open' |'solved' | 'pending' | 'closed']: [string, string]} = 
 {
-    'new':['Nuevo', 'gray.400', 'gray.500'],
-    'open':['Abierto', 'red.500', 'red.600'],
-    'pending':['Pendiente','blue.500', 'blue.600',],
-    'solved':['Resuelto','green.400', 'green.500'],
-    'closed':['Cerrado','gray.700', 'gray.800']
+    'new':['yellow.100', 'yellow.600'],
+    'open':['red.100', 'red.600'],
+    'pending':['cyan.100', 'cyan.600',],
+    'solved':['green.100', 'green.600'],
+    'closed':['gray.100', 'gray.600']
 }
 
 //FILTERS AND MAPPING
 export type Channels = 'email' | 'whatsapp' | 'instagram' | 'webchat' | 'google_business' | 'phone'
-export const logosMap:{[key in Channels]: [string, IconType, string]} = 
-    {
-        'email':['Mail', IoMdMail, 'red.600'],
-        'webchat':['Web',IoChatboxEllipses, 'cyan.400'], 
-        'whatsapp':['Whatsapp',IoLogoWhatsapp, 'green'], 
-        'instagram': ['Instagram', AiFillInstagram, 'pink.700'], 
-        'google_business':['Google Business', IoLogoGoogle, 'blue.400'],
-        'phone':['Llamada telefónica', FaPhone, 'blue.400']
+export const logosMap:{[key in Channels]: [IconType, string]} = 
+    { 
+        'email':[ IoMdMail, 'red.600'],
+        'whatsapp':[IoLogoWhatsapp, 'green'], 
+        'webchat':[IoChatboxEllipses, 'cyan.400'], 
+        'google_business':[ IoLogoGoogle, 'blue.400'],
+        'instagram': [AiFillInstagram, 'pink.700'], 
+        'phone':[ FaPhone, 'blue.400']
 
     }
 export type ContactChannel = 'email_address' | 'phone_number' |  'instagram_username' | 'webchat_uuid' |  'google_business_id'
@@ -290,9 +355,11 @@ export const contactDicRegex:{[key in ContactChannel]:[string, RegExp, number, C
   }
 
 //SETTINGS
-export type IconKey = 'organization' | 'people' | 'channels' | 'integrations' | 'main'
+export type IconKey = 'organization' | 'rules' | 'user' | 'actions' | 'channels' | 'integrations' | 'main'
 export type SubSectionProps = string[][]
 export type SectionsListProps = {[key in IconKey]: string}
+
+export type ActionsType = 'email_csat' |  'whatsapp_csat' | 'webchat_csat' | 'agent_email_notification' | 'motherstructure_update'
 
 //MATILDA CONFIGURATION PROPS
 export interface configProps {
@@ -309,3 +376,6 @@ export interface configProps {
     out_of_business_agent_transfer_message: string
     ask_for_requirement_confirmation:boolean
 }
+
+//CONDITIONS TYPES
+export type DataTypes = 'bool' | 'int' | 'float' | 'str' | 'timestamp' | 'list'

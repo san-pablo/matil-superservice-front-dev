@@ -1,13 +1,14 @@
 //REACT
-import { useState, useEffect, useRef, Fragment } from "react"
+import { useState, useEffect, useRef, Fragment, useMemo } from "react"
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from "../../../AuthContext" 
+import { useTranslation } from "react-i18next"
 //FETCH DATA
 import fetchData from "../../API/fetchData"
 //FRONT
 import { Flex, Box, Text, Tooltip, Button, IconButton, Skeleton } from '@chakra-ui/react'
 //COMPONENTS
-import EditText from "../../Components/EditText"
+import EditText from "../../Components/Reusable/EditText"
 import AccionesButton from "../Tickets/ActionsButton"
 //FUNCTIONS
 import timeAgo from "../../Functions/timeAgo"
@@ -18,9 +19,35 @@ import { IoIosArrowBack, IoIosArrowForward, IoMdArrowDropdown, IoMdArrowDropup }
 //TYPING
 import { ContactBusinessesProps, columnsBusinessesMap,  HeaderSectionType } from "../../Constants/typing"
 import { useSession } from "../../../SessionContext"
-import ConfirmBox from "../../Components/ConfirmBox"
+import ConfirmBox from "../../Components/Reusable/ConfirmBox"
 import CreateBusiness from "./CreateBusiness"
 
+
+    
+//GET THE CELL STYLE
+const CellStyle = ({ column, element }:{column:string, element:any}) => {
+    
+    const t_formats = useTranslation('formats').t
+
+    if (column === 'created_at' || column === 'last_interaction_at' )  
+    return(
+        <Tooltip  label={timeStampToDate(element as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
+            <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(element as string, t_formats)}</Text>
+        </Tooltip>)
+    else if (column === 'labels') {
+        return(<> 
+            {(!element || element === '')?<Text>-</Text>:
+            <Flex gap='5px' flexWrap={'wrap'}>
+                {element.split(',').map((label:string, index:number) => (
+                <Flex bg='gray.200' borderColor={'gray.300'} borderWidth={'1px'} p='4px' borderRadius={'.5rem'} fontSize={'.8em'} key={`client-label-${index}`}>
+                    <Text>{label}</Text>
+                </Flex>
+                ))}
+            </Flex>}
+        </>)
+    }
+    else return ( <Text whiteSpace={'nowrap'} fontWeight={column === 'name'?'medium':'normal' } textOverflow={'ellipsis'} overflow={'hidden'}>{element === ''?'-':element}</Text>)
+}
 
 //MAIN FUNCTION
 function ContactBusinessesTable ({addHeaderSection}:{addHeaderSection:HeaderSectionType}) {
@@ -138,34 +165,15 @@ function ContactBusinessesTable ({addHeaderSection}:{addHeaderSection:HeaderSect
     }
 
     
-    //GET THE CELL STYLE
-    const CellStyle = ({ column, element }:{column:string, element:any}) => {
-     
-        if (column === 'created_at' || column === 'last_interaction_at' )  
-        return(
-            <Tooltip  label={timeStampToDate(element as string)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
-                <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(element as string)}</Text>
-            </Tooltip>)
-        else if (column === 'labels') {
-            return(<> 
-                {(!element || element === '')?<Text>-</Text>:
-                <Flex gap='5px' flexWrap={'wrap'}>
-                    {element.split(',').map((label:string, index:number) => (
-                    <Flex bg='gray.200' borderColor={'gray.300'} borderWidth={'1px'} p='4px' borderRadius={'.5rem'} fontSize={'.8em'} key={`client-label-${index}`}>
-                        <Text>{label}</Text>
-                    </Flex>
-                    ))}
-                </Flex>}
-            </>)
-        }
-        else return ( <Text whiteSpace={'nowrap'} fontWeight={column === 'name'?'medium':'normal' } textOverflow={'ellipsis'} overflow={'hidden'}>{element === ''?'-':element}</Text>)
-    }
+    const memoizedCreateBusiness = useMemo(() => (
+        <ConfirmBox setShowBox={setShowCreateBusiness}>
+            <CreateBusiness setShowBox={setShowCreateBusiness} actionTrigger={(data:any) => fetchBusinessDataWithFilter(null)}/>
+        </ConfirmBox>
+    ), [showCreateBusiness])
 
     //FRONT
     return(<>
-        {showCreateBusiness && <ConfirmBox setShowBox={setShowCreateBusiness}>
-            <CreateBusiness setShowBox={setShowCreateBusiness} actionTrigger={(data:any) => fetchBusinessDataWithFilter(null)}/>
-        </ConfirmBox> }
+        {showCreateBusiness && memoizedCreateBusiness}
 
         <Box bg='white' height={'calc(100vh - 60px)'} maxW={'calc(100vw - 60px)'} overflowX={'scroll'} overflowY={'hidden'} p='2vw'>
     
@@ -210,8 +218,8 @@ function ContactBusinessesTable ({addHeaderSection}:{addHeaderSection:HeaderSect
                             {Object.keys(columnsBusinessesMap).map((column, index) => (<Fragment key={`businesses-header-${index}`}> 
                                 
                                 {(column !== 'id' && column !== 'contact_business_id' && column !== 'email_address' && column !== 'instagram_username' && column !== 'webchat_uuid' && column !== 'phone_number') && 
-                                    <Flex key={`business-header-${index}`} gap='2px' alignItems={'end'} flex={`${columnsBusinessesMap[column][1]/10} 0 ${columnsBusinessesMap[column][1]}px`}> 
-                                        <Text cursor='pointer' onClick={() => requestSort(column)}>{columnsBusinessesMap[column][0]}</Text>
+                                    <Flex key={`business-header-${index}`} gap='2px' alignItems={'end'} flex={`${columnsBusinessesMap[column]/10} 0 ${columnsBusinessesMap[column]}px`}> 
+                                        <Text cursor='pointer' onClick={() => requestSort(column)}>{columnsBusinessesMap[column]}</Text>
                                         {getSortIcon(column)}
                                     </Flex>
                                 }
@@ -222,7 +230,7 @@ function ContactBusinessesTable ({addHeaderSection}:{addHeaderSection:HeaderSect
                                 {Object.keys(columnsBusinessesMap).map((column:string, index2:number) => (
                                     <Fragment  key={`business-cell-${index}-${index2}`} > 
                                         {(column !== 'id' && column !== 'contact_business_id' && column !== 'email_address' && column !== 'instagram_username' && column !== 'webchat_uuid' && column !== 'phone_number') && 
-                                        <Flex  key={`business-cell-${index}-${index2}`}  gap='2px' alignItems={'end'} flex={`${columnsBusinessesMap[column][1]/10} 0 ${columnsBusinessesMap[column][1]}px`}> 
+                                        <Flex  key={`business-cell-${index}-${index2}`}  gap='2px' alignItems={'end'} flex={`${columnsBusinessesMap[column]/10} 0 ${columnsBusinessesMap[column]}px`}> 
                                             <CellStyle column={column} element={row[column]} />
                                         </Flex>}
                                 </Fragment>))}

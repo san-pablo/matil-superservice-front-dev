@@ -4,9 +4,9 @@ import { useAuth } from '../../../AuthContext'
 //FRONT
 import { Flex, Box, Button, Text } from '@chakra-ui/react'
 //COMPONENTS
-import LoadingIconButton from '../../Components/LoadingIconButton'
+import LoadingIconButton from '../../Components/Reusable/LoadingIconButton'
 import fetchData from '../../API/fetchData'
-import EditText from '../../Components/EditText'
+import EditText from '../../Components/Reusable/EditText'
 
 
 //MAIN FUNCTION

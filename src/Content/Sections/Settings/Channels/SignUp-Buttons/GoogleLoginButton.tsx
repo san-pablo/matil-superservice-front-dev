@@ -2,7 +2,7 @@ import {useEffect, useState } from 'react'
 import { Button } from '@chakra-ui/react'
 
 import { useAuth } from '../../../../../AuthContext'
-import LoadingIconButton from '../../../../Components/LoadingIconButton'
+import LoadingIconButton from '../../../../Components/Reusable/LoadingIconButton'
 import { FaGoogle } from "react-icons/fa";
 
 

@@ -1,29 +1,20 @@
 //REACT
 import { Dispatch, SetStateAction } from "react"
+import { useTranslation } from "react-i18next"
 //FRONT
 import { Text, Box, Flex, Button, NumberInput, NumberInputField } from "@chakra-ui/react"
 //ICONS
-import EditText from "../../../Components/EditText"
+import EditText from "../../../Components/Reusable/EditText"
 //TYPING
 import { configProps } from "../../../Constants/typing"
- 
+  
 
 const GetMatildaConfig = ({configDict, setConfigDict, updateData, configIndex, isPhone = false}:{configDict:configProps | null, setConfigDict?:Dispatch<SetStateAction<configProps | null>>, updateData?: (configDict: configProps, index:number) => void, configIndex?:number, isPhone?:boolean}) => {
 
-    const labelsDict:{[key:string]:any} = {
-        answer_inmediately:'Responder inmediatamente',
-        business_day_end:'Hora de fin',
-        business_day_start:'Hora de inicio',
-        business_days:'Días laborables',
-        is_matilda_enabled:'Estado de Matilda',
-        is_restricted_to_business_days:'Restrigir respuestas a días laborables',
-        maximum_seconds_to_respond:'Máximo de segundos en responder',
-        minimum_seconds_to_respond:'Mínimo de segundos en responder',
-        notify_about_agent_transfer:'Notificar de la transferencia a un agente',
-        agent_transfer_message:'Mensaje de transferencia al agente',
-        out_of_business_agent_transfer_message:'Mensaje de transferencia al agente (fuera del horario laboral)',
-        ask_for_requirement_confirmation: 'Confirmar requisitos' 
-    }
+    //TRANSLATION CONSTANT
+    const { t } = useTranslation('settings')
+
+    //LABELS DICT
     const weekDaysList = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
  
     const handleCheckboxChange = (key: any, value: boolean) => {
@@ -73,51 +64,49 @@ const GetMatildaConfig = ({configDict, setConfigDict, updateData, configIndex, i
 return(   
    <Box mt='2vh' >
    
-        <Text mt='2vh' fontWeight={'medium'}>Utilización de la IA</Text>
-        <Text mb='1vh' fontSize={'.8em'} color='gray.500'>Activa o desactiva el asistente de IA Matilda.</Text>
+        <Text mt='2vh' fontWeight={'medium'}>{t('IAUse')}</Text>
+        <Text mb='1vh' fontSize={'.8em'} color='gray.500'>{t('IAUse')}</Text>
         <Flex mt='1vh' gap='10px'>
-            <Button size='sm' onClick={(e) => handleCheckboxChange('is_matilda_enabled', true)} bg={configDict?.is_matilda_enabled?'brand.gradient_blue':'gray.100'} color={configDict?.is_matilda_enabled?'white':'black'} _hover={{bg:configDict?.is_matilda_enabled?'brand.gradient_blue_hover':'gray.200'}}>Activada</Button>
-            <Button size='sm' onClick={(e) => handleCheckboxChange('is_matilda_enabled', false)} bg={!configDict?.is_matilda_enabled?'brand.gradient_blue':'gray.100'} color={!configDict?.is_matilda_enabled?'white':'black'} _hover={{bg:!configDict?.is_matilda_enabled?'brand.gradient_blue_hover':'gray.200'}}>Desactivada</Button>
+            <Button size='sm' onClick={(e) => handleCheckboxChange('is_matilda_enabled', true)} bg={configDict?.is_matilda_enabled?'brand.gradient_blue':'gray.100'} color={configDict?.is_matilda_enabled?'white':'black'} _hover={{bg:configDict?.is_matilda_enabled?'brand.gradient_blue_hover':'gray.200'}}>{t('Active')}</Button>
+            <Button size='sm' onClick={(e) => handleCheckboxChange('is_matilda_enabled', false)} bg={!configDict?.is_matilda_enabled?'brand.gradient_blue':'gray.100'} color={!configDict?.is_matilda_enabled?'white':'black'} _hover={{bg:!configDict?.is_matilda_enabled?'brand.gradient_blue_hover':'gray.200'}}>{t('Inactive')}</Button>
         </Flex>
 
  
         {configDict?.is_matilda_enabled && <>
             {!isPhone && <> 
-                <Text mt='4vh' fontWeight={'medium'}>Tiempo de respuesta</Text>
-                <Text mb='1vh' fontSize={'.8em'} color='gray.500'>Configura el tiempo que tarda Matilda en responder a los mensajes.</Text>
+                <Text mt='4vh' fontWeight={'medium'}>{t('ResponseTime')}</Text>
+                <Text mb='1vh' fontSize={'.8em'} color='gray.500'>{t('ResponseTimeDes')}</Text>
                 <Flex mt='1vh' gap='10px'>
-                    <Button size='sm' onClick={(e) => handleCheckboxChange('answer_inmediately', true)} bg={configDict?.answer_inmediately?'brand.gradient_blue':'gray.100'} color={configDict?.answer_inmediately?'white':'black'} _hover={{bg:configDict?.answer_inmediately?'brand.gradient_blue_hover':'gray.200'}}>Responder instantáneamente</Button>
-                    <Button  size='sm' onClick={(e) => handleCheckboxChange('answer_inmediately', false)} bg={!configDict?.answer_inmediately?'brand.gradient_blue':'gray.100'} color={!configDict?.answer_inmediately?'white':'black'} _hover={{bg:!configDict?.answer_inmediately?'brand.gradient_blue_hover':'gray.200'}}>Configuración avanzada</Button>
+                    <Button size='sm' onClick={(e) => handleCheckboxChange('answer_inmediately', true)} bg={configDict?.answer_inmediately?'brand.gradient_blue':'gray.100'} color={configDict?.answer_inmediately?'white':'black'} _hover={{bg:configDict?.answer_inmediately?'brand.gradient_blue_hover':'gray.200'}}>{t('InstantResponse')}</Button>
+                    <Button  size='sm' onClick={(e) => handleCheckboxChange('answer_inmediately', false)} bg={!configDict?.answer_inmediately?'brand.gradient_blue':'gray.100'} color={!configDict?.answer_inmediately?'white':'black'} _hover={{bg:!configDict?.answer_inmediately?'brand.gradient_blue_hover':'gray.200'}}>{t('AdvancedConfig')}</Button>
                 </Flex>
 
  
                 {!configDict.answer_inmediately && 
                     <Flex gap='20px'> 
                         <Box> 
-                            <Text mt='2vh' fontSize={'.9em'}>{labelsDict.minimum_seconds_to_respond}</Text>
-                            <NumberInput size='sm' value={configDict?.['minimum_seconds_to_respond'] || 0} onChange={(valueString) => handleNumberChange('minimum_seconds_to_respond', valueString)} min={1} max={labelsDict.maximum_seconds_to_respond}>
+                            <Text mt='2vh' fontSize={'.9em'}>{t('minimum_seconds_to_respond')}</Text>
+                            <NumberInput size='sm' value={configDict?.['minimum_seconds_to_respond'] || 0} onChange={(valueString) => handleNumberChange('minimum_seconds_to_respond', valueString)} min={1} max={parseInt(configDict.maximum_seconds_to_respond)}>
                                 <NumberInputField  fontSize={'.9em'} borderRadius='.5rem'   borderColor={'gray.300'} _hover={{ border: '1px solid #CBD5E0' }} _focus={{ borderColor: 'rgb(77, 144, 254)', borderWidth: '2px', px:'6px' }} px='7px' />
                             </NumberInput>
                         </Box>
                         <Box>
-                            <Text fontSize={'.9em'} mt='2vh'>{labelsDict.maximum_seconds_to_respond}</Text>
-                            <NumberInput size='sm' value={configDict?.['maximum_seconds_to_respond'] || 0} onChange={(valueString) => handleNumberChange('maximum_seconds_to_respond', valueString)} min={labelsDict.minimum_seconds_to_respond} max={14400}>
+                            <Text fontSize={'.9em'} mt='2vh'>{t('maximum_seconds_to_respond')}</Text>
+                            <NumberInput size='sm' value={configDict?.['maximum_seconds_to_respond'] || 0} onChange={(valueString) => handleNumberChange('maximum_seconds_to_respond', valueString)} min={parseInt(configDict.minimum_seconds_to_respond)} max={14400}>
                                 <NumberInputField  fontSize={'.9em'} borderRadius='.5rem'   borderColor={'gray.300'} _hover={{ border: '1px solid #CBD5E0' }} _focus={{ borderColor: 'rgb(77, 144, 254)', borderWidth: '2px', px:'6px' }} px='7px' />
                             </NumberInput>
                         </Box>
                     </Flex>}
             </>}
-
-
   
-            <Text mt='4vh' fontWeight={'medium'}>Días laborables</Text>
-            <Text mb='1vh'  fontSize={'.8em'} color='gray.500'>Configura los días y horas en los que Matilda responderá a los mensajes.</Text>
+            <Text mt='4vh' fontWeight={'medium'}>{t('WorksDays')}</Text>
+            <Text mb='1vh'  fontSize={'.8em'} color='gray.500'>{t('WorksDaysDes')}</Text>
             <Flex mt='1vh' gap='10px'>
-                <Button size='sm' onClick={(e) => handleCheckboxChange('is_restricted_to_business_days', true)} bg={configDict?.is_restricted_to_business_days?'brand.gradient_blue':'gray.100'} color={configDict.is_restricted_to_business_days?'white':'black'} _hover={{bg:configDict.is_restricted_to_business_days?'brand.gradient_blue_hover':'gray.200'}}>Contestar sólo días laborables</Button>
-                <Button  size='sm' onClick={(e) => handleCheckboxChange('is_restricted_to_business_days', false)} bg={!configDict?.is_restricted_to_business_days?'brand.gradient_blue':'gray.100'} color={!configDict.is_restricted_to_business_days?'white':'black'} _hover={{bg:!configDict.is_restricted_to_business_days?'brand.gradient_blue_hover':'gray.200'}}>Contestar siempre</Button>
+                <Button size='sm' onClick={(e) => handleCheckboxChange('is_restricted_to_business_days', true)} bg={configDict?.is_restricted_to_business_days?'brand.gradient_blue':'gray.100'} color={configDict.is_restricted_to_business_days?'white':'black'} _hover={{bg:configDict.is_restricted_to_business_days?'brand.gradient_blue_hover':'gray.200'}}>{t('OnlyAnswerWorkDays')}</Button>
+                <Button  size='sm' onClick={(e) => handleCheckboxChange('is_restricted_to_business_days', false)} bg={!configDict?.is_restricted_to_business_days?'brand.gradient_blue':'gray.100'} color={!configDict.is_restricted_to_business_days?'white':'black'} _hover={{bg:!configDict.is_restricted_to_business_days?'brand.gradient_blue_hover':'gray.200'}}>{t('AnswerAlways')}</Button>
             </Flex>
 
-            {configDict.is_restricted_to_business_days && <><Text mt='2vh' mb='1vh' fontSize={'.9em'}>{labelsDict.business_days}</Text>
+            {configDict.is_restricted_to_business_days && <><Text mt='2vh' mb='1vh' fontSize={'.9em'}>{t('business_days')}</Text>
             <Flex gap='10px'>
                 {weekDaysList.map((weekday, index) => {
                     return (
@@ -128,13 +117,13 @@ return(
             </Flex>
             <Flex gap='20px'> 
                 <Box> 
-                    <Text fontSize={'.9em'} mt='2vh'>{labelsDict.business_day_start}</Text>
+                    <Text fontSize={'.9em'} mt='2vh'>{t('business_day_start')}</Text>
                     <Box minW='150px'> 
                         <EditText type={'time'} hideInput={false} value={`${Math.floor(configDict?.['business_day_start'] || 0).toString().padStart(2, '0')}:${(((configDict?.['business_day_start'] || 0) % 1) * 60).toFixed(0).toString().padStart(2, '0')}`}  setValue={(value) => handleSelectChange('business_day_start', value)}/>
                     </Box>
                 </Box>
                 <Box> 
-                    <Text fontSize={'.9em'} mt='2vh' >{labelsDict.business_day_end}</Text>
+                    <Text fontSize={'.9em'} mt='2vh' >{t('business_day_end')}</Text>
                     <Box minW='150px' > 
                         <EditText type={'time'} hideInput={false} value={`${Math.floor(configDict?.['business_day_end'] || 0).toString().padStart(2, '0')}:${(((configDict?.['business_day_end'] || 0)% 1) * 60).toFixed(0).toString().padStart(2, '0')}`} setValue={(value) => handleSelectChange('business_day_end', value)}/>
                     </Box>
@@ -143,28 +132,28 @@ return(
             </>}
 
         {!isPhone && <> 
-            <Text mt='4vh' fontWeight={'medium'}>Transferencia a un agente</Text>
-            <Text mb='1vh' fontSize={'.8em'} color='gray.500' >Configura las notificaciones y mensajes cuando Matilda transfiere una conversación a un agente humano.</Text>
+            <Text mt='4vh' fontWeight={'medium'}>{t('AgentTransfer')}</Text>
+            <Text mb='1vh' fontSize={'.8em'} color='gray.500' >{t('AgentTransferDes')}</Text>
             <Flex mt='1vh' gap='10px'>
-                <Button size='sm' onClick={(e) => handleCheckboxChange('notify_about_agent_transfer', true)} bg={configDict?.notify_about_agent_transfer?'brand.gradient_blue':'gray.100'} color={configDict?.notify_about_agent_transfer?'white':'black'} _hover={{bg:configDict?.notify_about_agent_transfer?'brand.gradient_blue_hover':'gray.200'}}>Notificar al cliente</Button>
-                <Button  size='sm' onClick={(e) => handleCheckboxChange('notify_about_agent_transfer', false)} bg={!configDict?.notify_about_agent_transfer?'brand.gradient_blue':'gray.100'} color={!configDict?.notify_about_agent_transfer?'white':'black'} _hover={{bg:!configDict?.notify_about_agent_transfer?'brand.gradient_blue_hover':'gray.200'}}>No notificar</Button>
+                <Button size='sm' onClick={(e) => handleCheckboxChange('notify_about_agent_transfer', true)} bg={configDict?.notify_about_agent_transfer?'brand.gradient_blue':'gray.100'} color={configDict?.notify_about_agent_transfer?'white':'black'} _hover={{bg:configDict?.notify_about_agent_transfer?'brand.gradient_blue_hover':'gray.200'}}>{t('NotifyClient')}</Button>
+                <Button  size='sm' onClick={(e) => handleCheckboxChange('notify_about_agent_transfer', false)} bg={!configDict?.notify_about_agent_transfer?'brand.gradient_blue':'gray.100'} color={!configDict?.notify_about_agent_transfer?'white':'black'} _hover={{bg:!configDict?.notify_about_agent_transfer?'brand.gradient_blue_hover':'gray.200'}}>{t('NoNotify')}</Button>
             </Flex>
 
-            <Text mt='2vh' fontSize={'.9em'}>{labelsDict.agent_transfer_message}</Text>
+            <Text mt='2vh' fontSize={'.9em'}>{t('agent_transfer_message')}</Text>
             <Box maxW={'550px'} mt='.5vh'> 
                 <EditText hideInput={false} value={`${configDict?.['agent_transfer_message']}`} setValue={(value) => handleTextChange('agent_transfer_message', value)}/>
             </Box>
 
-            <Text mt='2vh' fontSize={'.9em'}>{labelsDict.out_of_business_agent_transfer_message}</Text>
+            <Text mt='2vh' fontSize={'.9em'}>{t('out_of_business_agent_transfer_message')}</Text>
             <Box maxW={'550px'} mt='.5vh'> 
                 <EditText hideInput={false} value={`${configDict?.['out_of_business_agent_transfer_message']}`} setValue={(value) => handleTextChange('out_of_business_agent_transfer_message', value)}/>
             </Box>
 
-            <Text mt='4vh' fontWeight={'medium'}>Confirmar requisitos</Text>
-            <Text mb='1vh' fontSize={'.8em'} color='gray.500'>Configura si Matilda debe pedir confirmación de requisitos especificados.</Text>
+            <Text mt='4vh' fontWeight={'medium'}>{t('ConfirmInfo')}</Text>
+            <Text mb='1vh' fontSize={'.8em'} color='gray.500'>{t('ConfirmInfoDes')}</Text>
             <Flex mt='1vh' gap='10px'>
-                <Button  size='sm'  onClick={(e) => handleCheckboxChange('ask_for_requirement_confirmation', true)}  bg={configDict?.ask_for_requirement_confirmation ? 'brand.gradient_blue' : 'gray.100'}  color={configDict?.ask_for_requirement_confirmation ? 'white' : 'black'}  _hover={{ bg: configDict?.ask_for_requirement_confirmation ? 'brand.gradient_blue_hover' : 'gray.200' }}>Confirmar</Button>
-                <Button size='sm'  onClick={(e) => handleCheckboxChange('ask_for_requirement_confirmation', false)} bg={!configDict?.ask_for_requirement_confirmation ? 'brand.gradient_blue' : 'gray.100'} color={!configDict?.ask_for_requirement_confirmation ? 'white' : 'black'}  _hover={{ bg: !configDict?.ask_for_requirement_confirmation ? 'brand.gradient_blue_hover' : 'gray.200' }}>No confirmar</Button>
+                <Button  size='sm'  onClick={(e) => handleCheckboxChange('ask_for_requirement_confirmation', true)}  bg={configDict?.ask_for_requirement_confirmation ? 'brand.gradient_blue' : 'gray.100'}  color={configDict?.ask_for_requirement_confirmation ? 'white' : 'black'}  _hover={{ bg: configDict?.ask_for_requirement_confirmation ? 'brand.gradient_blue_hover' : 'gray.200' }}>{t('Confirm')}</Button>
+                <Button size='sm'  onClick={(e) => handleCheckboxChange('ask_for_requirement_confirmation', false)} bg={!configDict?.ask_for_requirement_confirmation ? 'brand.gradient_blue' : 'gray.100'} color={!configDict?.ask_for_requirement_confirmation ? 'white' : 'black'}  _hover={{ bg: !configDict?.ask_for_requirement_confirmation ? 'brand.gradient_blue_hover' : 'gray.200' }}>{t('NoConfirm')}</Button>
             </Flex>
         </>}
         </>}

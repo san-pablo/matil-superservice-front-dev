@@ -1,0 +1,127 @@
+[
+    {
+      "front":{"x":1,"y":0},
+      "type": "extractor",
+      "variables": [
+        {
+          "index": 0,
+          "message": {
+            "type": "generative",
+            "generation_instructions": "Solicitar al cliente el número de pedido que desea utilizar para reenviar el email de confirmación."
+          },
+          "require_confirmation": true,
+          "confirmation_message": {
+            "type": "generative",
+            "generation_instructions": "Confirmar el número de pedido proporcionado: {{0}}. ¿Es correcto?"
+          }
+        },
+        {
+          "index": 1,
+          "message": {
+            "type": "generative",
+            "generation_instructions": "Solicitar el número de teléfono con el que se realizó la compra para poder verificar la identidad del cliente."
+          },
+          "require_confirmation": true,
+          "confirmation_message": {
+            "type": "generative",
+            "generation_instructions": "Confirmar el número de teléfono proporcionado: {{1}}. ¿Es correcto?"
+          }
+        }
+      ],
+      "branches": [
+        {
+          "name": "Identidad verificada",
+          "conditions": [
+            {
+              "variable_index": 0,
+              "operation": "exists"
+            },
+            {
+              "variable_index": 1,
+              "operation": "exists"
+            }
+          ],
+          "next_node_index": 1
+        }
+      ]
+    },
+    {
+      "front":{"x":2,"y":0},
+      "type": "function",
+      "uuid": "57567662-a2ea-4fe9-bf24-e0b685e1e723",
+      "variable_args": {
+        "numero_pedido": 0,
+        "numero_telefono": 1
+      },
+      "error_nodes_ids": {
+        "401": 4
+      },
+      "next_node_index": 2,
+      "outputs_to_variables":
+      {
+      }
+    },
+    {
+      "front":{"x":3,"y":0},
+      "type": "extractor",
+      "variables": [
+        {
+          "index": 2,
+          "message": {
+            "type": "generative",
+            "generation_instructions": "Solicitar la nueva dirección de correo electrónico a la que se desea reenviar el email de confirmación."
+          },
+          "require_confirmation": true,
+          "confirmation_message": {
+            "type": "generative",
+            "generation_instructions": "Confirmar la nueva dirección de correo electrónico: {{2}}. ¿Es correcto?"
+          }
+        }
+      ],
+      "branches": [
+        {
+          "name": "Correo electrónico nuevo confirmado",
+          "conditions": [
+            {
+              "variable_index": 2,
+              "operation": "exists"
+            }
+          ],
+          "next_node_index": 3
+        }
+      ]
+    },
+    {
+      "front":{"x":4,"y":0},
+      "type": "function",
+      "uuid": "582580c8-4244-4075-8b85-40dde2b90119",
+      "variable_args": {
+        "numero_pedido": 0,
+        "nuevo_email": 2
+      },
+      "next_node_index": 5,
+      "outputs_to_variables":
+      {
+      }
+    },
+    {
+      "front":{"x":3,"y":1},
+      "type": "terminator",
+      "messages": [
+        {
+          "type": "generative",
+          "generation_instructions": "Informar al cliente que el email de confirmación ha sido reenviado con éxito a la nueva dirección especificada."
+        }
+      ]
+    },
+    {
+      "front":{"x":5,"y":0},
+      "type": "terminator",
+      "messages": [
+        {
+          "type": "generative",
+          "generation_instructions": "Lo sentimos, pero no hemos podido verificar su identidad. Por favor, inténtelo de nuevo más tarde o contacte con nuestro equipo de atención al cliente."
+        }
+      ]
+    }
+  ]

@@ -16,6 +16,7 @@ interface determineBoxStyleProps {
 //MAIN FUNCTION
 const determineBoxStyle = ({buttonRef, setBoxStyle, setBoxPosition, changeVariable}:determineBoxStyleProps) => {
  
+    //UPDATE THE BOX POSTION BASED ON THEIR SCREEN POSITION
     const updateBoxPosition = () => {
         if (buttonRef.current) {
             const buttonRect = buttonRef.current.getBoundingClientRect()
