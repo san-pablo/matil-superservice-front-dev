@@ -473,7 +473,7 @@ function Content ({userInfo}:{userInfo:userInfo}) {
                                                         </Flex>
                                                     </Flex>
                                                     {showMoreHeaderSectionsBox &&
-                                                        <MotionBox transition={{ duration: '0.1',  ease: '[0.0, 0.9, 0.9, 1.0]' }} initial={{ opacity: 0 }} animate={{ opacity: 1 }}  mt='3px' maxH='80vh' overflowY='scroll'  ref={showMoreHeaderSectionsBoxRef}  position='absolute'  bg='white' zIndex={1000} boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.15)'}  borderColor={'gray.300'} borderWidth={'1px'} borderRadius={'.5rem'}> 
+                                                        <MotionBox transition={{ duration: '0.1',  ease: 'easeOut'}} initial={{ opacity: 0 }} animate={{ opacity: 1 }}  mt='3px' maxH='80vh' overflowY='scroll'  ref={showMoreHeaderSectionsBoxRef}  position='absolute'  bg='white' zIndex={1000} boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.15)'}  borderColor={'gray.300'} borderWidth={'1px'} borderRadius={'.5rem'}> 
                                                         {headerSections.slice(visibleSectionsIndex).map((element, index) => {
                                                             const sectionToSelect = element.type === 'ticket' ? 'tickets/ticket/' + element.code :  element.type === 'client' ? 'clients/client/' + element.code:'contact-businesses/business/' + element.code
                                                             const isSectionSelected = location.startsWith(`/${sectionToSelect}/`) || location ===  `/${sectionToSelect}`
@@ -608,7 +608,7 @@ const LogoutBox = ({ userInfoApp, auth }:{userInfoApp:userInfo, auth:any}) => {
 
             <AnimatePresence> 
             {showLogout && (
-                <MotionBox initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.95 }}  transition={{ duration: '0.1',  ease: '[0.0, 0.9, 0.9, 1.0]'}}
+                <MotionBox initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.95 }}  transition={{ duration: '0.1', ease: 'easeOut'}}
                 style={{ transformOrigin: 'bottom left' }}  minW='190px'  position='absolute' bg='white' p='15px' left='8px' bottom='30px' zIndex={1000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.300' borderWidth='1px' borderRadius='.5rem'>
                     <Box>
                         <Text fontSize='.8em' fontWeight='medium' whiteSpace='nowrap'>{userInfoApp.name + ' ' + userInfoApp.surname}</Text>
@@ -618,7 +618,7 @@ const LogoutBox = ({ userInfoApp, auth }:{userInfoApp:userInfo, auth:any}) => {
                     <Box position='relative' mt='7px'> 
 
                         {showStatusList &&
-                            <MotionBox initial={{ opacity: 0, top: -10}} animate={{ opacity: 1, top: 0 }}  exit={{ opacity: 0, top: -10}} transition={{ duration: '0.2',  ease: '[0.0, 0.9, 0.9, 1.0]'}} 
+                            <MotionBox initial={{ opacity: 0, top: -10}} animate={{ opacity: 1, top: 0 }}  exit={{ opacity: 0, top: -10}} transition={{ duration: '0.2', ease: 'easeOut'}} 
                             overflow={'hidden'} ml={'calc(100% + 5px)'} width={'100%'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={1000}   position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
                             {['connected', 'out', 'disconnected'].map((status, index) => (
                                 <Flex key={`status-list-${index}`} bg={status === userStatus?'blue.50':''} color={phoneMap[status][2]} p='7px' gap='10px' alignItems='center' cursor='pointer' _hover={{ bg: status === userStatus?'blue.100':'brand.hover_gray' }} onClick={() => {setUserStatus(status);setShowStatusList(!showStatusList)}}>
@@ -765,7 +765,7 @@ const OrganizationsBox = ({ userInfoApp, isAdmin, setUserInfoApp, auth, session,
             </Text>
             <AnimatePresence>     
             {showOrganizations && (
-                <MotionBox initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.9 }}  transition={{ duration: '0.1',  ease: '[0.0, 0.9, 0.9, 1.0]'}}
+                <MotionBox initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.9 }}  transition={{ duration: '0.1', ease: 'easeOut'}}
                 style={{ transformOrigin: 'top' }} position='absolute' bg='white' p='15px' right='2vw' top='50px' zIndex={1000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.300' borderWidth='1px' borderRadius='.5rem' >
                     <Box>
                     <Text fontSize='.9em' fontWeight='medium' whiteSpace='nowrap' mb='1vh'>{t('Organizations')}</Text>

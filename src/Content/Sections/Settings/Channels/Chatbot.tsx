@@ -291,10 +291,10 @@ function Chatbot () {
         </Flex> 
 
         <AnimatePresence> 
-                {showChat && 
-                    <MotionBox  transition={{ duration: '0.2',  ease: '[0.0, 0.9, 0.9, 1.0]' }} overflow={'hidden'} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)'  borderRadius={'1rem'} initial={{bottom:'-300px', opacity:0}} animate={{bottom:'90px', opacity:1}} exit={{bottom:'-300px', opacity:0}} position={'fixed'} bg='white' width='360px' height='650px' right='2vh' maxHeight='calc(100vh - 104px)' >
-                        <ChatbotComponent customInfo={chatBotData as ChatBotData}/>
-                    </MotionBox>}
+            {showChat && 
+                <MotionBox  transition={{ duration: '0.2', ease: 'easeIn' }} overflow={'hidden'} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)'  borderRadius={'1rem'} initial={{bottom:'-300px', opacity:0}} animate={{bottom:'90px', opacity:1}} exit={{bottom:'-300px', opacity:0}} position={'fixed'} bg='white' width='360px' height='650px' right='2vh' maxHeight='calc(100vh - 104px)' >
+                    <ChatbotComponent customInfo={chatBotData as ChatBotData}/>
+                </MotionBox>}
         </AnimatePresence>
         </>}
     </>)

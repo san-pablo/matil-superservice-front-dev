@@ -220,6 +220,7 @@ const Flow = () => {
         return availableNodes
     }
 
+    //RESIZE NDOES
     const resizeNodes = (nds:any[], sourceId:string) => {
         const [columnIndex] = sourceId.split('-').map(Number)
         let updatedNodes = nds.map((node) => {
@@ -600,7 +601,9 @@ const Flow = () => {
                     setFlowDescription(response.data.description)
                     setFlowVariables(response.data.variables)
                     setFlowInterpreterConfig(response.data.interpreter_configuration)
-                    isActiveRef.current === response.data.is_active
+                    //isActiveRef.current === response.data.is_active
+                    isActiveRef.current === true
+
                     setNodes([{id:'0', position:{x:0, y:0}, data:{channels:response.data.channel_ids, functions:{channelIds:channelsIds, editSimpleFlowData}}, type:'trigger'}, ...parseNodesFromBack(response.data.nodes)])
                 }
             }
@@ -714,12 +717,17 @@ const Flow = () => {
                     <CustomSelect containerRef={scrollRef} hide={false} selectedItem={messageData.index} setSelectedItem={(value) => setMessageData((prev) => ({...prev, index: value}))} options={Array.from({length: flowVariables.length}, (v, i) => i)} labelsMap={variablesLabelsMap} />
                     <Box bg='gray.300' width={'100%'} height={'1px'} mt='2vh' mb='2vh'/>
                     
-                    <Text color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('VariableInstructions')}</Text>        
+                    <Text color='black' fontWeight={'medium'}>{t('VariableInstructions')}</Text>        
                     <EditMessage scrollRef={scrollRef} messageData={instructionMessage} setMessageData={setInstructionMessage}/>
                
-
+                    <Text color='black' mt='3vh' fontWeight={'medium'}>{t('AskConfirmation')}</Text>        
+                    <Flex gap='10px' mt='5px'>
+                        <Button bg={messageData.require_confirmation?'brand.gradient_blue':'gray.200'} color={messageData.require_confirmation?'white':'black'} size='sm' _hover={{bg:messageData.require_confirmation?'brand.gradient_blue_hover':'gray.300'}} onClick={() => setMessageData((prev) => ({...prev, require_confirmation:true}))}>{t('Yes')}</Button>
+                        <Button bg={!messageData.require_confirmation?'brand.gradient_blue':'gray.200'} color={!messageData.require_confirmation?'white':'black'} size='sm' _hover={{bg:!messageData.require_confirmation?'brand.gradient_blue_hover':'gray.300'}} onClick={() => setMessageData((prev) => ({...prev, require_confirmation:false}))}>{t('No')}</Button>
+                    </Flex> 
+                     
                     {messageData.require_confirmation && <>
-                        <Text  mt='2vh' color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('ConfirmationMessage')}</Text>
+                        <Text  mt='3vh'  color='black'  fontWeight={'medium'}>{t('ConfirmationMessage')}</Text>
                         <EditMessage scrollRef={scrollRef} messageData={confirmationMessage} setMessageData={setConfirmationMessage}/>
                     </>}
                     </>}
@@ -896,7 +904,7 @@ const Flow = () => {
                             <AnimatePresence> 
                                 {showAdd && 
                                 <Portal>
-                                    <MotionBox initial={{ opacity: 0, marginTop: boxPosition === 'bottom'?-10:10 }} animate={{ opacity: 1, marginTop: 0 }}  exit={{ opacity: 0,marginTop: boxPosition === 'bottom'?-10:10}} transition={{ duration: '0.2',  ease: '[0.0, 0.9, 0.9, 1.0]'}}
+                                    <MotionBox initial={{ opacity: 0, marginTop: boxPosition === 'bottom'?-10:10 }} animate={{ opacity: 1, marginTop: 0 }}  exit={{ opacity: 0,marginTop: boxPosition === 'bottom'?-10:10}} transition={{ duration: '0.2',  ease: 'easeOut'}}
                                     top={boxStyle.top} bottom={boxStyle.bottom}right={boxStyle.right} width={boxStyle.width} maxH='40vh' overflow={'scroll'} gap='10px' ref={boxRef} fontSize={'.9em'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000} position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
                                         {(argType === 'output_to_variables' ? selectableOutputs:selectableArgs).map((arg, index) => (
                                             <Flex p='5px' _hover={{bg:'brand.hover_gray'}} key={`arg-${index}`} onClick={() => {setShowAdd(false);editArg(argType, 'add')}}>
@@ -1192,7 +1200,7 @@ const Flow = () => {
                     
                     <AnimatePresence> 
                         {showWarningBox && (
-                        <MotionBox initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}  transition={{ duration: '0.1',  ease: '[0.0, 0.9, 0.9, 1.0]'}}
+                        <MotionBox initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}  transition={{ duration: '0.1', ease: 'easeIn'}}
                         style={{ transformOrigin: 'top' }} width={`${window.innerWidth * 0.98 - (iconRef.current?.getBoundingClientRect().left || 0)}px`} maxH={'calc(100vh - 4vw - 45px)'} overflow={'scroll'}  position='absolute' bg='transparent' left={0}  top='45px' zIndex={1000}  borderRadius='.5rem' >
                             {endWarning.map((war, index) => (
                                 <Flex onClick={() => clickWarning('navigate', war.id)}  cursor={'pointer'} key={`end-warning-${index}`} mt='10px' bg='white' borderWidth={'0px 0px 0px 5px'} borderColor={'#E53E3E'} p='10px' borderRadius={'.5rem'} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' >
@@ -1488,7 +1496,7 @@ const EditMessage = ({scrollRef, messageData, setMessageData}:{scrollRef:RefObje
             <AnimatePresence> 
                 {showLanguagesBox && 
                 <Portal>
-                    <MotionBox initial={{ opacity: 0, marginTop: boxPosition === 'bottom'?-10:10 }} animate={{ opacity: 1, marginTop: 0 }}  exit={{ opacity: 0,marginTop: boxPosition === 'bottom'?-10:10}} transition={{ duration: '0.2',  ease: '[0.0, 0.9, 0.9, 1.0]'}}
+                    <MotionBox initial={{ opacity: 0, marginTop: boxPosition === 'bottom'?-10:10 }} animate={{ opacity: 1, marginTop: 0 }}  exit={{ opacity: 0,marginTop: boxPosition === 'bottom'?-10:10}} transition={{ duration: '0.2',  ease: 'easeOut'}}
                     top={boxStyle.top} bottom={boxStyle.bottom}right={boxStyle.right} width={boxStyle.width} maxH='40vh' overflow={'scroll'} gap='10px' ref={boxRef} fontSize={'.9em'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000} position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
                         {availableLanguage.map((option:string, index:number) => (
                             <Flex key={`option-${index}`} px='10px'  py='7px' cursor={'pointer'} justifyContent={'space-between'} alignItems={'center'} _hover={{bg:'brand.hover_gray'}}

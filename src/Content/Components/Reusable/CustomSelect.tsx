@@ -60,7 +60,7 @@ const CustomSelect = <T extends string | number>({options, selectedItem, setSele
             <AnimatePresence> 
                 {showList && 
                     <Portal>
-                        <MotionBox as="div" initial={{ opacity: 0, marginTop: boxPosition === 'bottom'?-10:10 }} animate={{ opacity: 1, marginTop: 0 }}  exit={{ opacity: 0,marginTop: boxPosition === 'bottom'?-10:10}} transition={{ duration: '.2',  ease: '[0.0, 0.9, 0.9, 1.0]'}}
+                        <MotionBox initial={{ opacity: 0, marginTop: boxPosition === 'bottom'?-10:10 }} animate={{ opacity: 1, marginTop: 0 }}  exit={{ opacity: 0,marginTop: boxPosition === 'bottom'?-10:10}} transition={{ duration: '.2', ease: 'easeOut'}}
                         top={boxStyle.top} bottom={boxStyle.bottom}right={boxStyle.right} width={boxStyle.width} maxH='40vh' overflow={'scroll'} gap='10px' ref={boxRef} fontSize={'.9em'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000}   position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
                             {options.map((option:T, index:number) => (
                                 <Flex key={`${selectedItem}-option-${index}`} px='10px' bg={disabledOptions?.includes(option)?'gray.200':'transparent'}   py='7px' cursor={disabledOptions?.includes(option)?'not-allowed':'pointer'} justifyContent={'space-between'} alignItems={'center'} color={selectedItem === option?'blue.500':'black'} _hover={{bg:disabledOptions?.includes(option)?'gray.200':'brand.hover_gray'}}

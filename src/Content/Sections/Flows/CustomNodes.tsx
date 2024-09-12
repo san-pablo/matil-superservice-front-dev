@@ -802,7 +802,7 @@ const NodesBox = ({disabledNodes, sourceData, addNewNode, clickFunc, getAvailabl
 
    return(
     <AnimatePresence> 
-      <MotionBox initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.95 }}  transition={{ duration: '0.1',  ease: '[0.0, 0.9, 0.9, 1.0]'}}
+      <MotionBox initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.95 }}  transition={{ duration: '0.1',  ease: 'easeOut'}}
       style={{ transformOrigin: 'bottom left' }} className="nowheel" textAlign={'start'} minW={'180px'}  maxH='45vh' overflow={'scroll'} bg='white' p='15px' zIndex={1000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.300' borderWidth='1px' borderRadius='.5rem'>
             {availableCustomNodes.length > 0 && <Text fontWeight={'medium'} fontSize={'.8em'} >{t('CreatedNodes')}</Text>}
             {availableCustomNodes.map((id, index) => (
@@ -869,7 +869,7 @@ const NodeHeader = ({nodeId, nodeType, isExpanded, setIsExpanded, deleteNode, ge
           </Flex>
           <AnimatePresence> 
             {showDelete && 
-              <MotionBox initial={{ opacity: 0, marginTop: -10 }} animate={{ opacity: 1, marginTop: 0 }}  exit={{ opacity: 0,marginTop: -10}} transition={{ duration: '0.2',  ease: '[0.0, 0.9, 0.9, 1.0]'}}
+              <MotionBox initial={{ opacity: 0, marginTop: -10 }} animate={{ opacity: 1, marginTop: 0 }}  exit={{ opacity: 0,marginTop: -10}} transition={{ duration: '0.2',  ease: 'easeOut'}}
                 maxH='40vh' p='7px' overflow={'scroll'} gap='10px' ref={boxRef} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='gray.50' zIndex={100000}   position={'absolute'} borderRadius={'.3rem'} >
                 <Flex color='black'  fontSize={'.9em'}  _hover={{bg:'gray.200'}} borderRadius={'.5rem'} p='5px' cursor={'pointer'}  alignItems={'center'} gap='10px' onClick={() => deleteNode(nodeId)}>
                     <Icon as={BsTrash3Fill}/>
@@ -999,7 +999,7 @@ const MessagesComponent = ({id, messages, setShowNodesAction, editMessage }:{id:
           <Text fontSize={'.5em '} style={{overflow: 'hidden',display: '-webkit-box',WebkitLineClamp: 3, WebkitBoxOrient: 'vertical'}} ><span style={{fontWeight:500, color:'black', fontSize:'.7em'}}> {t('GenerationInstructions')}:</span> {message.generation_instructions}</Text>
           </>:
           <Box overflowY={'scroll'}>
-            {Object.keys(message.preespecified_messages).map((lng, index) => (
+            {Object.keys(message?.preespecified_messages || []).map((lng, index) => (
               <Flex mt='5px' key={`message-${index}-${lng}`} gap='5px' alignItems={'center'}>
                 <Text fontSize={'.8em'}>{languagesFlags[lng][1]}</Text>
                 <Text textOverflow={'ellipsis'} overflow={'hidden'} whiteSpace={'nowrap'} fontSize={'.5em'}>{message.preespecified_messages[lng]}</Text>
