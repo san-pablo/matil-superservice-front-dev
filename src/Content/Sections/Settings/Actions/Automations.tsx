@@ -17,6 +17,7 @@ import ConfirmBox from '../../../Components/Reusable/ConfirmBox'
 import EditStructure from '../../../Components/Reusable/EditStructure'
 import CustomSelect from '../../../Components/Reusable/CustomSelect'
 import VariableTypeChanger from '../../../Components/Reusable/VariableTypeChanger'
+import Table from '../../../Components/Reusable/Table'
 //ICONS
 import { BsTrash3Fill } from "react-icons/bs"
 import { FaPlus } from 'react-icons/fa6'
@@ -34,6 +35,8 @@ interface AutomationData  {
     actions:{type:ActionsType, content:any}[]
 }
 
+const CellStyle = ({column, element}:{column:string, element:any}) => {return <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element}</Text>}
+
 //MAIN FUNCTION
 function Automations () {
 
@@ -48,16 +51,32 @@ function Automations () {
         actions:[]
     }
     
-    //GROUPS DATA
+    //AUTOMATIONS DATA
     const [automationData, setAutomationData] = useState<AutomationData[] | null>(null)
 
+    //FILTER AUTOMATION DATA
+    const [text, setText]  =useState<string>('')
+    const [filteredAutomationData, setFilteredAutomationData] = useState<AutomationData[]>([])
+    useEffect(() => {
+        const filterUserData = () => {
+            if (automationData) {
+                const filtered = automationData.filter(user =>
+                    user.name.toLowerCase().includes(text.toLowerCase()) ||
+                    user.description.toLowerCase().includes(text.toLowerCase()) 
+                )
+                setFilteredAutomationData(filtered)
+            }
+        }
+        filterUserData()
+    }, [text, automationData])
+    
     //SELECTED GROUP
     const [selectedIndex, setSelectedIndex] = useState<number>(-2)
 
     //FETCH INITIAL DATA
     useEffect(() => {
         fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/automations`, setValue:setAutomationData, auth})
-        document.title = `${t('Actions')} - ${t('Automations')} - ${auth.authData.organizationName} - Matil`
+        document.title = `${t('Automations')} - ${auth.authData.organizationName} - Matil`
     }, [])
 
     //FRONT
@@ -68,7 +87,6 @@ function Automations () {
                 <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Automations')}</Text>
                 <Text color='gray.600' fontSize={'.9em'}>{t('AutomationsDes')}</Text>
             </Box>
-            <Button leftIcon={<FaPlus/>} onClick={() => {setSelectedIndex(-1)}}>{t('CreateAutomation')}</Button>
         </Flex>
 
         <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='5vh'/>
@@ -76,27 +94,22 @@ function Automations () {
             <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('AutomationsCount', {count:automationData?.length})}</Text>
         </Skeleton>
  
-        <Skeleton isLoaded={automationData !== null}> 
-            <Box mt='2vh' py='5px'  overflow={'scroll'} maxW={'calc(100vw - 260px - 4vw)'}>
- 
-            {automationData?.length === 0 ? 
-            <Box borderRadius={'.5rem'} width={'100%'} bg='gray.50' borderColor={'gray.200'} borderWidth={'1px'} p='15px'>    
-                <Text fontWeight={'medium'} fontSize={'1.1em'}>{t('NoAutomations')}</Text>
-            </Box>: 
-            <> 
-                <Flex borderTopRadius={'.5rem'} borderColor={'gray.300'} borderWidth={'1px'}  minWidth={'1180px'}  gap='20px' alignItems={'center'}  color='gray.500' p='10px'  bg='gray.100' fontWeight={'medium'} > 
-                    <Text flex='15 0 150px'>{t('Name')}</Text>
-                    <Text flex='35 0 350px'>{t('Description')}</Text>
-                </Flex>
-                {automationData?.map((row, index) =>( 
-                    <Flex minWidth={'1180px'} borderRadius={index === automationData.length - 1?'0 0 .5rem .5rem':'0'} borderWidth={'0 1px 1px 1px'} onClick={() => setSelectedIndex(index)}  gap='20px' key={`automation-${index}`}  alignItems={'center'}  fontSize={'.9em'} color='black' p='10px'  borderColor={'gray.300'}> 
-                        <Text flex='15 0 150px' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{row.name}</Text>
-                        <Text flex='35 0 350px' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{row.description}</Text>
-                    </Flex>
-                ))}
-            </>}
-            </Box>
+
+        <Flex  mt='2vh'justifyContent={'space-between'} alignItems={'end'}>
+            <Skeleton isLoaded={automationData !== null}> 
+                <Box width={'350px'}> 
+                    <EditText value={text} setValue={setText} searchInput={true}/>
+                </Box>
+            </Skeleton>
+            <Flex gap='10px'> 
+                <Button size='sm' leftIcon={<FaPlus/>} onClick={() => {setSelectedIndex(-1)}}>{t('CreateAutomation')}</Button>
+            </Flex> 
+        </Flex>
+        <Skeleton mt='2vh' isLoaded={automationData !== null}> 
+            <Table data={filteredAutomationData} CellStyle={CellStyle} columnsMap={{'name':[t('Name'), 150], 'description':[t('Desription'), 350]}} noDataMessage={t('NoAutomations')} onClickRow={(row, index) => setSelectedIndex(index)} />  
         </Skeleton>
+
+    
         </>}
     </>)
 }

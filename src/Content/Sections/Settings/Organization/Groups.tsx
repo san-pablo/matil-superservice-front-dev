@@ -14,6 +14,7 @@ import LoadingIconButton from '../../../Components/Reusable/LoadingIconButton'
 import useOutsideClick from '../../../Functions/clickOutside'
 import ConfirmBox from '../../../Components/Reusable/ConfirmBox'
 import showToast from '../../../Components/ToastNotification'
+import Table from '../../../Components/Reusable/Table'
 //ICONS
 import { BsTrash3Fill } from "react-icons/bs"
 import { FaPlus } from 'react-icons/fa6'
@@ -32,6 +33,9 @@ interface GroupData  {
 //MOTION BOX
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
 
+const CellStyle = ({column, element}:{column:string, element:any}) => {
+ return <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{column === 'users'?element.map((user:any) => user.name).join(' - '):element}</Text>
+}
 
 //MAIN FUNCTION
 function Groups () {
@@ -39,6 +43,7 @@ function Groups () {
     //AUTH CONSTANT
     const auth = useAuth()
     const { t } = useTranslation('settings')
+    const groupsMapDict:{[key:string]:[string, number]} = {name:[t('Name'), 150], description: [t('Description'), 350], users:[t('Users'), 500]}
     const newGroup:GroupData = {
         id: -1,
         name: t('NewGroup'),
@@ -51,6 +56,23 @@ function Groups () {
 
     //SELECTED GROUP
     const [selectedGroup, setSelectedGroup] = useState<GroupData | null>(null)
+
+    //FILTER GROUPS DATA
+    const [text, setText]  =useState<string>('')
+    const [filteredGroupsData, setFilteredGroupsData] = useState<GroupData[]>([])
+      useEffect(() => {
+        const filterUserData = () => {
+            if (groupsData) {
+                const filtered = groupsData.filter(user =>
+                    user.name.toLowerCase().includes(text.toLowerCase()) ||
+                    user.description.toLowerCase().includes(text.toLowerCase())
+                )
+                setFilteredGroupsData(filtered)
+            }
+        }
+        filterUserData()
+      }, [text, groupsData])
+
 
     //FETCH INITIAL DATA
     useEffect(() => {
@@ -65,36 +87,26 @@ function Groups () {
                 <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('GroupsTable')}</Text>
                 <Text color='gray.600' fontSize={'.9em'}>{t('GroupsDescription')}</Text>
             </Box>
-            <Button leftIcon={<FaPlus/>} onClick={() => setSelectedGroup(newGroup)}>{t('CreateGroup')}</Button>
         </Flex>
 
         <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='5vh'/>
-        <Skeleton isLoaded={groupsData !== null}> 
-            <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('GroupsCount', {count:groupsData?.length})}</Text>
+        <Skeleton mb='1vh' isLoaded={groupsData !== null}> 
+            <Text  fontWeight={'medium'} fontSize={'1.2em'}>{t('GroupsCount', {count:groupsData?.length})}</Text>
         </Skeleton>
  
-        <Skeleton isLoaded={groupsData !== null}> 
-            <Box mt='2vh' py='5px'  overflow={'scroll'} maxW={'calc(100vw - 260px - 4vw)'}>
- 
-            {groupsData?.length === 0 ? 
-            <Box borderRadius={'.5rem'} width={'100%'} bg='gray.50' borderColor={'gray.200'} borderWidth={'1px'} p='15px'>    
-                <Text fontWeight={'medium'} fontSize={'1.1em'}>{t('NoGroups')}</Text>
-            </Box>: 
-            <> 
-                <Flex borderTopRadius={'.5rem'} borderColor={'gray.300'} borderWidth={'1px'}  minWidth={'1180px'}  gap='20px' alignItems={'center'}  color='gray.500' p='10px'  bg='gray.100' fontWeight={'medium'} > 
-                    <Text flex='15 0 150px'>{t('Name')}</Text>
-                    <Text flex='35 0 350px'>{t('Description')}</Text>
-                    <Text flex='50 0 500px'>{t('Users')}</Text>
-                </Flex>
-                {groupsData?.map((row, index) =>( 
-                    <Flex minWidth={'1180px'} borderRadius={index === groupsData.length - 1?'0 0 .5rem .5rem':'0'} borderWidth={'0 1px 1px 1px'} onClick={() => setSelectedGroup(row)}  gap='20px' key={`user-${index}`}  alignItems={'center'}  fontSize={'.9em'} color='black' p='10px'  borderColor={'gray.300'}> 
-                        <Text flex='15 0 150px' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{row.name}</Text>
-                        <Text flex='35 0 350px' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{row.description}</Text>
-                        <Text flex='50 0 500px' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{row.users.map(user => user.name).join(' - ')}</Text>
-                    </Flex>
-                ))}
-            </>}
-            </Box>
+        <Flex  mt='2vh'justifyContent={'space-between'} alignItems={'end'}>
+            <Skeleton isLoaded={groupsData !== null}> 
+                <Box width={'350px'}> 
+                    <EditText value={text} setValue={setText} searchInput={true}/>
+                </Box>
+            </Skeleton>
+            <Flex gap='10px'> 
+                <Button size='sm' leftIcon={<FaPlus/>} onClick={() => setSelectedGroup(newGroup)}>{t('CreateGroup')}</Button>
+            </Flex>
+        </Flex>
+
+        <Skeleton   mt='2vh'isLoaded={groupsData !== null}> 
+            <Table data={filteredGroupsData || []} CellStyle={CellStyle} noDataMessage={t('NoGroups')} columnsMap={groupsMapDict} onClickRow={(row:any, index:number) => setSelectedGroup(row)}/>
         </Skeleton>
         </>}
     </>)

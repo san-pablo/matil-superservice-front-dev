@@ -25,6 +25,51 @@
 }
 
 
+/**/
+.custom-checkbox {
+  position: relative !important;
+  appearance: none;
+  box-sizing: content-box;
+  overflow: hidden;
+}
+
+.custom-checkbox[type="checkbox"]:before {
+  content: '';
+  display: inline-block;
+  width: 16px; 
+  height: 16px; 
+  border-radius: 6px;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+}
+
+.custom-checkbox[type="checkbox"]:after {
+  content: '';
+  position: absolute;
+  width: 5px; 
+  height: 10px; 
+  border-radius: 1;
+  transform: translate(0%, 0%) scale(0) rotate(45deg);
+  background-color: transparent;
+  box-shadow: 2px 2px 0px 0px #007bff; 
+  left: 50%;
+  top: 35%;
+}
+
+.custom-checkbox[type="checkbox"]:checked:after {
+  animation: toggleOnCheckbox 0.2s ease forwards;
+}
+
+@keyframes toggleOnCheckbox {
+  from {
+    transform: translate(-50%, -85%) scale(0) rotate(45deg);
+  }
+  to {
+    transform: translate(-50%, -85%) scale(1) rotate(45deg);
+  }
+}
+
+
 
 /*LOADING ICON BUTTON*/
 .bounce-dot {

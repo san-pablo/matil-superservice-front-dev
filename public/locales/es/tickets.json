@@ -2,6 +2,7 @@
     "Views":"Vistas",
     "PublicViews":"Vistas públicas",
     "PrivateViews":"Vistas privadas",
+    "NoTickets":"No hay tickets disponibles",
     "Trash":"Papelera de tickets",
     "EditViews":"Editar vistas",
     "Filter":"Filtrar",
@@ -18,7 +19,6 @@
     "Edit":"Editar",
     "Recover":"Recuperar",
     "DeSelect":"Deseleccionar",
-
     "Cancel":"Cancelar",
     "NoBusiness":"Sin empresa",
     "WebClient":"Cliente de la Web",

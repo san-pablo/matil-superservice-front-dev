@@ -4,8 +4,11 @@
     "ClientsCount_other":"{{count}} clientes",
     "Cancel":"Cancelar",
     "Business":"Empresa",
+    "NoClients":"No hay clientes disponibles",
+
     "Conversations_one":"Conversación",
     "Conversations_other":"conversaciones",
+    "ApplyFilters":"Aplicar filtros",
     "Page":"Página",
     "email_address": "Mail",
     "phone_number":"Teléfono",

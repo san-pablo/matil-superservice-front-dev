@@ -24,6 +24,7 @@ import { IoIosArrowBack } from 'react-icons/io'
 import { RxCross2 } from 'react-icons/rx'
 //TYPING 
 import { FieldAction, ActionsType } from '../../../Constants/typing'
+import Table from '../../../Components/Reusable/Table'
 
 //TYPING
 interface AutomationData  {
@@ -33,6 +34,8 @@ interface AutomationData  {
     any_conditions:FieldAction[]
     actions:{type:ActionsType, content:any}[]
 }
+
+const CellStyle = ({column, element}:{column:string, element:any}) => {return <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element}</Text>}
 
 //MAIN FUNCTION
 function Triggers () {
@@ -48,11 +51,27 @@ function Triggers () {
         actions:[]
     }
     
-    //GROUPS DATA
+    //TRIGERS DATA
     const [triggerData, setTriggerData] = useState<AutomationData[] | null>(null)
 
     //SELECTED GROUP
     const [selectedIndex, setSelectedIndex] = useState<number>(-2)
+
+    //FILTER TRIGGER DATA
+    const [text, setText]  =useState<string>('')
+    const [filteredTriggerData, setFilteredTriggerData] = useState<AutomationData[]>([])
+    useEffect(() => {
+        const filterUserData = () => {
+            if (triggerData) {
+                const filtered = triggerData.filter(user =>
+                    user.name.toLowerCase().includes(text.toLowerCase()) ||
+                    user.description.toLowerCase().includes(text.toLowerCase()) 
+                  )
+                setFilteredTriggerData(filtered)
+            }
+        }
+        filterUserData()
+    }, [text, triggerData])
 
     //FETCH INITIAL DATA
     useEffect(() => {
@@ -80,26 +99,18 @@ function Triggers () {
             <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('TriggersCount', {count:triggerData?.length})}</Text>
         </Skeleton>
  
-        <Skeleton isLoaded={triggerData !== null}> 
-            <Box mt='2vh' py='5px'  overflow={'scroll'} maxW={'calc(100vw - 260px - 4vw)'}>
- 
-            {triggerData?.length === 0 ? 
-            <Box borderRadius={'.5rem'} width={'100%'} bg='gray.50' borderColor={'gray.200'} borderWidth={'1px'} p='15px'>    
-                <Text fontWeight={'medium'} fontSize={'1.1em'}>{t('NoTriggers')}</Text>
-            </Box>: 
-            <> 
-                <Flex borderTopRadius={'.5rem'} borderColor={'gray.300'} borderWidth={'1px'}  minWidth={'1180px'}  gap='20px' alignItems={'center'}  color='gray.500' p='10px'  bg='gray.100' fontWeight={'medium'} > 
-                    <Text flex='15 0 150px'>{t('Name')}</Text>
-                    <Text flex='35 0 350px'>{t('Description')}</Text>
-                </Flex>
-                {triggerData?.map((row, index) =>( 
-                    <Flex minWidth={'1180px'} borderRadius={index === triggerData.length - 1?'0 0 .5rem .5rem':'0'} borderWidth={'0 1px 1px 1px'} onClick={() => setSelectedIndex(index)}  gap='20px' key={`trigger-${index}`}  alignItems={'center'}  fontSize={'.9em'} color='black' p='10px'  borderColor={'gray.300'}> 
-                        <Text flex='15 0 150px' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{row.name}</Text>
-                        <Text flex='35 0 350px' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{row.description}</Text>
-                    </Flex>
-                ))}
-            </>}
-            </Box>
+        <Flex  mt='2vh'justifyContent={'space-between'} alignItems={'end'}>
+            <Skeleton isLoaded={triggerData !== null}> 
+                <Box width={'350px'}> 
+                    <EditText value={text} setValue={setText} searchInput={true}/>
+                </Box>
+            </Skeleton>
+            <Flex gap='10px'> 
+                <Button size='sm' leftIcon={<FaPlus/>} onClick={() => {setSelectedIndex(-1)}}>{t('CreateTrigger')}</Button>
+            </Flex> 
+        </Flex>
+        <Skeleton mt='2vh' isLoaded={triggerData !== null}> 
+            <Table data={filteredTriggerData} CellStyle={CellStyle} columnsMap={{'name':[t('Name'), 150], 'description':[t('Desription'), 350]}} noDataMessage={t('NoTriggers')} onClickRow={(row, index) => setSelectedIndex(index)} />  
         </Skeleton>
         </>}
     </>)

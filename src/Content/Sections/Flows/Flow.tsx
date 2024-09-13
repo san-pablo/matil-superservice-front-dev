@@ -155,7 +155,7 @@ const Flow = () => {
                 case 'transfer': return {groupsList:groupsListRef.current, setShowNodesAction, editMessage, editSimpleFlowData, deleteNode}
                 case 'reset': return {flowVariables:flowVariablesRef.current, setShowNodesAction, editSimpleFlowData, editMessage, deleteNode, addNewNode, getAvailableNodes}
                 case 'flow_swap': return {flowsIds:flowsListRef.current, setShowNodesAction, editMessage, addNewNode, deleteNode, editSimpleFlowData} 
-                case 'function': return {flowId:location.split('/')[location.split('/').length - 1], functionsDict:functionsNameMap.current,  setShowNodesAction, editSimpleFlowData, addNewNode, deleteNode, getAvailableNodes}
+                case 'function': return {flowId:location.split('/')[location.split('/').length - 1], functionsDict:functionsNameMap.current,  setShowNodesAction, editSimpleFlowData, addNewNode, deleteNode, getAvailableNodes, editFunctionError}
                 case 'motherstructure_updates': return {setShowNodesAction, editFieldAction, addNewNode, deleteNode, getAvailableNodes}
                 default:{}
             }
@@ -303,7 +303,7 @@ const Flow = () => {
             else if (type === 'transfer') newNodeObjectData = {user_id:0, group_id:0, messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:{groupsList:groupsListRef.current, setShowNodesAction, editMessage, editSimpleFlowData, deleteNode}}
             else if (type === 'reset') newNodeObjectData = {variable_indices:[],next_node_index:null, messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:{flowVariables:flowVariablesRef.current, setShowNodesAction, editMessage, addNewNode, deleteNode, editSimpleFlowData, getAvailableNodes}}
             else if (type === 'flow_swap') newNodeObjectData = {new_flow_uuid:'-1', messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:{flowsIds: flowsListRef.current, setShowNodesAction, editMessage, addNewNode, deleteNode, editSimpleFlowData}}
-            else if (type === 'function') newNodeObjectData = {uuid:'', variable_args:{}, motherstructure_args:{}, hardcoded_args:{}, error_nodes_ids:{}, next_node_index:null, output_to_variables:{}, functions:{flowId:location.split('/')[location.split('/').length - 1], functionsDict:functionsNameMap.current, setShowNodesAction, editSimpleFlowData, addNewNode, deleteNode, getAvailableNodes}}
+            else if (type === 'function') newNodeObjectData = {uuid:'', variable_args:{}, motherstructure_args:{}, hardcoded_args:{}, error_nodes_ids:{}, next_node_index:null, output_to_variables:{}, functions:{flowId:location.split('/')[location.split('/').length - 1], functionsDict:functionsNameMap.current, setShowNodesAction, editSimpleFlowData, addNewNode, deleteNode, getAvailableNodes, editFunctionError}}
             else if (type === 'motherstructure_updates') newNodeObjectData = {updates:[], next_node_index:null, functions:{setShowNodesAction, editFieldAction, addNewNode, deleteNode, getAvailableNodes}}
             return {id, position, data: newNodeObjectData, type:targetType}
         }
@@ -389,32 +389,27 @@ const Flow = () => {
                                 const edgeTarget = edge.id.split('->')[1].split('(')[0]
                                 sourceNode = edgeSource
                                 if (edge.sourceHandle) {
-                                    if (edgeTarget === sourceId) sourceHandle = parseInt(edge.sourceHandle.split('-')[1])
-                                    //return edgeTarget !== sourceId
+                                    if (edgeSource === sourceId) {
+                                        if (edge.sourceHandle.includes('(') && edge.sourceHandle.includes(')')) sourceHandle = parseInt(edge.sourceHandle.split('(')[1].split(')')[0], 10)
+                                        else sourceHandle = parseInt(edge.sourceHandle.split('-')[1], 10)
+                                        return sourceHandle !== -1
+                                    } 
                                 }
                                 if (delete_branch)  return edgeSource !== sourceId
                                 else return edgeSource !== sourceId && edgeTarget !== sourceId
-
                         }))
                     }
 
                     let updatedNodes = nds.map((node) => {
                         if (node.id === sourceId ) {
-                            if (sourceHandle !== -1) {
-                                if (node.type === 'function') {
-                                    const updatedErrors = { ...node.data.error_nodes_ids }
-                                    const keyToUpdate = Object.keys(updatedErrors)[sourceHandle]
-                                    if (keyToUpdate) updatedErrors[keyToUpdate] = null                                           
-                                    return {...node, data: {...node.data, error_nodes_ids:updatedErrors}}
-                                }
-                                else {
-                                    return {...node, data: {...node.data, branches: node.data.branches.map((branch: any, idx: number) => {
-                                                if (idx === sourceHandle) return { ...branch, next_node_index: null }
-                                                return branch
-                                            })
-                                        }
+                            if (sourceHandle !== -1) {      
+                                return {...node, data: {...node.data, branches: node.data.branches.map((branch: any, idx: number) => {
+                                            if (idx === sourceHandle) return { ...branch, next_node_index: null }
+                                            return branch
+                                        })
                                     }
                                 }
+                                
                             }
                             else return {...node, data: {...node.data, next_node_index: null}} 
                         }
@@ -518,13 +513,14 @@ const Flow = () => {
       setTimeout(() => {setSourceId(nodeId as string)}, 0)
     }
 
+
     //ADD OR DELETE A MESSAGE IN SENDER
     const editFieldAction = (nodeId:string | undefined, index:number | undefined, type:'remove' | 'add' | 'edit', newAction?:FieldAction) => {
         setNodes((nds) => nds.map((node) => {
             if (node.id !== nodeId) return node
             let updatedActions
             if (type === 'remove') updatedActions = node.data.updates.filter((_:any, idx:number) => idx !== index)
-            else if (type === 'add') updatedActions = [...node.data.updates, {motherstructure:'tickets', is_customizable:false, name:'user_id', op:'set', value:-1}]
+            else if (type === 'add') updatedActions = [...node.data.updates, {motherstructure:'tickets', is_customizable:false, name:'user_id', operation:'set', value:-1}]
             else if (type === 'edit') {
                 updatedActions = node.data.updates.map((message: any, idx: number) => {
                   if (idx === index) return newAction
@@ -551,6 +547,56 @@ const Flow = () => {
             if (node.id !== nodeId) return node
             return {...node, data: { functions:node.data.functions, ...newData}}
         }))
+    }
+
+    //EDIT ERROS OF FUNCTIONS
+    const editFunctionError = (nodeId:string | undefined, type:'add' | 'remove' | 'remove-branch', keyToEdit:number, index?:number) => {
+
+        setNodes((nds) => nds.map((node) => {
+            
+            if (node.id !== nodeId) return node
+            let updatedErrors
+            if (type === 'remove' || type === 'remove-branch') {
+
+                setEdges((edges) => {
+                    const filteredEdges = edges.filter((edge) => {
+                        const edgeSource = edge.id.split('->')[0];
+                        return edgeSource !== nodeId || edge.sourceHandle !== `handle-${index}`
+                    })
+
+                    let updatedEdges
+                    if (type === 'remove') {
+                        updatedEdges = filteredEdges.map((edge) => {
+                            const edgeSource = edge.id.split('->')[0];
+                            const edgeHandleIndex = edge.sourceHandle?parseInt(edge.sourceHandle.split('-')[1], 10):-1
+                                if (edgeSource === nodeId && edgeHandleIndex > (index as number)) {
+                                const newHandle = `handle-${edgeHandleIndex - 1}`
+                                return {...edge,id: `${nodeId}->${newHandle}`, sourceHandle: newHandle}
+                            }
+                            return edge
+                        })
+                    }
+                    else updatedEdges = filteredEdges
+                
+                    return updatedEdges
+                })
+                
+                if (type === 'remove')  {
+                    const errors = node.data.error_nodes_ids
+                    delete errors[keyToEdit]
+                    updatedErrors = errors
+                }
+                else {
+                    const errors = node.data.error_nodes_ids
+                    errors[keyToEdit] = null
+                    updatedErrors = errors
+                }
+            }
+            else if (type === 'add') updatedErrors = {...node.data.error_nodes_ids, [keyToEdit]: null}
+          
+            return {...node,data: {...node.data,error_nodes_ids: updatedErrors}}  
+        })
+      )     
     }
     
     //FETCH INITIAL DATA
@@ -596,6 +642,7 @@ const Flow = () => {
             else {
                  const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/flows/${flowId}`, setWaiting, auth})
                 if (response?.status === 200){
+                    console.log(response.data.nodes)
                     flowVariablesRef.current = response.data.variables
                     setFlowName(response.data.name)
                     setFlowDescription(response.data.description)
@@ -612,6 +659,7 @@ const Flow = () => {
     }, [])
 
  
+    console.log(nodes)
     //CUSTOM BOX FOR EDITING NODES
     const NodesEditBox = () => {
 
@@ -639,11 +687,11 @@ const Flow = () => {
                     editBranch(showNodesAction?.nodeId, showNodesAction?.actionData.index, 'edit', branchData)
                 },[branchData])
         
-                const editBranchData = (index: number | undefined, type: 'add' | 'remove' | 'edit', newCondition?: { variable_index: number, op: string, value: any }) => {
+                const editBranchData = (index: number | undefined, type: 'add' | 'remove' | 'edit', newCondition?: { variable_index: number, operation: string, value: any }) => {
                     setBranchData((branch) => {
                         let updatedConditions
                         if (type === 'remove') updatedConditions = branch.conditions.filter((_, idx: number) => idx !== index)
-                        else if (type === 'add') updatedConditions = [...branch.conditions, { variable_index: 0, op: 'eq', value: null }]
+                        else if (type === 'add') updatedConditions = [...branch.conditions, { variable_index: 0, operation: 'eq', value: null }]
                         else if (type === 'edit' && newCondition) {
                             updatedConditions = branch.conditions.map((con, idx) => {
                                 if (idx === index) return newCondition
@@ -667,16 +715,16 @@ const Flow = () => {
                         <Box bg='gray.300' width={'100%'} height={'1px'} mt='2vh' mb='2vh'/>
                         {flowVariables.length === 0?<Text fontSize={'.9em'}>{t('NoVariablesSelected')}</Text>:<> 
                         
-                        {branchData.conditions.map((condition:{variable_index:number, op:string, value:any}, index:number) => (<> 
+                        {branchData.conditions.map((condition:{variable_index:number, operation:string, value:any}, index:number) => (<> 
 
                             <Flex mt='.5vh'  key={`conditions-${index}`} alignItems='center' gap='20px'>
                                 <Box flex='5'> 
                                     <CustomSelect containerRef={scrollRef} hide={false} selectedItem={condition.variable_index} setSelectedItem={(value) => editBranchData(index, 'edit',{...condition, variable_index:value, value:''})} options={Array.from({length: flowVariables.length}, (v, i) => i)} labelsMap={variablesLabelsMap} />
                                 </Box>
                                 <Box flex='4'>
-                                    <CustomSelect containerRef={scrollRef} labelsMap={inequalitiesMap} hide={false} selectedItem={condition.op} setSelectedItem={(value) => editBranchData(index, 'edit',{...condition, op:value})} options={columnInequalities[flowVariables[condition.variable_index].type]}/>
+                                    <CustomSelect containerRef={scrollRef} labelsMap={inequalitiesMap} hide={false} selectedItem={condition.operation} setSelectedItem={(value) => editBranchData(index, 'edit',{...condition, operation:value})} options={columnInequalities[flowVariables[condition.variable_index].type]}/>
                                 </Box>
-                                {condition.op !== 'exists' && <Box flex='5'>
+                                {condition.operation !== 'exists' && <Box flex='5'>
                                     <InputType inputType={flowVariables[condition.variable_index].type} value={condition.value} setValue={(value) => editBranchData(index, 'edit',{...condition, value})}/>
                                 </Box>}
                                 <IconButton bg='transaprent' border='none' size='sm' _hover={{bg:'gray.200'}} icon={<RxCross2/>} aria-label='delete-all-condition' onClick={() => editBranchData(index, 'remove')}/>

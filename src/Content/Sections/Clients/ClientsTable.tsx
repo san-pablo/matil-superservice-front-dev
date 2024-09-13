@@ -20,6 +20,7 @@ import timeAgo from "../../Functions/timeAgo"
 import { FaMagnifyingGlass } from "react-icons/fa6" 
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io"
 import { PiDesktopTowerFill } from "react-icons/pi"
+import { FaFilter } from "react-icons/fa"
 //TYPING
 import { Clients, Channels,  ClientColumn, logosMap, HeaderSectionType, languagesFlags } from "../../Constants/typing"
   
@@ -91,12 +92,9 @@ function ClientsTable ({addHeaderSection}:{addHeaderSection:HeaderSectionType}) 
     const [filters, setFilters] = useState<ClientsFilters>({page_index:1, channel_types:[]})
     const [selectedIndex, setSelectedIndex] = useState<number>(-1)
 
-    //SELECTED ELEMENTS
-    const [selectedElements, setSelectedElements] = useState<number[]>([])
-
     //FETCH DATA ON FIRST RENDER
     useEffect(() => {
-        document.title = `Clientes - ${auth.authData.organizationName} - Matil`
+        document.title = `${t('Clients')} - ${auth.authData.organizationName} - Matil`
         localStorage.setItem('currentSection', `clients`)
 
         const fetchClientsData = async() => {
@@ -152,35 +150,29 @@ function ClientsTable ({addHeaderSection}:{addHeaderSection:HeaderSectionType}) 
                 <Text fontWeight={'medium'} fontSize={'1.5em'}>{t('Clients')}</Text>
                 <AccionesButton items={clients ? clients.page_data:[]} view={null} section={'clients'}/>
              </Flex>
-            <Flex justifyContent={'space-between'} alignItems={'end'} gap='20px'  > 
-                <Flex gap='20px' alignItems={'center'} mt='3vh' flex='1' ref={containerRef} px='4px' overflowX={'scroll'}>
-                    <Box minW='200px' width={'300px'} alignItems={'center'} >
-                        <EditText value={filters.search} setValue={(value:string) => setFilters({...filters, search:value})} searchInput={true}/>
-                    </Box> 
-       
-                    <FilterButton selectList={Object.keys(logosMap)} selectedElements={filters.channel_types} setSelectedElements={(element) => toggleChannelsList(element as Channels)} icon={PiDesktopTowerFill} filter='channels'/>
-                </Flex>
-                <Button whiteSpace='nowrap'  minWidth='auto'leftIcon={<FaMagnifyingGlass/>} size='sm' onClick={() => fetchClientDataWithFilter({...filters,page_index:1})}>Aplicar filtros</Button>
+    
+            <Flex gap='15px' mt='2vh' > 
+                <Box width={'350px'}> 
+                    <EditText value={filters.search} setValue={(value) => setFilters(prev => ({...prev, search:value}))} searchInput={true}/>
+                </Box>
+                <FilterButton selectList={Object.keys(logosMap)} selectedElements={filters.channel_types} setSelectedElements={(element) => toggleChannelsList(element as Channels)} icon={PiDesktopTowerFill} filter='channels'/>
+                <Button _hover={{color:'blue.500'}} leftIcon={<FaFilter/>} size='sm'  onClick={() => fetchClientDataWithFilter({...filters, page_index:1})}>{t('ApplyFilters')}</Button>
             </Flex>
-            <Box bg={'gray.200'} height={'1px'} mt='3vh' mb='3vh' width='100%'/>
 
-            <Skeleton isLoaded={!waitingInfo}> 
-                <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('ClientsCount_one', {count:clients?.total_clients})}</Text>
-            </Skeleton>
-            
-            {/*TABLA*/}
-            <Box> 
-                <Flex p='10px' alignItems={'center'} justifyContent={'end'} gap='10px' flexDir={'row-reverse'}>
+            <Flex mt='2vh'  justifyContent={'space-between'} alignItems={'center'}> 
+                <Skeleton  isLoaded={!waitingInfo} >
+                    <Text fontWeight={'medium'} color='gray.600' fontSize={'1.2em'}> {t('ClientsCount', {count:clients?.total_clients})}</Text> 
+                </Skeleton>
+                <Flex  alignItems={'center'} justifyContent={'end'} gap='10px' flexDir={'row-reverse'}>
                     <IconButton isRound size='xs' aria-label='next-page' icon={<IoIosArrowForward />} isDisabled={filters.page_index >= Math.floor((clients?.total_clients || 0)/ 50)} onClick={() => fetchClientDataWithFilter({...filters,page_index:filters.page_index + 1})}/>
                     <Text fontWeight={'medium'} fontSize={'.9em'} color='gray.600'>{t('Page')} {filters.page_index}</Text>
                     <IconButton isRound size='xs' aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={filters.page_index === 1} onClick={() => fetchClientDataWithFilter({...filters,page_index:filters.page_index - 1})}/>
                 </Flex>
-            
-                <Skeleton isLoaded={!waitingInfo}> 
-                    <Table data={clients?.page_data || []} CellStyle={CellStyle} noDataMessage={t('NoClients')} columnsMap={columnsClientsMap} requestSort={requestSort} onClickRow={clickRow} excludedKeys={['id', 'contact_business_id', 'phone_number', 'email_address', 'instagram_username', 'webchat_uuid', 'google_business_review_id']}  currentIndex={selectedIndex} />
-                </Skeleton>
-            </Box>
-    
+            </Flex>
+
+            <Skeleton isLoaded={!waitingInfo}> 
+                <Table data={clients?.page_data || []} CellStyle={CellStyle} noDataMessage={t('NoClients')} columnsMap={columnsClientsMap} requestSort={requestSort} onClickRow={clickRow} excludedKeys={['id', 'contact_business_id', 'phone_number', 'email_address', 'instagram_username', 'webchat_uuid', 'google_business_review_id']}  currentIndex={selectedIndex} />
+            </Skeleton>
         </Box>
         )
 }

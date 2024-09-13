@@ -7,11 +7,12 @@ import { useState, useMemo, useRef, useEffect, Fragment, Dispatch, SetStateActio
 import { useAuth } from "../../../AuthContext"
 //FRONT
 import { Flex, Box, Text, Checkbox, Tooltip } from '@chakra-ui/react'
+import '../styles.css'
 //ICONS
 import { IoMdArrowDropdown, IoMdArrowDropup } from 'react-icons/io'
 //TYPING
 import { columnsTicketsMap, TicketColumn,  TicketsTableProps } from "../../Constants/typing" 
- 
+
 //TYPING
 interface TableProps{
     data: any[]
@@ -27,7 +28,7 @@ interface TableProps{
     onSelectAllElements?:(isSeleceted:boolean) =>void
     currentIndex?:number
 }
-   
+    
 //MAIN FUNCTION
 const Table = ({ data, CellStyle, noDataMessage, requestSort,  columnsMap, excludedKeys = [], onClickRow, selectedElements, onlyOneSelect = false, setSelectedElements, onSelectAllElements, currentIndex = -1 }:TableProps ) =>{
 
@@ -151,16 +152,17 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort,  columnsMap, exclu
     //FRONT
     return(
         <> 
+       
+        <Box overflow={'scroll'} maxW={'calc(100% + 20px)'} ml='-10px' p='10px' >    
         {(!data || dataToWork.length === 0) ? 
             <Box borderRadius={'.5rem'} width='100%' bg='gray.50' borderColor={'gray.200'} borderWidth={'1px'} p='15px'>    
                 <Text fontWeight={'medium'} fontSize={'1.1em'}>{noDataMessage}</Text>
             </Box>: 
-        <Box overflow={'scroll'} maxW={'calc(100% + 20px)'} ml='-10px' p='10px' >    
             <Box borderRadius={'.5em'} bg='gray.50'  overflow={'hidden'}   minWidth={`${totalWidth}px`}   >    
                 <Flex  position={'sticky'}  borderTopRadius={'.5rem'} minWidth={`${totalWidth}px`}  borderColor={'gray.200'} borderWidth={'1px'} gap='20px' ref={headerRef} alignItems={'center'}  color='gray.600' p='10px' fontSize={'1em'} bg='gray.100' > 
                     {selectedElements && 
-                    <Flex alignItems={'center'} width='10px' > 
-                        <Checkbox isChecked={selectedElements.length >= data.length} onChange={(e) => onInternalSelectAllElements(e?.target?.checked)}/>  
+                    <Flex alignItems={'center'} > 
+                        <input type="checkbox" className="custom-checkbox"  checked={selectedElements.length >= data.length} onChange={(e) => onInternalSelectAllElements(e?.target?.checked)}/>  
                     </Flex>}
                     {Object.keys(columnsMap).filter(column => column !== 'id').map((column) => (
                         <Fragment key={`header-${column}`}>
@@ -176,11 +178,11 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort,  columnsMap, exclu
                     {dataToWork.map((row:any, index:number) => {  
                         
                         return (
-                            <Flex data-index={index}  position={'relative'} overflow={'hidden'} gap='20px' minWidth={`${totalWidth}px`} borderRadius={index === data.length - 1?'0 0 .5rem .5rem':'0'} borderWidth={'0 1px 1px 1px'}  cursor={onClickRow?'pointer':'not-allowed'} onClick={() => {if (onClickRow) onClickRow(row, index)}} key={`row-${index}`}  bg={selectedIndex === index ? 'blue.50':(selectedElements || []).includes(row.id)?'blue.100':index%2 === 1?'#FCFCFC':'white'} alignItems={'center'}  fontSize={'.9em'} color='black' p='10px' borderColor={'gray.200'} _hover={{bg:(selectedElements || [] ).includes(row.id)?'blue.100':'blue.50'}}  > 
+                            <Flex data-index={index}  position={'relative'} overflow={'hidden'} gap='20px' minWidth={`${totalWidth}px`} borderRadius={index === data.length - 1?'0 0 .5rem .5rem':'0'} borderWidth={'0 1px 1px 1px'}  cursor={onClickRow?'pointer':'not-allowed'} onClick={() => {if (onClickRow) onClickRow(row, index)}} key={`row-${index}`}  bg={selectedIndex === index ? 'blue.50':(selectedElements || []).includes(row.id)?'blue.100':index%2 === 1?'#FFFDFA':'white'} alignItems={'center'}  fontSize={'.9em'} color='black' p='10px' borderColor={'gray.200'} _hover={{bg:(selectedElements || [] ).includes(row.id)?'blue.100':'blue.50'}}  > 
                                 {selectedIndex === index && <Box position='absolute' left={0} top={0} height={'100%'} width={'2px'} bg='blue.400'/>}
                                 {selectedElements &&
                                 <Flex alignItems={'center'} onClick={(e) => e.stopPropagation()}> 
-                                    <Checkbox onChange={(e) => handleCheckboxChange(index, e.target.checked)} isChecked={selectedElements.includes(index)}/>  
+                                    <input type="checkbox" className="custom-checkbox" onChange={(e) => handleCheckboxChange(index, e.target.checked)} checked={selectedElements.includes(index)}/>
                                 </Flex>}
                                 {Object.keys(columnsMap).map((column:string, index:number) => (
                                     <Fragment key={`header-${index}`}>
@@ -188,14 +190,14 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort,  columnsMap, exclu
                                         <Flex minW={0} alignItems={'center'} flex={`${(columnsMap?.[column][1] || 0)/10} 0 ${(columnsMap?.[column][1] || 0)}px`}> 
                                             <CellStyle column={column} element={row[column]}/>
                                         </Flex>}
-                                </Fragment>))}
+                                    </Fragment>))}
                             </Flex>)
                         })}
                 </Box>
             </Box>
- 
+            }
         </Box>
-    }
+    
     </> )
 }
 

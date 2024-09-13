@@ -10,11 +10,12 @@ import fetchData from "../../API/fetchData"
 import { Flex, Box, Text, Button, Skeleton, Tooltip } from '@chakra-ui/react'
 //COMPONENTS
 import Table from "../../Components/Reusable/Table"
+import EditText from "../../Components/Reusable/EditText"
 //FUNCTIONS
 import timeStampToDate from "../../Functions/timeStampToString"
 import timeAgo from "../../Functions/timeAgo"
 //ICONS
-import { FaPlus } from "react-icons/fa6" 
+import { FaPlus, FaFilter } from "react-icons/fa6" 
 //TYPING
 import { FlowsData, } from "../../Constants/typing"
 
@@ -54,6 +55,23 @@ function FlowsTable () {
     const [flows, setFlows] = useState<FlowsData[] | null>(null)
     const [selectedIndex, setSelectedIndex] = useState<number>(-1)
 
+    //FILTER LOGIC
+    const [text, setText]  =useState<string>('')
+    const [filteredFlows, setFilteredFlows] = useState<FlowsData[]>([])
+    useEffect(() => {
+      const filterUserData = () => {
+        if (flows) {
+            const filtered = flows.filter(flow =>
+                flow.name.toLowerCase().includes(text.toLowerCase()) ||
+                flow.description.toLowerCase().includes(text.toLowerCase())
+            )
+            setFilteredFlows(filtered)
+        }
+      }
+      filterUserData()
+    }, [text, flows])
+
+
     //FETCH DATA ON FIRST RENDER
     useEffect(() => {
         const fetchFlowsData = async() => {
@@ -81,23 +99,21 @@ function FlowsTable () {
             <Flex justifyContent={'space-between'} alignItems={'end'}> 
                 <Box> 
                     <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Flows')}</Text>
-                    <Text color='gray.600' fontSize={'.9em'}>{t('FlowsDes')}</Text>
                 </Box>
                 <Button  leftIcon={<FaPlus/>} onClick={() => navigate('/flows-functions/flows/flow/create')}>{t('CreateFlow')}</Button>
             </Flex>
-            <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='5vh'/>
+
+            <Box mt='2vh' width={'350px'}> 
+                <EditText value={text} setValue={setText} searchInput={true}/>
+            </Box>
+        
+            <Skeleton mt='2vh' isLoaded={flows !== null} >
+                <Text fontWeight={'medium'} color='gray.600' fontSize={'1.2em'}>{t('flows', {count:filteredFlows?.length})}</Text> 
+            </Skeleton>
 
             <Skeleton isLoaded={flows !== null}> 
-                <Text mb='2vh' fontWeight={'medium'} fontSize={'1.2em'}>{flows?.length} {t('flows', {count:flows?.length})}</Text>
+                <Table data={filteredFlows as FlowsData[]} CellStyle={CellStyle} noDataMessage={t('NoFlows')} columnsMap={columnsFlowsMap} onClickRow={clickRow} currentIndex={selectedIndex}/>
             </Skeleton>
-            
-            {/*TABLA*/}
-            <Box> 
-                <Skeleton isLoaded={flows !== null}> 
-                    <Table data={flows as FlowsData[]} CellStyle={CellStyle} noDataMessage={t('NoFlows')} columnsMap={columnsFlowsMap} onClickRow={clickRow} currentIndex={selectedIndex}/>
-                 </Skeleton>
-            </Box>
-    
         </Box>
         )
 }

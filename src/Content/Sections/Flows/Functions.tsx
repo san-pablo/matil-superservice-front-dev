@@ -54,13 +54,30 @@ const Functions = () => {
     const auth = useAuth()
     const session = useSession()
     const location = useLocation().pathname
-    const functionsDataMap:{[key:string]:[string, number]} = {uuid:[t('Id'), 200], name:[t('name'), 200], description:[t('description'), 300], number_of_errors:[t('NumberErrors'), 100]} 
+    const functionsDataMap:{[key:string]:[string, number]} = {uuid:[t('Id'), 200], name:[t('name'), 200], description:[t('description'), 300], number_of_errors:[t('NumberErrors'), 140]} 
 
     //CREATE NEW FUNCTION OR EDITING ONE
     const [editFunctionUuid, setEditFunctionUuid] = useState<string | null>(location.split('/')[3]?location.split('/')[3] :null)
 
     //TICKETS DATA
     const [functionsData, setFunctionsData] = useState<FunctionsData[] | null>(null)
+
+     //FILTER LOGIC
+     const [text, setText]  =useState<string>('')
+     const [filteredFunctions, setFilteredFunctions] = useState<FunctionsData[]>([])
+     useEffect(() => {
+       const filterUserData = () => {
+         if (functionsData) {
+             const filtered = functionsData.filter(flow =>
+                 flow.name.toLowerCase().includes(text.toLowerCase()) ||
+                 flow.description.toLowerCase().includes(text.toLowerCase()) || 
+                 flow.uuid.toLowerCase().includes(text.toLowerCase())
+             )
+             setFilteredFunctions(filtered)
+         }
+       }
+       filterUserData()
+     }, [text, functionsData])
 
     //FETCH NEW DATA WHEN THE VIEW CHANGE
     useEffect(() => {        
@@ -84,26 +101,28 @@ const Functions = () => {
    return(<>
     
     {editFunctionUuid ?<EditFunctionBox selectedUuid={editFunctionUuid} onSaveFunction={onSaveFunction}/>: 
-    <Box height={'100%'} width={'100%'} p='2vw'> 
+        <Box height={'100%'} width={'100%'} p='2vw'> 
 
-        <Flex justifyContent={'space-between'} alignItems={'end'}> 
-            <Box> 
-                <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Functions')}</Text>
-                <Text color='gray.600' fontSize={'.9em'}>{t('FunctionsDes')}</Text>
+            <Flex justifyContent={'space-between'} alignItems={'end'}> 
+                <Box> 
+                    <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Functions')}</Text>
+                </Box>
+                <Button  leftIcon={<FaPlus/>} onClick={() => setEditFunctionUuid('-1')}>{t('CreateFunction')}</Button>
+            </Flex>
+
+            <Box mt='2vh' width={'350px'}> 
+                <EditText value={text} setValue={setText} searchInput={true}/>
             </Box>
-            <Button  leftIcon={<FaPlus/>} onClick={() => setEditFunctionUuid('-1')}>{t('CreateFunction')}</Button>
-        </Flex>
-        <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='5vh'/>
+        
+            <Skeleton mt='2vh' isLoaded={functionsData !== null} >
+                <Text fontWeight={'medium'} color='gray.600' fontSize={'1.2em'}>{t('functionsCount', {count:filteredFunctions?.length})}</Text> 
+            </Skeleton>
 
-        <Skeleton isLoaded={functionsData !== null}> 
-            <Text mb='2vh' fontWeight={'medium'} fontSize={'1.2em'}>{t('functionsCount', {count:functionsData?.length})}</Text>
-        </Skeleton>
-
-        <Skeleton isLoaded={functionsData !== null}> 
-            <Table data={functionsData?functionsData:[]} CellStyle={CellStyle} noDataMessage={t('NoFunctions')} columnsMap={functionsDataMap} onClickRow={(value:any, index:number) => setEditFunctionUuid(value.uuid)}/>
-        </Skeleton>
-    </Box>
-    }
+            <Skeleton isLoaded={functionsData !== null}> 
+                <Table data={filteredFunctions} CellStyle={CellStyle} noDataMessage={t('NoFunctions')} columnsMap={functionsDataMap} onClickRow={(value:any, index:number) => setEditFunctionUuid(value.uuid)}/>
+            </Skeleton>
+        </Box>
+        }
     </>)
 }
 

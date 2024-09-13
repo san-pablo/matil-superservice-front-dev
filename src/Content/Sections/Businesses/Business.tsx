@@ -9,20 +9,22 @@ import { useLocation, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import DOMPurify from 'dompurify'
 //FRONT
-import { Flex, Box, Text, Icon, Textarea, Avatar, Skeleton, IconButton} from '@chakra-ui/react'
+import { Flex, Box, Text, Icon, Textarea, Avatar, Skeleton, IconButton, Tooltip } from '@chakra-ui/react'
 //FETCH DATA
 import fetchData from "../../API/fetchData"
 //COMPONENTS
 import Table from "../../Components/Reusable/Table"
 import EditText from "../../Components/Reusable/EditText"
+import StateMap from "../../Components/Reusable/StateMap"
 //FUNCTIONS
 import timeAgo from "../../Functions/timeAgo"
+import timeStampToDate from "../../Functions/timeStampToString"
 //ICONS
 import { FaBuilding } from "react-icons/fa6"
 import { RxCross2 } from "react-icons/rx"
 import { IoIosArrowForward, IoIosArrowBack } from "react-icons/io"
 //TYPING
-import { Clients, HeaderSectionType, ContactBusinessesTable, Channels, ClientColumn } from "../../Constants/typing"
+import { Clients, HeaderSectionType, ContactBusinessesTable, Channels, ClientColumn, languagesFlags } from "../../Constants/typing"
  
 
 //TYPING
@@ -35,7 +37,44 @@ interface BusinessProps {
     setBusinessClients?:Dispatch<SetStateAction<Clients | null>>
     socket:any
 }
- 
+
+//GET THE CELL STYLE
+const CellStyle = ({ column, element }:{column:string, element:any}) => {
+     
+    //TRANSLATION
+    const { t } = useTranslation('clients')
+    const t_formats = useTranslation('formats').t
+
+    if (column === 'created_at' ||  column === 'last_interaction_at' )  
+    return(
+        <Tooltip label={timeStampToDate(element as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
+            <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(element as string, t_formats)}</Text>
+        </Tooltip>)
+    else if (column === 'labels') {
+        return(<> 
+        <Flex minH={'35px'} alignItems={'center'}> 
+        {element === ''? <Text>-</Text>:
+            <Flex gap='5px' flexWrap={'wrap'}>
+                {element.split(',').map((label:string, index:number) => (
+                    <Flex bg='gray.200' borderColor={'gray.300'} borderWidth={'1px'} p='4px' borderRadius={'.5rem'} fontSize={'.8em'} key={`client-label-${index}`}>
+                        <Text>{label}</Text>
+                    </Flex>
+                ))}
+            </Flex>
+        }
+        </Flex>
+    </>)
+    }
+    else if (column === 'language') {
+        return(
+        <Flex gap='5px' alignItems={'center'}>
+            <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{typeof element === 'string' && element in languagesFlags ?languagesFlags[element][0]:'No detectado'}</Text>
+            <Text fontSize={'.8em'}>{typeof element === 'string' && element in languagesFlags ?languagesFlags[element][1]:'🏴󠁥󠁳󠁣󠁴󠁿'}</Text>
+            </Flex>)
+    }   
+    else if (column === 'is_blocked') return <Text color={element?'red':'black'}>{element?t('is_blocked'):t('Active')}</Text>  
+    else return ( <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'}  fontWeight={column === 'name'?'medium':'normal'}  overflow={'hidden'} >{element === ''?'-':element}</Text>)
+}
  
 //MAIN FUNCTION
 function Business ({comesFromTicket, socket, addHeaderSection, businessData, setBusinessData, businessClients, setBusinessClients  }: BusinessProps) {
@@ -46,10 +85,9 @@ function Business ({comesFromTicket, socket, addHeaderSection, businessData, set
     const location = useLocation().pathname
     const navigate = useNavigate()
     const { t } = useTranslation('business')
-    
     const t_formats = useTranslation('formats').t
+    const columnsClientsMap:{[key:string]:[string, number]} = {name: [t('name'), 200], contact: [t('contact'), 150], labels: [t('labels'), 350], last_interaction_at: [t('last_interaction_at'), 150], created_at: [t('created_at'), 150], rating: [t('rating'), 60], language: [t('language'), 150], notes: [t('notes'), 350], is_blocked: [t('is_blocked'), 150]}
 
-    
     //SCROLL REFS
     const scrollRef1 = useRef<HTMLDivElement>(null)
 
@@ -91,7 +129,7 @@ function Business ({comesFromTicket, socket, addHeaderSection, businessData, set
                 const businessElement = headerSectionsData.find(value => value.id === businessId && value.type === 'business')
                     
                 //SET TITLE
-                document.title = `Empresa de Contacto: ${location.split('/')[location.split('/').length - 1]} - ${auth.authData.organizationName} - Matil`
+                document.title = `${t('Business')}: ${location.split('/')[location.split('/').length - 1]} - ${auth.authData.organizationName} - Matil`
                 localStorage.setItem('currentSection', `contact-businesses/business/${businessId}`)
 
                 //SET DATA IF BUSINESS FOUND
@@ -133,12 +171,10 @@ function Business ({comesFromTicket, socket, addHeaderSection, businessData, set
         const clientsResponse = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/clients`, params:{...filtersToSend, contact_business_id:businessDataEdit?.id}, setValue:setBusinessClientsEdit, auth })         
         if (clientsResponse?.status == 200) setClientsFilters(filtersToSend)
         
-    }
-      
+    } 
 
     //TRIGGER UPDATE DATA ON CHANGES
     const updateData = async(newData?:ContactBusinessesTable | null) => {
-
         const compareData = newData ?newData:businessDataEdit as ContactBusinessesTable
 
         if (JSON.stringify(businessDataEditRef.current) !== JSON.stringify(compareData)){
@@ -148,6 +184,12 @@ function Business ({comesFromTicket, socket, addHeaderSection, businessData, set
                 if (comesFromTicket && setBusinessData) setBusinessData(compareData)
             }
         }
+    }
+
+    //TABLE LOGIC
+    const clickRow = (client:any, index:number) => {
+        session.dispatch({type:'UPDATE_CLIENTS_TABLE_SELECTED_ITEM', payload:{index}})
+        navigate(`/clients/client/${client.id}`)
     }
 
     ///////////////////////////
@@ -168,8 +210,6 @@ function Business ({comesFromTicket, socket, addHeaderSection, businessData, set
 
     //TAGS LOGIC
     const [inputValue, setInputValue] = useState<string>('')
- 
- 
     const handleKeyDown = (event:KeyboardEvent<HTMLDivElement>) => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault()
@@ -199,31 +239,26 @@ function Business ({comesFromTicket, socket, addHeaderSection, businessData, set
     }
 
     //CHANGE NAME
-    const handelChangeName = (value:string) => {
-        if (businessDataEdit) setBusinessDataEdit(prevData => prevData ? ({ ...prevData, name:value}) as ContactBusinessesTable : null)
-    }
+    const handelChangeName = (value:string) => {if (businessDataEdit) setBusinessDataEdit(prevData => prevData ? ({ ...prevData, name:value}) as ContactBusinessesTable : null)}
     
     return (<> 
- 
-
         {!comesFromTicket && 
             <Flex px='30px' height='60px' bg='gray.100' borderBottomWidth={'1px'} borderBottomColor='gray.200' flex='1' alignItems={'center'} >
                 <Flex borderRadius={'.3rem'} height={'70%'}  alignItems={'center'} borderWidth={'1px 1px 1px 1px'}  borderColor='gray.300'> 
                     <Flex alignItems='center' gap='6px' cursor={'pointer'}  bg={'gray.300'} height={'100%'}  borderRightWidth={'1px'} borderRightColor='gray.300'  px={{md:'10px',lg:'20px'}}> 
                         <Icon as={FaBuilding} boxSize={'14px'} />
-                        <Skeleton isLoaded={businessDataEdit !== null}> <Text whiteSpace={'nowrap'} fontSize={{md:'.8em',lg:'1em'}}>{businessDataEdit?businessDataEdit?.name:'Sin empresa (Crear)'}</Text></Skeleton>
+                        <Skeleton isLoaded={businessDataEdit !== null}> <Text whiteSpace={'nowrap'} fontSize={{md:'.8em',lg:'1em'}}>{businessDataEdit?businessDataEdit?.name:t('NoBusinessCreate')}</Text></Skeleton>
                     </Flex> 
                 </Flex>
             </Flex>
         }
 
-     
         <Flex height={'calc(100vh - 120px)'}  width={'100%'}>
             <Box ref={scrollRef1} p='2vw' bg='gray.50' width={'320px'} borderRightWidth={'1px'} borderRightColor='gray.200' overflow={'scroll'}  >
              
             <Flex mt='3vh' gap='10px'> 
                         <Box width={'70px'} mt='11px'> 
-                            <Text fontSize='.8em' fontWeight={'medium'} color='gray' >Etiquetas</Text>
+                            <Text fontSize='.8em' fontWeight={'medium'} color='gray' >{t('labels')}</Text>
                         </Box>
                         <Skeleton isLoaded={businessDataEdit !== null}> 
                             <Box flex='1'> 
@@ -245,7 +280,7 @@ function Business ({comesFromTicket, socket, addHeaderSection, businessData, set
                     </Flex>
                     <Flex mt='1vh' gap='10px'> 
                         <Box width={'70px'}> 
-                            <Text fontSize='.8em'  mt='11px'fontWeight={'medium'} color='gray' >Notas</Text>
+                            <Text fontSize='.8em'  mt='11px'fontWeight={'medium'} color='gray' >{t('notes')}</Text>
                         </Box>
                         <Skeleton isLoaded={businessDataEdit !== null}> 
                             <Box flex='1'> 
@@ -256,7 +291,7 @@ function Business ({comesFromTicket, socket, addHeaderSection, businessData, set
                     
                     <Flex mt='3vh' alignItems={'center'} gap='10px'> 
                         <Box width={'70px'}> 
-                            <Text fontSize='.8em' fontWeight={'medium'} color='gray' >Creado</Text>
+                            <Text fontSize='.8em' fontWeight={'medium'} color='gray' >{t('created_at')}</Text>
                         </Box>
                         <Skeleton   flex='1'isLoaded={businessDataEdit !== null}> 
                            <Text fontSize={'.9em'}>{timeAgo(businessDataEdit?.created_at, t_formats)}</Text>
@@ -265,7 +300,7 @@ function Business ({comesFromTicket, socket, addHeaderSection, businessData, set
 
                     <Flex mt='3vh' alignItems={'center'} gap='10px'> 
                         <Box width={'70px'}> 
-                            <Text fontSize='.8em' fontWeight={'medium'} color='gray' >Última interacción</Text>
+                            <Text fontSize='.8em' fontWeight={'medium'} color='gray' >{t('last_interaction_at')}</Text>
                         </Box>
                         <Skeleton   flex='1'isLoaded={businessDataEdit !== null}> 
                            <Text fontSize={'.9em'}>{timeAgo(businessDataEdit?.last_interaction_at, t_formats)}</Text>
@@ -278,28 +313,26 @@ function Business ({comesFromTicket, socket, addHeaderSection, businessData, set
                 <Flex  flex='1' gap='20px'  alignItems={'center'}>
                     <Avatar />
                     <Skeleton width={'100%'} isLoaded={businessDataEdit !== null}> 
-                        <EditText nameInput={true} size='md' maxLength={70} updateData={updateData} value={businessDataEdit?.name === ''? 'Cliente de la Web':businessDataEdit?.name} setValue={handelChangeName}/>
+                        <EditText nameInput={true} size='md' maxLength={70} updateData={updateData} value={businessDataEdit?.name === ''? t('WebClient'):businessDataEdit?.name} setValue={handelChangeName}/>
                     </Skeleton>
                 </Flex>
             </Flex>
 
             <Box width={'100%'} mt='3vh' mb='3vh' height={'1px'} bg='gray.300'/>
             <Skeleton isLoaded={businessClientsEdit !== null}> 
-                <Text fontWeight={'medium'}>{businessClientsEdit?.page_data.length} Cliente{businessClientsEdit?.page_data.length === 1 ? '':'s'} asociado{businessClientsEdit?.page_data.length === 1 ? '':'s'}</Text>
+                <Text fontWeight={'medium'}>{t('Clients', {count:businessClientsEdit?.page_data.length})}</Text>
             </Skeleton>
 
             <Flex p='10px' alignItems={'center'} justifyContent={'end'} gap='10px' flexDir={'row-reverse'}>
                     <IconButton isRound size='xs' aria-label='next-page' icon={<IoIosArrowForward />} isDisabled={clientsFilters.page_index > Math.floor((businessClientsEdit?.total_clients || 0)/ 25)} onClick={() => updateTable({...clientsFilters,page_index:clientsFilters.page_index + 1})}/>
-                    <Text fontWeight={'medium'} fontSize={'.9em'} color='gray.600'>Página {clientsFilters.page_index}</Text>
+                    <Text fontWeight={'medium'} fontSize={'.9em'} color='gray.600'>{t('Page')} {clientsFilters.page_index}</Text>
                     <IconButton isRound size='xs' aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={clientsFilters.page_index === 1} onClick={() => updateTable({...clientsFilters,page_index:clientsFilters.page_index - 1})}/>
                 </Flex>
             <Skeleton isLoaded={businessClientsEdit !== null}> 
-                {/*<Table data={businessClientsEdit?.page_data} updateData={updateTable} filters={clientsFilters} maxWidth="calc(96vw - 380px)"/>*/}
+                <Table data={businessClientsEdit?.page_data || []} CellStyle={CellStyle} noDataMessage={t('NoClients')} columnsMap={columnsClientsMap} onClickRow={clickRow} />
             </Skeleton>
         </Box>
         </Flex>
-
-      
      </>)
 }
 

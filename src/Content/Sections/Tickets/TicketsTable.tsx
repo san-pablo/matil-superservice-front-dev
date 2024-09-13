@@ -26,14 +26,11 @@ import timeStampToDate from "../../Functions/timeStampToString"
 import timeAgo from "../../Functions/timeAgo"
 import showToast from "../../Components/ToastNotification"
 //ICONS
-import { FaRegEdit } from "react-icons/fa"
-import { HiMiniAdjustmentsHorizontal } from "react-icons/hi2"
-import { RxCross2 } from "react-icons/rx"
 import { IoIosArrowForward, IoIosArrowBack } from "react-icons/io"
 import { BsTrash3Fill } from "react-icons/bs"
 import { MdDeselect } from "react-icons/md"
-import { FaExclamationCircle, FaExclamationTriangle, FaInfoCircle, FaCheckCircle } from 'react-icons/fa'
-import { FaArrowRotateLeft } from "react-icons/fa6"
+import { FaExclamationCircle, FaExclamationTriangle, FaInfoCircle, FaCheckCircle, FaRegEdit } from 'react-icons/fa'
+import { FaArrowRotateLeft, FaFilter } from "react-icons/fa6"
 import { BiEditAlt } from "react-icons/bi"
 //TYPING
 import { Tickets, TicketColumn, Views, ViewType, TicketsTableProps, columnsTicketsMap, logosMap, Channels  } from "../../Constants/typing"
@@ -42,7 +39,8 @@ import { Tickets, TicketColumn, Views, ViewType, TicketsTableProps, columnsTicke
 interface TicketFilters {
     page_index:number
     sort_by?:TicketColumn | 'not_selected'
-    search?:string, order?:'asc' | 'desc'
+    search?:string, 
+    order?:'asc' | 'desc'
 }
 type Status = 'new' | 'open' | 'solved' | 'pending' | 'closed'
 const validStatuses: Status[] = ['new', 'open', 'solved', 'pending', 'closed']
@@ -91,7 +89,7 @@ const CellStyle = ({column, element}:{column:string, element:any}) => {
     const t_formats = useTranslation('formats').t
 
     if (column === 'local_id') return  <Text color='gray' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>#{element}</Text>
-    else if (column === 'user_id')  {console.log(element);return  <Text fontWeight={'medium'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element === -1 ?'Matilda':element === 0 ? t('NoAgent'):(auth?.authData?.users?.[element as string | number].name || '')}</Text>}
+    else if (column === 'user_id')  return  <Text fontWeight={'medium'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element === -1 ?'Matilda':element === 0 ? t('NoAgent'):(auth?.authData?.users?.[element as string | number].name || '')}</Text>
     else if (column === 'unseen_changes') 
         return(
         <Flex color={element?'red':'green'} alignItems={'center'} gap='5px'> 
@@ -215,8 +213,7 @@ function TicketsTable({socket}:{socket:any}) {
 
     //SHOW FILTERS AND FILTERS INFO
     const [filters, setFilters ] = useState<TicketFilters>({page_index:1}) 
-    const [showFilters, setShowFilters] = useState<boolean>(false)
-    
+
      //NAVIGATE TO THE CLICKED TICKET AND SHOW IT IN THE HEADER
     const [selectedElements, setSelectedElements] = useState<number[]>([])
     const handleClickRow  = (row:TicketsTableProps, index:number) => {
@@ -233,7 +230,7 @@ function TicketsTable({socket}:{socket:any}) {
 
     //DELETE AND RECOVER TICKETS LOGIC
     const [showConfirmDelete, setShowConfirmDelete] = useState<boolean>(false)
-   
+
 
     //FETCH NEW DATA ON FILTERS CHANGE
     const fetchTicketDataWithFilter = async (applied_filters:{page_index:number, sort_by?:TicketColumn | 'not_selected', search?:string, order?:'asc' | 'desc'} | null) => {
@@ -259,55 +256,6 @@ function TicketsTable({socket}:{socket:any}) {
             {data:response.data, view: {view_type: selectedView.type, view_index: selectedView.index}, selectedIndex:-1, filters: selectedFilters}
             session.dispatch({ type: 'UPDATE_TICKETS_TABLE', payload: newTicket })
          }
-    }
-
-    //FILTERS COMPONENT
-    const Filters = () => {
-        
-        //SCROLL REF
-        const scrollRef = useRef<HTMLDivElement>(null)
-
-        //FILTERS
-        const [text, setText] = useState<string>(filters.search || '')
-        
-        //WAITING SEND FILTERS
-        const [waitingSendFilters, setWaitingSendFilters] = useState<boolean>(false)
-
-        //SEND FILTERS (CURRENTLY THERE IS ONLY TEXT FILGTER)
-        const sendFilters = async () => {
-            setWaitingSendFilters(true)
-            let filtersDict:TicketFilters  = {
-                page_index:1,
-                search:text,
-            }
-
-            await fetchTicketDataWithFilter(filtersDict)
-            setWaitingSendFilters(false)
-            setFilters(filtersDict)
-            setShowFilters(false)   
-         }
-
-        //FILTERS BAR FRONT
-        return (
-            <>
-                <Box ref={scrollRef} overflowY={'scroll'} height={'100%'} px='3px'  >
-                    <Flex justifyContent={'space-between'} alignItems={'center'}>
-                        <Text fontWeight={'medium'} fontSize='1.2em'>{t('Filter')}</Text>
-                        <IconButton icon={<RxCross2 />} aria-label='hide-filters' onClick={() => setShowFilters(false)} size='sm' isRound bg='transparent' borderWidth={'0px'} />
-                    </Flex>
-                    <Box width={'100%'} mt='2vh' mb='2vh'  height={'1px'} bg='gray.300' />
-                    <Text fontSize={'1em'} mb='1vh' fontWeight={'medium'}>{t('TextMatch')}</Text>
-                    <EditText value={text} setValue={setText} searchInput={true} />
-                </Box>
-                <Box>
-                    <Box width={'100%'} mt='2vh' mb='2vh' height={'1px'} bg='gray.300' />
-                    <Flex flexDir={'row-reverse'} gap='20px'>
-                        <Button size='sm' onClick={sendFilters} bg='brand.gradient_blue' color='white' _hover={{bg:'brand.gradient_blue_hover'}}>{waitingSendFilters?<LoadingIconButton/>:t('ApplyFilters')}</Button>
-                        <Button size='sm' color='red' _hover={{ color: 'red.600' }} onClick={() => setShowFilters(false)}>{t('Cancel')}</Button>
-                    </Flex>
-                </Box>
-            </>
-        )
     }
     
     //RECOVER TICKETS FUNCTION
@@ -347,7 +295,6 @@ function TicketsTable({socket}:{socket:any}) {
                 setSelectedElements([])
             }
         }
-     
 
         return(<>
         <Box p='15px'> 
@@ -428,32 +375,30 @@ function TicketsTable({socket}:{socket:any}) {
                     <Text flex='1' minW={0} fontWeight={'medium'} fontSize={'1.5em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{selectedView.name}</Text>
                     <ActionsButton items={tickets?.page_data} view={selectedView} section={'tickets'} />
                 </Flex>
-                <Button mt='2vh' onClick={() => {setShowFilters(true) }} leftIcon={<HiMiniAdjustmentsHorizontal />} fontSize={'1em'} size='sm' fontWeight={'medium'}  _hover={{ color: 'blue.500' }}>{t('Filter')}</Button>
-                
-                <Skeleton  isLoaded={!waitingInfo} >
-                    <Text mt='2vh'>{t('TicketsCount', {count:tickets?.total_tickets})}</Text> 
-                </Skeleton >
-                <Box>
-                    <Flex p='10px' alignItems={'center'} justifyContent={'end'} gap='10px' flexDir={'row-reverse'}>
+                               
+                <Flex gap='15px' mt='2vh'> 
+                        <Box width={'350px'}> 
+                            <EditText value={filters.search} setValue={(value) => setFilters(prev => ({...prev, search:value}))} searchInput={true}/>
+                        </Box>
+                        <Button _hover={{color:'blue.500'}} leftIcon={<FaFilter/>} size='sm' onClick={() => fetchTicketDataWithFilter(filters)}>{t('ApplyFilters')}</Button>
+                    </Flex>
+                    
+                <Flex mt='2vh'  justifyContent={'space-between'} alignItems={'center'}> 
+                    <Skeleton isLoaded={!waitingInfo} >
+                        <Text fontWeight={'medium'} color='gray.600' fontSize={'1.2em'}> {t('TicketsCount', {count:tickets?.total_tickets})}</Text> 
+                    </Skeleton>
+                    <Flex alignItems={'center'} justifyContent={'end'} gap='10px' flexDir={'row-reverse'}>
                         <IconButton isRound size='xs' aria-label='next-page' icon={<IoIosArrowForward />} isDisabled={filters.page_index > Math.floor((tickets?.total_tickets || 0)/ 25)} onClick={() => fetchTicketDataWithFilter({...filters,page_index:filters.page_index + 1})}/>
                         <Text fontWeight={'medium'} fontSize={'.9em'} color='gray.600'>{t('Page')} {filters.page_index}</Text>
                         <IconButton isRound size='xs' aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={filters.page_index === 1} onClick={() => fetchTicketDataWithFilter({...filters,page_index:filters.page_index - 1})}/>
                     </Flex>
-                    <Skeleton isLoaded={!waitingInfo}>
-                        <Table data={(tickets?.page_data || [])} CellStyle={CellStyle} noDataMessage={t('NoTickets')} requestSort={requestSort} columnsMap={columnsTicketsMap} excludedKeys={['id', 'conversation_id', 'end_client_id',  'is_matilda_engaged']} onClickRow={handleClickRow} selectedElements={selectedElements} setSelectedElements={setSelectedElements} onSelectAllElements={() => {}} currentIndex={selectedIndex}/> 
-                    </Skeleton >             
-                </Box>
+                </Flex>
+                
+                <Skeleton isLoaded={!waitingInfo}>
+                    <Table data={(tickets?.page_data || [])} CellStyle={CellStyle} noDataMessage={t('NoTickets')} requestSort={requestSort} columnsMap={columnsTicketsMap} excludedKeys={['id', 'conversation_id', 'end_client_id',  'is_matilda_engaged']} onClickRow={handleClickRow} selectedElements={selectedElements} setSelectedElements={setSelectedElements} onSelectAllElements={() => {}} currentIndex={selectedIndex}/> 
+                </Skeleton >             
+              
             </Box>
-
-                {/*FILTERS BOX*/}
-            <AnimatePresence> 
-                {showFilters &&
-                <> <motion.div initial={{right:-400}} onMouseDown={(e)=>{e.stopPropagation()}} animate={{right:0}}  exit={{right:-400}} transition={{ duration: .15 }} style={{position: 'fixed',top: 0,width: '400px',height: '100vh',padding:'2vh 1vw 1vw 2vh',backgroundColor: 'white',zIndex: 201, display:'flex',justifyContent:'space-between',flexDirection:'column'}}> 
-                        <Filters/>
-                    </motion.div>
-                    <motion.div initial={{opacity:0}} onMouseDown={()=>setShowFilters(false)} animate={{opacity:1}} exit={{opacity:0}}   transition={{ duration: .3 }} style={{backdropFilter: 'blur(1px)',WebkitBackdropFilter: 'blur(1px)',position: 'fixed',top: 0,left: 0,width: '100vw',height: '100vh',backgroundColor: 'rgba(0, 0, 0, 0.3)',zIndex: 200}}/>
-                </>}
-            </AnimatePresence>
 
         </Flex>
         

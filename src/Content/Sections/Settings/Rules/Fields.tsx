@@ -11,6 +11,7 @@ import LoadingIconButton from "../../../Components/Reusable/LoadingIconButton"
 import EditText from "../../../Components/Reusable/EditText"
 import ConfirmBox from "../../../Components/Reusable/ConfirmBox"
 import CustomSelect from "../../../Components/Reusable/CustomSelect"
+import Table from "../../../Components/Reusable/Table"
 //ICONS
 import { FaPlus } from "react-icons/fa6"
 import { BsTrash3Fill } from "react-icons/bs"
@@ -37,6 +38,8 @@ function parseToBack(dataArray:FieldsType[]) {
     return result
 }
 
+const CellStyle = ({column, element}:{column:string, element:any}) => {return <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element}</Text>}
+
 const Fields = () => {
 
     //CONSTANTS
@@ -44,6 +47,7 @@ const Fields = () => {
     const auth = useAuth()
     const structuresMap:{[key in 'ticket' | 'client' | 'contact_business']:string} = {'ticket':t('Tickets'), 'client':t('Clients'), 'contact_business':t('Contact_business')}
     const variablesMap:{[key in variables]:string} = {'bool':t('bool'), 'int':t('int'), 'float':t('float'), 'str':t('str'), 'timestamp':t('timestamp')}
+    const columnsFieldsMap:{[key:string]:[string, number]} = {'name':[t('Name'), 250],  'motherstructure':['Structure', 200], 'type': ['Type', 200], 'default':[t('Default'), 300]}
 
     //CREATE NEW FIELD OR EDITING ONE
     const [editFieldData, setEditFieldData] = useState<{data:FieldsType, index:number} | null>(null)
@@ -56,6 +60,19 @@ const Fields = () => {
     //TICKETS DATA
     const [fieldsData, setFieldsData] = useState<FieldsType[] | null>(null)
 
+    //FILTER FIELDS DATA
+    const [text, setText]  =useState<string>('')
+    const [filteredFieldsData, setFilteredFieldsData] = useState<FieldsType[]>([])
+    useEffect(() => {
+        const filterUserData = () => {
+            if (fieldsData) {
+                const filtered = fieldsData.filter(user => user.name.toLowerCase().includes(text.toLowerCase()))
+                setFilteredFieldsData(filtered)
+            }
+        }
+        filterUserData()
+    }, [text, fieldsData])
+       
     //FETCH NEW DATA WHEN THE VIEW CHANGE
     useEffect(() => {        
         document.title = `${t('Fields')} - ${auth.authData.organizationId} - Matil`
@@ -179,40 +196,28 @@ const Fields = () => {
                 <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Fields')}</Text>
                 <Text color='gray.600' fontSize={'.9em'}>{t('FieldsDes')}</Text>
             </Box>
+             
+        </Flex>
+        <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='5vh'/>
+
+        <Skeleton mb='1vh' isLoaded={fieldsData !== null}> 
+            <Text  fontWeight={'medium'} fontSize={'1.2em'}>{t('FieldsCount', {count:fieldsData?.length})}</Text>
+        </Skeleton>
+
+        <Flex  mt='2vh'justifyContent={'space-between'} alignItems={'end'}>
+            <Skeleton isLoaded={fieldsData !== null}> 
+                <Box width={'350px'}> 
+                    <EditText value={text} setValue={setText} searchInput={true}/>
+                </Box>
+            </Skeleton>
             <Flex gap='10px'> 
                 {selectedElements.length > 0 && <Button size='sm' color='red' _hover={{color:'red.600', bg:'gray.200'}} leftIcon={<BsTrash3Fill/>} onClick={handleDeleteFields} >{t('DeleteFields')}</Button>}
                 <Button size='sm' leftIcon={<FaPlus/>} onClick={() => setEditFieldData({index:-1, data:{ motherstructure:'ticket', name:'', type:'bool', default:'True'}})}>{t('CreateField')}</Button>
             </Flex>
         </Flex>
-        <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='5vh'/>
 
-        <Skeleton isLoaded={fieldsData !== null}> 
-            {fieldsData?.length === 0 ? 
-                    <Text fontWeight={'medium'} fontSize={'1.1em'}>{t('NoFields')}</Text>
-               : 
-                <> 
-                    <Flex  borderTopRadius={'.5rem'}  borderColor={'gray.300'} borderWidth={'1px'}  minWidth={'1180px'}  gap='20px' alignItems={'center'}  color='gray.500' p='10px'  bg='gray.100' fontWeight={'medium'} > 
-                        <Flex flex='1 0 10px' alignItems={'center'}> 
-                            <Checkbox onChange={(e) => setSelectedElements(e.target.checked ? Array.from({ length: fieldsData?.length || 0 }, (_, index) => index):[])}/>  
-                        </Flex>
-                        <Text flex='25 0 250px'>{t('Name')}</Text>
-                        <Text flex='20 0 200px'>{t('Structure')}</Text>
-                        <Text flex='20 0 200px'>{t('Type')}</Text>
-                        <Text flex='30 0 300px'>{t('Default')}</Text>
-                    </Flex>
-
-                    {fieldsData?.map((row, index) =>( 
-                        <Flex minWidth={'1180px'} borderRadius={index === fieldsData.length - 1?'0 0 .5rem .5rem':'0'} onClick={() => setEditFieldData({index, data:row})} borderWidth={'0 1px 1px 1px'}  gap='20px' key={`field-${index}`}  bg={selectedElements.includes(index)?'blue.100':'none'} alignItems={'center'}  fontSize={'.9em'} color='black' p='10px'  borderColor={'gray.300'}> 
-                            <Box flex='1 0 10px' onClick={(e) => e.stopPropagation()}> 
-                                <Checkbox onChange={(e) => handleCheckboxChange(index, e.target.checked)} isChecked={selectedElements.includes(index)}/>  
-                            </Box>
-                            <Text flex='25 0 250px'>{row.name}</Text>
-                            <Text flex='20 0 200px'>{structuresMap[row.motherstructure]}</Text>
-                            <Text flex='20 0 200px'>{variablesMap[row.type]}</Text>
-                            <Text flex='30 0 300px'>{t(row.default)}</Text>
-                        </Flex>
-                    ))}
-                </>}
+        <Skeleton mt='2vh' isLoaded={fieldsData !== null}> 
+            <Table data={filteredFieldsData} CellStyle={CellStyle} noDataMessage={t('NoFields')}  columnsMap={columnsFieldsMap} onClickRow={(row:any, index:number) => setEditFieldData({index, data:row})} />
         </Skeleton>
     </Box>
     </>)

@@ -91,6 +91,7 @@ interface FunctionNodeData {
     addNewNode:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}, targetType:nodeTypesDefinition | '', nodeId?:string) => void
     deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean) => void
     getAvailableNodes:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}) => string[]
+    editFunctionError: (nodeId:string | undefined, type:'add' | 'remove' | 'remove-branch', keyToEdit:number, index?:number) => void
   }
 }
 
@@ -544,26 +545,7 @@ export const FunctionNode = ({id, data}:{id:string, data:FunctionNodeData}) => {
   //ERROR CODE TO ADD
   const [codeToAdd, setCodeToAdd] = useState<number>(1)
 
-  //ADD A NEW CODE ERROR
-  const handleEditError = (type:'add' | 'remove' | 'remove-branch', keyToEdit?:number, index?:number) => {
-    if (type === 'add') {
-      data.functions.editSimpleFlowData(id, 'error_nodes_ids', {...data.error_nodes_ids, [codeToAdd]: null})
-      setCodeToAdd(1)
-    }
-    else if (type === 'remove' && keyToEdit !== undefined) {
-      const currentErrors = {...data.error_nodes_ids}
-      delete currentErrors[keyToEdit]
-      data.functions.editSimpleFlowData(id, 'error_nodes_ids', currentErrors)
-      data.functions.deleteNode(id, false, true )
-    }
-    else if (type === 'remove-branch' && keyToEdit !== undefined) {
-      const currentErrors = {...data.error_nodes_ids}
-      currentErrors[keyToEdit] = null
-      data.functions.editSimpleFlowData(id, 'error_nodes_ids', currentErrors)
-      data.functions.deleteNode(id, false, true )
-    }
-  }
-
+ 
   //COMPONENT FOR ERROR REDIRECTS
   const ErrorRedirectsComponent = ({keyToEdit, index}:{keyToEdit:number, index:number}) => {
 
@@ -584,7 +566,7 @@ export const FunctionNode = ({id, data}:{id:string, data:FunctionNodeData}) => {
                 <Text fontWeight={'medium'} fontSize={'.7em'} noOfLines={1} textOverflow={'ellipsis'} >{keyToEdit}</Text>
             </Flex>
             {(isHoveringCondition) && 
-              <Flex alignItems={'center'} position={'absolute'} borderRadius={'full'} p='3px' top={'-7px'} zIndex={100} bg='white' boxShadow={'0 0 5px 1px rgba(0, 0, 0, 0.15)'} right={'-7px'} justifyContent={'center'} cursor={'pointer'} onClick={() => handleEditError('remove', keyToEdit, index)}>
+              <Flex alignItems={'center'} position={'absolute'} borderRadius={'full'} p='3px' top={'-7px'} zIndex={100} bg='white' boxShadow={'0 0 5px 1px rgba(0, 0, 0, 0.15)'} right={'-7px'} justifyContent={'center'} cursor={'pointer'} onClick={() => data.functions.editFunctionError(id, 'remove', keyToEdit, index)}>
                 <Icon boxSize={'10px'} as={BsTrash3Fill} color='red'/>
               </Flex>}
           </Box>
@@ -599,7 +581,7 @@ export const FunctionNode = ({id, data}:{id:string, data:FunctionNodeData}) => {
           
         </Flex>
       {(isHovering && data.error_nodes_ids[keyToEdit] !== null) && 
-      <Flex cursor={'pointer'} onClick={() => handleEditError('remove-branch', keyToEdit, index)} ref={buttonRef} position={'absolute'} top='3px' left='calc(100% + 7px)' zIndex={100} bg='white' display={'inline-flex'} p='4px' alignItems={'center'} justifyContent={'center'}  boxShadow={'0 0 5px 1px rgba(0, 0, 0, 0.15)'}  borderRadius={'50%'}>
+      <Flex cursor={'pointer'} onClick={() => data.functions.editFunctionError(id, 'remove-branch', keyToEdit, index)} ref={buttonRef} position={'absolute'} top='3px' left='calc(100% + 7px)' zIndex={100} bg='white' display={'inline-flex'} p='4px' alignItems={'center'} justifyContent={'center'}  boxShadow={'0 0 5px 1px rgba(0, 0, 0, 0.15)'}  borderRadius={'50%'}>
         <Icon as={BsTrash3Fill} color='blue.400' boxSize={'10px'}/>
       </Flex>}
       <Box height={'28px'} zIndex={0} top={0}  width={'calc(100% + 15px)'}  bg='transparent' position={'absolute'} />
@@ -663,7 +645,7 @@ export const FunctionNode = ({id, data}:{id:string, data:FunctionNodeData}) => {
                   <NumberInput flex='1'  mt='5px' width='50%' size={'xs'} value={codeToAdd} onChange={(value) => setCodeToAdd(parseInt(value)) } min={1} max={1000000} clampValueOnBlur={false} >
                     <NumberInputField borderRadius='.5rem'  fontSize={'.7em'} borderColor={'gray.300'} _hover={{ border:'1px solid #CBD5E0'}} _focus={{ px:'11px', borderColor: "rgb(77, 144, 254)", borderWidth: "2px" }} px='12px' />
                   </NumberInput>  
-                  <Button isDisabled={Object.keys(data?.error_nodes_ids || []).includes(String(codeToAdd))} leftIcon={<FaPlus/>}  size='xs' mt='10px' onClick={() => handleEditError('add')}>{t('AddError')}</Button>
+                  <Button isDisabled={Object.keys(data?.error_nodes_ids || []).includes(String(codeToAdd))} leftIcon={<FaPlus/>}  size='xs' mt='10px' onClick={() => data.functions.editFunctionError(id, 'add', codeToAdd )}>{t('AddError')}</Button>
                 </Flex>
           </Box>}
       </Box>

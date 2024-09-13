@@ -37,8 +37,10 @@
     "Flow": "Flow",
     "Channel": "Channel Identifier",
     "create": "Create Flow",
-    "flows_one": "flow",
-    "flows_other": "flows",
+    "flows_one": "{{count}} flow",
+    "flows_other": "{{count}} flows",
+    "NoFlows":"No flows available",
+    
     "name": "Name",
     "description": "Description",
     "is_active": "Status",

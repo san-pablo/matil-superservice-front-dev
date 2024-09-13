@@ -158,10 +158,6 @@ function AdminUsers () {
     const [waitingDelete, setWaitingDelete] = useState<boolean>(false)
     const [showConfirmDelete ,setShowConfirmDelete] = useState<boolean>(false)
     const [selectedElements, setSelectedElements] = useState<number[]>([])
-    const handleCheckboxChange = (index:number, isChecked:boolean) => {
-        if (isChecked) setSelectedElements(prevElements => [...prevElements, index])
-        else setSelectedElements(prevElements => prevElements.filter(el => el !== index))
-    }
     const handleDeleteUsers = async() => {
 
         const userToDelete = userData[selectedElements[0]]
@@ -233,10 +229,10 @@ function AdminUsers () {
             </Flex>
         </Flex>
 
-         <Skeleton isLoaded={!waitingInfo}> 
-            <Box mt='2vh' >
+         <Skeleton mt='2vh' isLoaded={!waitingInfo}> 
+ 
                 <Table data={filteredUserData} CellStyle={UserCellStyles} noDataMessage={t('NoUsers')} columnsMap={usersColumnsMap} onlyOneSelect selectedElements={selectedElements} setSelectedElements={setSelectedElements}/>
-            </Box>
+     
         </Skeleton>
         </> 
     </>)

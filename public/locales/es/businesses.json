@@ -1,0 +1,27 @@
+{
+    "ContactBusinesses":"Empresas de contacto",
+    "NoBusinesses":"No hay empresas de contacto disponibles",
+    "Page":"Página",
+    "BusinessesCount_one":"{{count}} empresa",
+    "BusinessesCount_other":"{{count}} Empresas",
+    "CreateBusiness":"Crear Empresa",
+    "Name":"Nombre",
+    "Domain":"Domain",
+    "Business":"Empresa",
+    
+    "name": "Nombre",
+    "labels":  "Etiquetas",
+    "created_at": "Creado",
+    "last_interaction_at": "Última interacción",
+    "notes": "Notas",
+    "NoBusinessCreate":"Sin empresa (Crear)",
+    "Clients_one":"{{count}} cliente asociado",
+    "Clients_other":"{{count}} clientes asociados",
+    "WebClient":"Cliente de la Web",
+    "NoClients":"No hay clientes asociados a esta empresa",
+    "CorrectCreated":"Empresa creado con éxito",
+    "FailedCreated":"Hubo un error al crear la empresa",
+    "Cancel":"Cancelar",
+    "ApplyFilters":"Aplicar Filtros"
+
+}

@@ -283,7 +283,7 @@ export type nodeTypesDefinition = 'add' | 'extractor' | 'brancher' | 'sender' 
 export type actionTypesDefinition = 'message' | 'condition' | 'extract' | 'flow_result' | 'edit_fields' | 'function'
 export type Branch = {
     name:string, 
-    conditions:{variable_index:number, op:string, value:any}[],
+    conditions:{variable_index:number, operation:string, value:any}[],
     next_node_index:number
   }
 export type FlowMessage = {

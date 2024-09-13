@@ -4,9 +4,12 @@
     "ClientsCount_other": "{{count}} clients",
     "Cancel": "Cancel",
     "Business": "Business",
+    "NoClients":"No clients available",
+
     "Conversations_one": "Conversation",
     "Conversations_other": "conversations",
     "Page": "Page",
+    "ApplyFilters": "Apply Filters",
     "email_address": "Email",
     "phone_number": "Phone",
     "instagram_username": "Instagram",

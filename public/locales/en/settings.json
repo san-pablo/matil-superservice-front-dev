@@ -121,6 +121,8 @@
     "false": "False",
     "timestamp": "Date",
     "NoFields": "No fields available",
+    "FieldsCount_one":"{{count}} field",
+    "FieldsCount_other":"{{count}} fields",
     "DeleteAllFields": "Do you want to delete the selected fields?",
     "CorrectDeletedFields": "Fields successfully deleted",
     "FailedDeletedFields": "There was an error deleting the fields",

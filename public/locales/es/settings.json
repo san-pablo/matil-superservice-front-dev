@@ -123,6 +123,9 @@
     "False":"Falso",
     "false":"Falso",
     "timestamp":"Fecha",
+    "FieldsCount_one":"{{count}} campo",
+    "FieldsCount_other":"{{count}} campos",
+
     "NoFields":"No hay campos disponibles",
     "DeleteAllFields":"¿Desea eliminar los campos seleccionados?",
     "CorrectDeletedFields":"Campos eliminados con éxito",

@@ -3,6 +3,8 @@
     "PublicViews": "Public Views",
     "PrivateViews": "Private Views",
     "Trash": "Ticket Trash",
+    "NoTickets":"No tickets available",
+
     "EditViews": "Edit Views",
     "Filter": "Filter",
     "Page": "Page",
