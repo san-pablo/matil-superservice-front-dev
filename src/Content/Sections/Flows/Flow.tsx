@@ -99,13 +99,15 @@ const Flow = () => {
     const [showMoreInfo, setShowMoreInfo] = useState<boolean>(false)
     const [showCreateVariable, setShowCreateVariable] = useState<boolean>(false)
 
+
     //FLOW DATA
     const [sourceId, setSourceId] = useState<string | null>(null)
     const [nodes, setNodes, onNodesChange] = useNodesState([])
     const [edges, setEdges, onEdgesChange] = useEdgesState([])
     const [flowName, setFlowName] = useState<string>(t('NewFlow'))    
     const [flowDescription, setFlowDescription] = useState<string>('')    
-    const [flowVariables, setFlowVariables] = useState<VariableType[]>([])   
+    const [flowVariables, setFlowVariables] = useState<VariableType[]>([])  
+    const initialNodesRef = useRef<any[]>([])
     const flowVariablesRef = useRef<VariableType[]>([])
     const flowsListRef = useRef<{uuid:string, name:string}[]>([])
     const groupsListRef = useRef<{id:string, name:string}[]>([])
@@ -114,6 +116,9 @@ const Flow = () => {
     const currentMessagesRef = useRef<{type:string, content:any, sent_by:'business' | 'client'}[]>([])
     const isActiveRef = useRef<boolean>(true)
 
+    //SHOW NT SAVED CHANGES WARNING
+    const [showNoSaveWarning, setShowNoSaveWarning] = useState<boolean>(false)
+    
     //UPDATE VARIABLES FROM NODES
     useEffect(() => {
         setNodes((nds) => {
@@ -371,6 +376,7 @@ const Flow = () => {
         }
     }
 
+    //DELETE A NODE OR A BRANCH (THE LOGIC IS REUSED TO RESIZE NODES WHEN HIDING OR EXPANDING A NODE)
     const deleteNode = (sourceId:string, resize?:boolean, delete_branch?:boolean) => {
         
         setNodes((nds) => 
@@ -385,23 +391,23 @@ const Flow = () => {
                     if (nds.length === 2) setEdges([{ id: '0->1', type: 'custom', source: '0', target: '1' }])
                     else {
                         setEdges((edg) => edg.filter((edge) => {
-                                const edgeSource = edge.id.split('->')[0]
-                                const edgeTarget = edge.id.split('->')[1].split('(')[0]
-                                sourceNode = edgeSource
-                                if (edge.sourceHandle) {
-                                    if (edgeSource === sourceId) {
-                                        if (edge.sourceHandle.includes('(') && edge.sourceHandle.includes(')')) sourceHandle = parseInt(edge.sourceHandle.split('(')[1].split(')')[0], 10)
-                                        else sourceHandle = parseInt(edge.sourceHandle.split('-')[1], 10)
-                                        return sourceHandle !== -1
-                                    } 
-                                }
-                                if (delete_branch)  return edgeSource !== sourceId
-                                else return edgeSource !== sourceId && edgeTarget !== sourceId
+                            const edgeSource = edge.id.split('->')[0]
+                            const edgeTarget = edge.id.split('->')[1].split('(')[0]
+                            sourceNode = edgeSource
+                            if (edge.sourceHandle) {
+                                if (edgeSource === sourceId) {
+                                    if (edge.sourceHandle.includes('(') && edge.sourceHandle.includes(')')) sourceHandle = parseInt(edge.sourceHandle.split('(')[1].split(')')[0], 10)
+                                    else sourceHandle = parseInt(edge.sourceHandle.split('-')[1], 10)
+                                    return sourceHandle !== -1
+                                } 
+                            }
+                            if (delete_branch)  return edgeSource !== sourceId
+                            else return edgeSource !== sourceId && edgeTarget !== sourceId
                         }))
                     }
 
                     let updatedNodes = nds.map((node) => {
-                        if (node.id === sourceId ) {
+                        if (node.id === sourceNode ) {
                             if (sourceHandle !== -1) {      
                                 return {...node, data: {...node.data, branches: node.data.branches.map((branch: any, idx: number) => {
                                             if (idx === sourceHandle) return { ...branch, next_node_index: null }
@@ -409,7 +415,6 @@ const Flow = () => {
                                         })
                                     }
                                 }
-                                
                             }
                             else return {...node, data: {...node.data, next_node_index: null}} 
                         }
@@ -512,7 +517,6 @@ const Flow = () => {
       )
       setTimeout(() => {setSourceId(nodeId as string)}, 0)
     }
-
 
     //ADD OR DELETE A MESSAGE IN SENDER
     const editFieldAction = (nodeId:string | undefined, index:number | undefined, type:'remove' | 'add' | 'edit', newAction?:FieldAction) => {
@@ -642,25 +646,24 @@ const Flow = () => {
             else {
                  const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/flows/${flowId}`, setWaiting, auth})
                 if (response?.status === 200){
+                     
                     console.log(response.data.nodes)
                     flowVariablesRef.current = response.data.variables
                     setFlowName(response.data.name)
                     setFlowDescription(response.data.description)
                     setFlowVariables(response.data.variables)
                     setFlowInterpreterConfig(response.data.interpreter_configuration)
-                    //isActiveRef.current === response.data.is_active
-                    isActiveRef.current === true
-
-                    setNodes([{id:'0', position:{x:0, y:0}, data:{channels:response.data.channel_ids, functions:{channelIds:channelsIds, editSimpleFlowData}}, type:'trigger'}, ...parseNodesFromBack(response.data.nodes)])
+                    isActiveRef.current === response.data.is_active
+                    const frontNodes = parseNodesFromBack(response.data.nodes)
+                    initialNodesRef.current = frontNodes
+                    setNodes([{id:'0', position:{x:0, y:0}, data:{channels:response.data.channel_ids, functions:{channelIds:channelsIds, editSimpleFlowData}}, type:'trigger'}, ...frontNodes])
                 }
             }
         }
         fetchInitialData()
     }, [])
 
- 
-    console.log(nodes)
-    //CUSTOM BOX FOR EDITING NODES
+     //CUSTOM BOX FOR EDITING NODES
     const NodesEditBox = () => {
 
         const node = nodes.find(node => node.id === showNodesAction?.nodeId)
@@ -1221,6 +1224,7 @@ const Flow = () => {
             }
             else {
                 const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/flows/${flowId}`, auth, method:'put', setWaiting:setWaitingSave, requestForm:newFlow, toastMessages:{works:t('CorrectEditedFlow'), failed:t('FailedEditedFlow')}})
+                initialNodesRef.current = nodes
             }   
         }
 
@@ -1286,7 +1290,7 @@ const Flow = () => {
             <Box left={'1vw'} ref={nameInputRef} top='1vw' zIndex={100} position={'absolute'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.1)'} maxH={'calc(100vh - 2vw)'} overflow={'scroll'} bg='white' borderRadius={'.5rem'} borderWidth={'1px'} borderColor={'gray.300'} > 
                 <Flex gap='10px' alignItems={'center'} p='10px'> 
                     <Tooltip label={t('GoBack')}  placement='bottom' hasArrow bg='black'  color='white'  borderRadius='.4rem' fontSize='.75em' p='4px'> 
-                        <IconButton aria-label='go-back' size='sm' bg='transparent' border='none' onClick={() => navigate('/flows-functions/flows')} icon={<IoIosArrowBack size='20px'/>}/>
+                        <IconButton aria-label='go-back' size='sm' bg='transparent' border='none' onClick={() => {if (JSON.stringify(nodes) !== JSON.stringify(initialNodesRef.current)) setShowNoSaveWarning(true);else navigate('/flows-functions/flows')}} icon={<IoIosArrowBack size='20px'/>}/>
                     </Tooltip>
                     <Box width={'300px'} > 
                         <EditText nameInput={true} hideInput={true} size='md' maxLength={70}  value={flowName} setValue={setFlowName}/>
