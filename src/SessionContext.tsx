@@ -123,6 +123,8 @@ const sessionReducer = (state: SessionData, action: { type: string; payload: any
         //SAVE FLOWS AND FUNCTIONS INFORMATION
         case 'UPDATE_FLOWS':
             return { ...state, flowsFunctions: { ...state.flowsFunctions, flows:action.payload.data }}
+        case 'DELETE_FLOWS':
+            return { ...state, flowsFunctions: { ...state.flowsFunctions, flows:null }}
         case 'UPDATE_FUNCTIONS':
             return { ...state, flowsFunctions: { ...state.flowsFunctions, functions:action.payload.data }}
 

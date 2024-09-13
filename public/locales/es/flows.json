@@ -214,5 +214,14 @@
     "append":"Añadir",
     "append_2":"a ",
     "remove":"Eliminar",
-    "remove_2":"de "
+    "remove_2":"de ",
+
+    "NoSavedChanges":"Hay cambios sin guardar",
+    "NoSavedChangeAnswer":"¿Desea guardar los cambios efectuados en el flujo?",
+    "SaveAndExit":"Salir y Guardar",
+    "NoSave":"No Guardar",
+    "NoMessage":"Escriba instrucciones..."
+
+
+
 }

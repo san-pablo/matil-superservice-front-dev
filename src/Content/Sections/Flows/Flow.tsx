@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, RefObject, useMemo, CSSProperties, Dispatc
 import { useAuth } from '../../../AuthContext.js'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useSession } from '../../../SessionContext.js'
 //FETCH DATA
 import fetchData from '../../API/fetchData'
 //FRONT
@@ -40,7 +41,7 @@ import { IoIosArrowDown, IoIosWarning, IoIosArrowBack } from 'react-icons/io'
 import { BsTrash3Fill } from 'react-icons/bs'
 //TYPING
 import { languagesFlags, actionTypesDefinition, nodeTypesDefinition, DataTypes, Branch, FlowMessage, FieldAction, FunctionType } from '../../Constants/typing.js'
- 
+  
 //FLOWS AND NODES DEFINITIONS
 const panOnDrag = [1, 2]
  
@@ -377,11 +378,10 @@ const Flow = () => {
     }
 
     //DELETE A NODE OR A BRANCH (THE LOGIC IS REUSED TO RESIZE NODES WHEN HIDING OR EXPANDING A NODE)
-    const deleteNode = (sourceId:string, resize?:boolean, delete_branch?:boolean) => {
-        
+    const deleteNode = (sourceId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean) => {
+
         setNodes((nds) => 
             {   
-
                 if (resize) return resizeNodes(nds, sourceId)
                             
                 else {
@@ -391,41 +391,62 @@ const Flow = () => {
                     if (nds.length === 2) setEdges([{ id: '0->1', type: 'custom', source: '0', target: '1' }])
                     else {
                         setEdges((edg) => edg.filter((edge) => {
-                            const edgeSource = edge.id.split('->')[0]
-                            const edgeTarget = edge.id.split('->')[1].split('(')[0]
-                            sourceNode = edgeSource
-                            if (edge.sourceHandle) {
-                                if (edgeSource === sourceId) {
+                            const edgeSource = edge.source
+                            const edgeTarget = edge.target
+
+                            //DELETE BRANCH
+                            if ((sourceId === edgeSource) && isSource) {
+                                sourceNode = edgeSource
+                                return false
+                            }
+
+                             //DELETE NODE
+                            else if ((sourceId === edgeTarget) && !isSource) {
+                                sourceNode = edgeSource
+                                if (edge.sourceHandle) {
                                     if (edge.sourceHandle.includes('(') && edge.sourceHandle.includes(')')) sourceHandle = parseInt(edge.sourceHandle.split('(')[1].split(')')[0], 10)
                                     else sourceHandle = parseInt(edge.sourceHandle.split('-')[1], 10)
                                     return sourceHandle !== -1
                                 } 
                             }
+                        
                             if (delete_branch)  return edgeSource !== sourceId
                             else return edgeSource !== sourceId && edgeTarget !== sourceId
                         }))
                     }
+                    console.log(sourceHandle)
+                    console.log(sourceNode)
+
 
                     let updatedNodes = nds.map((node) => {
-                        if (node.id === sourceNode ) {
-                            if (sourceHandle !== -1) {      
-                                return {...node, data: {...node.data, branches: node.data.branches.map((branch: any, idx: number) => {
-                                            if (idx === sourceHandle) return { ...branch, next_node_index: null }
-                                            return branch
-                                        })
-                                    }
+                        if (node.id === sourceNode) {
+                            if (sourceHandle !== -1) {     
+                                if (node.type === 'brancher' || node.type === 'extractor') {
+                                    return {...node, data: {...node.data, branches: node.data.branches.map((branch: any, idx: number) => {
+                                                if (idx === sourceHandle) return { ...branch, next_node_index: null }
+                                                return branch
+                                            })
+                                        }
+                                    } 
+                                }
+                                else if (node.type === 'function') {
+                                    const errors = node.data.error_nodes_ids
+                                    const ketToDelete = Object.keys(node.data.error_nodes_ids)[sourceHandle]
+                                    errors[ketToDelete] = null
+                                    return {...node, data: {...node.data, error_nodes_ids: errors}}
                                 }
                             }
                             else return {...node, data: {...node.data, next_node_index: null}} 
                         }
                         return node
                     })
+                 
                     if (!delete_branch) updatedNodes = updatedNodes.filter((node) => node.id !== sourceId)
                     if (nds.length === 2) updatedNodes.push({id:'1', position:{x:350, y:0}, data:{addNewNode}, type:'add'})
 
                     return updatedNodes
                 }
-             }
+            }
     )}
 
     //ADD OR DELETE BRANCHES
@@ -575,7 +596,7 @@ const Flow = () => {
                             const edgeHandleIndex = edge.sourceHandle?parseInt(edge.sourceHandle.split('-')[1], 10):-1
                                 if (edgeSource === nodeId && edgeHandleIndex > (index as number)) {
                                 const newHandle = `handle-${edgeHandleIndex - 1}`
-                                return {...edge,id: `${nodeId}->${newHandle}`, sourceHandle: newHandle}
+                                return {...edge, id: `${nodeId}->${newHandle}`, sourceHandle: newHandle}
                             }
                             return edge
                         })
@@ -646,17 +667,15 @@ const Flow = () => {
             else {
                  const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/flows/${flowId}`, setWaiting, auth})
                 if (response?.status === 200){
-                     
-                    console.log(response.data.nodes)
                     flowVariablesRef.current = response.data.variables
                     setFlowName(response.data.name)
                     setFlowDescription(response.data.description)
                     setFlowVariables(response.data.variables)
                     setFlowInterpreterConfig(response.data.interpreter_configuration)
                     isActiveRef.current === response.data.is_active
-                    const frontNodes = parseNodesFromBack(response.data.nodes)
+                    const frontNodes = [{id:'0', position:{x:0, y:0}, data:{channels:response.data.channel_ids, functions:{channelIds:channelsIds, editSimpleFlowData}}, type:'trigger'},...parseNodesFromBack(response.data.nodes)]
                     initialNodesRef.current = frontNodes
-                    setNodes([{id:'0', position:{x:0, y:0}, data:{channels:response.data.channel_ids, functions:{channelIds:channelsIds, editSimpleFlowData}}, type:'trigger'}, ...frontNodes])
+                    setNodes(frontNodes)
                 }
             }
         }
@@ -1094,6 +1113,7 @@ const Flow = () => {
 
         //ICON REF
         const iconRef = useRef<HTMLDivElement>(null)
+        const session = useSession()
 
         //CONFORM DELETION BOOLEAN
         const [showConfirmDelete, setShowConfirmDelete] = useState<boolean>(false)
@@ -1193,9 +1213,12 @@ const Flow = () => {
     
             //FUNCTION FOR DELETING AN AUTOMATION
             const deleteFlow = async () => {
+                session.dispatch({type:'DELETE_FLOWS'})
                 const flowId = location.split('/')[location.split('/').length - 1]
                 const response = await fetchData({endpoint: `superservice/${auth.authData.organizationId}/admin/flows/${flowId}`, method: 'delete', setWaiting: setWaitingDelete, auth, toastMessages: {works: t('CorrectDeletedFlow'), failed: t('FailedDeletedFlow')}})
-                if (response?.status === 200) navigate(-1)
+                if (response?.status === 200) {
+                     navigate(-1)
+                }
             }
     
             //FRONT
@@ -1219,8 +1242,11 @@ const Flow = () => {
             const parsedNodes = parseDataToBack(nodes)
             const newFlow = {is_active:isActiveRef.current, name:flowName, description:flowDescription, variables:flowVariables, interpreter_configuration:flowInterpreterConfig, nodes:parsedNodes.nodes, channel_ids:parsedNodes.channels }
             if (location.endsWith('create')) {
+                session.dispatch({type:'DELETE_FLOWS'})
                 const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/flows`, auth, method:'post', setWaiting:setWaitingSave, requestForm:newFlow, toastMessages:{works:t('CorrectCreateFlow'), failed:t('FailedCreateFlow')}})
-                navigate(-1)
+                if (response?.status === 200) {
+                     navigate(-1)
+                }
             }
             else {
                 const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/flows/${flowId}`, auth, method:'put', setWaiting:setWaitingSave, requestForm:newFlow, toastMessages:{works:t('CorrectEditedFlow'), failed:t('FailedEditedFlow')}})
@@ -1235,11 +1261,29 @@ const Flow = () => {
             </ConfirmBox>
         ), [showConfirmDelete])
 
+        //MEMOIZED CREATE VARIABLE BOX
+        const memoizedNoSavedWarning = useMemo(() => (<> 
+        {showNoSaveWarning && 
+                <ConfirmBox setShowBox={setShowNoSaveWarning} isSectionWithoutHeader> 
+                    <Box p='15px' > 
+                        <Text fontWeight={'medium'}>{t('NoSavedChanges')}</Text>
+                        <Text mt={'.5vh'}>{t('NoSavedChangeAnswer')}</Text>
+                    </Box>
+                    <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+                        <Button  size='sm' color={'white'} bg='brand.gradient_blue'  _hover={{bg:'brand.gradient_blue_hover'}}   onClick={() => {saveChanges();navigate('/flows-functions/flows')}}>{waitingSave?<LoadingIconButton/>:t('SaveAndExit')}</Button>
+                        <Button  size='sm' colorScheme='red' onClick={() => navigate('/flows-functions/flows')}>{t('NoSave')}</Button>
+                    </Flex>
+                </ConfirmBox>
+        
+            }
+        </>), [showNoSaveWarning])
+
         //FRONT
         return (
             <>
             {showConfirmDelete && memoizedDeleteBox}
-       
+            {memoizedNoSavedWarning}
+
             <Flex gap='15px'  position={'absolute'} right={'2vw'} top='2vw' zIndex={100}  > 
                 {numberOfWarnings > 0 && 
                 <Flex position={'relative'} onMouseEnter={handleMouseEnter}  onMouseLeave={handleMouseLeave}  >   
@@ -1290,7 +1334,7 @@ const Flow = () => {
             <Box left={'1vw'} ref={nameInputRef} top='1vw' zIndex={100} position={'absolute'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.1)'} maxH={'calc(100vh - 2vw)'} overflow={'scroll'} bg='white' borderRadius={'.5rem'} borderWidth={'1px'} borderColor={'gray.300'} > 
                 <Flex gap='10px' alignItems={'center'} p='10px'> 
                     <Tooltip label={t('GoBack')}  placement='bottom' hasArrow bg='black'  color='white'  borderRadius='.4rem' fontSize='.75em' p='4px'> 
-                        <IconButton aria-label='go-back' size='sm' bg='transparent' border='none' onClick={() => {if (JSON.stringify(nodes) !== JSON.stringify(initialNodesRef.current)) setShowNoSaveWarning(true);else navigate('/flows-functions/flows')}} icon={<IoIosArrowBack size='20px'/>}/>
+                        <IconButton aria-label='go-back' size='sm' bg='transparent' border='none' onClick={() => {if (areArraysDifferent(nodes, initialNodesRef.current)) setShowNoSaveWarning(true);else navigate('/flows-functions/flows')}} icon={<IoIosArrowBack size='20px'/>}/>
                     </Tooltip>
                     <Box width={'300px'} > 
                         <EditText nameInput={true} hideInput={true} size='md' maxLength={70}  value={flowName} setValue={setFlowName}/>
@@ -1565,5 +1609,20 @@ const EditMessage = ({scrollRef, messageData, setMessageData}:{scrollRef:RefObje
         </Box>}
     </Box>)
 }
-
  
+function areArraysDifferent(arr1:any[], arr2:any) {
+    const cleanObject = (obj: any) => {
+        const { position, height, width, id, type, data, ...rest } = obj
+            const { functions, ...dataWithoutFunctions } = data
+        return {id, type, data: dataWithoutFunctions}
+    }
+    if (arr1.length !== arr2.length) return true
+    for (let i = 0; i < arr1.length; i++) {
+        console.log(cleanObject(arr1[i]))
+        console.log(cleanObject(arr2[i]))
+
+      if (JSON.stringify(cleanObject(arr1[i])) !== JSON.stringify(cleanObject(arr2[i]))) return true
+    }
+    return false
+  }
+  

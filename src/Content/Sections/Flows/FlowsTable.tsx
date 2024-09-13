@@ -75,6 +75,7 @@ function FlowsTable () {
     //FETCH DATA ON FIRST RENDER
     useEffect(() => {
         const fetchFlowsData = async() => {
+            console.log(session.sessionData.flowsFunctions.flows)
             if (session.sessionData.flowsFunctions.flows) {
                 setFlows(session.sessionData.flowsFunctions.flows)
             }
