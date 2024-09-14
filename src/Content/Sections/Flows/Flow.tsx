@@ -7,7 +7,7 @@ import { useSession } from '../../../SessionContext.js'
 //FETCH DATA
 import fetchData from '../../API/fetchData'
 //FRONT
-import { Flex, Box, Button, IconButton, NumberInput, NumberInputField, Text, Textarea, Portal, Icon, Skeleton, Tooltip, chakra, shouldForwardProp } from '@chakra-ui/react'
+import { Flex, Box, Button, IconButton, NumberInput, NumberInputField, Text, Textarea, Portal, Icon, Skeleton, Tooltip, chakra, shouldForwardProp, Switch, Radio } from '@chakra-ui/react'
 import { motion, AnimatePresence, isValidMotionProp, cubicBezier } from 'framer-motion'
 //FLOWS
 import ReactFlow, { Controls, Background, useNodesState, useEdgesState, ControlButton, SelectionMode, useReactFlow } from 'reactflow'
@@ -46,8 +46,10 @@ import { FiHash } from 'react-icons/fi';
 import { TbMathFunction } from 'react-icons/tb';
 import { FiType } from 'react-icons/fi';
 import { AiOutlineCalendar } from 'react-icons/ai';
-import { MdOutlineFormatListBulleted } from 'react-icons/md';
-import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+import { MdOutlineFormatListBulleted } from 'react-icons/md'
+import { FaCheckCircle, FaTimesCircle } from "react-icons/fa"
+import { FaRobot, FaLanguage, FaR } from "react-icons/fa6";
+
 //TYPING
 import { languagesFlags, actionTypesDefinition, nodeTypesDefinition, DataTypes, Branch, FlowMessage, FieldAction, FunctionType } from '../../Constants/typing.js'
 import { IconType } from 'react-icons'
@@ -799,21 +801,25 @@ const Flow = () => {
                 return (
                 <Box ref={scrollRef} overflow={'scroll'}  p='30px'>
                     {flowVariables.length === 0?<Text fontSize={'.9em'}>{t('NoVariablesSelected')}</Text>:<> 
-                    <Text mb='1vh'color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('VariableType')}</Text>
+                    <Text fontSize={'1.1em'} mb='.5vh' fontWeight={'medium'}>{t('VariableType')}</Text>
                     <CustomSelect containerRef={scrollRef} hide={false} selectedItem={messageData.index} setSelectedItem={(value) => setMessageData((prev) => ({...prev, index: value}))} options={Array.from({length: flowVariables.length}, (v, i) => i)} labelsMap={variablesLabelsMap} />
-                    <Box bg='gray.300' width={'100%'} height={'1px'} mt='2vh' mb='2vh'/>
                     
-                    <Text color='black' fontWeight={'medium'}>{t('VariableInstructions')}</Text>        
+                    <Text mt='3vh' color='black'fontSize={'1.1em'} fontWeight={'medium'}>{t('VariableInstructions')}</Text>     
+                    <Text mb='1.5vh' color='gray.600' fontSize={'.8em'} >{t('VariableInstructionsDes')}</Text>        
+
                     <EditMessage scrollRef={scrollRef} messageData={instructionMessage} setMessageData={setInstructionMessage}/>
                
-                    <Text color='black' mt='3vh' fontWeight={'medium'}>{t('AskConfirmation')}</Text>        
-                    <Flex gap='10px' mt='5px'>
-                        <Button bg={messageData.require_confirmation?'brand.gradient_blue':'gray.200'} color={messageData.require_confirmation?'white':'black'} size='sm' _hover={{bg:messageData.require_confirmation?'brand.gradient_blue_hover':'gray.300'}} onClick={() => setMessageData((prev) => ({...prev, require_confirmation:true}))}>{t('Yes')}</Button>
-                        <Button bg={!messageData.require_confirmation?'brand.gradient_blue':'gray.200'} color={!messageData.require_confirmation?'white':'black'} size='sm' _hover={{bg:!messageData.require_confirmation?'brand.gradient_blue_hover':'gray.300'}} onClick={() => setMessageData((prev) => ({...prev, require_confirmation:false}))}>{t('No')}</Button>
-                    </Flex> 
+                    <Flex gap='10px' mt='3vh' alignItems={'center'}>
+                        <Switch isChecked={messageData.require_confirmation} onChange={(e) => setMessageData((prev) => ({ ...prev, require_confirmation: e.target.checked }))}/>
+                        <Text fontSize={'1.1em'} fontWeight={'medium'}>{t('AskConfirmation')}</Text>        
+                    </Flex>
+                    <Text mb='2vh' color='gray.600' fontSize={'.8em'} >{t('AskConfirmationDes')}</Text>        
+                    
                      
                     {messageData.require_confirmation && <>
-                        <Text  mt='3vh'  color='black'  fontWeight={'medium'}>{t('ConfirmationMessage')}</Text>
+                        <Text  mt='3vh'  color='black'fontSize={'1.1em'} fontWeight={'medium'}>{t('ConfirmationMessage')}</Text>
+                        <Text mb='1.5vh' color='gray.600' fontSize={'.8em'} >{t('ConfirmationMessageDes')}</Text>        
+
                         <EditMessage scrollRef={scrollRef} messageData={confirmationMessage} setMessageData={setConfirmationMessage}/>
                     </>}
                     </>}
@@ -1607,27 +1613,27 @@ const EditMessage = ({scrollRef, messageData, setMessageData}:{scrollRef:RefObje
 
     return (
     <Box ref={scrollRef} overflow={'scroll'}>
-        <Text mb='1vh'color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('MessageType')}</Text>
-        <CustomSelect containerRef={scrollRef} hide={false} selectedItem={messageData.type} setSelectedItem={(value) => setMessageData((prev) => ({...prev, type: value}))} options={['generative', 'preespecified']} labelsMap={messagesTypeDict} />
-        <Box bg='gray.300' width={'100%'} height={'1px'} mt='2vh' mb='2vh'/>
+        <Text fontSize={'.9em'} fontWeight={'medium'}>{t('MessageType')}</Text>
+        <Flex gap='20px' mt='1vh'>
+            <Button leftIcon={<FaRobot/>} bg={messageData.type === 'generative'?'blackAlpha.800':'gray.200'} color={messageData.type === 'generative'?'white':'black'} size='sm' _hover={{bg:messageData.type === 'generative'?'blackAlpha.800':'gray.300'}} onClick={() => setMessageData((prev) => ({...prev, type:'generative'}))}>{t(messagesTypeDict['generative'])}</Button>
+            <Button leftIcon={<FaLanguage/>}  bg={!(messageData.type === 'generative')?'blackAlpha.800':'gray.200'} color={!(messageData.type === 'generative')?'white':'black'} size='sm' _hover={{bg:!(messageData.type === 'generative')?'blackAlpha.800':'gray.300'}} onClick={() => setMessageData((prev) => ({...prev, type:'preespecified'}))}>{t(messagesTypeDict['preespecified'])}</Button>
+        </Flex> 
+
 
         {messageData.type === 'generative'? <>
-        <Text color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('GenerationInstructions')}</Text>
-        <Textarea mt='1vh'  maxLength={2000} height={'auto'} placeholder={`${t('VariableInstructionsPlaceholder')}...`} maxH='300px' value={messageData.generation_instructions} onChange={(e) => setMessageData((prev) => ({...prev, generation_instructions:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
+        <Textarea mt='1.5vh'  maxLength={2000} height={'auto'} placeholder={`${t('VariableInstructionsPlaceholder')}...`} maxH='300px' value={messageData.generation_instructions} onChange={(e) => setMessageData((prev) => ({...prev, generation_instructions:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
         </>:
             <Box>
             {Object.keys(messageData?.preespecified_messages || []).map((lng, index) => (
-                <Box mt='15px' key={`message-${index}-${lng}`} gap='5px' alignItems={'center'}>
-                    <Flex alignContent={'center'} justifyContent={'space-between'}> 
-                        <Text color='gray.600' fontSize={'.8em'} mb='5px' fontWeight={'medium'}>{t('Language')}</Text>
-                        <IconButton bg='transaprent' border='none' size='sm' _hover={{bg:'gray.200'}} icon={<RxCross2/>} aria-label='delete-all-condition' onClick={() => editMessagePreespecified(lng, 'remove')}/>
+                <Box mt='1.5vh' key={`message-${index}-${lng}`} alignItems={'center'}>
+                    <Flex alignItems={'end'} justifyContent={'space-between'}> 
+                        <Text fontWeight={'medium'} fontSize={'.9em'} >{languagesFlags[lng][0]} {languagesFlags[lng][1]}</Text>
+                        <Button size='xs' color='red' leftIcon={<BsTrash3Fill/>} onClick={() => editMessagePreespecified(lng, 'remove')}>{t('Delete')}</Button>
                     </Flex>
-                    <Text fontSize={'.9em'} mb='5px' >{languagesFlags[lng][0]} {languagesFlags[lng][1]}</Text>
-                    <Text color='gray.600'fontSize={'.8em'} mt='15px' fontWeight={'medium'}>{t('Message')}</Text>
-                    <Textarea mt='5px'  maxLength={2000} height={'auto'} placeholder={`${t('WriteMessage')}...`} maxH='300px' value={messageData.preespecified_messages[lng]} onChange={(e) => editMessagePreespecified(lng, 'edit', e.target.value)} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
+                    <Textarea mt='1vh' maxLength={2000} height={'auto'} placeholder={`${t('WriteMessage')}...`} maxH='300px' value={messageData.preespecified_messages[lng]} onChange={(e) => editMessagePreespecified(lng, 'edit', e.target.value)} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
                 </Box>
             ))}
-            <Button ref={buttonRef} size='sm' mt='2vh' onClick={() => setShowLanguagesFlags(!showLanguagesBox)} leftIcon={<FaPlus/>}>{t('AddLanguage')}</Button>
+            <Button ref={buttonRef} size='xs' mt='2vh' onClick={() => setShowLanguagesFlags(!showLanguagesBox)} leftIcon={<FaPlus/>}>{t('AddLanguage')}</Button>
             <AnimatePresence> 
                 {showLanguagesBox && 
                 <Portal>

@@ -56,9 +56,12 @@ const theme = extendTheme({
       global: {
         body: {
           bg: 'gray.50',
-          fontFamily: 'Jost, sans-serif'
+          fontFamily: 'Poppins, sans-serif'
         }
       }
+    },
+    fontWeight: {
+      normal:400, medium:500, semibold:600
     },
     components: {
       Button: { baseStyle: {fontWeight:'medium' },
@@ -229,8 +232,10 @@ const App: React.FC = () => {
           <>
               {(isSignedIn && authData.accessToken && ((authData.views && authData.users) || !authData.organizationId))?
                 <Router> 
+                  <Box fontSize={'.9em'}> 
                   <Content userInfo={userInfo} />
                   <ToastContainer />
+                  </Box>
                 </Router>:
                 <>
                   <Flex justifyContent={'center'} alignItems={'center'} height={'100vh'} width={'100vw'} bg='linear-gradient(to right, #C6D8FE, #93B6FF)'> 

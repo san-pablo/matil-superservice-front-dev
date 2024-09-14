@@ -93,12 +93,12 @@
     "Branch":"Rama",
     "AddBranchName":"Añade un nombre a la rama...",
     "And":"y",
-    "VariableType":"Selecciona el tipo de variable a extraer",
+    "VariableType":"Variable a extraer",
     "VariableInstructions":"Instrucciones de extracción",
     "VariableInstructionsPlaceholder":"Escriba instrucciones de extracción",
     "AddMessage":"Añadir mensaje",
     "GeneratedByMatilda":"Generado por Matilda",
-    "Literal":"Literal",
+    "Literal":"Preespecificado",
     "Type":"Tipo",
     "GenerationInstructions":"Instrucciones",
     "MessageType":"Selecciona el tipo de mensaje",
@@ -228,10 +228,11 @@
     "NoAskForConfirmation":"No solicitar confirmación",
     "SaveVariable":"Guardar cambios",
     "ResetChat":"Limpiar chat",
-    "GoBack":"Volver atrás"
+    "GoBack":"Volver atrás",
+    "VariableInstructionsDes":"Configura el mensaje que mostrará Matilda para indicar al cliente que proporcione la variables deseada.",
+    "AskConfirmationDes":"Decide si Matilda ha de confirmar la variable extraída.",
+    "ConfirmationMessageDes":"Configura el mensaje que mostrará Matilda para confirmar la extracción de la variable."
 
-
-
-
+    
 
 }
