@@ -6,8 +6,6 @@ import { useAuth } from '../../../AuthContext.js'
 import { Flex, Icon, Box, Text, Checkbox, Grid, Button, NumberInput, NumberInputField, Radio, chakra, shouldForwardProp } from '@chakra-ui/react'
 import { motion, AnimatePresence, isValidMotionProp } from 'framer-motion'
 import { Handle, Position } from 'reactflow'
-//COMPONENTS
-import CustomSelect from '../../Components/Reusable/CustomSelect.js'
 //FUNCTIONS
 import useOutsideClick from '../../Functions/clickOutside.js'
 //ICONS
@@ -38,11 +36,13 @@ interface TriggerNodeData {
 interface BrancherNodeData {
   branches:Branch[]
   functions: {
+    index:number
+    currentIndex:number
     setShowNodesAction:Dispatch<SetStateAction<null | {nodeId:string, actionType:actionTypesDefinition, actionData:any}>>
     editBranch:(nodeId:string | undefined, index:number | undefined, type:'remove' | 'add' | 'remove-branch') => void
     addNewNode:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}, targetType:nodeTypesDefinition | '', nodeId?:string) => void
     deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean) => void
-    getAvailableNodes:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}) => string[]
+    getAvailableNodes:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}) => {id:string, index:number}[]
   }
 }
 
@@ -51,13 +51,15 @@ interface ExtractorNodeData {
   variables:{index:number, message:FlowMessage, require_confirmation:boolean, confirmation_message:FlowMessage}[]
   branches:Branch[]
   functions: {
+    index:number
+    currentIndex:number
     flowVariables:VariableType[]
     setShowNodesAction:Dispatch<SetStateAction<null | {nodeId:string, actionType:actionTypesDefinition, actionData:any}>>
     editBranch:(nodeId:string | undefined, index:number | undefined, type:'remove' | 'add' | 'remove-branch') => void
     editExtractor:(nodeId:string | undefined, index:number | undefined, type:'remove' | 'add') => void
     addNewNode:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}, targetType:nodeTypesDefinition | '', nodeId?:string) => void
     deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean) => void
-    getAvailableNodes:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}) => string[]
+    getAvailableNodes:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}) => {id:string, index:number}[]
   }
 }
 
@@ -66,11 +68,13 @@ interface SenderNodeData {
   messages:FlowMessage[]
   next_node_index:number | null
   functions: {
+    index:number
+    currentIndex:number
     deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean) => void
     addNewNode:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}, targetType:nodeTypesDefinition | '', nodeId?:string) => void
     setShowNodesAction:Dispatch<SetStateAction<null | {nodeId:string, actionType:actionTypesDefinition, actionData:any}>>
     editMessage:(nodeId:string | undefined, index:number | undefined, type:'remove' | 'add' | 'edit', newMessage?:FlowMessage ) => void
-    getAvailableNodes:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}) => string[]
+    getAvailableNodes:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}) => {id:string, index:number}[]
   }
 }
 
@@ -84,13 +88,15 @@ interface FunctionNodeData {
   output_to_variables:{[key:string]:number}
   next_node_index:number | undefined 
   functions: {
+    index:number
+    currentIndex:number
     functionsDict:{[key:string]:string}
     flowId:string
     editSimpleFlowData:(nodeId:string | undefined, keyToUpdate:string, newData:any ) => void
     setShowNodesAction:Dispatch<SetStateAction<null | {nodeId:string, actionType:actionTypesDefinition, actionData:any}>>
     addNewNode:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}, targetType:nodeTypesDefinition | '', nodeId?:string) => void
     deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean) => void
-    getAvailableNodes:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}) => string[]
+    getAvailableNodes:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}) => {id:string, index:number}[]
     editFunctionError: (nodeId:string | undefined, type:'add' | 'remove' | 'remove-branch', keyToEdit:number, index?:number) => void
   }
 }
@@ -100,6 +106,8 @@ interface TerminatorNodeData {
   messages:FlowMessage[]
   flow_result:string
   functions: {
+    index:number
+    currentIndex:number
     deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean) => void
     setShowNodesAction:Dispatch<SetStateAction<null | {nodeId:string, actionType:actionTypesDefinition, actionData:any}>>
     editMessage:(nodeId:string | undefined, index:number | undefined, type:'remove' | 'add' | 'edit', newMessage?:FlowMessage ) => void
@@ -112,6 +120,8 @@ interface TransferNodeData {
   group_id:number
   user_id:number
   functions: {
+    index:number
+    currentIndex:number
     groupsList:{name:string, id:number}[]
     deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean) => void
     setShowNodesAction:Dispatch<SetStateAction<null | {nodeId:string, actionType:actionTypesDefinition, actionData:any}>>
@@ -126,13 +136,15 @@ interface ResetNodeData {
   variable_indices:number[]
   next_node_index:number | null
   functions: {
+    index:number
+    currentIndex:number
     flowVariables:VariableType[]
     deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean) => void
     addNewNode:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}, targetType:nodeTypesDefinition | '', nodeId?:string) => void
     setShowNodesAction:Dispatch<SetStateAction<null | {nodeId:string, actionType:actionTypesDefinition, actionData:any}>>
     editSimpleFlowData:(nodeId:string | undefined, keyToUpdate:string, newData:number[] ) => void
     editMessage:(nodeId:string | undefined, index:number | undefined, type:'remove' | 'add' | 'edit', newMessage?:FlowMessage ) => void
-    getAvailableNodes:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}) => string[]
+    getAvailableNodes:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}) => {id:string, index:number}[]
   }
 
 }
@@ -142,6 +154,8 @@ interface FlowSwapData {
   messages:FlowMessage[]
   new_flow_uuid:string
   functions: {
+    index:number
+    currentIndex:number
     flowsIds:{name:string, uuid:string}[]
     deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean) => void
     setShowNodesAction:Dispatch<SetStateAction<null | {nodeId:string, actionType:actionTypesDefinition, actionData:any}>>
@@ -155,11 +169,13 @@ interface MotherStructureUpdateNodeData {
   next_node_index:number | null
   updates:FieldAction[]
   functions: {
+    index:number
+    currentIndex:number
     setShowNodesAction:Dispatch<SetStateAction<null | {nodeId:string, actionType:actionTypesDefinition, actionData:any}>>
     editFieldAction:(nodeId:string | undefined, index:number | undefined, type:'remove' | 'add' | 'edit', newField?:FieldAction ) => void
     deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean) => void
     addNewNode:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}, targetType:nodeTypesDefinition | '', nodeId?:string) => void
-    getAvailableNodes:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}) => string[]
+    getAvailableNodes:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}) => {id:string, index:number}[]
   }
 }
 
@@ -243,8 +259,8 @@ export const BrancherNode = ({id, data}:{id:string, data:BrancherNodeData}) => {
   const [isExpanded, setIsExpanded] = useState<boolean>(true)
 
   return (<> 
-      <Box cursor={'default'} bg="gray.50" borderRadius={'.5rem'} borderColor='gray.300' borderWidth={'1px'} width='250px'>
-          <NodeHeader nodeId={id} nodeType='brancher' isExpanded={isExpanded} setIsExpanded={setIsExpanded} deleteNode={data.functions.deleteNode} getAvailableNodes={data.functions.getAvailableNodes}/>
+      <Box cursor={'default'}  bg={data.functions.currentIndex === data.functions.index?'blue.50':'gray.50'}  borderRadius={'.5rem'} borderColor='gray.300' borderWidth={'1px'} width='250px'>
+          <NodeHeader nodeId={id} nodeIndex={data.functions.index} nodeType='brancher' isExpanded={isExpanded} setIsExpanded={setIsExpanded} deleteNode={data.functions.deleteNode} getAvailableNodes={data.functions.getAvailableNodes}/>
           {isExpanded && 
             <Box p='0 15px 15px 15px'> 
               <BranchesComponent id={id} branches={data.branches} isExpanded={isExpanded} editBranch={data.functions.editBranch} setShowNodesAction={data.functions.setShowNodesAction} addNewNode={data.functions.addNewNode} getAvailableNodes={data.functions.getAvailableNodes}/>
@@ -274,8 +290,7 @@ export const ExtactorNode = ({id, data}:{id:string, data:ExtractorNodeData}) => 
     return(
       <Box position='relative' onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}> 
         <Box cursor={'pointer'}  mt='15px' boxShadow={'0 0 5px 1px rgba(0, 0, 0, 0.15)'}p='10px' borderRadius={'.3rem'} borderTopColor={'#4A5568'} borderTopWidth='3px' key={`variable-${index}`} onClick={() => data.functions.setShowNodesAction({nodeId:id, actionType:'extract', actionData:{index}})}>
-          <Text fontSize='.9em' color='black' mb='7px' fontWeight={'medium'}>{t(data.functions.flowVariables.length === 0?t('NoVariable'):data.functions.flowVariables[variable.index].name)}</Text>
-
+          <Text fontSize='.9em' color='black' mb='7px' fontWeight={'medium'}>{t((data.functions.flowVariables.length === 0 || !data.functions.flowVariables?.[variable.index])?t('NoVariable'):data.functions.flowVariables[variable.index].name)}</Text>
           {variable.message.type === 'generative' ?<> 
           <Text fontSize={'.7em '} style={{overflow: 'hidden',display: '-webkit-box',WebkitLineClamp: 3, WebkitBoxOrient: 'vertical'}} >{variable.message.generation_instructions === ''?t('NoMessage'):variable.message.generation_instructions}</Text>
           </>:
@@ -300,8 +315,8 @@ export const ExtactorNode = ({id, data}:{id:string, data:ExtractorNodeData}) => 
     )
   }
   return (<>
-      <Box cursor={'default'} bg="gray.50" borderRadius={'.5rem'} borderColor='gray.300' borderWidth={'1px'} width='250px'>
-        <NodeHeader nodeId={id} nodeType='extractor'  isExpanded={isExpanded} setIsExpanded={setIsExpanded} deleteNode={data.functions.deleteNode} getAvailableNodes={data.functions.getAvailableNodes}/>
+      <Box cursor={'default'}  bg={data.functions.currentIndex === data.functions.index?'blue.50':'gray.50'}  borderRadius={'.5rem'} borderColor='gray.300' borderWidth={'1px'} width='250px'>
+        <NodeHeader nodeId={id} nodeIndex={data.functions.index}  nodeType='extractor'  isExpanded={isExpanded} setIsExpanded={setIsExpanded} deleteNode={data.functions.deleteNode} getAvailableNodes={data.functions.getAvailableNodes}/>
    
           {isExpanded && <Box p='0 15px 15px 15px'> 
           <Flex  mb='10px' gap='15px' alignItems={'center'}  > 
@@ -341,8 +356,8 @@ export const SenderNode = ({id, data}:{id:string, data:SenderNodeData}) => {
   const [isExpanded, setIsExpanded] = useState<boolean>(true)
 
   return (<> 
-    <Box cursor={'default'} bg="gray.50" borderRadius={'.5rem'} borderColor='gray.300' borderWidth={'1px'}  width='250px'>
-        <NodeHeader nodeId={id} nodeType='sender'  next_node_index={data.next_node_index} isExpanded={isExpanded} setIsExpanded={setIsExpanded} getAvailableNodes={data.functions.getAvailableNodes} deleteNode={data.functions.deleteNode} addNewNode={data.functions.addNewNode}/>
+    <Box cursor={'default'} bg={data.functions.currentIndex === data.functions.index?'blue.50':'gray.50'}  borderRadius={'.5rem'} borderColor='gray.300' borderWidth={'1px'}  width='250px'>
+        <NodeHeader nodeId={id} nodeIndex={data.functions.index}  nodeType='sender'  next_node_index={data.next_node_index} isExpanded={isExpanded} setIsExpanded={setIsExpanded} getAvailableNodes={data.functions.getAvailableNodes} deleteNode={data.functions.deleteNode} addNewNode={data.functions.addNewNode}/>
  
           {isExpanded && <Box p='0 15px 15px 15px'> 
             <Flex gap='15px' alignItems={'center'} > 
@@ -370,8 +385,8 @@ export const TerminatorNode = ({id, data}:{id:string, data:TerminatorNodeData}) 
   const [isExpanded, setIsExpanded] = useState<boolean>(true)
 
   return (<> 
-    <Box cursor={'default'} bg="gray.50" borderRadius={'.5rem'} borderColor='gray.300' borderWidth={'1px'}  width='250px'>
-        <NodeHeader nodeId={id} nodeType='terminator' isExpanded={isExpanded} setIsExpanded={setIsExpanded} deleteNode={data.functions.deleteNode}/>
+    <Box cursor={'default'}  bg={data.functions.currentIndex === data.functions.index?'blue.50':'gray.50'} borderRadius={'.5rem'} borderColor='gray.300' borderWidth={'1px'}  width='250px'>
+        <NodeHeader nodeId={id} nodeIndex={data.functions.index}  nodeType='terminator' isExpanded={isExpanded} setIsExpanded={setIsExpanded} deleteNode={data.functions.deleteNode}/>
           {isExpanded && 
           <Box p='0 15px 15px 15px'> 
             <Flex gap='15px' alignItems={'center'} > 
@@ -406,15 +421,14 @@ export const TransferNode = ({id, data}:{id:string, data:TransferNodeData}) => {
     const auth = useAuth()
    //BOOLEAN FOR EXPANDING
    const [isExpanded, setIsExpanded] = useState<boolean>(true)
- 
   //GET USERS LIST
     let usersDict:{[key:number]:string} = {}
     if (auth.authData.users) Object.keys(auth.authData?.users).map((key:any) => {if (auth?.authData?.users) usersDict[key] = auth?.authData?.users[key].name})
     const usersList:{id:number, name:string}[] = Object.keys(usersDict).map(key => {return {id:parseInt(key), name:usersDict[parseInt(key)]}})
 
    return (<> 
-     <Box cursor={'default'} bg="gray.50" borderRadius={'.5rem'} borderColor='gray.300' borderWidth={'1px'}  width='250px'>
-         <NodeHeader nodeId={id} nodeType='transfer' isExpanded={isExpanded} setIsExpanded={setIsExpanded} deleteNode={data.functions.deleteNode}/>
+     <Box cursor={'default'}  bg={data.functions.currentIndex === data.functions.index?'blue.50':'gray.50'}  borderRadius={'.5rem'} borderColor='gray.300' borderWidth={'1px'}  width='250px'>
+         <NodeHeader nodeId={id} nodeIndex={data.functions.index}  nodeType='transfer' isExpanded={isExpanded} setIsExpanded={setIsExpanded} deleteNode={data.functions.deleteNode}/>
            {isExpanded && 
            <Box p='0 15px 15px 15px'> 
              <Flex gap='15px' alignItems={'center'} > 
@@ -465,8 +479,8 @@ export const ResetNode = ({id, data}:{id:string, data:ResetNodeData}) => {
 
 
   return (<> 
-      <Box cursor={'default'} bg="gray.50" borderRadius={'.5rem'} borderColor='gray.300' borderWidth={'1px'} width='250px'>
-          <NodeHeader nodeId={id} nodeType='reset' isExpanded={isExpanded} setIsExpanded={setIsExpanded} addNewNode={data.functions.addNewNode} next_node_index={data.next_node_index} deleteNode={data.functions.deleteNode} getAvailableNodes={data.functions.getAvailableNodes}/>
+      <Box cursor={'default'} bg={data.functions.currentIndex === data.functions.index?'blue.50':'gray.50'} borderRadius={'.5rem'} borderColor='gray.300' borderWidth={'1px'} width='250px'>
+          <NodeHeader nodeId={id} nodeIndex={data.functions.index}  nodeType='reset' isExpanded={isExpanded} setIsExpanded={setIsExpanded} addNewNode={data.functions.addNewNode} next_node_index={data.next_node_index} deleteNode={data.functions.deleteNode} getAvailableNodes={data.functions.getAvailableNodes}/>
           {isExpanded &&   
             <Box p='0 15px 15px 15px'> 
             <Flex gap='15px' alignItems={'center'} > 
@@ -505,8 +519,8 @@ export const FlowSwapNode = ({id, data}:{id:string, data:FlowSwapData}) => {
 
   
   return (<> 
-    <Box cursor={'default'} bg="gray.50" borderRadius={'.5rem'} borderColor='gray.300' borderWidth={'1px'}  width='250px'>
-        <NodeHeader nodeId={id} nodeType='flow_swap' isExpanded={isExpanded} setIsExpanded={setIsExpanded} deleteNode={data.functions.deleteNode}/>
+    <Box cursor={'default'} bg={data.functions.currentIndex === data.functions.index?'blue.50':'gray.50'}  borderRadius={'.5rem'} borderColor='gray.300' borderWidth={'1px'}  width='250px'>
+        <NodeHeader nodeId={id} nodeIndex={data.functions.index}  nodeType='flow_swap' isExpanded={isExpanded} setIsExpanded={setIsExpanded} deleteNode={data.functions.deleteNode}/>
           {isExpanded && 
           <Box p='0 15px 15px 15px'> 
             <Flex gap='15px' alignItems={'center'} > 
@@ -560,7 +574,7 @@ export const FunctionNode = ({id, data}:{id:string, data:FunctionNodeData}) => {
     const [isHoveringCondition, setIsHoveringCondition] = useState<boolean>(false)
 
     return (
-      <Box key={`error-${index}`} position="relative" mt='8px' onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
+      <Box key={`error-${index}`}  position="relative" mt='8px' onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
         <Flex position={'relative'} alignItems={'center'} display={'inline-flex'}  > 
           <Box  position='relative' onMouseEnter={() => setIsHoveringCondition(true)} onMouseLeave={() => setIsHoveringCondition(false)} > 
             <Flex minW={'50px'} borderWidth={'1px'} zIndex={1} position={'relative'} bg='white'  display={'inline-flex'} boxShadow={'0 0 5px 1px rgba(0, 0, 0, 0.15)'} borderRadius={'.3rem'} p='4px'>  
@@ -595,8 +609,8 @@ export const FunctionNode = ({id, data}:{id:string, data:FunctionNodeData}) => {
   }
 
   return (<> 
-      <Box cursor={'default'} bg="gray.50" borderRadius={'.5rem'} borderColor='gray.300' borderWidth={'1px'} width='250px'>
-          <NodeHeader nodeId={id} nodeType='function' isExpanded={isExpanded} setIsExpanded={setIsExpanded} deleteNode={data.functions.deleteNode} next_node_index={data.next_node_index} addNewNode={data.functions.addNewNode} getAvailableNodes={data.functions.getAvailableNodes}/>
+      <Box cursor={'default'}  bg={data.functions.currentIndex === data.functions.index?'blue.50':'gray.50'} borderRadius={'.5rem'} borderColor='gray.300' borderWidth={'1px'} width='250px'>
+          <NodeHeader nodeId={id} nodeIndex={data.functions.index}  nodeType='function' isExpanded={isExpanded} setIsExpanded={setIsExpanded} deleteNode={data.functions.deleteNode} next_node_index={data.next_node_index} addNewNode={data.functions.addNewNode} getAvailableNodes={data.functions.getAvailableNodes}/>
           {isExpanded &&   
             <Box p='0 15px 15px 15px' cursor={'pointer'}  > 
               <Flex gap='15px' alignItems={'center'} > 
@@ -739,8 +753,8 @@ export const MotherStructureUpdateNode = ({id, data}:{id:string, data:MotherStru
 
   //FRONT
   return (<> 
-      <Box cursor={'default'} bg="gray.50" borderRadius={'.5rem'} borderColor='gray.300' borderWidth={'1px'} width='250px'>
-          <NodeHeader nodeId={id} nodeType='motherstructure_updates' isExpanded={isExpanded} next_node_index={data.next_node_index} setIsExpanded={setIsExpanded} addNewNode={data.functions.addNewNode} deleteNode={data.functions.deleteNode} getAvailableNodes={data.functions.getAvailableNodes}/>
+      <Box cursor={'default'} bg={data.functions.currentIndex === data.functions.index?'blue.50':'gray.50'} borderRadius={'.5rem'} borderColor='gray.300' borderWidth={'1px'} width='250px'>
+          <NodeHeader nodeId={id} nodeIndex={data.functions.index}  nodeType='motherstructure_updates' isExpanded={isExpanded} next_node_index={data.next_node_index} setIsExpanded={setIsExpanded} addNewNode={data.functions.addNewNode} deleteNode={data.functions.deleteNode} getAvailableNodes={data.functions.getAvailableNodes}/>
           {isExpanded &&   
             <Box p='0 15px 15px 15px'> 
               <Flex gap='15px' alignItems={'center'} > 
@@ -761,14 +775,13 @@ export const MotherStructureUpdateNode = ({id, data}:{id:string, data:MotherStru
 }
 
 //BOX CONTAINIG ALL THE NDOE TYPES
-const NodesBox = ({disabledNodes, sourceData, addNewNode, clickFunc, getAvailableNodes }:{disabledNodes:number[], sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}, addNewNode:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number, }, targetType:nodeTypesDefinition | '', nodeId?:string) => void, clickFunc?:() => void, getAvailableNodes?:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}) => string[]}) => {
+const NodesBox = ({disabledNodes, sourceData, addNewNode, clickFunc, getAvailableNodes }:{disabledNodes:number[], sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}, addNewNode:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number, }, targetType:nodeTypesDefinition | '', nodeId?:string) => void, clickFunc?:() => void, getAvailableNodes?:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}) => {id:string, index:number}[]}) => {
 
   //TRANSLATION
   const { t } = useTranslation('flows')
   
   //AVAILABLE CUSTOM NODES
-  const [availableCustomNodes, setAvailableCustomNodes] = useState<string[]>([])
-  useEffect(() => {if (getAvailableNodes) setAvailableCustomNodes(getAvailableNodes(sourceData))},[])
+  const availableCustomNodes:{id:string, index:number}[] = getAvailableNodes?getAvailableNodes(sourceData):[]
 
   //NODES LIST
   const nodesList:{name:string, description:null | string, node_match:nodeTypesDefinition, icon:IconType}[] = [
@@ -788,14 +801,14 @@ const NodesBox = ({disabledNodes, sourceData, addNewNode, clickFunc, getAvailabl
       <MotionBox initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.95 }}  transition={{ duration: '0.1',  ease: 'easeOut'}}
       style={{ transformOrigin: 'bottom left' }} className="nowheel" textAlign={'start'} minW={'180px'}  maxH='45vh' overflow={'scroll'} bg='white' p='15px' zIndex={1000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.300' borderWidth='1px' borderRadius='.5rem'>
             {availableCustomNodes.length > 0 && <Text fontWeight={'medium'} fontSize={'.8em'} >{t('CreatedNodes')}</Text>}
-            {availableCustomNodes.map((id, index) => (
-            <Fragment key={`node-custom-${index}`}> 
-              <Flex _hover={{bg:'brand.hover_gray'}} borderRadius={'.5rem'} p='5px' cursor={'pointer'}  alignItems={'center'} gap='10px' onClick={() => {addNewNode(sourceData, '', id);if (clickFunc) clickFunc()}}>
-                  <Flex borderRadius={'.5rem'} bg={'gray.500'} color='white' justifyContent={'center'} alignItems={'center'} p={'6px'}>
-                      <Icon boxSize={'12px'} as={FaShareNodes}/>
-                  </Flex>
-                  <Text fontSize={'.8em'} >{t('Node')} {id.split('-')[2]}</Text>
-              </Flex>
+            {availableCustomNodes.map((node, index) => (
+              <Fragment key={`node-custom-${index}`}> 
+                <Flex _hover={{bg:'brand.hover_gray'}} borderRadius={'.5rem'} p='5px' cursor={'pointer'}  alignItems={'center'} gap='10px' onClick={() => {addNewNode(sourceData, '', node.id);if (clickFunc) clickFunc()}}>
+                    <Flex borderRadius={'.5rem'} bg={'gray.500'} color='white' justifyContent={'center'} alignItems={'center'} p={'6px'}>
+                        <Icon boxSize={'12px'} as={FaShareNodes}/>
+                    </Flex>
+                    <Text fontSize={'.8em'} >{t('Node')} {node.index}</Text>
+                </Flex>
             </Fragment>))}
             <Text fontWeight={'medium'} fontSize={'.8em'} >{t('NewNodes')}</Text>
             {nodesList.map((node, index) => (
@@ -815,7 +828,7 @@ const NodesBox = ({disabledNodes, sourceData, addNewNode, clickFunc, getAvailabl
 }
 
 //HEADER COMPONENT (SHARED FOR ALL NODES)
-const NodeHeader = ({nodeId, nodeType, isExpanded, setIsExpanded, deleteNode, getAvailableNodes, addNewNode, next_node_index}:{nodeId:string, nodeType:nodeTypesDefinition, isExpanded:boolean, setIsExpanded:Dispatch<SetStateAction<boolean>>, deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean) => void,getAvailableNodes?:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}) => string[] , addNewNode?:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}, targetType:nodeTypesDefinition | '', nodeId?:string) => void, next_node_index?:number | null}) => {
+const NodeHeader = ({nodeId, nodeIndex, nodeType, isExpanded, setIsExpanded, deleteNode, getAvailableNodes, addNewNode, next_node_index}:{nodeId:string, nodeIndex:number, nodeType:nodeTypesDefinition, isExpanded:boolean, setIsExpanded:Dispatch<SetStateAction<boolean>>, deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean) => void,getAvailableNodes?:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}) => {id:string, index:number}[], addNewNode?:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}, targetType:nodeTypesDefinition | '', nodeId?:string) => void, next_node_index?:number | null}) => {
 
   let disabledNodes:number[]
   if (nodeType === 'brancher' || nodeType === 'sender' || nodeType === 'reset' || nodeType === 'motherstructure_updates') disabledNodes = [8]
@@ -848,7 +861,7 @@ const NodeHeader = ({nodeId, nodeType, isExpanded, setIsExpanded, deleteNode, ge
         <Box position={'relative'}> 
           <Flex alignItems={'center'} fontWeight={'medium'}  fontSize={'.8em'}  gap='5px' ref={buttonRef} onClick={() => setShowDelete(!showDelete)}> 
               <Icon cursor={'pointer'} as={BsThreeDotsVertical} />
-              <Text>{nodeId.split('-')[2]}.</Text>
+              <Text>{nodeIndex}.</Text>
           </Flex>
           <AnimatePresence> 
             {showDelete && 
@@ -887,7 +900,7 @@ const NodeHeader = ({nodeId, nodeType, isExpanded, setIsExpanded, deleteNode, ge
 }
 
 //BRANCHES COMPONENT
-const BranchesComponent = ({id, branches, isExpanded, setShowNodesAction, editBranch, addNewNode, getAvailableNodes }:{id:string, branches:Branch[], isExpanded:boolean, setShowNodesAction:Dispatch<SetStateAction<null | {nodeId:string, actionType:actionTypesDefinition, actionData:any}>>, editBranch:(nodeId:string | undefined, index:number | undefined, type:'remove-branch' | 'remove' | 'add') => void, addNewNode:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}, targetType:nodeTypesDefinition | '', nodeId?:string) => void, getAvailableNodes:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}) => string[]}) => {
+const BranchesComponent = ({id, branches, isExpanded, setShowNodesAction, editBranch, addNewNode, getAvailableNodes }:{id:string, branches:Branch[], isExpanded:boolean, setShowNodesAction:Dispatch<SetStateAction<null | {nodeId:string, actionType:actionTypesDefinition, actionData:any}>>, editBranch:(nodeId:string | undefined, index:number | undefined, type:'remove-branch' | 'remove' | 'add') => void, addNewNode:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}, targetType:nodeTypesDefinition | '', nodeId?:string) => void, getAvailableNodes:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}) => {id:string, index:number}[]}) => {
   
   //TRANSLATION
   const { t } = useTranslation('flows')
@@ -906,7 +919,7 @@ const BranchesComponent = ({id, branches, isExpanded, setShowNodesAction, editBr
 
     return (
      <Box key={`branch-${index}`} position="relative" mt='8px' onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
-      {index !== branches.length - 1  && <Box height={'calc(100% + 15px)'}  left={'-22px'} width={'2px'} bg='gray.400' position={'absolute'} top={0}/>}
+      {branches.length === 1 ? <Box height={'7px'}  left={'-22px'} width={'2px'} bg='gray.400' position={'absolute'} top={0}/>:index !== branches.length - 1  && <Box height={'calc(100% + 15px)'}  left={'-22px'} width={'2px'} bg='gray.400' position={'absolute'} top={0}/>}
 
       <svg width="18px" height="40px" viewBox="0 0 30 40" style={{ position: 'absolute', left: '-22px', top: '50%', transform: 'translateY(-50%)' }}>
         <path d="M30 20 C16.5 20, 0 20, 0 0" stroke="#A0AEC0" strokeWidth="3"  fill="transparent"/>

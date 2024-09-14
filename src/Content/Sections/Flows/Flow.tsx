@@ -8,7 +8,7 @@ import { useSession } from '../../../SessionContext.js'
 import fetchData from '../../API/fetchData'
 //FRONT
 import { Flex, Box, Button, IconButton, NumberInput, NumberInputField, Text, Textarea, Portal, Icon, Skeleton, Tooltip, chakra, shouldForwardProp } from '@chakra-ui/react'
-import { motion, AnimatePresence, isValidMotionProp } from 'framer-motion'
+import { motion, AnimatePresence, isValidMotionProp, cubicBezier } from 'framer-motion'
 //FLOWS
 import ReactFlow, { Controls, Background, useNodesState, useEdgesState, ControlButton, SelectionMode, useReactFlow } from 'reactflow'
 import 'reactflow/dist/style.css'
@@ -31,6 +31,8 @@ import CustomSelect from '../../Components/Reusable/CustomSelect.js'
 import LoadingIconButton from '../../Components/Reusable/LoadingIconButton.js'
 import ConfirmBox from '../../Components/Reusable/ConfirmBox.js'
 import VariableTypeChanger from '../../Components/Reusable/VariableTypeChanger.js'
+import '../../Components/styles.css'
+
 //FUNCTIONS
 import useOutsideClick from '../../Functions/clickOutside.js'
 import determineBoxStyle from '../../Functions/determineBoxStyle.js'
@@ -39,8 +41,16 @@ import { RxCross2 } from 'react-icons/rx'
 import { FaPlus } from 'react-icons/fa'
 import { IoIosArrowDown, IoIosWarning, IoIosArrowBack } from 'react-icons/io'
 import { BsTrash3Fill } from 'react-icons/bs'
+import { AiOutlineCheckCircle } from 'react-icons/ai';
+import { FiHash } from 'react-icons/fi';
+import { TbMathFunction } from 'react-icons/tb';
+import { FiType } from 'react-icons/fi';
+import { AiOutlineCalendar } from 'react-icons/ai';
+import { MdOutlineFormatListBulleted } from 'react-icons/md';
+import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 //TYPING
 import { languagesFlags, actionTypesDefinition, nodeTypesDefinition, DataTypes, Branch, FlowMessage, FieldAction, FunctionType } from '../../Constants/typing.js'
+import { IconType } from 'react-icons'
   
 //FLOWS AND NODES DEFINITIONS
 const panOnDrag = [1, 2]
@@ -71,6 +81,7 @@ const Flow = () => {
     const edgeTypes = useMemo(() => ({custom: CustomEdge}), [])
     const { zoomIn, zoomOut, setCenter } = useReactFlow()
 
+
     //TRANSLATION
     const { t } = useTranslation('flows')
     
@@ -98,8 +109,7 @@ const Flow = () => {
 
     //SHOW MORE INFO
     const [showMoreInfo, setShowMoreInfo] = useState<boolean>(false)
-    const [showCreateVariable, setShowCreateVariable] = useState<boolean>(false)
-
+    const [variableToEdit, setVariableToEdit] = useState<{data:VariableType, index:number} | -1| null>(null)
 
     //FLOW DATA
     const [sourceId, setSourceId] = useState<string | null>(null)
@@ -115,8 +125,9 @@ const Flow = () => {
     const channelsListRef = useRef<{id:string, display_id:string, name:string, channel_type:string, is_active:boolean}[]>([])
     const currentChannelIdRef = useRef<string | null>(null)
     const currentMessagesRef = useRef<{type:string, content:any, sent_by:'business' | 'client'}[]>([])
+    const currentFlowIndexRef = useRef<number>(-1)
     const isActiveRef = useRef<boolean>(true)
-
+    
     //SHOW NT SAVED CHANGES WARNING
     const [showNoSaveWarning, setShowNoSaveWarning] = useState<boolean>(false)
     
@@ -131,6 +142,11 @@ const Flow = () => {
         })
         flowVariablesRef.current = flowVariables
     },[flowVariables])
+
+    useEffect(() => {
+        setNodes((nds) =>nds.map((node) => ({...node, data: { ...node.data, functions:{...node.data.functions, currentIndex: currentFlowIndexRef.current}}})))
+    }, [currentFlowIndexRef.current]);
+    
 
     const [flowInterpreterConfig, setFlowInterpreterConfig] = useState<{data_extraction_model: 'simple' | 'comprehensive', response_classification_model:'none' | 'simple' | 'comprehensive'}>({data_extraction_model:'comprehensive', response_classification_model:'comprehensive'})    
     const [flowsFunctions, setFlowFunctions] = useState<string[]>([])
@@ -148,30 +164,32 @@ const Flow = () => {
         })
         return {nodes:finalNodes, channels:triggerNode?.data.channels}
     }
+
+    //GET NODE FUNCTIONS
+    const getNodeFunctions = (type:nodeTypesDefinition, index:number) => {
+        switch (type) {
+            case 'brancher': return  {index, currentIndex:currentFlowIndexRef.current, flowVariables:flowVariablesRef.current, setShowNodesAction, editBranch, addNewNode, deleteNode, getAvailableNodes}
+            case 'extractor': return {index, currentIndex:currentFlowIndexRef.current, flowVariables:flowVariablesRef.current, setShowNodesAction, editBranch, editExtractor, addNewNode, deleteNode, getAvailableNodes}
+            case 'sender': return {index, currentIndex:currentFlowIndexRef.current, setShowNodesAction, editMessage, addNewNode, deleteNode, getAvailableNodes}
+            case 'terminator': return {index, currentIndex:currentFlowIndexRef.current, setShowNodesAction, editMessage, deleteNode}
+            case 'transfer': return {index, currentIndex:currentFlowIndexRef.current, groupsList:groupsListRef.current, setShowNodesAction, editMessage, editSimpleFlowData, deleteNode}
+            case 'reset': return {index, currentIndex:currentFlowIndexRef.current, flowVariables:flowVariablesRef.current, setShowNodesAction, editSimpleFlowData, editMessage, deleteNode, addNewNode, getAvailableNodes}
+            case 'flow_swap': return {index, currentIndex:currentFlowIndexRef.current, flowsIds:flowsListRef.current, setShowNodesAction, editMessage, addNewNode, deleteNode, editSimpleFlowData} 
+            case 'function': return {index, currentIndex:currentFlowIndexRef.current, flowId:location.split('/')[location.split('/').length - 1], functionsDict:functionsNameMap.current,  setShowNodesAction, editSimpleFlowData, addNewNode, deleteNode, getAvailableNodes, editFunctionError}
+            case 'motherstructure_updates': return {currentIndex:currentFlowIndexRef.current, setShowNodesAction, editFieldAction, addNewNode, deleteNode, getAvailableNodes}
+            default:{}
+        }
+    }
  
     //PARSE NODE DATA FROM BACK TO USE IN THE APP
     const parseNodesFromBack = (nodesBack: Array<{id:string, front:{x:number, y:number}, type: nodeTypesDefinition; [key: string]: any }>) => {
         
-        const getNodeFunctions = (type:nodeTypesDefinition) => {
-            switch (type) {
-                case 'brancher': return  {flowVariables:flowVariablesRef.current, setShowNodesAction, editBranch, addNewNode, deleteNode, getAvailableNodes}
-                case 'extractor': return {flowVariables:flowVariablesRef.current, setShowNodesAction, editBranch, editExtractor, addNewNode, deleteNode, getAvailableNodes}
-                case 'sender': return {setShowNodesAction, editMessage, addNewNode, deleteNode, getAvailableNodes}
-                case 'terminator': return {setShowNodesAction, editMessage, deleteNode}
-                case 'transfer': return {groupsList:groupsListRef.current, setShowNodesAction, editMessage, editSimpleFlowData, deleteNode}
-                case 'reset': return {flowVariables:flowVariablesRef.current, setShowNodesAction, editSimpleFlowData, editMessage, deleteNode, addNewNode, getAvailableNodes}
-                case 'flow_swap': return {flowsIds:flowsListRef.current, setShowNodesAction, editMessage, addNewNode, deleteNode, editSimpleFlowData} 
-                case 'function': return {flowId:location.split('/')[location.split('/').length - 1], functionsDict:functionsNameMap.current,  setShowNodesAction, editSimpleFlowData, addNewNode, deleteNode, getAvailableNodes, editFunctionError}
-                case 'motherstructure_updates': return {setShowNodesAction, editFieldAction, addNewNode, deleteNode, getAvailableNodes}
-                default:{}
-            }
-        }
 
         const getNewNodeObject = (node: {id: string, type: nodeTypesDefinition, [key: string]: any }, index:number) => {
             const {x, y} = node.front
             const { type, ...variableData } = node
-            const data = {...variableData as {[key: string]: any}, functions: getNodeFunctions(type)}
-            return {id: `${x}-${y}-${index + 1}`, position:{x:x * 350, y: y* 350}, type, data}
+            const data = {...variableData as {[key: string]: any}, functions: getNodeFunctions(type, index + 1)}
+            return {id: `${x}-${y}`, position:{x:x * 350, y: y* 350}, type, data}
         }
 
         const finalNodes = nodesBack.map((node, index) => {return getNewNodeObject(node, index)})
@@ -199,7 +217,7 @@ const Flow = () => {
                     }
             }
         })
-        setEdges([{ id: '0->1-0-1', type: 'custom', source: '0', target: '1-0-1' }, ...firstEdges])
+        setEdges([{ id: '0->1-0', type: 'custom', source: '0', target: '1-0' }, ...firstEdges])
         
         return finalNodes
     }
@@ -207,16 +225,17 @@ const Flow = () => {
     //GET THE AVAILABLE NODES WHEN ADDING A NEW ONE
     const getAvailableNodes = (sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}) => {
 
-        let availableNodes:string[] = []
+        let availableNodes:{id:string, index:number}[] = []
+
         setNodes((nds) => {
             const [sourceX] = sourceData.sourceId.split('-').map(Number)
             const nextColumnNodes = nds.filter(node => {
                 const [x] = node.id.split('-').map(Number)
                 return x === sourceX + 1
-            }).map((node, index) => {return node.id})
+            }).map((node, index) => {return {id:node.id, index:node.data.functions.index}})
 
             if (sourceData.sourceType === 'reset') {
-                const extractorNodes = nds.filter(node => node.type === 'extractor').map((node, index) => {return node.id})
+                const extractorNodes = nds.filter(node => node.type === 'extractor').map((node, index) => {return {id:node.id, index:node.data.functions.index}})
                 availableNodes = [...nextColumnNodes, ...extractorNodes]
             }
             else availableNodes = nextColumnNodes
@@ -237,14 +256,14 @@ const Flow = () => {
 
         let currentY = 0
         let acc = 0
-        updatedNodes = updatedNodes.map((node) => {
+        updatedNodes = updatedNodes.map((node, index) => {
             const [nodeColIndex, nodeRowIndex] = node.id.split('-').map(Number)
             if (nodeColIndex === columnIndex) {
                 if (nodeRowIndex > acc) currentY += (380 * (nodeRowIndex - acc))
                 const newPosition = { x: nodeColIndex * 350, y: currentY }
                 currentY += (node?.height || 0) + 30
                 acc ++
-                return {...node, position: newPosition}
+                return {...node, position: newPosition, functions:{...node.functions, index}}
             }
             return node
         })
@@ -273,12 +292,12 @@ const Flow = () => {
                 const occupiedRows = new Set(matchingNodes.map((node) => parseInt(node.id.split('-')[1])))
                 let firstAvailableRow = 0
                 while (occupiedRows.has(firstAvailableRow)) {firstAvailableRow++}
-                return `${newNodeX}-${firstAvailableRow}-${nds.length}`
+                return `${newNodeX}-${firstAvailableRow}}`
             } 
             else {
                 let firstAvailableRow = 0
                 while (restrictedRows.has(firstAvailableRow)) {firstAvailableRow++}
-                return `${newNodeX}-${firstAvailableRow}-${nds.length}`
+                return `${newNodeX}-${firstAvailableRow}`
             } 
         }
 
@@ -302,15 +321,15 @@ const Flow = () => {
             const position = { x, y }
             
             let newNodeObjectData = {}
-            if (type === 'brancher') newNodeObjectData = {branches:[{name:'',conditions:[], next_node_index:null}], functions:{flowVariables:flowVariablesRef.current, setShowNodesAction, editBranch, addNewNode, deleteNode, getAvailableNodes}}
-            else if (type === 'extractor') newNodeObjectData = {branches:[{name:'',conditions:[], next_node_index:null}], variables:[], functions:{flowVariables:flowVariablesRef.current, setShowNodesAction, editBranch, editExtractor, addNewNode, deleteNode, getAvailableNodes}}
-            else if (type === 'sender') newNodeObjectData =  {next_node_index:null, messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:{setShowNodesAction, editMessage, addNewNode, deleteNode, getAvailableNodes}}
-            else if (type === 'terminator') newNodeObjectData = {flow_result:'', messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:{setShowNodesAction, editMessage, deleteNode}}
-            else if (type === 'transfer') newNodeObjectData = {user_id:0, group_id:0, messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:{groupsList:groupsListRef.current, setShowNodesAction, editMessage, editSimpleFlowData, deleteNode}}
-            else if (type === 'reset') newNodeObjectData = {variable_indices:[],next_node_index:null, messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:{flowVariables:flowVariablesRef.current, setShowNodesAction, editMessage, addNewNode, deleteNode, editSimpleFlowData, getAvailableNodes}}
-            else if (type === 'flow_swap') newNodeObjectData = {new_flow_uuid:'-1', messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:{flowsIds: flowsListRef.current, setShowNodesAction, editMessage, addNewNode, deleteNode, editSimpleFlowData}}
-            else if (type === 'function') newNodeObjectData = {uuid:'', variable_args:{}, motherstructure_args:{}, hardcoded_args:{}, error_nodes_ids:{}, next_node_index:null, output_to_variables:{}, functions:{flowId:location.split('/')[location.split('/').length - 1], functionsDict:functionsNameMap.current, setShowNodesAction, editSimpleFlowData, addNewNode, deleteNode, getAvailableNodes, editFunctionError}}
-            else if (type === 'motherstructure_updates') newNodeObjectData = {updates:[], next_node_index:null, functions:{setShowNodesAction, editFieldAction, addNewNode, deleteNode, getAvailableNodes}}
+            if (type === 'brancher') newNodeObjectData = {branches:[{name:'',conditions:[], next_node_index:null}], functions:getNodeFunctions(targetType as nodeTypesDefinition, nds.length - 1)}
+            else if (type === 'extractor') newNodeObjectData = {branches:[{name:'',conditions:[], next_node_index:null}], variables:[], functions:getNodeFunctions(targetType as nodeTypesDefinition, nds.length - 1)}
+            else if (type === 'sender') newNodeObjectData =  {next_node_index:null, messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:getNodeFunctions(targetType as nodeTypesDefinition, nds.length - 1)}
+            else if (type === 'terminator') newNodeObjectData = {flow_result:'', messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:getNodeFunctions(targetType as nodeTypesDefinition, nds.length - 1)}
+            else if (type === 'transfer') newNodeObjectData = {user_id:0, group_id:0, messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:getNodeFunctions(targetType as nodeTypesDefinition, nds.length - 1)}
+            else if (type === 'reset') newNodeObjectData = {variable_indices:[],next_node_index:null, messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:getNodeFunctions(targetType as nodeTypesDefinition, nds.length - 1)}
+            else if (type === 'flow_swap') newNodeObjectData = {new_flow_uuid:'-1', messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:getNodeFunctions(targetType as nodeTypesDefinition, nds.length - 1)}
+            else if (type === 'function') newNodeObjectData = {uuid:'', variable_args:{}, motherstructure_args:{}, hardcoded_args:{}, error_nodes_ids:{}, next_node_index:null, output_to_variables:{}, functions:getNodeFunctions(targetType as nodeTypesDefinition, nds.length - 1)}
+            else if (type === 'motherstructure_updates') newNodeObjectData = {updates:[], next_node_index:null, functions:getNodeFunctions(sourceData.sourceType, nds.length - 1)}
             return {id, position, data: newNodeObjectData, type:targetType}
         }
 
@@ -414,9 +433,6 @@ const Flow = () => {
                             else return edgeSource !== sourceId && edgeTarget !== sourceId
                         }))
                     }
-                    console.log(sourceHandle)
-                    console.log(sourceNode)
-
 
                     let updatedNodes = nds.map((node) => {
                         if (node.id === sourceNode) {
@@ -1092,18 +1108,18 @@ const Flow = () => {
 
     //MEMOIZED CREATE VARIABLE BOX
     const memoizedCreateVariable = useMemo(() => (<> 
-        {showCreateVariable && 
-            <ConfirmBox setShowBox={setShowCreateVariable} isSectionWithoutHeader={true}> 
-                <CreateVariable setFlowVariables={setFlowVariables} setShowCreateVariable={setShowCreateVariable}/>
+        {variableToEdit && 
+            <ConfirmBox setShowBox={(b:boolean) => setVariableToEdit(null)} isSectionWithoutHeader={true}> 
+                <CreateVariable variableData={variableToEdit} setFlowVariables={setFlowVariables} setVariableToEdit={setVariableToEdit}/>
             </ConfirmBox>
          }
-     </>), [showCreateVariable])
+     </>), [variableToEdit])
 
     //MEMOIZED TEST BOX COMPONENT
     const memoizedTestBox = useMemo(() => (<> 
         {showTest && 
             <ConfirmBox max maxW={'80vw'} setShowBox={setShowTest} isSectionWithoutHeader={true}> 
-                <TestChat flowId={location.split('/')[location.split('/').length - 1]} channelIds={nodes[0].data.channels} flowName={flowName}  channelsList={channelsListRef.current} currentChannelId={currentChannelIdRef} currentMessages={currentMessagesRef} setShowTest={setShowTest}/>
+                <TestChat flowId={location.split('/')[location.split('/').length - 1]} channelIds={nodes[0].data.channels} flowName={flowName}  channelsList={channelsListRef.current} currentChannelId={currentChannelIdRef} currentMessages={currentMessagesRef} currentFlowIndex={currentFlowIndexRef} setShowTest={setShowTest}/>
             </ConfirmBox>
          }
      </>), [showTest, nodes, flowName])
@@ -1331,42 +1347,50 @@ const Flow = () => {
 
             {waiting ? <LoadingIconButton/> :
             <> 
-            <Box left={'1vw'} ref={nameInputRef} top='1vw' zIndex={100} position={'absolute'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.1)'} maxH={'calc(100vh - 2vw)'} overflow={'scroll'} bg='white' borderRadius={'.5rem'} borderWidth={'1px'} borderColor={'gray.300'} > 
-                <Flex gap='10px' alignItems={'center'} p='10px'> 
-                    <Tooltip label={t('GoBack')}  placement='bottom' hasArrow bg='black'  color='white'  borderRadius='.4rem' fontSize='.75em' p='4px'> 
-                        <IconButton aria-label='go-back' size='sm' bg='transparent' border='none' onClick={() => {if (areArraysDifferent(nodes, initialNodesRef.current)) setShowNoSaveWarning(true);else navigate('/flows-functions/flows')}} icon={<IoIosArrowBack size='20px'/>}/>
-                    </Tooltip>
-                    <Box width={'300px'} > 
-                        <EditText nameInput={true} hideInput={true} size='md' maxLength={70}  value={flowName} setValue={setFlowName}/>
-                    </Box>
+            <Flex flexDir={'column'} left={'1vw'} top='1vw' zIndex={100} position={'absolute'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.1)'} overflow={'hidden'} maxH={'calc(100vh - 2vw)'} width='30vw' bg='white' borderRadius={'.5rem'} borderWidth={'1px'} borderColor={'gray.300'} > 
+                <Flex  ref={nameInputRef}  gap='10px' alignItems={'center'} p='10px' justifyContent={'space-between'}> 
+                    <Flex flex='1' gap='10px' alignItems={'center'}> 
+                        <Tooltip label={t('GoBack')}  placement='bottom' hasArrow bg='black'  color='white'  borderRadius='.4rem' fontSize='.75em' p='4px'> 
+                            <IconButton aria-label='go-back' size='sm' bg='transparent' border='none' onClick={() => {if (areArraysDifferent(nodes, initialNodesRef.current)) setShowNoSaveWarning(true);else navigate('/flows-functions/flows')}} icon={<IoIosArrowBack size='20px'/>}/>
+                        </Tooltip>
+                        <Box flex='1'> 
+                            <EditText nameInput={true} hideInput={true} size='md' maxLength={70}  value={flowName} setValue={setFlowName}/>
+                        </Box>
+                    </Flex>
                     <Button leftIcon={<IoIosArrowDown className={!showMoreInfo ? "rotate-icon-up" : "rotate-icon-down"}/>} size='sm' bg='transparent' borderColor={'transparent'} borderWidth={'1px'} onClick={() => setShowMoreInfo(!showMoreInfo)}>{t('SeeMoreData')}</Button>
                 </Flex>
-                {showMoreInfo && 
-                    <Box p='15px'>
-                        <Text fontSize={'.9em'} color='gray.600' fontWeight={'medium'}>{t('Description')}</Text>
-                        <Textarea mt='5px'  maxLength={2000} height={'auto'} placeholder={`${t('Description')}...`} maxH='300px' value={flowDescription} onChange={(e) => setFlowDescription(e.target.value)} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
-                        <Text mt='2vh' fontSize={'.9em'} color='gray.600' fontWeight={'medium'}>Variables</Text>
 
-                        {flowVariables.length === 0 ? <Text mt='1vh' fontSize={'.9em'}>{t('NoVariables')}</Text>:
-                            flowVariables.map((variable, index) => (
-                            <VariableBox key={`variable-${index}`} variable={variable} index={index} setFlowVariables={setFlowVariables}/>
-                        ))} 
-                        <Flex flexDir={'row-reverse'} mt='1vh'> 
-                            <Button size='sm' leftIcon={<FaPlus/>} mt='1vh' onClick={() => setShowCreateVariable(true)}>{t('CreateVariable')}</Button>
-                        </Flex>
-                        <Text mt='2vh' fontSize={'.9em'} color='gray.600' fontWeight={'medium'}>{t('Interpreter_Config')}</Text>
-                        <Flex gap='30px'>
-                            <Box flex={1} mt='.5vh'>
-                                <Text mb='5px' fontSize={'.8em'} fontWeight={'medium'}>{t('Data_Extraction_Model')}</Text>
-                                <CustomSelect hide={false} selectedItem={flowInterpreterConfig.data_extraction_model} setSelectedItem={(value) => setFlowInterpreterConfig((prev) => ({...prev, data_extraction_model:value  as 'simple' | 'comprehensive'}))} options={Object.keys(dataExtactionDict)}  labelsMap={dataExtactionDict}/>
-                            </Box>
-                            <Box flex={1} mt='.5vh'>
-                                <Text mb='5px' fontSize={'.8em'} fontWeight={'medium'}>{t('Data_Classification_Model')}</Text>
-                                <CustomSelect hide={false} selectedItem={flowInterpreterConfig.response_classification_model} setSelectedItem={(value) => setFlowInterpreterConfig((prev) => ({...prev ,response_classification_model:value as  'none' | 'simple' | 'comprehensive'}))} options={Object.keys(classificationDict)}  labelsMap={classificationDict}/>
-                            </Box>
-                        </Flex>
-                    </Box>}
-            </Box>
+                <AnimatePresence> 
+                    {showMoreInfo &&  
+                    <motion.div initial={{height:0}}  animate={{height:'auto'}}  exit={{height:0 }}  transition={{duration:'.3', ease:cubicBezier(0.0, 0.9, 0.9, 1.0)}}  style={{overflow:'scroll', maxHeight:`${window.innerHeight - (nameInputRef.current?.getBoundingClientRect().bottom || 0) - window.innerWidth * 0.02}px`}}> 
+                        <Box p='15px'>
+                            <Text fontSize={'.9em'} color='gray.600' fontWeight={'medium'}>{t('Description')}</Text>
+                            <Textarea mt='5px'  maxLength={2000} height={'auto'} placeholder={`${t('Description')}...`} maxH='300px' value={flowDescription} onChange={(e) => setFlowDescription(e.target.value)} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
+                            <Text mt='2vh' fontSize={'.9em'} color='gray.600' fontWeight={'medium'}>{t('Variables')}</Text>
+
+                            {flowVariables.length === 0 ? <Text mt='1vh' fontSize={'.9em'}>{t('NoVariables')}</Text>:
+                                flowVariables.map((variable, index) => (
+                                <VariableBox key={`variable-${index}`} variable={variable} index={index} setFlowVariables={setFlowVariables} setVariableToEdit={setVariableToEdit}/>
+                            ))} 
+                            <Flex flexDir={'row-reverse'} mt='1vh'> 
+                                <Button size='sm' leftIcon={<FaPlus/>} mt='1vh'  onClick={() => setVariableToEdit(-1)}>{t('CreateVariable')}</Button>
+                            </Flex>
+                            <Text mt='2vh' fontSize={'.9em'} color='gray.600' fontWeight={'medium'}>{t('Interpreter_Config')}</Text>
+                            <Flex gap='30px'>
+                                <Box flex={1} mt='.5vh'>
+                                    <Text mb='5px' fontSize={'.8em'} fontWeight={'medium'}>{t('Data_Extraction_Model')}</Text>
+                                    <CustomSelect hide={false} selectedItem={flowInterpreterConfig.data_extraction_model} setSelectedItem={(value) => setFlowInterpreterConfig((prev) => ({...prev, data_extraction_model:value  as 'simple' | 'comprehensive'}))} options={Object.keys(dataExtactionDict)}  labelsMap={dataExtactionDict}/>
+                                </Box>
+                                <Box flex={1} mt='.5vh'>
+                                    <Text mb='5px' fontSize={'.8em'} fontWeight={'medium'}>{t('Data_Classification_Model')}</Text>
+                                    <CustomSelect hide={false} selectedItem={flowInterpreterConfig.response_classification_model} setSelectedItem={(value) => setFlowInterpreterConfig((prev) => ({...prev ,response_classification_model:value as  'none' | 'simple' | 'comprehensive'}))} options={Object.keys(classificationDict)}  labelsMap={classificationDict}/>
+                                </Box>
+                            </Flex>
+                        </Box>
+                        </motion.div>}
+                </AnimatePresence>
+
+            </Flex>
 
             <WarningsComponent/>
 
@@ -1392,48 +1416,56 @@ const Flow = () => {
 export default Flow
 
 //BOX FOR SHOWING EACH VARIABLE
-const VariableBox = ({variable, index, setFlowVariables}:{variable:VariableType,index:number, setFlowVariables:Dispatch<SetStateAction<VariableType[]>>}) => {
+const VariableBox = ({ variable, index, setFlowVariables, setVariableToEdit }:{variable:VariableType,index:number, setFlowVariables:Dispatch<SetStateAction<VariableType[]>>,  setVariableToEdit:Dispatch<SetStateAction<{data:VariableType, index:number} | null | -1 >>}) => {
     
     //TRANSLATION
     const { t }  = useTranslation('flows')
 
     //MAPPING CONSTANTS
-    const variablesMap:{[key in DataTypes]:string} = {'bool':t('bool'), 'int':t('int'), 'float':t('float'), 'str':t('str'), 'timestamp':t('timestamp'), 'list':t('list')}
+    const variablesMap:{[key in DataTypes]:[string, IconType]} = {'bool':[t('bool'),AiOutlineCheckCircle ], 'int':[t('int'), FiHash], 'float':[t('float'), TbMathFunction], 'str':[t('str'), FiType], 'timestamp':[t('timestamp'), AiOutlineCalendar], 'list':[t('list'), MdOutlineFormatListBulleted]}
     
     //HOVER BOOLEAN
     const [isHovering, setIsHovering] = useState<boolean>(false)
 
     return (
-        <Box position={'relative'} mt='1vh' fontSize={'.8em'} p='10px' boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} borderRadius={'.5em'} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
-            <Flex  gap='5px' justifyContent={'space-between'}>
-                <Text flex={1}><span style={{fontWeight:500}}>{t('name')}:</span> {variable.name}</Text>
+        <Box position={'relative'} cursor={'pointer'} mt='1vh'  p='10px' boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} borderRadius={'.5em'} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} onClick={() => setVariableToEdit({data:variable, index})}>
+            <Flex  gap='5px' alignItems={'center'} >
+                <Text fontWeight={'medium'}  fontSize={'1em'} >{variable.name} <span style={{fontSize:'.8em'}}>({variablesMap[variable.type][0]})</span></Text>
+                -
+                <Flex fontSize={'.8em'} gap='5px' justifyContent={'space-between'} alignItems={'center'}>
+                     <Text color={variable.ask_for_confirmation?'green':'red'}  flex={1}>{variable.ask_for_confirmation?t('AskForConfirmation'):t('NoAskForConfirmation')}</Text>
+                     <Icon as={variable.ask_for_confirmation?FaCheckCircle:FaTimesCircle} color={variable.ask_for_confirmation?'green':'red'}/>
+                </Flex>
             </Flex>
-            <Text flex={1}><span style={{fontWeight:500}}>{t('description')}:</span> {variable.description}</Text>
+            
+            <Text flex={1} mt='.5vh' fontSize={'.8em'} color='gray.600'>{variable.description === ''?t('NoDescription'):variable.description }</Text>
 
-            <Flex  gap='5px' justifyContent={'space-between'}>
-                <Text flex={1}><span style={{fontWeight:500}}>{t('Type')}:</span> {variablesMap[variable.type]}</Text>
-                <Text flex={1}><span style={{fontWeight:500}}>{t('AskConfirmation')}:</span> {variable.ask_for_confirmation?t('Yes'):t('No')}</Text>
-            </Flex>
-            <Flex gap='5px' justifyContent={'space-between'}>
-                <Text flex={1}><span style={{fontWeight:500}}>{t('Examples')}:</span> {variable.examples.map((example, index) => (<span key={`example-${index}`}>{t(example)} {index < variable.examples.length - 1 && ' - '}</span>))}</Text>
-                <Text flex={1} ><span style={{fontWeight:500}}>{t('Values')}:</span> {variable.values.map((value, index) => (<span key={`value-${index}`}>{t(value)} {index < variable.values.length - 1 && ' - '}</span>))}</Text>
+         
+            <Flex  mt='.5vh' gap='5px' justifyContent={'space-between'}>
+                <Box flex='1'>
+                    <Text fontSize={'.8em'} color={'gray.600'} fontWeight={'medium'} flex={1}>{t('Examples')}</Text>
+                    <Text fontSize={'.8em'} flex={1}>{variable.examples.length === 0?t('NoDefinedExamples'):variable.examples.map((example, index) => (<span key={`example-${index}`}>{t(example)} {index < variable.examples.length - 1 && ' - '}</span>))}</Text>
+                </Box>
+                <Box flex='1'>
+                    <Text fontSize={'.8em'} color={'gray.600'} fontWeight={'medium'} flex={1}>{t('Values')}</Text>
+                    <Text fontSize={'.8em'} flex={1}>{variable.values.length === 0?t('NoValues'):variable.values.map((value, index) => (<span key={`value-${index}`}>{t(value)} {index < variable.examples.length - 1 && ' - '}</span>))}</Text>
+                </Box>
             </Flex>
             {(isHovering) && 
-            <Flex alignItems={'center'} onClick={() => setFlowVariables((prev) => (prev.filter((_, i) => i !== index)))} position={'absolute'} borderRadius={'full'} p='5px' top={'-7px'} zIndex={100} bg='white' boxShadow={'0 0 5px 1px rgba(0, 0, 0, 0.15)'} right={'-7px'} justifyContent={'center'} cursor={'pointer'} >
+            <MotionBox initial={{scale:.5}} animate={{scale:1}} transition={{ type: 'spring', stiffness: '200'  }} display={'flex'} alignItems={'center'}  onClick={(e) => {e.stopPropagation();setFlowVariables((prev) => (prev.filter((_, i) => i !== index)))}} position={'absolute'} borderRadius={'full'} p='5px' top={'-7px'} zIndex={100} bg='white' boxShadow={'0 0 5px 1px rgba(0, 0, 0, 0.15)'} right={'-7px'} justifyContent={'center'} cursor={'pointer'} >
                 <Icon boxSize={'13px'} as={BsTrash3Fill} color='red'/>
-            </Flex>}
+            </MotionBox>}
         </Box>
         )
 }
-
-//CREATING A VARIABLE
-const CreateVariable = ({setFlowVariables, setShowCreateVariable}:{setFlowVariables:Dispatch<SetStateAction<VariableType[]>>, setShowCreateVariable:Dispatch<SetStateAction<boolean>>}) => {
+ //CREATING A VARIABLE
+const CreateVariable = ({variableData, setFlowVariables, setVariableToEdit}:{variableData:{data:VariableType, index:number} | -1, setFlowVariables:Dispatch<SetStateAction<VariableType[]>>, setVariableToEdit:Dispatch<SetStateAction<{data:VariableType, index:number} | null | -1>>}) => {
 
     const { t } = useTranslation('flows')
     const variablesMap:{[key in DataTypes]:string} = {'bool':t('bool'), 'int':t('int'), 'float':t('float'), 'str':t('str'), 'timestamp':t('timestamp'), 'list':t('list')}
 
 
-    const [currentVariable, setCurrentVariable] = useState<{name:string, type:DataTypes, description:string, examples:any[], values:any[], ask_for_confirmation:boolean}>({name:'', type:'bool', description:'', examples:[], values:[], ask_for_confirmation:false})
+    const [currentVariable, setCurrentVariable] = useState<VariableType>(variableData === -1?{name:'', type:'bool', description:'', examples:[], values:[], ask_for_confirmation:false}:variableData.data)
     
     const [currentExample, setCurrentExample] = useState<string>('')
     const [currentValue, setCurrentValue] = useState<string>('')
@@ -1447,6 +1479,13 @@ const CreateVariable = ({setFlowVariables, setShowCreateVariable}:{setFlowVariab
         else if (action === 'delete' && index !== undefined) setCurrentVariable((prev) => ({...prev, [keyToEdit]: prev[keyToEdit].filter((_, i) => i !== index)}))
         
     }
+
+    const sendVariable = () => {
+        if (variableData === -1) setFlowVariables((prev) => [...prev, currentVariable]);
+        else setFlowVariables((prev) => prev.map((variable, index) => index === variableData.index ? currentVariable : variable))
+        setVariableToEdit(null)
+      }
+      
 
     return (<> 
         <Box p='15px' minW={'600px'}>
@@ -1495,8 +1534,8 @@ const CreateVariable = ({setFlowVariables, setShowCreateVariable}:{setFlowVariab
         </Box>
  
         <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-            <Button  isDisabled={currentVariable.name === ''} size='sm' color='white' bg='brand.gradient_blue' _hover={{bg:'brand.gradient_blue_hover'}} onClick={() => {setShowCreateVariable(false);setFlowVariables(prev => ([...prev,currentVariable]))}}>{t('CreateVariable')}</Button>
-            <Button  size='sm' onClick={() => setShowCreateVariable(false)}>{t('Cancel')}</Button>
+            <Button  isDisabled={currentVariable.name === '' || (variableData !== -1 && JSON.stringify(variableData.data) === JSON.stringify(currentVariable))} size='sm' color='white' bg='brand.gradient_blue' _hover={{bg:'brand.gradient_blue_hover'}} onClick={sendVariable}>{variableData === -1 ? t('CreateVariable'): t('SaveVariable')}</Button>
+            <Button  size='sm' onClick={() => setVariableToEdit(null)}>{t('Cancel')}</Button>
         </Flex>
         
     </>)

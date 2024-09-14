@@ -75,10 +75,7 @@ function FlowsTable () {
     //FETCH DATA ON FIRST RENDER
     useEffect(() => {
         const fetchFlowsData = async() => {
-            console.log(session.sessionData.flowsFunctions.flows)
-            if (session.sessionData.flowsFunctions.flows) {
-                setFlows(session.sessionData.flowsFunctions.flows)
-            }
+            if (session.sessionData.flowsFunctions.flows) setFlows(session.sessionData.flowsFunctions.flows)
             else {
                 const flowsResponse = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/flows`, setValue:setFlows,  auth:auth})
                 if (flowsResponse?.status === 200) session.dispatch({type:'UPDATE_FLOWS',payload:{data:flowsResponse?.data}})

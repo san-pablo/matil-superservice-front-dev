@@ -25,7 +25,7 @@
 }
 
 
-/**/
+/* CUSTOM CHECKBOX */
 .custom-checkbox {
   position: relative !important;
   appearance: none;
@@ -69,7 +69,19 @@
   }
 }
 
-
+/* BOUNCE FOR DELETE AND ADD FLOATING BOX AT NODES */
+@keyframes scaleBounce {
+  0% {
+    transform: scale(0);
+  }
+  60% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.scale-button { animation:scaleButton 1s ease-out !important}
 
 /*LOADING ICON BUTTON*/
 .bounce-dot {

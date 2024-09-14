@@ -1,13 +1,16 @@
-
-//FRONT
-import { Flex, Box, Icon, Text, Tooltip, IconButton } from '@chakra-ui/react'
+//REACT
 import { useEffect, useState, useRef, MutableRefObject, Dispatch, SetStateAction } from 'react'
-import fetchData from '../../API/fetchData'
 import { useAuth } from '../../../AuthContext'
 import { useTranslation } from 'react-i18next'
-import { logosMap, Channels } from '../../Constants/typing'
+//FETCH DATA
+import fetchData from '../../API/fetchData'
+//FRONT
+import { Flex, Box, Icon, Text, Tooltip, IconButton, Button } from '@chakra-ui/react'
+//ICONS
 import { IoIosArrowBack } from 'react-icons/io'
-
+//TYPING
+import { logosMap, Channels } from '../../Constants/typing'
+ 
 interface TestFlowData {
   flowId:string
   channelIds:string[]
@@ -15,11 +18,12 @@ interface TestFlowData {
   channelsList:{id:string, display_id:string, name:string, channel_type:string, is_active:boolean}[]
   currentChannelId:MutableRefObject<string | null>
   currentMessages:MutableRefObject<{type:string, content:any, sent_by:'business' | 'client'}[]>
+  currentFlowIndex:MutableRefObject<number>
   setShowTest:Dispatch<SetStateAction<boolean>>
 }
 
 
-const TestChat = ({flowId, channelIds, flowName, channelsList, currentChannelId, currentMessages, setShowTest }:TestFlowData) => {
+const TestChat = ({flowId, channelIds, flowName, channelsList, currentChannelId, currentMessages, currentFlowIndex, setShowTest }:TestFlowData) => {
 
   //CONSTANTS
   const auth = useAuth()
@@ -44,10 +48,10 @@ const TestChat = ({flowId, channelIds, flowName, channelsList, currentChannelId,
 
     setMessages(prev => [...prev, {type:'plain', content:{text}, sent_by:'client' }])
     setWaitingMessage(true)
-
     const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/flows/${flowId}/test`, method:'post', auth, setWaiting:setWaitingMessage, requestForm:{channel_id:selectedChannelId, flow_state:flowState, conversation_messages:[{type, content:{text}, sent_by:'client' }] }})
-    
     if (response?.status === 200) {
+      console.log(response.data)
+      currentFlowIndex.current = response.data.flow_state_data.node_index + 1 
       setMessages(prev => [...prev, ...response.data.messages])
       setFlowState(response.data.flow_state_data)
       setMotherStructureUpdates(response.data.motherstructure_updates)
@@ -95,54 +99,57 @@ const TestChat = ({flowId, channelIds, flowName, channelsList, currentChannelId,
 
    <Flex height='90vh'  width='100%'  flexDir='column' >  
         {selectedChannelId ?<> 
-          <Flex borderBottomWidth={'1px'} width={'100%'} borderBottomColor={'gray.300'} fontSize={'.9em'} alignItems={'center'} p='10px'height={'80px'} bg='gray.100' gap='10px'>
+        <Flex borderBottomWidth={'1px'} width={'100%'}  height={'80px'}  justifyContent={'space-between'} alignItems={'center'} borderBottomColor={'gray.300'} bg='gray.100' p='10px'> 
+          <Flex fontSize={'.9em'} alignItems={'center'}  gap='10px'>
             <Tooltip label={t('GoBack')}  placement='bottom' hasArrow bg='black'  color='white'  borderRadius='.4rem' fontSize='.75em' p='4px'> 
                 <IconButton aria-label='go-back' size='sm' bg='transparent' border='none' onClick={() => setShowTest(false)} icon={<IoIosArrowBack size='20px'/>}/>
             </Tooltip>
             <Box> 
-              <Text><span style={{fontWeight:500}}>{t('Flow')}:</span> {flowName}</Text>
-              <Text><span style={{fontWeight:500}}> {t('Channel')}:</span> {selectedChannelId}</Text>
+              <Text><span style={{fontWeight:500}}>{flowName}</span> {currentFlowIndex.current === -1 ?'':<span style={{fontSize:'.9em'}}> ({t('Node')} {currentFlowIndex.current})</span>}</Text>
+              <Text mt='.5vh'><span style={{fontWeight:500}}> {t('Channel')}:</span> {selectedChannelId}</Text>
             </Box>
           </Flex>
+          <Button  colorScheme='red' size='sm' onClick={() => {setMessages([]); setSelectedChannelId(null)} }>{t('ResetChat')}</Button>
+        </Flex>
     
-          <Box width={'100%'} p='20px' overflow={'scroll'} flex='1'>
-              {messages.map((message, index)=>{
-      
-                const isNextMessageBot = messages[index + 1] ? messages[index + 1].sent_by === 'business' : false 
-                const isLastMessageBot = messages[index - 1] ? messages[index - 1].sent_by === 'business' : false 
-                const isLastMessage = index === messages.length - 1 
-          
-      
-                return(<div key={`message-${index}`}>
-                  <div style={{ marginTop: index === 0 ? '0px' : (message.sent_by === messages[index - 1].sent_by? '3px':'15px')}}> 
-                  
-                  <div style={{gap:'10px', fontSize:'.9em', display:'flex', width:'100%', alignItems:'end', flexDirection:message.sent_by === 'business' ? 'row':'row-reverse'}}  key={`message-${index}`}  >
-                      {(message.sent_by === 'business' && !isNextMessageBot)&& 
-                      <div style={{marginBottom:index > 1?'18px':'0'}}><img alt='chatLogo' src={'/images/matil.svg'} width='20px'/></div>}
-                            <div style={{maxWidth:'82%',display:'flex',flexDirection:'column',alignItems:'end', animation:index > 1 ?message.sent_by === 'business'? 'expandFromLeft 0.5s ease-out' : 'expandFromRight 0.5s ease-out':'none'}}> 
-                                <div style={{ marginLeft:(message.sent_by === 'business' && !isNextMessageBot)?'0':'30px', background:message.sent_by === 'business'?'#EDF2F7':'linear-gradient(to right, rgba(0, 102, 204, 1),rgba(51, 153, 255, 1))', color:message.sent_by === 'business'?'black':'white',  padding:'8px', borderRadius: message.sent_by === 'business'? (isNextMessageBot && isLastMessageBot)? '.2rem .7rem .7rem .2rem' : isNextMessageBot?'.7rem .7rem .7rem .2rem': isLastMessageBot ? '.2rem .7rem .7rem .7rem':'.7rem' : (!isNextMessageBot && !isLastMessageBot && !isLastMessage)? '.7rem .2rem .2rem .7rem' : (isNextMessageBot || isLastMessage)?'.7rem .2rem .7rem .7rem':'.7rem .7rem .2rem .7rem'}}>
-                                    {message.content.text}
-                                </div>
-                            </div>
-                        </div>
-                </div>
-                </div>)
-                })}
-              {waitingMessage &&<div> 
-                <div style={{display:'flex',  marginTop:'15px', gap:'10px',  width:'100%', alignItems:'end' }}>
-                    <img alt='chatLogo' src={'/images/matil.svg'} width='20px'/>
-                    <div style={{maxWidth:'82%', background:'#eeeeee', animation: 'expandFromLeft 0.5s ease-out',color:'black', padding:'8px', borderRadius:'.7rem'}} >
-                        <div className="writing-animation">
-                            <span className="bounce-dot"></span>
-                            <span className="bounce-dot"></span>
-                            <span className="bounce-dot"></span>
-                        </div>
+        <Box width={'100%'} p='20px' overflow={'scroll'} flex='1'>
+            {messages.map((message, index)=>{
+    
+              const isNextMessageBot = messages[index + 1] ? messages[index + 1].sent_by === 'business' : false 
+              const isLastMessageBot = messages[index - 1] ? messages[index - 1].sent_by === 'business' : false 
+              const isLastMessage = index === messages.length - 1 
+        
+    
+              return(<div key={`message-${index}`}>
+                <div style={{ marginTop: index === 0 ? '0px' : (message.sent_by === messages[index - 1].sent_by? '3px':'15px')}}> 
+                
+                <div style={{gap:'10px', fontSize:'.9em', display:'flex', width:'100%', alignItems:'end', flexDirection:message.sent_by === 'business' ? 'row':'row-reverse'}}  key={`message-${index}`}  >
+                    {(message.sent_by === 'business' && !isNextMessageBot)&& 
+                    <div style={{marginBottom:index > 1?'18px':'0'}}><img alt='chatLogo' src={'/images/matil.svg'} width='20px'/></div>}
+                          <div style={{maxWidth:'82%',display:'flex',flexDirection:'column',alignItems:'end', animation:index > 1 ?message.sent_by === 'business'? 'expandFromLeft 0.5s ease-out' : 'expandFromRight 0.5s ease-out':'none'}}> 
+                              <div style={{ marginLeft:(message.sent_by === 'business' && !isNextMessageBot)?'0':'30px', background:message.sent_by === 'business'?'#EDF2F7':'linear-gradient(to right, rgba(0, 102, 204, 1),rgba(51, 153, 255, 1))', color:message.sent_by === 'business'?'black':'white',  padding:'8px', borderRadius: message.sent_by === 'business'? (isNextMessageBot && isLastMessageBot)? '.2rem .7rem .7rem .2rem' : isNextMessageBot?'.7rem .7rem .7rem .2rem': isLastMessageBot ? '.2rem .7rem .7rem .7rem':'.7rem' : (!isNextMessageBot && !isLastMessageBot && !isLastMessage)? '.7rem .2rem .2rem .7rem' : (isNextMessageBot || isLastMessage)?'.7rem .2rem .7rem .7rem':'.7rem .7rem .2rem .7rem'}}>
+                                  {message.content.text}
+                              </div>
+                          </div>
+                      </div>
+              </div>
+              </div>)
+              })}
+            {waitingMessage &&<div> 
+              <div style={{display:'flex',  marginTop:'15px', gap:'10px',  width:'100%', alignItems:'end' }}>
+                  <img alt='chatLogo' src={'/images/matil.svg'} width='20px'/>
+                  <div style={{maxWidth:'82%', background:'#eeeeee', animation: 'expandFromLeft 0.5s ease-out',color:'black', padding:'8px', borderRadius:'.7rem'}} >
+                      <div className="writing-animation">
+                          <span className="bounce-dot"></span>
+                          <span className="bounce-dot"></span>
+                          <span className="bounce-dot"></span>
                       </div>
                     </div>
-                </div>}
-          </Box>
+                  </div>
+              </div>}
+        </Box>
 
-            <TextAreaContainer/>
+        <TextAreaContainer/>
      
         </>:<Box p='20px'>
             <Text fontWeight={'medium'}>{t('SelectChannel')}</Text>
