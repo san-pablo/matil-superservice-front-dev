@@ -61,7 +61,7 @@ const theme = extendTheme({
       }
     },
     components: {
-      Button: { baseStyle: {fontWeight:'medium',_hover:{color:'blue.500'} },
+      Button: { baseStyle: {fontWeight:'medium' },
     },
       Skeleton: skeletonTheme,
       Radio: {
