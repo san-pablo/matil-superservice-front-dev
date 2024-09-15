@@ -162,11 +162,9 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort,  columnsMap, exclu
                 <Text fontWeight={'medium'} fontSize={'1.1em'}>{noDataMessage}</Text>
             </Box>: 
             <Box borderRadius={'.5em'} bg='gray.50'  overflow={'hidden'}   minWidth={`${totalWidth}px`}   >    
-                <Flex  position={'sticky'}  borderTopRadius={'.5rem'} minWidth={`${totalWidth}px`}  borderColor={'gray.200'} borderWidth={'1px'} gap='20px' ref={headerRef} alignItems={'center'}  color='gray.600' p='10px' fontSize={'1em'} bg='gray.100' > 
-                    {selectedElements && 
-                    <Flex alignItems={'center'} > 
-                        <Checkbox bg='#f0f0f0' borderColor={'#ccc'}  checked={selectedElements.length >= data.length} onChange={(e) => onInternalSelectAllElements(e?.target?.checked)}/>
-                    </Flex>}
+                <Flex position={'sticky'}  borderTopRadius={'.5rem'} minWidth={`${totalWidth}px`}  borderColor={'gray.200'} borderWidth={'1px'} gap='20px' ref={headerRef} alignItems={'center'}  color='gray.600' p='10px' fontSize={'1em'} bg='gray.100' > 
+                    
+                    {selectedElements && <CustomCheckbox isChecked={selectedElements.length >= data.length} onChange={(e) => onInternalSelectAllElements(e?.target?.checked)}/>}
                     {Object.keys(columnsMap).filter(column => column !== 'id').map((column) => (
                         <Fragment key={`header-${column}`}>
                             {column in data[0] &&
@@ -184,7 +182,7 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort,  columnsMap, exclu
                             <Flex data-index={index}  position={'relative'} overflow={'hidden'} gap='20px' minWidth={`${totalWidth}px`} borderRadius={index === data.length - 1?'0 0 .5rem .5rem':'0'} borderWidth={'0 1px 1px 1px'}  cursor={onClickRow?'pointer':'not-allowed'} onClick={() => {if (onClickRow) onClickRow(row, index)}} key={`row-${index}`}  bg={selectedIndex === index ? 'blue.50':(selectedElements || []).includes(index)?'blue.100':index%2 === 1?'#FFFDFA':'white'} alignItems={'center'}  fontSize={'.9em'} color='black' p='10px' borderColor={'gray.200'} _hover={{bg:(selectedElements || [] ).includes(index)?'blue.100':'blue.50'}}  > 
                                 {selectedIndex === index && <Box position='absolute' left={0} top={0} height={'100%'} width={'2px'} bg='blue.400'/>}
                                 {selectedElements &&
-                                <Flex alignItems={'center'} onClick={(e) => e.stopPropagation()}> 
+                                <Flex onClick={(e) => e.stopPropagation()}> 
                                     <CustomCheckbox onChange={(e) => handleCheckboxChange(index, e.target.checked)} isChecked={selectedElements.includes(index)} />
                                  </Flex>}
                                 {Object.keys(columnsMap).map((column:string, index:number) => (

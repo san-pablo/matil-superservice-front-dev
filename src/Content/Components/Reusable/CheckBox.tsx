@@ -1,7 +1,9 @@
+import { Flex } from '@chakra-ui/react'
 import '../styles.css'
 
 const CustomCheckbox = ({onChange, isChecked}:{onChange:(e:any) => void, isChecked:boolean}) => {
     return (
+        <Flex mt='4px'> 
         <div className="checkbox-wrapper-4">
             <input className="inp-cbx" id="morning" type="checkbox"  checked={isChecked} onChange={onChange}/>
             <label className="cbx" htmlFor="morning"><span>
@@ -14,7 +16,7 @@ const CustomCheckbox = ({onChange, isChecked}:{onChange:(e:any) => void, isCheck
                 </symbol>
             </svg>
         </div>
-
+        </Flex>
     )
 }
 

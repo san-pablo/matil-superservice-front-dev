@@ -12,7 +12,6 @@
 
 
 /* CUSTOM CHECKBOX */
-
   .checkbox-wrapper-4 * {
     box-sizing: border-box;
   }
@@ -26,28 +25,27 @@
     display: inline-block;
   }
 
-  .checkbox-wrapper-4 .cbx:hover {
-    background: rgba(0,119,255,0.06);
-  }
   .checkbox-wrapper-4 .cbx span {
     float: left;
     vertical-align: middle;
-    transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0)
   }
   .checkbox-wrapper-4 .cbx span:first-child {
     position: relative;
     width: 16px;
     height: 16px;
-    border-radius: 5px;
+    background-color: transparent;
+    border-radius: 4px;
     transform: scale(1);
     border: 1px solid #cccfdb;
     transition: all 0.2s ease;
-    box-shadow: 0 1px 1px rgba(0,16,75,0.05)
   }
   .checkbox-wrapper-4 .cbx span:first-child svg {
     position: absolute;
-    top: 3px;
+    top: 2px;
     left: 2px;
+    width: 10px;
+    width: 10px;
     fill: none;
     stroke: #fff;
     stroke-width: 2;
@@ -79,29 +77,6 @@
     pointer-events: none;
     user-select: none;
   }
-  
-  @-moz-keyframes wave-4 {
-    50% {
-      transform: scale(0.9);
-    }
-  }
-  @-webkit-keyframes wave-4 {
-    50% {
-      transform: scale(0.9);
-    }
-  }
-  @-o-keyframes wave-4 {
-    50% {
-      transform: scale(0.9);
-    }
-  }
-  @keyframes wave-4 {
-    50% {
-      transform: scale(0.9);
-    }
-  }
-
- 
 
 
 /* BOUNCE FOR DELETE AND ADD FLOATING BOX AT NODES */
