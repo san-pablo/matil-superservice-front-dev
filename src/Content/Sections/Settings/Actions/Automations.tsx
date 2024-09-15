@@ -142,7 +142,7 @@ const EditAutomation = ({automationData, selectedIndex, setSelectedIndex, allAut
         else {
             const updatedAutomations = [...allAutomations]
             updatedAutomations[selectedIndex] = currentAutomationData
-            return newAutomations = updatedAutomations
+            newAutomations = updatedAutomations
         }
 
         const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/automations`, requestForm:newAutomations, method:'put', setWaiting:setWaitingSend, auth, toastMessages:{works:selectedIndex === -1?t('CorrectCreatedAutomation'):t('CorrectUpdatedAutomation'), failed: selectedIndex === -1?t('FailedCreatedAutomation'):t('FailedUpdatedAutomation')}})

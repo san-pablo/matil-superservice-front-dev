@@ -1,5 +1,5 @@
 //REACT
-import { useState, useEffect, useRef, RefObject, useMemo, CSSProperties, Dispatch, SetStateAction, useLayoutEffect } from 'react'
+import { useState, useEffect, useRef, RefObject, useMemo, CSSProperties, Dispatch, SetStateAction, useLayoutEffect, Fragment } from 'react'
 import { useAuth } from '../../../AuthContext.js'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -32,6 +32,7 @@ import LoadingIconButton from '../../Components/Reusable/LoadingIconButton.js'
 import ConfirmBox from '../../Components/Reusable/ConfirmBox.js'
 import VariableTypeChanger from '../../Components/Reusable/VariableTypeChanger.js'
 import '../../Components/styles.css'
+ 
 
 //FUNCTIONS
 import useOutsideClick from '../../Functions/clickOutside.js'
@@ -43,12 +44,15 @@ import { IoIosArrowDown, IoIosWarning, IoIosArrowBack } from 'react-icons/io'
 import { BsTrash3Fill } from 'react-icons/bs'
 import { AiOutlineCheckCircle } from 'react-icons/ai';
 import { FiHash } from 'react-icons/fi';
-import { TbMathFunction } from 'react-icons/tb';
+import { TbMathFunction, TbBraces, TbListDetails } from "react-icons/tb";
+
 import { FiType } from 'react-icons/fi';
 import { AiOutlineCalendar } from 'react-icons/ai';
 import { MdOutlineFormatListBulleted } from 'react-icons/md'
 import { FaCheckCircle, FaTimesCircle } from "react-icons/fa"
-import { FaRobot, FaLanguage, FaR } from "react-icons/fa6";
+import { FaRobot, FaLanguage, FaArrowDown, FaTicket, FaBuilding } from "react-icons/fa6"
+import { IoPeopleSharp } from "react-icons/io5"
+
 
 //TYPING
 import { languagesFlags, actionTypesDefinition, nodeTypesDefinition, DataTypes, Branch, FlowMessage, FieldAction, FunctionType } from '../../Constants/typing.js'
@@ -208,7 +212,8 @@ const Flow = () => {
                 }
                 else {
                     const targetIndex = node.data?.next_node_index !== undefined && node.data?.next_node_index !== null ?node.data?.next_node_index: -1   
-                    const targetId = targetIndex === -1 ? null:finalNodes[targetIndex].id
+
+                    const targetId = (targetIndex === -1 || targetIndex > finalNodes.length -1 ) ? null:finalNodes[targetIndex].id
                     if (targetId) firstEdges.push({id: `${sourceId}->${targetId}-(-1)`, sourceHandle:'handle-(-1)', type: 'custom', source: sourceId, target: targetId})
 
                     if (node.type === 'function' && node.data.error_nodes_ids) {
@@ -281,7 +286,7 @@ const Flow = () => {
     }, [sourceId])
 
     //ADD AND DELETE NEW NODES FUNCTIONS
-    const addNewNode = (sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}, targetType:nodeTypesDefinition | '', nodeId?:string) => {
+    const addNewNode = (sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}, targetType:nodeTypesDefinition | '', nodeId?:string, nodeIndex?:number) => {
     
         const getNewNodeId = (id:string, nds:{id:string, type:nodeTypesDefinition, position:{x:number, y:number}, data:any}[]) => {
             const newNodeX = parseInt(id.split('-')[0]) + 1
@@ -323,15 +328,15 @@ const Flow = () => {
             const position = { x, y }
             
             let newNodeObjectData = {}
-            if (type === 'brancher') newNodeObjectData = {branches:[{name:'',conditions:[], next_node_index:null}], functions:getNodeFunctions(targetType as nodeTypesDefinition, nds.length - 1)}
-            else if (type === 'extractor') newNodeObjectData = {branches:[{name:'',conditions:[], next_node_index:null}], variables:[], functions:getNodeFunctions(targetType as nodeTypesDefinition, nds.length - 1)}
-            else if (type === 'sender') newNodeObjectData =  {next_node_index:null, messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:getNodeFunctions(targetType as nodeTypesDefinition, nds.length - 1)}
-            else if (type === 'terminator') newNodeObjectData = {flow_result:'', messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:getNodeFunctions(targetType as nodeTypesDefinition, nds.length - 1)}
-            else if (type === 'transfer') newNodeObjectData = {user_id:0, group_id:0, messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:getNodeFunctions(targetType as nodeTypesDefinition, nds.length - 1)}
-            else if (type === 'reset') newNodeObjectData = {variable_indices:[],next_node_index:null, messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:getNodeFunctions(targetType as nodeTypesDefinition, nds.length - 1)}
-            else if (type === 'flow_swap') newNodeObjectData = {new_flow_uuid:'-1', messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:getNodeFunctions(targetType as nodeTypesDefinition, nds.length - 1)}
-            else if (type === 'function') newNodeObjectData = {uuid:'', variable_args:{}, motherstructure_args:{}, hardcoded_args:{}, error_nodes_ids:{}, next_node_index:null, output_to_variables:{}, functions:getNodeFunctions(targetType as nodeTypesDefinition, nds.length - 1)}
-            else if (type === 'motherstructure_updates') newNodeObjectData = {updates:[], next_node_index:null, functions:getNodeFunctions(sourceData.sourceType, nds.length - 1)}
+            if (type === 'brancher') newNodeObjectData = {branches:[{name:'',conditions:[], next_node_index:null}], functions:getNodeFunctions(targetType as nodeTypesDefinition, nds.length)}
+            else if (type === 'extractor') newNodeObjectData = {branches:[{name:'',conditions:[], next_node_index:null}], variables:[], functions:getNodeFunctions(targetType as nodeTypesDefinition, nds.length)}
+            else if (type === 'sender') newNodeObjectData =  {next_node_index:null, messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:getNodeFunctions(targetType as nodeTypesDefinition, nds.length)}
+            else if (type === 'terminator') newNodeObjectData = {flow_result:'', messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:getNodeFunctions(targetType as nodeTypesDefinition, nds.length)}
+            else if (type === 'transfer') newNodeObjectData = {user_id:0, group_id:0, messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:getNodeFunctions(targetType as nodeTypesDefinition, nds.length1)}
+            else if (type === 'reset') newNodeObjectData = {variable_indices:[],next_node_index:null, messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:getNodeFunctions(targetType as nodeTypesDefinition, nds.length)}
+            else if (type === 'flow_swap') newNodeObjectData = {new_flow_uuid:'-1', messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:getNodeFunctions(targetType as nodeTypesDefinition, nds.length)}
+            else if (type === 'function') newNodeObjectData = {uuid:'', variable_args:{}, motherstructure_args:{}, hardcoded_args:{}, error_nodes_ids:{}, next_node_index:null, output_to_variables:{}, functions:getNodeFunctions(targetType as nodeTypesDefinition, nds.length )}
+            else if (type === 'motherstructure_updates') newNodeObjectData = {updates:[], next_node_index:null, functions:getNodeFunctions(sourceData.sourceType, nds.length)}
             return {id, position, data: newNodeObjectData, type:targetType}
         }
 
@@ -351,17 +356,18 @@ const Flow = () => {
             setNodes((nds) => 
             {
                 newNodeId = nodeId?nodeId:getNewNodeId(sourceData.sourceId, nds as {id:string, type:nodeTypesDefinition, position:{x:number, y:number}, data:any}[])
+                
                 if (sourceData.sourceType === 'brancher' || sourceData.sourceType === 'extractor' || sourceData.sourceType === 'function' ) {
-                    const nodeIndex = nds.findIndex(node => node.id === sourceData.sourceId)
-                    if (nodeIndex !== -1) {
-                        const nodeToUpdate = { ...nds[nodeIndex] }
+                    const nodeIndexToEdit = nds.findIndex(node => node.id === sourceData.sourceId)
+                    if (nodeIndexToEdit !== -1) {
+                        const nodeToUpdate = { ...nds[nodeIndexToEdit] }
                         if (sourceData.sourceType === 'function') {
-                            if (sourceData.branchIndex === undefined) nodeToUpdate.data = {...nodeToUpdate.data, next_node_index: parseInt(newNodeId.split('-')[2]) - 1}
+                            if (sourceData.branchIndex === undefined) nodeToUpdate.data = {...nodeToUpdate.data, next_node_index: nodeId ? (nodeIndex || 0) - 1 : nds.length - 1 }
                             else if (nodeToUpdate.data.error_nodes_ids) {
                                 const updatedErrors = {...nodeToUpdate.data.error_nodes_ids}
                                 const keyToUpdate = Object.keys(updatedErrors)[sourceData?.branchIndex as number]
                                 if (keyToUpdate) {
-                                    updatedErrors[keyToUpdate] =  parseInt(newNodeId.split('-')[2]) - 1
+                                    updatedErrors[keyToUpdate] =  nodeId ? (nodeIndex || 0) - 1 : nds.length  -1
                                     nodeToUpdate.data = { ...nodeToUpdate.data, error_nodes_ids: updatedErrors }
                                 }
                             }
@@ -369,23 +375,23 @@ const Flow = () => {
                         else {
                             if (nodeToUpdate.data && Array.isArray(nodeToUpdate.data.branches)) {
                                 const updatedBranches = nodeToUpdate.data.branches.map((branch:any, index:number) => {
-                                    if (index === sourceData.branchIndex) return {...branch, next_node_index: parseInt(newNodeId.split('-')[2]) - 1}
+                                    if (index === sourceData.branchIndex) return {...branch, next_node_index:  nodeId ? (nodeIndex || 0) -1 : nds.length - 1 }
                                     return branch
                                 })
                                 nodeToUpdate.data = {...nodeToUpdate.data, branches: updatedBranches}
                             }
                         }
-                        const updatedNodes = nds.map((node, index) => index === nodeIndex ? nodeToUpdate : node)
+                        const updatedNodes = nds.map((node, index) => index === nodeIndexToEdit ? nodeToUpdate : node)
                         
                         if (nodeId) return updatedNodes
                         else return [...updatedNodes, getNewNodeObject(newNodeId, targetType as nodeTypesDefinition, nds)]
                     }
                 }
                 else {
-                    const nodeIndex = nds.findIndex(node => node.id === sourceData.sourceId)
-                    if (nodeIndex !== -1) {
-                        const nodeToUpdate = { ...nds[nodeIndex], data:{...nds[nodeIndex].data, next_node_index:parseInt(newNodeId.split('-')[2]) - 1} }
-                        const updatedNodes = nds.map((node, index) => index === nodeIndex ? nodeToUpdate : node)
+                    const nodeIndexToEdit = nds.findIndex(node => node.id === sourceData.sourceId)
+                    if (nodeIndexToEdit !== -1) {
+                        const nodeToUpdate = { ...nds[nodeIndexToEdit], data:{...nds[nodeIndexToEdit].data, next_node_index: nodeId ? (nodeIndex  || 0) -1 : nds.length - 1} }
+                        const updatedNodes = nds.map((node, index) => index === nodeIndexToEdit ? nodeToUpdate : node)
                         if (nodeId) return updatedNodes
                         return [...updatedNodes, getNewNodeObject(newNodeId, targetType as nodeTypesDefinition, nds)]
                     }
@@ -563,7 +569,7 @@ const Flow = () => {
             if (node.id !== nodeId) return node
             let updatedActions
             if (type === 'remove') updatedActions = node.data.updates.filter((_:any, idx:number) => idx !== index)
-            else if (type === 'add') updatedActions = [...node.data.updates, {motherstructure:'tickets', is_customizable:false, name:'user_id', operation:'set', value:-1}]
+            else if (type === 'add') updatedActions = [...node.data.updates, {motherstructure:'ticket', is_customizable:false, name:'user_id', operation:'set', value:-1}]
             else if (type === 'edit') {
                 updatedActions = node.data.updates.map((message: any, idx: number) => {
                   if (idx === index) return newAction
@@ -706,8 +712,6 @@ const Flow = () => {
         const node = nodes.find(node => node.id === showNodesAction?.nodeId)
         const scrollRef = useRef<HTMLDivElement>(null)
 
-        const structureList:('ticket' | 'client' | 'contact_business')[] = ['ticket', 'client', 'contact_business']    
-        const structureLabelsMap:{[key in 'ticket' | 'client' | 'contact_business']:string} = {'ticket':t('tickets'), 'client':t('clients'),'contact_business':t('contact_businesses')}
         const ticketsList = ['user_id', 'group_id', 'channel_type', 'title', 'subject', 'urgency_rating', 'status', 'unseen_changes', 'tags', 'is_matilda_engaged', 'is_satisfaction_offered']
         const ticketsLabelsMap:{[key:string]:string} = {}
         ticketsList.forEach((structure, index) => {ticketsLabelsMap[structure] = t(structure)})
@@ -751,10 +755,15 @@ const Flow = () => {
 
                 return (
                     <Box ref={scrollRef} overflow={'scroll'}  p='30px'>
-                        <EditText value={branchData.name} setValue={(value:string) => setBranchData((prev) => ({...prev, name:value}))} placeholder={t('AddBranchName')}/>
-                        <Box bg='gray.300' width={'100%'} height={'1px'} mt='2vh' mb='2vh'/>
-                        {flowVariables.length === 0?<Text fontSize={'.9em'}>{t('NoVariablesSelected')}</Text>:<> 
+
+                        <Text fontSize={'1.1em'} fontWeight={'medium'}>{t('EditConditions')}</Text>
+                        <Text fontSize={'.8em'} mb='3vh' color={'gray.600'}>{t('EditConditionsDes')}</Text>
                         
+                        <Text fontSize={'.9em'} fontWeight={'medium'} mb='.5vh'>{t('name')}</Text>
+                        <EditText value={branchData.name} hideInput={false} setValue={(value:string) => setBranchData((prev) => ({...prev, name:value}))} placeholder={t('AddBranchName')}/>
+
+                        <Text fontSize={'.9em'} fontWeight={'medium'} mt='3vh' mb='.5vh'>{t('Conditions')}</Text>
+                        {flowVariables.length === 0?<Text fontSize={'.9em'}>{t('NoVariablesSelected')}</Text>:<> 
                         {branchData.conditions.map((condition:{variable_index:number, operation:string, value:any}, index:number) => (<> 
 
                             <Flex mt='.5vh'  key={`conditions-${index}`} alignItems='center' gap='20px'>
@@ -811,7 +820,7 @@ const Flow = () => {
                
                     <Flex gap='10px' mt='3vh' alignItems={'center'}>
                         <Switch isChecked={messageData.require_confirmation} onChange={(e) => setMessageData((prev) => ({ ...prev, require_confirmation: e.target.checked }))}/>
-                        <Text fontSize={'1.1em'} fontWeight={'medium'}>{t('AskConfirmation')}</Text>        
+                        <Text fontSize={'1.1em'} fontWeight={'medium'}>{t('AskConfirmation')}</Text>  
                     </Flex>
                     <Text mb='2vh' color='gray.600' fontSize={'.8em'} >{t('AskConfirmationDes')}</Text>        
                     
@@ -819,7 +828,6 @@ const Flow = () => {
                     {messageData.require_confirmation && <>
                         <Text  mt='3vh'  color='black'fontSize={'1.1em'} fontWeight={'medium'}>{t('ConfirmationMessage')}</Text>
                         <Text mb='1.5vh' color='gray.600' fontSize={'.8em'} >{t('ConfirmationMessageDes')}</Text>        
-
                         <EditMessage scrollRef={scrollRef} messageData={confirmationMessage} setMessageData={setConfirmationMessage}/>
                     </>}
                     </>}
@@ -847,7 +855,7 @@ const Flow = () => {
 
                 return(
                 <Box ref={scrollRef} overflow={'scroll'}  p='30px'>
-                    <Text mb='1vh'color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('FlowResult')}</Text>
+                    <Text mb='.5vh' fontSize={'1.1em'} fontWeight={'medium'}>{t('FlowResult')}</Text>
                     <Textarea mt='5px'  maxLength={2000} height={'auto'} placeholder={`${t('FlowResultPlaceholder')}...`} maxH='300px' value={flowResult} onChange={(e) => setFlowResult(e.target.value)} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
                 </Box>
                 )
@@ -880,25 +888,35 @@ const Flow = () => {
 
                 return(
                     <Box ref={scrollRef} overflow={'scroll'}  p='30px'>
-         
-                        <Text mb='1vh'color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('StructureUpdate')}</Text>
-                        <CustomSelect containerRef={scrollRef} hide={false} selectedItem={fieldsData.motherstructure} setSelectedItem={(value) => setFieldsData((prev) => ({...prev, motherstructure:value}))} options={structureList} labelsMap={structureLabelsMap} />
-                        <Text mt='1vh' mb='1vh'color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('IsCustomizable')}</Text>
-                        <Flex gap='10px' mt='5px'>
-                            <Button bg={fieldsData.is_customizable?'brand.gradient_blue':'gray.200'} color={fieldsData.is_customizable?'white':'black'} size='sm' _hover={{bg:fieldsData.is_customizable?'brand.gradient_blue_hover':'gray.300'}} onClick={() => setFieldsData((prev) => ({...prev, is_customizable:true}))}>{t('Yes')}</Button>
-                            <Button bg={!fieldsData.is_customizable?'brand.gradient_blue':'gray.200'} color={!fieldsData.is_customizable?'white':'black'} size='sm' _hover={{bg:!fieldsData.is_customizable?'brand.gradient_blue_hover':'gray.300'}} onClick={() => setFieldsData((prev) => ({...prev, is_customizable:false}))}>{t('No')}</Button>
+                        <Text fontSize={'1.1em'} fontWeight={'medium'}>{t('EditField')}</Text>
+                        <Text fontSize={'.8em'} color={'gray.600'}>{t('EditFieldDes')}</Text>
+
+                        <Text fontSize={'.9em'} mt='3vh' fontWeight={'medium'}>{t('SelectStructure')}</Text>
+                        <Flex gap='20px' mt='1vh' >
+                            <Button leftIcon={<FaTicket/>} bg={fieldsData.motherstructure === 'ticket'?'blackAlpha.800':'gray.200'} color={fieldsData.motherstructure === 'ticket'?'white':'black'} size='sm' _hover={{bg:fieldsData.motherstructure === 'ticket'?'blackAlpha.800':'gray.300'}}  onClick={() => setFieldsData((prev) => ({...prev, motherstructure:'ticket'}))}>{t('Tickets')}</Button>
+                            <Button leftIcon={<IoPeopleSharp/>} bg={fieldsData.motherstructure === 'client'?'blackAlpha.800':'gray.200'} color={fieldsData.motherstructure === 'client'?'white':'black'} size='sm' _hover={{bg:fieldsData.motherstructure === 'client'?'blackAlpha.800':'gray.300'}}    onClick={() => setFieldsData((prev) => ({...prev, motherstructure:'client'}))}>{t('Clients')}</Button>
+                            <Button leftIcon={<FaBuilding/>} bg={fieldsData.motherstructure === 'contact_business'?'blackAlpha.800':'gray.200'} color={fieldsData.motherstructure === 'contact_business'?'white':'black'} size='sm' _hover={{bg:fieldsData.motherstructure === 'contact_business'?'blackAlpha.800':'gray.300'}}   onClick={() => setFieldsData((prev) => ({...prev, motherstructure:'contact_business'}))}>{t('Businesses')}</Button>           
                         </Flex> 
-                        <Text mt='1vh' mb='1vh'color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('ActionDefinition')}</Text>
+
+                        <Flex gap='10px' mt='3vh' alignItems={'center'}>
+                            <Switch isChecked={fieldsData.is_customizable} onChange={(e) => setFieldsData((prev) => ({...prev, is_customizable:e.target.checked}))}/>
+                            <Text fontSize={'.9em'} fontWeight={'medium'}>{t('IsCustomizable')}</Text>     
+                        </Flex>
+                        <Text fontSize={'.8em'} color='gray.600'>{t('IsCustomizableDes')}</Text>        
+                        
+                        <Text mt='3vh' fontSize={'.9em'} fontWeight={'medium'}>{t('ActionDefinition')}</Text>
+                        <Text fontSize={'.8em'} mb='.5vh' color='gray.600'>{t('ActionDefinitionDes')}</Text>        
+                                
                         {fieldsData.is_customizable? <Text></Text>:
                         
                         <Flex alignItems={'center'} gap='10px'>
                             <Box flex='1'> 
-                                <CustomSelect containerRef={scrollRef} hide={false} selectedItem={fieldsData.op} setSelectedItem={(value) => setFieldsData((prev) => ({...prev, op:value}))} options={(operationTypesDict[fieldsData.name as keyof typeof operationTypesDict] || [])} labelsMap={operationLabelsMap} />
+                                <CustomSelect containerRef={scrollRef} hide={false} selectedItem={fieldsData.operation} setSelectedItem={(value) => setFieldsData((prev) => ({...prev, op:value}))} options={(operationTypesDict[fieldsData.name as keyof typeof operationTypesDict] || [])} labelsMap={operationLabelsMap} />
                             </Box>
                             <Box flex='1'> 
                                 <CustomSelect containerRef={scrollRef} hide={false} selectedItem={fieldsData.name} setSelectedItem={(value) => setFieldsData((prev) => ({...prev, name:value}))} options={selectableNames} labelsMap={selectableDict} />
                             </Box>
-                            <Text>{t(`${fieldsData.op}_2`)}</Text>
+                            <Text>{fieldsData.operation ? t(`${fieldsData.operation}_2`):''}</Text>
                             <Box flex='1'> 
                                 <VariableTypeChanger inputType={fieldsData.name} value={fieldsData.value} setValue={(value) => setFieldsData((prev) => ({...prev, value}))}/>
                             </Box>
@@ -915,30 +933,31 @@ const Flow = () => {
                 //FLOW VARIABLES MAP
                 const variablesLabelsMap:{[key:number]:string} = {}
                 flowVariables.forEach((variable, index) => {variablesLabelsMap[index] = t(flowVariables[index].name)})
-                const [waiting,setWaiting] = useState<boolean>(false)
+                const [waiting, setWaiting] = useState<boolean>(false)
 
-                //CONVERTING THE NDOE DATA TO MANIPULATE IT
+                //CONVERTING THE NODE DATA TO MANIPULATE IT
                 const { functions, ...rest } = node?.data 
                 const [functionData, setFunctionData] = useState<FunctionType>(rest)
 
                 useEffect(()=> {editFunctionFlowData(showNodesAction?.nodeId, functionData)},[functionData])
 
-                //SELECTABLE ARGS, BASED ON THE FUNCTGION UUID AND THE ARGS THAT ARE ALREADY SELECTED 
                 const [argsToSelect, setArgsToSelect] = useState<string[]>([])
                 const [outputsToSelect, setOutputsToSelect] = useState<string[]>([])
 
+ 
                 useEffect(() => {        
                     const fetchInitialData = async() => {
  
                         const functionResponse = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/functions/${functionData.uuid}`, setWaiting, auth})
-                        console.log(functionResponse)
                         if (functionResponse?.status === 200) {
+
+                            const hardcodedDict:{[key:string]:string} = {}
+                            functionResponse.data.arguments.map((arg:any) => {hardcodedDict[arg.name as string] = arg.default || ''}) 
                             const dictArgs = functionResponse.data.arguments.map((arg:any) => {return arg.name})
                             const dictOutputs = functionResponse.data.outputs.map((arg:any) => {return arg.name})
-
-                            console.log(functionResponse)
                             setArgsToSelect(dictArgs)
                             setOutputsToSelect(dictOutputs)
+                            setFunctionData(prev => ({...prev, hardcoded_args:hardcodedDict}))
                         }
                     }
                     if (functionData.uuid) fetchInitialData() 
@@ -946,27 +965,31 @@ const Flow = () => {
                     else firstRender2.current = false
                 }, [functionData.uuid])
 
-                //SELECTABLE ARGUMENTS AND OUTPUTS
-                const selectedArgs = Object.keys((functionData?.variable_args || [])).concat(Object.keys((functionData?.motherstructure_args || []))).concat(Object.keys((functionData?.hardcoded_args || [])))
-                let selectableArgs:string[]  = []
-                if (functionData.uuid !== '' && argsToSelect !== undefined) selectableArgs = argsToSelect.filter(arg => !selectedArgs.includes(arg))
-                const selectedOutputs = Object.keys((functionData.output_to_variables || []))
-                let selectableOutputs:string[]  = []
-                if (functionData.uuid !== '' && outputsToSelect !== undefined) selectableOutputs = outputsToSelect.filter(arg => !selectedOutputs.includes(arg))
-
                 //FUNCTION FOR EDITING ARGS
-                const editArg = (argType:'variable_args' | 'motherstructure_args' | 'hardcoded_args' | 'output_to_variables', type:'add' | 'edit' | 'remove', argKey?:string,  newValue?:any) => {
+                const editArg = (argType:'variable_args' | 'motherstructure_args' | 'hardcoded_args' | 'output_to_variables', type:'change' | 'edit', argKey?:string,  newValue?:any) => {
                     
-                    if (type === 'add' && (argType === 'output_to_variables'?selectableOutputs:selectableArgs).length > 0) {
-                        setFunctionData((prev) => ({...prev, [argType]: {...prev[argType], [(argType === 'output_to_variables'?selectableOutputs:selectableArgs)[0]]: argType === 'motherstructure_args' ? { motherstructure: 'ticket', is_customizable: false, name: 'user_id' }: -1 }}))
-                    } 
-                    else if (type === 'remove' && argKey !== undefined) {
+                    if (argType === 'output_to_variables' && argKey) {
                         setFunctionData((prev) => {
                             const updatedArgType = { ...prev[argType] }
-                            delete updatedArgType[argKey]
+                            updatedArgType[argKey] = newValue
                             return {...prev, [argType]: updatedArgType}
                         })
                     }
+
+                    else if (type === 'change') {
+                        setFunctionData((prev) => {
+                            if (!argKey) return prev
+                            const updatedData = { ...prev } as FunctionType
+                            const argTypesToCheck:('variable_args' | 'motherstructure_args' | 'hardcoded_args')[] = ['variable_args', 'motherstructure_args', 'hardcoded_args']
+
+                            argTypesToCheck.forEach((key:'variable_args' | 'motherstructure_args' | 'hardcoded_args' ) => {if (key !== argType ) delete updatedData[key][argKey]})
+                            if (argType === 'motherstructure_args') updatedData[argType] = { ...updatedData[argType], [argKey]:{ motherstructure: 'ticket', is_customizable: false, name: 'user_id' } }
+                            else if (argType === 'hardcoded_args') updatedData[argType] = { ...updatedData[argType], [argKey]:'' }
+                            else updatedData[argType] = { ...updatedData[argType], [argKey]:-1 }
+
+                            return updatedData
+                        })}
+
                     else if (type === 'edit'  && argKey !== undefined   && newValue !== undefined) {
                         setFunctionData((prev) => {
                             const updatedArgType = { ...prev[argType] }
@@ -977,122 +1000,87 @@ const Flow = () => {
 
                 }   
 
-                //BUTTON FOR ADDING A NEW ARG
-                const AddArgButton = ({argType}:{argType:'variable_args' | 'motherstructure_args' | 'hardcoded_args' | 'output_to_variables'}) => {
-
-                    //SHOW AND HIDE BOX LOGIC
-                    const boxRef = useRef<HTMLDivElement>(null)
-                    const buttonRef = useRef<HTMLButtonElement>(null)
-                    const [showAdd, setShowAdd] = useState<boolean>(false)
-                    useOutsideClick({ref1:buttonRef, ref2:boxRef, containerRef:scrollRef, onOutsideClick:setShowAdd})
-                    const [boxPosition, setBoxPosition] = useState<'top' | 'bottom'>('bottom')
-                    const [boxStyle, setBoxStyle] = useState<CSSProperties>({})
-                    determineBoxStyle({buttonRef, setBoxStyle, setBoxPosition, changeVariable:showAdd})
-                    
-                    //FRONT
-                    return (
-                        <Flex mt='2vh' flexDir={'row-reverse'}>
-                            <Button ref={buttonRef} onClick={() => setShowAdd(true)} leftIcon={<FaPlus/>} size={'sm'}>{argType === 'output_to_variables' ? t('AddOutput'):t('AddArg')}</Button> 
-                            <AnimatePresence> 
-                                {showAdd && 
-                                <Portal>
-                                    <MotionBox initial={{ opacity: 0, marginTop: boxPosition === 'bottom'?-10:10 }} animate={{ opacity: 1, marginTop: 0 }}  exit={{ opacity: 0,marginTop: boxPosition === 'bottom'?-10:10}} transition={{ duration: '0.2',  ease: 'easeOut'}}
-                                    top={boxStyle.top} bottom={boxStyle.bottom}right={boxStyle.right} width={boxStyle.width} maxH='40vh' overflow={'scroll'} gap='10px' ref={boxRef} fontSize={'.9em'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000} position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
-                                        {(argType === 'output_to_variables' ? selectableOutputs:selectableArgs).map((arg, index) => (
-                                            <Flex p='5px' _hover={{bg:'brand.hover_gray'}} key={`arg-${index}`} onClick={() => {setShowAdd(false);editArg(argType, 'add')}}>
-                                                <Text fontSize={'.9em'}>{arg}</Text>
-                                            </Flex>
-                                        ))}
-                                    </MotionBox>
-                                </Portal>
-                            }
-                        </AnimatePresence>
-                        </Flex>
-
-                    )
-                }
-
                 //COMPONENT FOR THE MOTHERSTRUCTURE ARGS
                 const MotherStructureArg = ({selectedArg, keyToEdit}:{selectedArg:{motherstructure:'ticket' | 'client' | 'contact_business',is_customizable:boolean, name:string}, keyToEdit:string}) => {
 
                     const selectableNames2 = selectedArg.motherstructure === 'ticket' ? ticketsList : selectedArg.motherstructure === 'client' ? clientsList : businessList
                     const selectableDict2 = selectedArg.motherstructure === 'ticket' ? ticketsLabelsMap : selectedArg.motherstructure === 'client' ? structureClientsMap : structureBusinessMap
     
-                
                     return (
-                    <> 
-                        <Text mb='.5vh' mt='1vh' color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('StructureUpdate')}</Text>
-                        <CustomSelect containerRef={scrollRef} hide={false} selectedItem={selectedArg.motherstructure} setSelectedItem={(value) => editArg('motherstructure_args', 'edit', keyToEdit, {...functionData.motherstructure_args[keyToEdit], motherstructure:value})} options={structureList} labelsMap={structureLabelsMap} />
-
-                        <Text mt='1vh'  mb='.5vh' color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('IsCustomizable')}</Text>
-                        <Flex gap='10px' >
-                            <Button bg={selectedArg.is_customizable?'brand.gradient_blue':'gray.200'} color={selectedArg.is_customizable?'white':'black'} size='xs' _hover={{bg:selectedArg.is_customizable?'brand.gradient_blue_hover':'gray.300'}} onClick={() => editArg('motherstructure_args', 'edit', keyToEdit, {...functionData.motherstructure_args[keyToEdit], is_customizable:true})} >{t('Yes')}</Button>
-                            <Button bg={!selectedArg.is_customizable?'brand.gradient_blue':'gray.200'} color={!selectedArg.is_customizable?'white':'black'} size='xs' _hover={{bg:!selectedArg.is_customizable?'brand.gradient_blue_hover':'gray.300'}} onClick={() => editArg('motherstructure_args', 'edit', keyToEdit, {...functionData.motherstructure_args[keyToEdit], is_customizable:false})} >{t('No')}</Button>
+                    <>                         
+                        <Flex gap='20px' mt='.5vh' mb='1.5vh'>
+                            <Button leftIcon={<FaTicket/>} bg={selectedArg.motherstructure === 'ticket'?'blackAlpha.800':'gray.200'} color={selectedArg.motherstructure === 'ticket'?'white':'black'} size='xs' _hover={{bg:selectedArg.motherstructure === 'ticket'?'blackAlpha.800':'gray.300'}}  onClick={() => editArg('motherstructure_args', 'edit', keyToEdit, {...functionData.motherstructure_args[keyToEdit], motherstructure:'ticket'})}>{t('Tickets')}</Button>
+                            <Button leftIcon={<IoPeopleSharp/>} bg={selectedArg.motherstructure === 'client'?'blackAlpha.800':'gray.200'} color={selectedArg.motherstructure === 'client'?'white':'black'} size='xs' _hover={{bg:selectedArg.motherstructure === 'client'?'blackAlpha.800':'gray.300'}}   onClick={() => editArg('motherstructure_args', 'edit', keyToEdit, {...functionData.motherstructure_args[keyToEdit], motherstructure:'client'})}>{t('Clients')}</Button>
+                            <Button leftIcon={<FaBuilding/>} bg={selectedArg.motherstructure === 'contact_business'?'blackAlpha.800':'gray.200'} color={selectedArg.motherstructure === 'contact_business'?'white':'black'} size='xs' _hover={{bg:selectedArg.motherstructure === 'contact_business'?'blackAlpha.800':'gray.300'}}   onClick={() => editArg('motherstructure_args', 'edit', keyToEdit, {...functionData.motherstructure_args[keyToEdit], motherstructure:'contact_business'})}>{t('Businesses')}</Button>           
+                        </Flex> 
+                        <Flex gap='10px' mb='1.5vh'  alignItems={'center'}>
+                            <Switch isChecked={selectedArg.is_customizable} onChange={(e) => editArg('motherstructure_args', 'edit', keyToEdit, {...functionData.motherstructure_args[keyToEdit], is_customizable:e.target.checked})}/>
+                            <Text fontWeight={'medium'} fontSize={'.9em'}>{t('IsCustomizable')}</Text> 
                         </Flex>
-                        
-                        <Text mb='.5vh' mt='1vh' color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('StructureName')}</Text>
                         {selectedArg.is_customizable? <Text></Text>: 
-                            <CustomSelect containerRef={scrollRef} hide={false} selectedItem={functionData.motherstructure_args[keyToEdit].name} setSelectedItem={(value) => editArg('motherstructure_args', 'edit', keyToEdit, {...functionData.motherstructure_args[keyToEdit], name:value})}  options={selectableNames2} labelsMap={selectableDict2} />
+                        <CustomSelect containerRef={scrollRef} hide={false} selectedItem={functionData.motherstructure_args[keyToEdit].name} setSelectedItem={(value) => editArg('motherstructure_args', 'edit', keyToEdit, {...functionData.motherstructure_args[keyToEdit], name:value})}  options={selectableNames2} labelsMap={selectableDict2} />
                         }
                     </>)
 
                 }
                 
+                //INPUT TYPE DEPENDING ON THE ARG TYPE
+                const EditType = ({arg}:{arg:string}) => {
+                    if (Object.keys(functionData.variable_args).includes(arg)) {
+                        return (<> 
+                            <Text fontSize={'.8em'} mb='.5vh'  fontWeight={'medium'} color='gray.600'>{t('SelectVariable')}</Text>
+                            <CustomSelect containerRef={scrollRef} hide={false} selectedItem={functionData.variable_args[arg]} setSelectedItem={(value) => editArg('variable_args', 'edit', arg, value )} options={Array.from({length: flowVariables.length}, (v, i) => i)} labelsMap={variablesLabelsMap} /> 
+                        </>)
+                    }
+                    else if (Object.keys(functionData.motherstructure_args).includes(arg)){
+                        return (<>
+                            <Text fontSize={'.8em'} fontWeight={'medium'} color='gray.600'>{t('SelectField')}</Text>
+                            <MotherStructureArg selectedArg={functionData.motherstructure_args[arg]} keyToEdit={arg}/> 
+                         </>) 
+                    }
+                    else if (Object.keys(functionData.hardcoded_args).includes(arg)) return(<>  
+                        <Text fontSize={'.8em'} mb='.5vh' fontWeight={'medium'} color='gray.600'>{t('SelectHardcodedArg')}</Text>
+                        <EditText hideInput={false} value={functionData.hardcoded_args[arg]} setValue={(value:string) => editArg('hardcoded_args', 'edit', arg, value )}/>
+                    </>)
+                    else return <Text fontSize={'.8em'} color='red'>{t('SelectArgMessage')}</Text>
+                }
+
                 return (
                     <Box ref={scrollRef} overflowY={'scroll'} p='30px'>
-                        <Text mb='1vh'color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('FunctionToSelect')}</Text>
+                        <Text mb='.5vh' fontSize={'1.1em'} fontWeight={'medium'}>{t('FunctionToSelect')}</Text>
                         <CustomSelect containerRef={scrollRef} hide={false} selectedItem={functionData.uuid} setSelectedItem={(value) => setFunctionData((prev) => ({...prev, uuid:value}))} options={flowsFunctions} labelsMap={functionsNameMap.current} />
                         <Skeleton isLoaded={!waiting}> 
                             {functionData.uuid !== '' && <>
-                                <Text mt='2vh' mb='1vh'color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('VariableArgs')}</Text>
-                                {Object.keys(functionData.variable_args).map((keyToEdit, index) => (
-                                    <Flex mt='1vh' gap='20px' key={`variable-args-${index}`} alignItems={'center'}>
-                                        <Text  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'} flex='1' fontWeight={'medium'} >{keyToEdit}</Text>
-                                        <Box flex='2'> 
-                                            <CustomSelect containerRef={scrollRef} hide={false} selectedItem={functionData.variable_args[keyToEdit]} setSelectedItem={(value) => editArg('variable_args', 'edit', keyToEdit, value )} options={Array.from({length: flowVariables.length}, (v, i) => i)} labelsMap={variablesLabelsMap} />
-                                        </Box>
-                                        <IconButton bg='transaprent' border='none' size='sm' _hover={{bg:'gray.200'}} icon={<RxCross2/>} aria-label='delete-arg-1' onClick={() => editArg('variable_args', 'remove', keyToEdit)}/>
-                                    </Flex>
-                                    
-                                ))}  
-                                <AddArgButton argType={'variable_args'}/>
+                                <Text mt='3vh' fontSize={'1.1em'} fontWeight={'medium'}>{t('VariableArgs')}</Text>
+                                <Text mb='2vh' color='gray.600' fontSize={'.8em'}>{t('VariableArgsDes')}</Text>
 
-                                <Text mt='2vh' mb='1vh'color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('StructureArgs')}</Text>
-                                {Object.keys(functionData?.motherstructure_args || []).map((keyToEdit, index) => (
-                                    <Box  mt='1vh'  key={`motherstructure-args-${index}`} bg='white' borderRadius={'.5em'}  p='15px' boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.15)'}> 
-                                        <Flex justifyContent={'space-between'} alignItems={'center'}> 
-                                            <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'} flex='1' fontWeight={'medium'} >{keyToEdit}</Text>
-                                            <IconButton bg='transaprent' border='none' size='sm' _hover={{bg:'gray.200'}} icon={<RxCross2/>} aria-label='delete-arg-2' onClick={() => editArg('motherstructure_args', 'remove', keyToEdit)}/>
-                                        </Flex>
-                                        <MotherStructureArg selectedArg={functionData.motherstructure_args[keyToEdit]} keyToEdit={keyToEdit}/>
-                                    </Box>
-                                ))}  
-                                <AddArgButton argType={'motherstructure_args'}/>
+                                {argsToSelect.length === 0 ? <Text mt='1vh' fontSize={'.9em'}>{t('NoArgs')}</Text>:<>
+                                    {argsToSelect.map((arg, index) => (
+                                    <Box shadow='md' mt='3vh' bg='gray.50' borderColor={'gray.200'} borderWidth={'1px'} p='15px' borderRadius={'.5rem'} key={`arg-${index}`}>
+                                        <Text fontWeight={'medium'}>{arg}</Text>
+                                        <Flex gap='20px' mt='1vh' mb='1.5vh'>
+                                            <Button leftIcon={<TbMathFunction/>} bg={Object.keys(functionData.variable_args).includes(arg)?'blackAlpha.800':'gray.200'} color={Object.keys(functionData.variable_args).includes(arg)?'white':'black'} size='sm' _hover={{bg:Object.keys(functionData.variable_args).includes(arg)?'blackAlpha.800':'gray.300'}} onClick={() => editArg('variable_args', 'change', arg)}>{t('VariableArg')}</Button>
+                                            <Button leftIcon={<TbListDetails/>} bg={Object.keys(functionData.motherstructure_args).includes(arg)?'blackAlpha.800':'gray.200'} color={Object.keys(functionData.motherstructure_args).includes(arg)?'white':'black'} size='sm' _hover={{bg:Object.keys(functionData.motherstructure_args).includes(arg)?'blackAlpha.800':'gray.300'}} onClick={() => editArg('motherstructure_args', 'change', arg)}>{t('StrucureArg')}</Button>
+                                            <Button leftIcon={<TbBraces/>} bg={Object.keys(functionData.hardcoded_args).includes(arg)?'blackAlpha.800':'gray.200'} color={Object.keys(functionData.hardcoded_args).includes(arg)?'white':'black'} size='sm' _hover={{bg:Object.keys(functionData.hardcoded_args).includes(arg)?'blackAlpha.800':'gray.300'}} onClick={() => editArg('hardcoded_args', 'change', arg)}>{t('HarcodedArg')}</Button>           
+                                        </Flex> 
+                                        <EditType arg={arg}/>
+                                    </Box>))}
+                                </>}
 
-                                <Text  mt='2vh' mb='1vh'color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('HarcodedArgs')}</Text>
-                                {Object.keys(functionData?.hardcoded_args || []).map((keyToEdit, index) => (
-                                    <Flex  mt='1vh'  gap='20px' key={`hardcoded-args-${index}`} alignItems={'center'}>
-                                        <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'} flex='1' fontWeight={'medium'} >{keyToEdit}</Text>
-                                        <Box flex='2'> 
-                                            <EditText hideInput={false} value={functionData.hardcoded_args[keyToEdit]} setValue={(value:string) => editArg('hardcoded_args', 'edit', keyToEdit, value )}/>
-                                        </Box>
-                                        <IconButton bg='transaprent' border='none' size='sm' _hover={{bg:'gray.200'}} icon={<RxCross2/>} aria-label='delete-arg-3' onClick={() => editArg('hardcoded_args', 'remove', keyToEdit)}/>
-                                    </Flex>
-                                ))}    
-                                <AddArgButton argType={'hardcoded_args'}/>
-
-                                <Text  mt='2vh' mb='1vh'color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('OutputArgs')}</Text>
-                                {Object.keys(functionData?.output_to_variables || []).map((keyToEdit, index) => (
-                                    <Flex  mt='1vh'  gap='20px' key={`output-args-${index}`} alignItems={'center'}>
-                                        <Text  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'} flex='1' fontWeight={'medium'} >{keyToEdit}</Text>
-                                        <Box flex='2'> 
-                                            <CustomSelect containerRef={scrollRef} hide={false} selectedItem={functionData.output_to_variables[keyToEdit]} setSelectedItem={(value) => editArg('output_to_variables', 'edit', keyToEdit, value )} options={Array.from({length: flowVariables.length}, (v, i) => i)} labelsMap={variablesLabelsMap} />
-                                        </Box>
-                                        <IconButton bg='transaprent' border='none' size='sm' _hover={{bg:'gray.200'}} icon={<RxCross2/>} aria-label='delete-output' onClick={() => editArg('output_to_variables', 'remove', keyToEdit)}/>
-                                    </Flex>
-                                ))}    
-                                <AddArgButton argType={'output_to_variables'}/>
-                            </>}
+                                <Flex mt='3vh' mb='3vh' justifyContent={'center'}>
+                                    <Icon as={FaArrowDown} color='blackAlpha.800' boxSize={'30px'}/>
+                                </Flex>
+                                <Text  fontSize={'1.1em'} fontWeight={'medium'}>{t('VariableOutputs')}</Text>
+                                <Text color='gray.600' fontSize={'.8em'}>{t('VariableOutputsDes')}</Text>
+                                {outputsToSelect.length === 0 ? <Text mt='1vh' fontSize={'.9em'}>{t('NoOutputs')}</Text>:<>
+                                    {outputsToSelect.map((arg, index) => (
+                                        <Box shadow='md' mt='3vh' bg='gray.50' borderColor={'gray.200'} borderWidth={'1px'} p='15px' borderRadius={'.5rem'} key={`output-${index}`}>
+                                            <Text mb='.5vh' fontWeight={'medium'}>{arg}</Text>
+                                            <Text fontSize={'.8em'} mt='1vh' mb='.5vh' fontWeight={'medium'} color='gray.600'>{t('SelectVariable')}</Text>
+                                            <CustomSelect containerRef={scrollRef} hide={false} selectedItem={functionData.output_to_variables[arg]} setSelectedItem={(value) => editArg('output_to_variables', 'change', arg, value )} options={Array.from({length: flowVariables.length}, (v, i) => i)} labelsMap={variablesLabelsMap} /> 
+                                        </Box>))}
+                                    </>}
+                                </>}
                         </Skeleton>
                     </Box>)
                  
@@ -1370,18 +1358,18 @@ const Flow = () => {
                     {showMoreInfo &&  
                     <motion.div initial={{height:0}}  animate={{height:'auto'}}  exit={{height:0 }}  transition={{duration:'.3', ease:cubicBezier(0.0, 0.9, 0.9, 1.0)}}  style={{overflow:'scroll', maxHeight:`${window.innerHeight - (nameInputRef.current?.getBoundingClientRect().bottom || 0) - window.innerWidth * 0.02}px`}}> 
                         <Box p='15px'>
-                            <Text fontSize={'.9em'} color='gray.600' fontWeight={'medium'}>{t('Description')}</Text>
+                            <Text fontWeight={'medium'}>{t('Description')}</Text>
                             <Textarea mt='5px'  maxLength={2000} height={'auto'} placeholder={`${t('Description')}...`} maxH='300px' value={flowDescription} onChange={(e) => setFlowDescription(e.target.value)} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
-                            <Text mt='2vh' fontSize={'.9em'} color='gray.600' fontWeight={'medium'}>{t('Variables')}</Text>
-
+                            
+                            <Text mt='2vh'fontWeight={'medium'}>{t('Variables')}</Text>
                             {flowVariables.length === 0 ? <Text mt='1vh' fontSize={'.9em'}>{t('NoVariables')}</Text>:
                                 flowVariables.map((variable, index) => (
                                 <VariableBox key={`variable-${index}`} variable={variable} index={index} setFlowVariables={setFlowVariables} setVariableToEdit={setVariableToEdit}/>
                             ))} 
                             <Flex flexDir={'row-reverse'} mt='1vh'> 
-                                <Button size='sm' leftIcon={<FaPlus/>} mt='1vh'  onClick={() => setVariableToEdit(-1)}>{t('CreateVariable')}</Button>
+                                <Button size='sm' leftIcon={<FaPlus/>}  mt='1vh'  onClick={() => setVariableToEdit(-1)}>{t('CreateVariable')}</Button>
                             </Flex>
-                            <Text mt='2vh' fontSize={'.9em'} color='gray.600' fontWeight={'medium'}>{t('Interpreter_Config')}</Text>
+                            <Text mt='2vh' fontWeight={'medium'}>{t('Interpreter_Config')}</Text>
                             <Flex gap='30px'>
                                 <Box flex={1} mt='.5vh'>
                                     <Text mb='5px' fontSize={'.8em'} fontWeight={'medium'}>{t('Data_Extraction_Model')}</Text>
@@ -1434,7 +1422,7 @@ const VariableBox = ({ variable, index, setFlowVariables, setVariableToEdit }:{v
     const [isHovering, setIsHovering] = useState<boolean>(false)
 
     return (
-        <Box position={'relative'} cursor={'pointer'} mt='1vh'  p='10px' boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} borderRadius={'.5em'} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} onClick={() => setVariableToEdit({data:variable, index})}>
+        <Box position={'relative'} cursor={'pointer'} mt={index === 0?'.5vh':'1.5vh'} p='15px' borderRadius={'.5rem'} shadow='md' bg='gray.50' borderColor={'gray.200'} borderWidth={'1px'}   onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} onClick={() => setVariableToEdit({data:variable, index})}>
             <Flex  gap='5px' alignItems={'center'} >
                 <Text fontWeight={'medium'}  fontSize={'1em'} >{variable.name} <span style={{fontSize:'.8em'}}>({variablesMap[variable.type][0]})</span></Text>
                 -
@@ -1445,16 +1433,14 @@ const VariableBox = ({ variable, index, setFlowVariables, setVariableToEdit }:{v
             </Flex>
             
             <Text flex={1} mt='.5vh' fontSize={'.8em'} color='gray.600'>{variable.description === ''?t('NoDescription'):variable.description }</Text>
-
-         
             <Flex  mt='.5vh' gap='5px' justifyContent={'space-between'}>
                 <Box flex='1'>
-                    <Text fontSize={'.8em'} color={'gray.600'} fontWeight={'medium'} flex={1}>{t('Examples')}</Text>
-                    <Text fontSize={'.8em'} flex={1}>{variable.examples.length === 0?t('NoDefinedExamples'):variable.examples.map((example, index) => (<span key={`example-${index}`}>{t(example)} {index < variable.examples.length - 1 && ' - '}</span>))}</Text>
+                    <Text fontSize={'.8em'}  fontWeight={'medium'} flex={1}>{t('Examples')}</Text>
+                    <Text color='gray.600' fontSize={'.8em'} flex={1}>{variable.examples.length === 0?t('NoDefinedExamples'):variable.examples.map((example, index) => (<span key={`example-${index}`}>{t(example)} {index < variable.examples.length - 1 && ' - '}</span>))}</Text>
                 </Box>
                 <Box flex='1'>
-                    <Text fontSize={'.8em'} color={'gray.600'} fontWeight={'medium'} flex={1}>{t('Values')}</Text>
-                    <Text fontSize={'.8em'} flex={1}>{variable.values.length === 0?t('NoValues'):variable.values.map((value, index) => (<span key={`value-${index}`}>{t(value)} {index < variable.examples.length - 1 && ' - '}</span>))}</Text>
+                    <Text fontSize={'.8em'}  fontWeight={'medium'} flex={1}>{t('Values')}</Text>
+                    <Text color='gray.600' fontSize={'.8em'} flex={1}>{variable.values.length === 0?t('NoValues'):variable.values.map((value, index) => (<span key={`value-${index}`}>{t(value)} {index < variable.examples.length - 1 && ' - '}</span>))}</Text>
                 </Box>
             </Flex>
             {(isHovering) && 
@@ -1494,25 +1480,23 @@ const CreateVariable = ({variableData, setFlowVariables, setVariableToEdit}:{var
       
 
     return (<> 
-        <Box p='15px' minW={'600px'}>
-            <Text fontSize={'.9em'} fontWeight={'medium'}>{t('Name')}</Text>
-            <EditText  maxLength={70} hideInput={false}  value={currentVariable.name} placeholder={`${t('Name')}...`} setValue={(value) => setCurrentVariable((prev) => ({...prev, name:value})) }/>
-            <Text fontSize={'.9em'} mt='1vh' fontWeight={'medium'}>{t('Description')}</Text>
-            <Textarea maxLength={2000} height={'auto'} placeholder={`${t('Description')}...`} maxH='300px' value={currentVariable.description} onChange={(e) => setCurrentVariable((prev) => ({...prev, description:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
-            <Text fontSize={'.9em'} mt='1vh' fontWeight={'medium'}>{t('Type')}</Text>
-            <CustomSelect hide={false} selectedItem={currentVariable.type} setSelectedItem={(value) => setCurrentVariable((prev) => ({...prev, type:value as DataTypes, examples:[], values:[]}))} options={Object.keys(variablesMap)} labelsMap={variablesMap}/>
-            <Text fontSize={'.9em'} mt='2vh' fontWeight={'medium'}>{t('AskConfirmation')}</Text>
-            <Flex gap='10px' mt='5px'>
-                <Button bg={currentVariable.ask_for_confirmation?'brand.gradient_blue':'gray.200'} color={currentVariable.ask_for_confirmation?'white':'black'} size='sm' _hover={{bg:currentVariable.ask_for_confirmation?'brand.gradient_blue_hover':'gray.300'}} onClick={() => setCurrentVariable((prev) => ({...prev, ask_for_confirmation:true}))}>{t('Yes')}</Button>
-                <Button bg={!currentVariable.ask_for_confirmation?'brand.gradient_blue':'gray.200'} color={!currentVariable.ask_for_confirmation?'white':'black'} size='sm' _hover={{bg:!currentVariable.ask_for_confirmation?'brand.gradient_blue_hover':'gray.300'}} onClick={() => setCurrentVariable((prev) => ({...prev, ask_for_confirmation:false}))}>{t('No')}</Button>
-            </Flex> 
+        <Box p='25px' minW={'600px'}>
 
-            <Text fontSize={'.9em'} mt='1vh' fontWeight={'medium'}>{t('Examples')}</Text>
-            <Flex flexWrap="wrap" gap='5px' alignItems="center" >
+            <Text  fontWeight={'medium'} mb='.5vh'>{t('Name')}</Text>
+            <EditText  maxLength={70} hideInput={false}  value={currentVariable.name} placeholder={`${t('Name')}...`} setValue={(value) => setCurrentVariable((prev) => ({...prev, name:value})) }/>
+            
+            <Text mb='.5vh' mt='1.5vh' fontWeight={'medium'}>{t('Description')}</Text>
+            <Textarea maxLength={2000} height={'auto'} placeholder={`${t('Description')}...`} maxH='300px' value={currentVariable.description} onChange={(e) => setCurrentVariable((prev) => ({...prev, description:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
+            
+            <Text mb='.5vh' mt='1.5vh' fontWeight={'medium'}>{t('Type')}</Text>
+            <CustomSelect hide={false} selectedItem={currentVariable.type} setSelectedItem={(value) => setCurrentVariable((prev) => ({...prev, type:value as DataTypes, examples:[], values:[]}))} options={Object.keys(variablesMap)} labelsMap={variablesMap}/>
+            
+            <Text mt='1.5vh' fontWeight={'medium'}>{t('Examples')}</Text>
+            <Flex flexWrap="wrap" gap='5px' mt='.5vh' alignItems="center" >
                 {currentVariable.examples.length === 0?<Text fontSize={'.9em'}> {t('NoExamples')}</Text>:currentVariable.examples.map((variable, index) => (
-                    <Flex key={`example-${index}`} borderRadius=".4rem" p='4px' fontSize={'.75em'} alignItems={'center'} m="1"bg='gray.200' gap='5px'>
+                    <Flex key={`example-${index}`} borderRadius=".4rem" p='5px' fontSize={'.75em'} alignItems={'center'} m="1" bg='gray.100' shadow={'sm'} borderColor={'gray.300'} borderWidth={'1px'} gap='5px'>
                         <Text>{t(variable)}</Text>
-                        <Icon as={RxCross2} onClick={() => editList('examples', 'delete', index)} cursor={'pointer'} />
+                        <Icon color='red' as={RxCross2} onClick={() => editList('examples', 'delete', index)} cursor={'pointer'} />
                     </Flex>
                 ))}
             </Flex>
@@ -1523,25 +1507,30 @@ const CreateVariable = ({variableData, setFlowVariables, setVariableToEdit}:{var
                 <Button isDisabled={currentExample === ''} leftIcon={<FaPlus/>} flex='1'  size='sm' onClick={() => editList('examples', 'add')}>{t('AddExample')}</Button>
             </Flex>
 
-            <Text fontSize={'.9em'} mt='1vh' fontWeight={'medium'}>{t('Values')}</Text>
-            <Flex flexWrap="wrap" gap='5px' alignItems="center" >
+            <Text  mt='1.5vh' fontWeight={'medium'}>{t('Values')}</Text>
+            <Flex flexWrap="wrap" gap='5px' mt='.5vh' alignItems="center" >
                 {currentVariable.values.length === 0?<Text fontSize={'.9em'}>{t('NoValues')}</Text>:currentVariable.values.map((variable, index) => (
-                    <Flex key={`value-${index}`} borderRadius=".4rem" p='4px' fontSize={'.75em'} alignItems={'center'} m="1"bg='gray.200' gap='5px'>
+                    <Flex key={`vallue-${index}`} borderRadius=".4rem" p='5px' fontSize={'.75em'} alignItems={'center'} m="1" bg='gray.100' shadow={'sm'} borderColor={'gray.300'} borderWidth={'1px'} gap='5px'>
                         <Text>{t(variable)}</Text>
-                        <Icon as={RxCross2} onClick={() => editList('values', 'delete', index)} cursor={'pointer'} />
-                    </Flex>
+                            <Icon as={RxCross2} onClick={() => editList('values', 'delete', index)} cursor={'pointer'} />
+                        </Flex>
                 ))}
             </Flex>            <Flex mt='1vh' gap='20px' alignItems={'center'}> 
                 <Box width={'70%'}> 
                     <InputType inputType={currentVariable.type} value={currentValue} setValue={(value) => setCurrentValue(value)}/>
                 </Box>
                 <Button  isDisabled={currentValue === ''}leftIcon={<FaPlus/>}  flex='1' size='sm' onClick={() => editList('values', 'add')}>{t('AddValue')}</Button>
-            </Flex>        
+            </Flex>      
+
+            <Flex mt='3vh' gap='10px'alignItems={'center'}>
+                <Switch isChecked={currentVariable.ask_for_confirmation} onChange={(e) => setCurrentVariable((prev) => ({...prev, ask_for_confirmation:e.target.checked}))}/>
+                <Text fontWeight={'medium'}>{t('AskConfirmation')}</Text>  
+            </Flex>  
         </Box>
  
         <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-            <Button  isDisabled={currentVariable.name === '' || (variableData !== -1 && JSON.stringify(variableData.data) === JSON.stringify(currentVariable))} size='sm' color='white' bg='brand.gradient_blue' _hover={{bg:'brand.gradient_blue_hover'}} onClick={sendVariable}>{variableData === -1 ? t('CreateVariable'): t('SaveVariable')}</Button>
-            <Button  size='sm' onClick={() => setVariableToEdit(null)}>{t('Cancel')}</Button>
+            <Button  isDisabled={currentVariable.name === '' || (variableData !== -1 && JSON.stringify(variableData.data) === JSON.stringify(currentVariable))} size='sm' color='white' bg='blackAlpha.800' _hover={{bg:'blackAlpha.900'}} onClick={sendVariable}>{variableData === -1 ? t('CreateVariable'): t('SaveVariable')}</Button>
+            <Button  size='sm' color='red' onClick={() => setVariableToEdit(null)}>{t('Cancel')}</Button>
         </Flex>
         
     </>)

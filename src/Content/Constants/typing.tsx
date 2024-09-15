@@ -296,7 +296,7 @@ export type FieldAction = {
     motherstructure:'ticket' | 'client' | 'contact_business'
     is_customizable:boolean
     name:string
-    op:string
+    operation:string
     value:any
 }
 export type FunctionType = {
@@ -308,6 +308,7 @@ export type FunctionType = {
     next_node_index:string | null
     output_to_variables:{[key:string]:number}
 }
+
 
 //MESSAGES
 export type MessagesProps = {

@@ -80,7 +80,6 @@ const AlertLevel = ({t,  rating }:{t:any, rating:number}) => {
     )
 } 
 
-
 //GET THE CELL STYLE
 const CellStyle = ({column, element}:{column:string, element:any}) => {
 

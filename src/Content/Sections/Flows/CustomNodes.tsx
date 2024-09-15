@@ -621,33 +621,42 @@ export const FunctionNode = ({id, data}:{id:string, data:FunctionNodeData}) => {
               </Flex>
               <Text mt='20px' fontSize='.7em' color='gray.600' fontWeight={'medium'} >{t('FunctionToRun')}:</Text>
               <Text fontSize={data.uuid === ''?'.8em':'.9em'} fontWeight={data.uuid === ''?'normal':'medium'}>{data.uuid === ''?t('NoFunction'):data.functions.functionsDict[data.uuid]}</Text>
-              <Button leftIcon={<FaRegEdit/>} width={'100%'} size='xs' mt='10px' onClick={() => {if (data.uuid !== '') {navigate(`/flows-functions/functions/${data.uuid}/${data.functions.flowId}`)}}}>{data.uuid === ''?t('SelectFunction'):t('EditFunction')}</Button>
+              <Button leftIcon={<FaRegEdit/>} width={'100%'} size='xs' mt='10px' onClick={() => {if (data.uuid !== '') navigate(`/flows-functions/functions/${data.uuid}/${data.functions.flowId}`); else data.functions.setShowNodesAction({nodeId:id, actionType:'function', actionData:{}})}}>{data.uuid === ''?t('SelectFunction'):t('EditFunction')}</Button>
               
               {data.uuid !== '' && <>
-                <Text  mt='10px' color='gray.600' fontSize={'.7em'} fontWeight={'medium'}>{t('VariableArgs')}</Text>
-                {(data.variable_args) && Object.keys(data.variable_args).map((keyToEdit, index) => (
-                    <Fragment key={`variable-arg-${index}`}> 
-                        <Text fontSize={'.7em'}  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'} flex='1' fontWeight={'medium'} >{keyToEdit}</Text>
-                    </Fragment>
-                ))}  
-                <Text mt='10px' color='gray.600' fontSize={'.7em'} fontWeight={'medium'}>{t('StructureArgs')}</Text>
-                {(data.motherstructure_args) && Object.keys(data.motherstructure_args).map((keyToEdit, index) => (
+   
+                {(data.variable_args && Object.keys(data.variable_args).length > 0) && <>
+                  <Text  mt='10px' color='gray.600' fontSize={'.7em'} fontWeight={'medium'}>{t('VariableArgs')}</Text>
+                  {Object.keys(data.variable_args).map((keyToEdit, index) => (
+                      <Fragment key={`variable-arg-${index}`}> 
+                          <Text fontSize={'.7em'}  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'} flex='1' fontWeight={'medium'} >{keyToEdit}</Text>
+                      </Fragment>
+                  ))}  
+                </>}
+                {(data.motherstructure_args && Object.keys(data.motherstructure_args).length > 0) && <>
+                  <Text mt='10px' color='gray.600' fontSize={'.7em'} fontWeight={'medium'}>{t('StructureArgs')}</Text>
+                  {Object.keys(data.motherstructure_args).map((keyToEdit, index) => (
                     <Fragment key={`motherstructure-arg-${index}`}> 
                         <Text fontSize={'.7em'}  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'} flex='1' fontWeight={'medium'} >{keyToEdit}</Text>
                     </Fragment>
-                ))}   
-                <Text  mt='10px'  color='gray.600' fontSize={'.7em'} fontWeight={'medium'}>{t('HarcodedArgs')}</Text>
-                {(data.hardcoded_args) && Object.keys(data.hardcoded_args).map((keyToEdit, index) => (
-                    <Fragment key={`harcoded-arg-${index}`}> 
-                        <Text fontSize={'.7em'}  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'} flex='1' fontWeight={'medium'} >{keyToEdit}</Text>
-                    </Fragment>
                 ))}  
-                <Text  mt='10px'  color='gray.600' fontSize={'.7em'} fontWeight={'medium'}>{t('OutputArgs')}</Text>
-                {(data.output_to_variables) && Object.keys(data.output_to_variables).map((keyToEdit, index) => (
-                    <Fragment key={`output-arg-${index}`}> 
-                        <Text fontSize={'.7em'}  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'} flex='1' fontWeight={'medium'} >{keyToEdit}</Text>
-                    </Fragment>
-                ))} 
+                </>} 
+                {(data.hardcoded_args && Object.keys(data.hardcoded_args).length > 0) && <>
+                      <Text  mt='10px'  color='gray.600' fontSize={'.7em'} fontWeight={'medium'}>{t('HarcodedArgs')}</Text>
+                      {Object.keys(data.hardcoded_args).map((keyToEdit, index) => (
+                      <Fragment key={`harcoded-arg-${index}`}> 
+                          <Text fontSize={'.7em'}  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'} flex='1' fontWeight={'medium'} >{keyToEdit}</Text>
+                      </Fragment>
+                  ))}  
+                </>}
+                {(data.output_to_variables && Object.keys(data.output_to_variables).length > 0) && <>
+                    <Text  mt='10px'  color='gray.600' fontSize={'.7em'} fontWeight={'medium'}>{t('OutputArgs')}</Text>
+                      {Object.keys(data.output_to_variables).map((keyToEdit, index) => (
+                      <Fragment key={`output-arg-${index}`}> 
+                          <Text fontSize={'.7em'}  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'} flex='1' fontWeight={'medium'} >{keyToEdit}</Text>
+                      </Fragment>
+                  ))} 
+                </>}
                 </>}
                 {data.uuid !== '' && <Button leftIcon={<FaRegEdit/>} width={'100%'} size='xs' mt='10px' onClick={() => data.functions.setShowNodesAction({nodeId:id, actionType:'function', actionData:{}})}>{t('EditOuputVariables')}</Button>}
 
@@ -741,7 +750,7 @@ export const MotherStructureUpdateNode = ({id, data}:{id:string, data:MotherStru
       <Box position='relative' onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}> 
         <Box cursor={'pointer'}  mt='15px' boxShadow={'0 0 5px 1px rgba(0, 0, 0, 0.15)'}p='10px' borderRadius={'.3rem'} borderTopColor={'black'} borderTopWidth='3px' key={`variable-${index}`} onClick={() => data.functions.setShowNodesAction({nodeId:id, actionType:'edit_fields', actionData:{index}})}>
           <Text fontSize='.7em' ><span style={{fontWeight:500}}>{t('Structure')}:</span> {t(action.motherstructure)}</Text>
-          <Text fontSize='.8em'> {t(action.op) + ' ' + t(action.name).toLocaleLowerCase() + ' ' + t(`${action.op}_2`) + getActionValue(action.name, action.value)}</Text>
+          <Text fontSize='.8em'> {t(action.operation) + ' ' + t(action.name).toLocaleLowerCase() + ' ' + t(`${action.operation}_2`) + getActionValue(action.name, action.value)}</Text>
         </Box>
         {(isHovering) && 
           <Flex alignItems={'center'} position={'absolute'} borderRadius={'full'} p='3px' top={'-7px'} zIndex={100} bg='white' boxShadow={'0 0 5px 1px rgba(0, 0, 0, 0.15)'} right={'-7px'} justifyContent={'center'} cursor={'pointer'} onClick={() => data.functions.editFieldAction(id, index, 'remove')}>
@@ -775,7 +784,7 @@ export const MotherStructureUpdateNode = ({id, data}:{id:string, data:MotherStru
 }
 
 //BOX CONTAINIG ALL THE NDOE TYPES
-const NodesBox = ({disabledNodes, sourceData, addNewNode, clickFunc, getAvailableNodes }:{disabledNodes:number[], sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}, addNewNode:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number, }, targetType:nodeTypesDefinition | '', nodeId?:string) => void, clickFunc?:() => void, getAvailableNodes?:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}) => {id:string, index:number}[]}) => {
+const NodesBox = ({disabledNodes, sourceData, addNewNode, clickFunc, getAvailableNodes }:{disabledNodes:number[], sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}, addNewNode:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number, }, targetType:nodeTypesDefinition | '', nodeId?:string, nodeIndex?:number) => void, clickFunc?:() => void, getAvailableNodes?:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}) => {id:string, index:number}[]}) => {
 
   //TRANSLATION
   const { t } = useTranslation('flows')
@@ -803,7 +812,7 @@ const NodesBox = ({disabledNodes, sourceData, addNewNode, clickFunc, getAvailabl
             {availableCustomNodes.length > 0 && <Text fontWeight={'medium'} fontSize={'.8em'} >{t('CreatedNodes')}</Text>}
             {availableCustomNodes.map((node, index) => (
               <Fragment key={`node-custom-${index}`}> 
-                <Flex _hover={{bg:'brand.hover_gray'}} borderRadius={'.5rem'} p='5px' cursor={'pointer'}  alignItems={'center'} gap='10px' onClick={() => {addNewNode(sourceData, '', node.id);if (clickFunc) clickFunc()}}>
+                <Flex _hover={{bg:'brand.hover_gray'}} borderRadius={'.5rem'} p='5px' cursor={'pointer'}  alignItems={'center'} gap='10px' onClick={() => {addNewNode(sourceData, '', node.id, node.index);if (clickFunc) clickFunc()}}>
                     <Flex borderRadius={'.5rem'} bg={'gray.500'} color='white' justifyContent={'center'} alignItems={'center'} p={'6px'}>
                         <Icon boxSize={'12px'} as={FaShareNodes}/>
                     </Flex>
@@ -828,7 +837,7 @@ const NodesBox = ({disabledNodes, sourceData, addNewNode, clickFunc, getAvailabl
 }
 
 //HEADER COMPONENT (SHARED FOR ALL NODES)
-const NodeHeader = ({nodeId, nodeIndex, nodeType, isExpanded, setIsExpanded, deleteNode, getAvailableNodes, addNewNode, next_node_index}:{nodeId:string, nodeIndex:number, nodeType:nodeTypesDefinition, isExpanded:boolean, setIsExpanded:Dispatch<SetStateAction<boolean>>, deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean) => void,getAvailableNodes?:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}) => {id:string, index:number}[], addNewNode?:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}, targetType:nodeTypesDefinition | '', nodeId?:string) => void, next_node_index?:number | null}) => {
+const NodeHeader = ({nodeId, nodeIndex, nodeType, isExpanded, setIsExpanded, deleteNode, getAvailableNodes, addNewNode, next_node_index}:{nodeId:string, nodeIndex:number, nodeType:nodeTypesDefinition, isExpanded:boolean, setIsExpanded:Dispatch<SetStateAction<boolean>>, deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean) => void,getAvailableNodes?:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}) => {id:string, index:number}[], addNewNode?:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}, targetType:nodeTypesDefinition | '', nodeId?:string, nodeIndex?:number) => void, next_node_index?:number | null}) => {
 
   let disabledNodes:number[]
   if (nodeType === 'brancher' || nodeType === 'sender' || nodeType === 'reset' || nodeType === 'motherstructure_updates') disabledNodes = [8]
@@ -988,14 +997,14 @@ const MessagesComponent = ({id, messages, setShowNodesAction, editMessage }:{id:
     const messagesTypeDict = {'generative':t('GeneratedByMatilda'), 'preespecified':t('Literal')}
     return(
       <Box position='relative' onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}> 
-        <Box cursor={'pointer'}  mt='15px' boxShadow={'0 0 5px 1px rgba(0, 0, 0, 0.15)'}p='10px' borderRadius={'.3rem'} borderTopColor={'black'} borderTopWidth='3px' key={`variable-${index}`} onClick={() => setShowNodesAction({nodeId:id, actionType:'message', actionData:{index}})}>
+        <Box cursor={'pointer'}  mt={index === 0?'7px':'12px'} boxShadow={'0 0 5px 1px rgba(0, 0, 0, 0.15)' }p='10px' borderRadius={'.3rem'} borderTopColor={'black'} borderTopWidth='3px' key={`variable-${index}`} onClick={() => setShowNodesAction({nodeId:id, actionType:'message', actionData:{index}})}>
           
-           {message.type === 'generative' ?<> 
+          {message.type === 'generative' ?<> 
           <Text fontSize={'.7em '} style={{overflow: 'hidden',display: '-webkit-box',WebkitLineClamp: 3, WebkitBoxOrient: 'vertical'}} >{message.generation_instructions === ''?t('NoMessage'):message.generation_instructions}</Text>
           </>:
           <Box overflowY={'scroll'}>
             {Object.keys(message?.preespecified_messages || []).map((lng, index) => (
-              <Flex mt='5px' key={`message-${index}-${lng}`} gap='5px' alignItems={'center'}>
+              <Flex mt={'5px'} key={`message-${index}-${lng}`} gap='5px' alignItems={'center'}>
                 <Text fontSize={'.8em'}>{languagesFlags[lng][1]}</Text>
                 <Text textOverflow={'ellipsis'} overflow={'hidden'} whiteSpace={'nowrap'} fontSize={'.5em'}>{message.preespecified_messages[lng]}</Text>
               </Flex>
@@ -1013,7 +1022,7 @@ const MessagesComponent = ({id, messages, setShowNodesAction, editMessage }:{id:
   } 
 
   return (
-    <Box mt='10px'>
+    <Box>
         {messages.map((message, index) => (
           <EditorComponent message={message} key={`message-${index}`} index={index}/>
         ))}

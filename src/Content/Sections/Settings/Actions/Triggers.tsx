@@ -144,8 +144,9 @@ const EditTrigger = ({triggerData, selectedIndex, setSelectedIndex, allTriggers,
         else {
             const updatedAutomations = [...allTriggers]
             updatedAutomations[selectedIndex] = currentAutomationData
-            return newAutomations = updatedAutomations
+            newAutomations = updatedAutomations
         }
+
         const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/triggers`, requestForm:newAutomations, method:'put', setWaiting:setWaitingSend, auth, toastMessages:{works:selectedIndex === -1?t('CorrectCreatedTrigger'):t('CorrectUpdatedTrigger'), failed: selectedIndex === -1?t('FailedCreatedTrigger'):t('FailedUpdatedTrigger')}})
         if (response?.status === 200) {
             setSelectedIndex(-2)
