@@ -420,7 +420,7 @@ function TicketsTable({socket}:{socket:any}) {
 
         {showConfirmDelete && 
         <ConfirmBox setShowBox={setShowConfirmDelete}> 
-               <ConfirmDeleteBox/>
+            <ConfirmDeleteBox/>
         </ConfirmBox>}
         
         </>)

@@ -1,4 +1,5 @@
 {
+    "Settings":"Ajustes",
     "Main":"Inicio",
     "Organization":"Cuenta",
     "Organization_Exp":"Gestiona el personal y los datos de tu organización.",
@@ -6,6 +7,8 @@
     "DataDes":"Conoce los detalles y estadísticas de tu organización.",
     "CreatedAt":"Creada el {{date}}",
     "Active":"Activa",
+    "ActiveM":"Activo",
+    "InactiveM":"Inactivo",
     "Inactive":"Inactiva",
     "PlanLimitations":"Limitaciones del plan",
     "ActiveUsers_one":"Hay {{count}} usuario activo",
@@ -23,13 +26,15 @@
     "FileStoreLimit":"{{size}} de {{max}}",
 
     "Payments":"Facturación",
+    "PaymentsDes":"Administra tu suscripción y detalles de pago.",
+
     
     "Users":"Usuarios",
     "UsersTable":"Tabla de ususarios",
-    "UsersDes":"Administra la información de tus usuarios.",
+    "UsersDes":"Invita a usuarios a la organización y administra a los ya pertenecientes.",
     "UsersCount_one":"{{count}} usuario",
     "UsersCount_other":"{{count}} usuarios",
-    "CreateUser":"Crear nuevo usuario",
+    "CreateUser":"Crear usuario",
     "Surname":"Apellidos",
     "Status":"Estado",
     "InvitationCode":"Código de invitación",
@@ -38,11 +43,13 @@
     "Admin":"Administrador",
     "Basic":"Básico",
     "DeleteUser":"Eliminar usuario",
-    "DeleteUserMessage":"¿Estás seguro que deseas eliminar al siguiente usuario de la organización?",
+    "DeleteUserMessage":"¿Estás seguro que deseas eliminar a/{ {{user}} }/ de la organización?",
     "Delete":"Eliminar",
     "CopyCode":"Copiar código",
 
     "Groups":"Grupos",
+    "GroupsDes":"Crea grupos de usuarios para mejorar la organización y eficiencia.",
+
     "GroupsTable":"Tabla de grupos",
     "GroupsDescription":"Organiza a los integrantes del equipo en función de su experiencia, ubicación, idioma u otros criterios para proporcionar un soporte más específico.",
     "CreateGroup":"Crear grupo",
@@ -65,10 +72,10 @@
 
    
     "User":"Usuario",
-    "User_Exp":"Edita tu perfil y configura tus propias vistas y atajos.",
+    "UserDes":"Edita tu perfil y configura tus propias vistas y atajos.",
  
     "Profile":"Perfil",
-    "Profile_Exp":"",
+    "ProfileDes":"Administra tu propio perfil dentro de la organización.",
     "ProfilePicture":"Foto de perfil",
     "ProfilePicture_Exp":"PNG, JPEG de menos de 10MB",
     "AddNewPicture":"Añadir nueva imagen",
@@ -102,14 +109,30 @@
     "FailedView":"Hubo un error al actualizar la vista",
 
     "Shortcuts":"Atajos",
- 
+    "ShortcutsDes":"Opciones que estarán presentes al inciar una conversación con un usuario.",
+    "AddShortcut":"+ Añadir atajo",
+
     "Tickets":"Tickets",
+    "TicketsDes":"Define reglas sobre la gestión de los tickets que se aplicarán a toda la organización.",
+    "DaysToClose":"Días para cerrar los tickets solucionados",
+    "DaysToCloseDes":"Número de días que un ticket permanece en estado resuelto antes de cerrarse automáticamente. Si se establece en 0, los tickets resueltos se cerrarán inmediatamente.",
+    "InactivityDaysToClose":"Días de inactividad para cerrar tickets",
+    "InactivityDaysToCloseDes":"Número de días sin actividad en un ticket antes de que se cierre automáticamente. Es útil para gestionar tickets que quedan abiertos sin respuesta.",
+    "MoveTrash":"Mover a la papelera tickets cerrados",
+    "MoveTrashDes":"Configuración que determina si los tickets cerrados se mueven a la papelera automáticamente.",
+    "DaysToDelete":"Días para eliminar tickets cerrados",
+    "DaysToDeleteDes":"Número de días que un ticket cerrado permanece en las vistas antes de ser enviado a la papelera automáticamente.",
+    "DeleteBinTickets":"Eliminar tickets en la papelera",
+    "DeleteBinTicketsDes":"Configuración que determina si los tickets que están en la papelera se eliminan automáticamente.",
+    "DaysToDeleteBin":"Días para eliminar tickets de la papelera",
+    "DaysToDeleteBinDes":"Número de días que un ticket permanece en la papelera antes de ser eliminado definitivamente.",
 
     "Fields":"Campos",
     "FieldsDes":"Añade nuevos campos a los tickets, clientes y empresas para una organización completamente personalizada.",
     "CreateField":"Crear campo",
     "SaveChanges":"Guardar cambios",
     "Structure":"Estructura",
+    "Businesses":"Empresas de contacto",
     "DeleteFields":"Eliminar campos",
     "Name":"Nombre",
     "Type":"Tipo",
@@ -125,11 +148,15 @@
     "timestamp":"Fecha",
     "FieldsCount_one":"{{count}} campo",
     "FieldsCount_other":"{{count}} campos",
-
     "NoFields":"No hay campos disponibles",
-    "DeleteAllFields":"¿Desea eliminar los campos seleccionados?",
-    "CorrectDeletedFields":"Campos eliminados con éxito",
-    "FailedDeletedFields":"Hubo un error al eliminar los campos",
+    "DeleteAllFields":"¿Deseas eliminar el campo/{ {{name}} }/ de la estructura/{ {{structure}}}/?",
+    "CorrectCreatedFields":"Campo creado con éxito",
+    "FailedCreatedFields":"Hubo un error al crear el campos",
+    "CorrectUpdatedFields":"Campo actualizado con éxito",
+    "FailedUpdateFields":"Hubo un error al atualizar el campo",
+
+    "CorrectDeletedFields":"Campo eliminado con éxito",
+    "FailedDeletedFields":"Hubo un error al eliminar el campo",
  
     "Channels":"Canales",
     "Channels_Exp":"Gestiona los canales de comunicación y contenido.",
@@ -186,8 +213,8 @@
     "TextColorMessages":"Color del texto de los mensajes",
     "TextColorMessagesDes":"Se aplicará a los mensajes que mande el usuario y a los atajos.",
     "Shorcuts":"Atajos",
-    "ShortcutsDes":"Opciones que estarán presentes al inciar una conversación con un usuario.",
-    "AddShortcut":"Añadir atajo",
+    "ShortcutWebsDes":"Opciones que estarán presentes al inciar una conversación con un usuario.",
+    "AddShortcutWeb":"Añadir atajo",
 
     "AccountName":"Nombre de la cuenta",
     "Account":"Cuenta",
@@ -198,14 +225,33 @@
     "AccountIdDes":"Identificador único de la cuenta",
     "AccessToken":"Token de acceso",
     "AccessTokendDes":"Clave de seguridad para la API",
-    "PhoneDes":"Número de teléfono asociado a la cuenta",
     
     "Phone":"Teléfono",
 
     "Mail":"Correo electrónico",
+    "IntroduceMail":"Introduce tu dirección de correo",
+    "IntroduceMailDes":"Se enviará un correo a la dirección seleccionada para verificar tu identidad.",
+    "CreateMail":"Crear correo",
+    "VerifyMail":"Verificar correo",
+    "CorrectCreatedMail":"Cuenta de correo añadida con éxito",
+    "FailedCreatedMail":"Hubo un error al añadir la cuenta de correo",
+    "MailVerification":"Verificación del correo",
+    "MailVerificationDes":"Te hemos enviado un correo desde Amazon Web Services SES. Para completar la verificación, por favor sigue estos pasos: ",
+    "MailVerificationDes1":"Abre el correo que te hemos enviado y haz clic en el enlace de verificación.",
+    "MailVerificationDes2":"Una vez hayas confirmado tu dirección de correo electrónico, haz clic en el botón de abajo para continuar.",
+    "VerifiedIdentity":"He verificado mi identidad",
+    "CorectSes":"Identidada verificada correctamente",
+    "FailedSes":"No se ha encontrado verificación, porfavor comprueba los pasos",
+    "ForwardConfig":"Configuración de reenvío de correos",
+    "ForwardConfigDes":"Para que podamos gestionar tus correos correctamente, debes habilitar el reenvío en tu cliente de correo electrónico hacia la siguiente dirección:",
+    "ForwardConfigDes1":"Una vez que hayas configurado el reenvío, verifica que todo ha funcionado correctamente haciendo clic en el botón de abajo.",
+    "CopyMail":"Copiar dirección de correo",
+
+
     "Template":"Plantilla",
     "TemplateDes":"Plantilla que se mostrará en los correos electrónicos",
 
+    
     "ChoosePage":"Elige una página",
     "NoPages":"No hay páginas disponibles",
     "PageId":"Id de la página",
@@ -240,19 +286,28 @@
     "High":"alta",
     "VeryHigh":"Muy alta",
     "Urgent":"Urgente",
-     
+  
     "Surveys":"Encuestas",
-    "SurveysDes":"Personaliza y configura tus encuestas de satisfacción del cliente para obtener un feedback valiosos a través de múltiples canales.",
-    "ScoreMessage":"Mensaje de Calificación",
+    "SurveysDes":"Personaliza y configura tus encuestas de satisfacción al cliente para obtener feedback directo.",
+    "csat":"CSAT",
+    "nps":"NPS",
+    "ScoreMessage":"Mensaje de calificación",
     "ScoreMessageDes":"Define el mensaje que se mostrará al usuario para que califique su experiencia.",
+    "ScorePlaceholder":"Nos importa tu opinión",
     "AskForComments":"Solicitar Comentarios",
     "AskForCommentsDes":"Configura si deseas pedir comentarios adicionales a los usuarios después de que hayan completado la encuesta.",
-    "Comments":"Comentarios",
+    "Comments":"Mensaje de los comentarios",
     "CommentsDes":"Personaliza el texto que se mostrará a los usuarios para que proporcionen sus comentarios.",
-    "CommentsPlacehoder":"Espacio para Comentarios",
-    "CommentsPlacehoderDes":" Introduce el texto que aparecerá en el campo de comentarios para animar a los usuarios a proporcionar su feedback.",
+    "CommentsSpacePlaceholder":"Explica brevemente tu experiencia",
+    "CommentsPlaceholder":"Espacio para Comentarios",
+    "CommentsPlaceholderDes":" Introduce el texto que aparecerá en el campo de comentarios para animar a los usuarios a proporcionar su feedback.",
+    "CommentsPlaceholderPlaceholder":"Deja tu comentario",
     "ThanksMessage":"Mensaje de Agradecimiento",
     "ThanksMessageDes":"Establece el mensaje que los usuarios verán después de completar la encuesta, agradeciéndoles por su tiempo.",
+    "ThanksMessagePlaceholder":"Muchas gracias por tu tiempo",
+    "CorrectSurvey":"Encuesta guardada con éxito",
+    "FailedSurvey":"HUbo un error al guardar la encuesta",
+
 
 
     "Actions":"Acciones",
@@ -261,7 +316,7 @@
     "BusinessRules":"Reglas de negocio",
     "BusinessRulesExp":"Configura y adapta la gestión de tickets, clientes y empresas de contacto y encuestas CSAT.",
     "Triggers":"Disparadores",
-    "TriggersDes":"Automatiza tareas comunes siempre que se cumplan condiciones específicas. Los disparadores se ejecutan cada vez que se crea o actualiza un ticket, cliente o empresa de contacto.",
+    "TriggersDes":"Automatiza tareas comunes siempre que se cumplan condiciones específicas.",
     "NewTrigger":"Nuevo disparador",
     "CreateTrigger":"Crear disparador",
     "TriggersCount_one": "{{count}} disparador",
@@ -274,7 +329,7 @@
     "FailedUpdatedTrigger":"Hubo un error al actualizar el disparador",
     "CorrectDeletedTrigger":"Disparador creado correctamente",
     "FailedDeletedTrigger":"Hubo un error al eliminar el disparador",
-    "ConfirmDeleteTrigger":"¿Estás seguro de que deseas eliminar el disparador?",
+    "ConfirmDeleteTrigger":"¿Estás seguro de que deseas eliminar el disparador/{ {{name}}}/?",
 
     "Automations":"Automatizaciones",
     "AutomationsDes":"Modifica propiedades de los tickets en un momento determinado después de que el ticket haya sido actualizado.",
@@ -284,9 +339,15 @@
     "AutomationsCount_other": "{{count}} automatizaciones",
     "NoAutomations":"No hay automatizaciones disponibles",
     "DeleteAutomation":"Eliminar automatización",
-    "AllConditionsAut":"Debe satisfacer todas las siguientes condiciones:",
-    "AnyConditionsAut":"Debe satisfacer cualquiera de las siguientes condiciones:",
+    "ConditionsDes":"Al igual que en las vistas, existen dos tipos de condiciones que determinan cuando se debe realizar una acción.",
+    "AllConditionsAut":"Todas las condiciones",
+    "AllConditionsAutDes":"Todas las condiciones especificadas deben cumplirse para que la acción ocurra.",
+    "AnyConditionsAut":"Cualquiera de las condiciones:",
+    "AnyConditionsAutDes":"Cualquiera de las condiciones especificadas puede cumplirse para que se realice la acción.",
+
     "ActionsToDo":"Acciones a realizar",
+    "ActionsToDoDes":"Conjunto de acciones que tendrá lugar si se cumplen todas las condiciones",
+
     "AddAction":"Añadir acción",
     "ActionType":"Tipo de acción",
     "ActionConfiguration":"Configuración de la acción",
@@ -405,7 +466,15 @@
     "append":"Añadir",
     "append_2":"a ",
     "remove":"Eliminar",
-    "remove_2":"de "
+    "remove_2":"de ",
 
+
+    "WebDes":"Configura los estilos y mensajes que se mostrarán en el chat de tu web",
+    "WhatsappDes":"Configura el número de Whatsapp y como se comportará Matilda en este canal.",
+    "PhoneDes":"Configura el número de teléfono que recibirá las llamadas.",
+    "InstagramDes":"Configura la cuenta de Instagram y como se comportará Matilda en este canal.",
+    "GoogleDes":"Configura la cuenta de Google Business y como se comportará Matilda en este canal.",
+    "MailDes":"Configura la cuenta de correo elctrónico y añade estilos a través de plantillas.",
+    "ShopifyDes":"Conecta tu tienda online con Matilda, para que pueda tomar acciones complejas."
 
 }

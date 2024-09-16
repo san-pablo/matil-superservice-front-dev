@@ -987,7 +987,7 @@ const Flow = () => {
                             else if (argType === 'hardcoded_args') updatedData[argType] = { ...updatedData[argType], [argKey]:'' }
                             else updatedData[argType] = { ...updatedData[argType], [argKey]:-1 }
 
-                            return updatedData
+                            return updatedData 
                         })}
 
                     else if (type === 'edit'  && argKey !== undefined   && newValue !== undefined) {

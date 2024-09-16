@@ -4,16 +4,16 @@
 
 //REACT
 import { useState, useMemo, useRef, useEffect, Fragment, Dispatch, SetStateAction } from "react"
-import { useAuth } from "../../../AuthContext"
 //FRONT
-import { Flex, Box, Text, Checkbox, Tooltip } from '@chakra-ui/react'
+import { Flex, Box, Text, IconButton,} from '@chakra-ui/react'
 import '../styles.css'
 //COMPONENTS
 import CustomCheckbox from "./CheckBox"
 //ICONS
 import { IoMdArrowDropdown, IoMdArrowDropup } from 'react-icons/io'
 //TYPING
-import { columnsTicketsMap, TicketColumn,  TicketsTableProps } from "../../Constants/typing" 
+import { columnsTicketsMap, TicketColumn } from "../../Constants/typing" 
+import { BsTrash3Fill } from "react-icons/bs"
 
 //TYPING
 interface TableProps{
@@ -29,10 +29,11 @@ interface TableProps{
     setSelectedElements?:Dispatch<SetStateAction<number[]>>
     onSelectAllElements?:(isSeleceted:boolean) =>void
     currentIndex?:number
+    deletableFunction?:(value:any, index:number) => void
 }
     
 //MAIN FUNCTION
-const Table = ({ data, CellStyle, noDataMessage, requestSort,  columnsMap, excludedKeys = [], onClickRow, selectedElements, onlyOneSelect = false, setSelectedElements, onSelectAllElements, currentIndex = -1 }:TableProps ) =>{
+const Table = ({ data, CellStyle, noDataMessage, requestSort,  columnsMap, excludedKeys = [], onClickRow, selectedElements, onlyOneSelect = false, setSelectedElements, onSelectAllElements, currentIndex = -1, deletableFunction }:TableProps ) =>{
 
     //CALCULATE DYNAMIC HEIGHT OF TABLE
     const tableBoxRef = useRef<HTMLDivElement>(null)
@@ -111,6 +112,7 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort,  columnsMap, exclu
         }
     }
     const handleCheckboxChange = (element:number, isChecked:boolean) => {
+
         if (selectedElements && setSelectedElements) {
             if (isChecked) {
                 if (onlyOneSelect) setSelectedElements([element])
@@ -151,7 +153,6 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort,  columnsMap, exclu
     const dataToWork = (requestSort)? data : sortedData
 
 
-    console.log(selectedElements)
     //FRONT
     return(
         <> 
@@ -164,7 +165,7 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort,  columnsMap, exclu
             <Box borderRadius={'.5em'} bg='gray.50'  overflow={'hidden'}   minWidth={`${totalWidth}px`}   >    
                 <Flex position={'sticky'}  borderTopRadius={'.5rem'} minWidth={`${totalWidth}px`}  borderColor={'gray.200'} borderWidth={'1px'} gap='20px' ref={headerRef} alignItems={'center'}  color='gray.600' p='10px' fontSize={'1em'} bg='gray.100' > 
                     
-                    {selectedElements && <CustomCheckbox isChecked={selectedElements.length >= data.length} onChange={(e) => onInternalSelectAllElements(e?.target?.checked)}/>}
+                    {selectedElements && <CustomCheckbox isChecked={selectedElements.length >= data.length} onChange={() => onInternalSelectAllElements(selectedElements.length >= data.length)}/>}
                     {Object.keys(columnsMap).filter(column => column !== 'id').map((column) => (
                         <Fragment key={`header-${column}`}>
                             {column in data[0] &&
@@ -174,8 +175,9 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort,  columnsMap, exclu
                             </Flex>}
                         </Fragment>))
                     }
+                    {deletableFunction && <Flex width={'60px'}/>}
                 </Flex>
-                <Box minWidth={`${totalWidth}px`} overflowX={'hidden'} ref={tableBoxRef} overflowY={'scroll'} maxH={boxHeight}> 
+                 <Box minWidth={`${totalWidth}px`} overflowX={'hidden'} ref={tableBoxRef} overflowY={'scroll'} maxH={boxHeight}> 
                     {dataToWork.map((row:any, index:number) => {  
                         
                         return (
@@ -183,7 +185,7 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort,  columnsMap, exclu
                                 {selectedIndex === index && <Box position='absolute' left={0} top={0} height={'100%'} width={'2px'} bg='blue.400'/>}
                                 {selectedElements &&
                                 <Flex onClick={(e) => e.stopPropagation()}> 
-                                    <CustomCheckbox onChange={(e) => handleCheckboxChange(index, e.target.checked)} isChecked={selectedElements.includes(index)} />
+                                    <CustomCheckbox onChange={() => handleCheckboxChange(index, !selectedElements.includes(index))} isChecked={selectedElements.includes(index)} />
                                  </Flex>}
                                 {Object.keys(columnsMap).map((column:string, index:number) => (
                                     <Fragment key={`header-${index}`}>
@@ -192,6 +194,11 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort,  columnsMap, exclu
                                             <CellStyle column={column} element={row[column]}/>
                                         </Flex>}
                                     </Fragment>))}
+                                {(deletableFunction) && 
+                                    <Flex width={'60px'}  onClick={(e) => e.stopPropagation()}>
+                                        <IconButton size={'sm'} color={'red.600'} bg='transparent' _hover={{bg:'red.100'}} icon={<BsTrash3Fill/>} aria-label="delete-row" onClick={() => deletableFunction(row, index)}/>
+                                    </Flex>
+                                }
                             </Flex>)
                         })}
                 </Box>

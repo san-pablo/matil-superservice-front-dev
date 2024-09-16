@@ -15,6 +15,8 @@ import useOutsideClick from '../../../Functions/clickOutside'
 import ConfirmBox from '../../../Components/Reusable/ConfirmBox'
 import showToast from '../../../Components/ToastNotification'
 import Table from '../../../Components/Reusable/Table'
+//FUCNTIONS
+import parseMessageToBold from '../../../Functions/parseToBold'
 //ICONS
 import { BsTrash3Fill } from "react-icons/bs"
 import { FaPlus } from 'react-icons/fa6'
@@ -57,6 +59,9 @@ function Groups () {
     //SELECTED GROUP
     const [selectedGroup, setSelectedGroup] = useState<GroupData | null>(null)
 
+    //GROUP TO DELETE
+    const [groupToDelete, setGroupToDelete] = useState<GroupData | null>(null)
+
     //FILTER GROUPS DATA
     const [text, setText]  =useState<string>('')
     const [filteredGroupsData, setFilteredGroupsData] = useState<GroupData[]>([])
@@ -77,38 +82,83 @@ function Groups () {
     //FETCH INITIAL DATA
     useEffect(() => {
         fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/groups`, setValue:setGroupsData, auth})
-        document.title = `${t('Organization')} - ${t('Groups')} - ${auth.authData.organizationName} - Matil`
+        document.title = `${t('Settings')} - ${t('Groups')} - ${auth.authData.organizationName} - Matil`
     }, [])
 
+    //DELETE BOX COMPONENT
+    const DeleteComponent = () => {
+
+        //WAITING DELETION
+        const [waitingDelete, setWaitingDelete] = useState<boolean>(false)
+
+        //FUNCTION FOR DELETING AN AUTOMATION
+        const deleteGroup = async () => {
+            setWaitingDelete(true)
+            const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/groups/${groupToDelete?.id}`, setWaiting:setWaitingDelete, method:'delete', auth, toastMessages:{works:t('CorrectDeletedGroup'), failed:t('FailedDeletedGroup')}})
+            if (response?.status == 200) {
+                setGroupToDelete(null)
+                setGroupsData(prev => {
+                    if (prev) return prev.filter((group) => group.id !== groupToDelete?.id)
+                    else return null
+                })
+            }             
+        }
+
+        //FRONT
+        return(<>
+            <Box p='20px'> 
+                <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('ConfirmDelete')}</Text>
+                <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
+                <Text >{t('ConfirmDeleteGroup')}</Text>
+            </Box>
+            <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+                <Button  size='sm' color='red.600' bg='red.100' _hover={{bg:'red.200'}} onClick={deleteGroup}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
+                <Button  size='sm'_hover={{color:'blue.400'}}  onClick={() => setGroupToDelete(null)}>{t('Cancel')}</Button>
+            </Flex>
+        </>)
+    }
+
+    //DELETE BOX
+    const memoizedDeleteBox = useMemo(() => (
+        <ConfirmBox isSectionWithoutHeader={true} setShowBox={(b:boolean) => setGroupToDelete(null)}> 
+            <DeleteComponent/>
+        </ConfirmBox>
+    ), [groupToDelete])
+
+
+    const memoizedGroupBox = useMemo(() => (
+        <ConfirmBox setShowBox={(b:boolean) => setSelectedGroup(null)} isSectionWithoutHeader={true}> 
+            <EditGroup groupData={selectedGroup as GroupData} setGroupData={setSelectedGroup} setGroupsData={setGroupsData}/>
+        </ConfirmBox>
+    ), [selectedGroup])
+    
     return(<>
-        {selectedGroup !== null ? <EditGroup groupData={selectedGroup} setGroupData={setSelectedGroup} setGroupsData={setGroupsData}/>:<>
+
+        {groupToDelete !== null && memoizedDeleteBox}
+        {selectedGroup !== null  && memoizedGroupBox}
         <Flex justifyContent={'space-between'} alignItems={'end'}> 
             <Box> 
                 <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('GroupsTable')}</Text>
                 <Text color='gray.600' fontSize={'.9em'}>{t('GroupsDescription')}</Text>
             </Box>
         </Flex>
-
-        <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='5vh'/>
-        <Skeleton mb='1vh' isLoaded={groupsData !== null}> 
-            <Text  fontWeight={'medium'} fontSize={'1.2em'}>{t('GroupsCount', {count:groupsData?.length})}</Text>
-        </Skeleton>
+        <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/>
  
-        <Flex  mt='2vh'justifyContent={'space-between'} alignItems={'end'}>
+ 
+        <Box width={'350px'}> 
+            <EditText value={text} setValue={setText} searchInput={true}/>
+        </Box>
+ 
+        <Flex  mt='2vh' justifyContent={'space-between'} alignItems={'end'}>
             <Skeleton isLoaded={groupsData !== null}> 
-                <Box width={'350px'}> 
-                    <EditText value={text} setValue={setText} searchInput={true}/>
-                </Box>
+                <Text  fontWeight={'medium'} fontSize={'1.2em'}>{t('GroupsCount', {count:groupsData?.length})}</Text>
             </Skeleton>
-            <Flex gap='10px'> 
-                <Button size='sm' leftIcon={<FaPlus/>} onClick={() => setSelectedGroup(newGroup)}>{t('CreateGroup')}</Button>
-            </Flex>
+            <Button size='sm' leftIcon={<FaPlus/>} onClick={() => setSelectedGroup(newGroup)}>{t('CreateGroup')}</Button>
         </Flex>
 
-        <Skeleton   mt='2vh'isLoaded={groupsData !== null}> 
-            <Table data={filteredGroupsData || []} CellStyle={CellStyle} noDataMessage={t('NoGroups')} columnsMap={groupsMapDict} onClickRow={(row:any, index:number) => setSelectedGroup(row)}/>
+        <Skeleton isLoaded={groupsData !== null}> 
+            <Table data={filteredGroupsData || []} CellStyle={CellStyle} noDataMessage={t('NoGroups')} columnsMap={groupsMapDict} onClickRow={(row:any, index:number) => setSelectedGroup(row)} deletableFunction={(row:any, index) => setGroupToDelete(row)}/>
         </Skeleton>
-        </>}
     </>)
 }
 
@@ -269,7 +319,7 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
             </Box>
             <AnimatePresence> 
                 {showResults && 
-                <MotionBox initial={{ opacity: 5, marginTop: -5 }} animate={{ opacity: 1, marginTop: 5 }}  exit={{ opacity: 0,marginTop:-5}} transition={{ duration: '0.2',  ease: '[0.0, 0.9, 0.9, 1.0]'}}
+                <MotionBox initial={{ opacity: 5, marginTop: -5 }} animate={{ opacity: 1, marginTop: 5 }}  exit={{ opacity: 0,marginTop:-5}} transition={{ duration: '0.2',  ease: 'easeOut'}}
                  maxH='30vh' overflow={'scroll'} width='140%' gap='10px' ref={boxRef} fontSize={'.9em'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000} position={'absolute'} left={0} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
                         <Box maxH='30vh'>
                             {filteredUsers.length === 0? 
@@ -285,103 +335,48 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
                                 </Flex>
                             ))}</>}
                         </Box>
-                      
-                 
+
                 </MotionBox>} 
             </AnimatePresence>
          </Box>
      )
     }
 
-    //DELETE BOX COMPONENT
-    const DeleteComponent = () => {
-
-        //WAITING DELETION
-        const [waitingDelete, setWaitingDelete] = useState<boolean>(false)
-
-        //FUNCTION FOR DELETING AN AUTOMATION
-        const deleteGroup = async () => {
-            setWaitingDelete(true)
-            const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/groups/${groupData.id}`, setWaiting:setWaitingDelete, method:'delete', auth, toastMessages:{works:t('CorrectDeletedGroup'), failed:t('FailedDeletedGroup')}})
-            if (response?.status == 200) {
-                setGroupData(null)
-                setGroupsData(prev => {
-                    if (prev) return prev.filter((group) => group.id !== groupData.id)
-                    else return null
-                })
-            }             
-        }
-
-        //FRONT
-        return(<>
-            <Box p='15px'> 
-                <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('ConfirmDelete')}</Text>
-                <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
-                <Text >{t('ConfirmDeleteGroup')}</Text>
-            </Box>
-            <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-                <Button  size='sm' colorScheme='red' onClick={deleteGroup}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
-                <Button  size='sm' onClick={() => setShowConfirmDelete(false)}>{t('Cancel')}</Button>
-            </Flex>
-        </>)
-    }
-
-    //DELETE BOX
-    const memoizedDeleteBox = useMemo(() => (
-        <ConfirmBox isSectionWithoutHeader={true} setShowBox={setShowConfirmDelete}> 
-            <DeleteComponent/>
-        </ConfirmBox>
-    ), [showConfirmDelete])
-
-
     //FRONT
     return (  <>
-    {showConfirmDelete && memoizedDeleteBox}
  
-    <Flex height={'100%'} minH='90vh'  width={'100%'} flexDir={'column'}> 
-        <Flex flexDir={'column'} flex='1'  py='2px'> 
-            <Flex justifyContent={'space-between'} alignItems={'center'}> 
-                <Flex gap='20px' alignItems={'center'}> 
-                    <Tooltip label={'Atrás'}  placement='bottom' hasArrow bg='black'  color='white'  borderRadius='.4rem' fontSize='.75em' p='4px'> 
-                        <IconButton aria-label='go-back' size='sm' bg='transparent' border='none' onClick={() => setGroupData(null)} icon={<IoIosArrowBack size='20px'/>}/>
-                    </Tooltip>
-                    <Box minW='500px'> 
-                        <EditText nameInput={true} size='md' value={currentGroupData.name} setValue={(value) => {setCurrentGroupData((prev) => ({...prev, name:value}))}}/>
-                    </Box>
-                </Flex>
-                {groupDataRef.current.id !== -1 && <Button  color='red' leftIcon={<BsTrash3Fill/>} onClick={() => setShowConfirmDelete(true)}>{t('DeleteGroup')}</Button>}
-            </Flex>
-            <Text fontSize={'1.1em'} mt='2vh' mb='1vh'  fontWeight={'medium'}>{t('Description')}</Text>
-            <Textarea resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('Description')}...`} maxH='300px' value={currentGroupData.description} onChange={(e) => setCurrentGroupData((prev) => ({...prev, description:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
+    <Box p='20px'> 
+        
+        <Box minW='500px'> 
+            <EditText nameInput={true} size='md' value={currentGroupData.name} setValue={(value) => {setCurrentGroupData((prev) => ({...prev, name:value}))}}/>
+        </Box>
+        
+        <Text  mt='2vh' mb='.5vh'  fontWeight={'medium'}>{t('Description')}</Text>
+        <Textarea resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('Description')}...`} maxH='300px' value={currentGroupData.description} onChange={(e) => setCurrentGroupData((prev) => ({...prev, description:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
 
-            <Box width={'100%'} mt='2vh' mb='2vh' height={'1px'} bg='gray.300'/>   
-            <Box flex={1} >
-                <Text mb='1vh' fontSize={'1.1em'}  fontWeight={'medium'}>{t('AddUsersGroup')}</Text>
-                <FindUser/>
-                <Box maxW={'600px'} mt='3vh' borderTopColor={'gray.300'} borderWidth={'1px 0 0 0'}> 
-                    {currentGroupData.users.length === 0 ?<Text mt='2vh'>{t('NoUsers')}</Text>:<>
-                    {currentGroupData.users.map((user, index) => (
-                    <Flex justifyContent={'space-between'} borderBottomColor={'gray.300'} borderBottomWidth={'1px'} _hover={{bg:'gray.50'}} cursor={'pointer'} alignItems={'center'}  key={`user-selected-${index}`} p='10px' gap='10px' >
-                        <Flex  gap='10px'> 
-                            <Avatar size='sm'/>
-                            <Box>
-                                <Text fontWeight={'medium'} fontSize={'.9em'}>{user.name} {user.surname}</Text>
-                                <Text fontSize={'.9em'}>{user.email}</Text>
-                            </Box>
-                        </Flex>
-                        <IconButton aria-label='delete-user' icon={<BsTrash3Fill/>} size='sm' bg='transparent' color='red' onClick={() => deleteUser(index, user.id)}/>
+        <Box mt='3vh' flex={1} >
+            <Text mb='1vh' fontWeight={'medium'}>{t('AddUsersGroup')}</Text>
+            <FindUser/>
+            <Box maxW={'600px'} mt='2vh'> 
+                {currentGroupData.users.length === 0 ?<Text mt='2vh'>{t('NoUsers')}</Text>:<>
+                {currentGroupData.users.map((user, index) => (
+                <Flex justifyContent={'space-between'} borderBottomColor={'gray.300'} borderBottomWidth={'1px'} _hover={{bg:'gray.50'}} cursor={'pointer'} alignItems={'center'}  key={`user-selected-${index}`} p='10px' gap='10px' >
+                    <Flex  gap='10px'> 
+                        <Avatar size='sm'/>
+                        <Box>
+                            <Text fontWeight={'medium'} fontSize={'.9em'}>{user.name} {user.surname}</Text>
+                            <Text fontSize={'.9em'}>{user.email}</Text>
+                        </Box>
                     </Flex>
-                    ))}</>}
-                </Box>
+                    <IconButton aria-label='delete-user' icon={<BsTrash3Fill/>} size='sm' bg='transparent' color='red' onClick={() => deleteUser(index, user.id)}/>
+                </Flex>
+                ))}</>}
             </Box>
- 
-       </Flex>
-
-        <Box width={'100%'} mb='2vh' height={'1px'} bg='gray.300'/>
-        <Flex flexDir = 'row-reverse'>
-            <Button onClick={sendEditGroup} isDisabled={currentGroupData.name === ''  || currentGroupData.users.length === 0 || ((JSON.stringify(currentGroupData) === JSON.stringify(groupDataRef.current)))}>{waitingSend?<LoadingIconButton/>:t('SaveChanges')}</Button>
-        </Flex>
-
+        </Box>
+    </Box>
+    <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+        <Button size='sm' bg={'blackAlpha.800'} color='white' _hover={{bg:'blackAlpha.900'}} onClick={sendEditGroup} isDisabled={currentGroupData.name === ''  || currentGroupData.users.length === 0 || ((JSON.stringify(currentGroupData) === JSON.stringify(groupDataRef.current)))}>{waitingSend?<LoadingIconButton/>:groupData.id === -1?t('CreateGroup'):t('SaveChanges')}</Button>
+        <Button  size='sm'_hover={{color:'blue.400'}}  onClick={() => setGroupData(null)}>{t('Cancel')}</Button>
     </Flex>
     </>)
 }

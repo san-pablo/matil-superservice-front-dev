@@ -12,12 +12,13 @@ import EditText from '../../../Components/Reusable/EditText'
 import LoadingIconButton from '../../../Components/Reusable/LoadingIconButton'
 import ConfirmBox from '../../../Components/Reusable/ConfirmBox'
 import Table from '../../../Components/Reusable/Table'
+//FUNCTIONS
+import copyToClipboard from '../../../Functions/copyTextToClipboard'
+import parseMessageToBold from '../../../Functions/parseToBold'
 //ICONS
 import { BsClipboard2Check, BsTrash3Fill } from "react-icons/bs"
 import { FaPlus } from 'react-icons/fa6'
-//FUNCTIONS
-import copyToClipboard from '../../../Functions/copyTextToClipboard'
- 
+
 //TYPING
 interface UserData  {
     name: string
@@ -68,20 +69,20 @@ const NewUserBox = ({userData, setUserData, setShowCreateNewUser}:NewUserBoxProp
 
     return(
         <> 
-        <Box p='25px'> 
-            <Text mt='1vh' mb='.5vh' fontWeight={'medium'}>{t('Mail')}</Text>
-            <EditText  regex={emailRegex} maxLength={100} placeholder={`${t('User')}@${t('Company')}.com`} hideInput={false} value={newUserInfo.email} setValue={(value) => setNewUserInfo({...newUserInfo, email:value})}/>
-            <Text mt='1vh' mb='.5vh' fontWeight={'medium'}>{t('Rol')}</Text>
-            <Flex gap='20px'>
-                <Button size='xs' bg={newUserInfo.is_admin?'brand.gradient_blue':'gray.200'} color={newUserInfo.is_admin?'white':'none'} _hover={{bg:newUserInfo.is_admin?'brand.gradient_blue_hover':'gray.300', color:newUserInfo.is_admin?'white':'blue.600'}}  onClick={() => setNewUserInfo({...newUserInfo, is_admin: true})}>{t('Admin')}</Button>
-                <Button size='xs' bg={!newUserInfo.is_admin?'brand.gradient_blue':'gray.200'} color={!newUserInfo.is_admin?'white':'none'} _hover={{bg:!newUserInfo.is_admin?'brand.gradient_blue_hover':'gray.300', color:!newUserInfo.is_admin?'white':'blue.600'}}  onClick={() => setNewUserInfo({...newUserInfo, is_admin:false})}>{t('Basic')}</Button>
+        <Box p='20px'> 
+            <Text mb='.5vh' fontWeight={'medium'}>{t('Mail')}</Text>
+            <EditText  regex={emailRegex} maxLength={100} placeholder={`${t('User').toLocaleLowerCase()}@${t('Company')}.com`} hideInput={false} value={newUserInfo.email} setValue={(value) => setNewUserInfo({...newUserInfo, email:value})}/>
+            <Text mt='2vh' mb='.5vh' fontWeight={'medium'}>{t('Rol')}</Text>
+            <Flex gap='10px'>
+                <Button size='xs' bg={newUserInfo.is_admin?'blackAlpha.800':'gray.200'} color={newUserInfo.is_admin?'white':'none'} _hover={{bg:newUserInfo.is_admin?'blackAlpha.900':'gray.300'}}  onClick={() => setNewUserInfo({...newUserInfo, is_admin: true})}>{t('Admin')}</Button>
+                <Button size='xs' bg={!newUserInfo.is_admin?'blackAlpha.800':'gray.200'} color={!newUserInfo.is_admin?'white':'none'} _hover={{bg:!newUserInfo.is_admin?'blackAlpha.900':'gray.300'}}  onClick={() => setNewUserInfo({...newUserInfo, is_admin:false})}>{t('Basic')}</Button>
             </Flex>
             {showError !== '' && <Text mt='2vh' fontSize={'.85em'} color='red'>{showError}</Text>}
          </Box>
-        <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-          <Button  size='sm' color='white' bg='brand.gradient_blue' _hover={{bg:'brand.gradient_blue_hover'}} onClick={createNewUser}>{waitingCreate?<LoadingIconButton/>:t('CreateUser')}</Button>
-          <Button  size='sm' onClick={()=>setShowCreateNewUser(false)}>{t('Cancel')}</Button>
-      </Flex>
+        <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+            <Button  size='sm' color='white' bg='blackAlpha.800' _hover={{bg:'blackAlpha.900'}} onClick={createNewUser}>{waitingCreate?<LoadingIconButton/>:t('CreateUser')}</Button>
+            <Button  size='sm' bg='gray.200' _hover={{color:'blue.400'}} onClick={()=>setShowCreateNewUser(false)}>{t('Cancel')}</Button>
+        </Flex>
       </>
     )
 }
@@ -91,20 +92,18 @@ const UserCellStyles = ({column, element}:{column:string, element:any}) => {
 
     const { t } = useTranslation('settings')
 
-    console.log(column)
-    console.log(element)
-
     switch (column) {
         case 'name':
         case 'surname':
         case 'email':
             return <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element}</Text>
         case 'is_admin':
-            return <Text whiteSpace={'nowrap'}  textOverflow={'ellipsis'} overflow={'hidden'}>{element?t('Admin'):t('Usuar')}</Text>
+            return <Text whiteSpace={'nowrap'}  textOverflow={'ellipsis'} overflow={'hidden'}>{element?t('Admin'):t('User')}</Text>
         case 'is_active':
             return (
-            <Box  display="inline-flex" fontSize='.8em' borderColor={element?'green.500':'red.600'} borderWidth={'1px'} py='1px' px='5px' fontWeight={'medium'} color='white'  bg={element?'green.400':'red.500'} borderRadius={'.7rem'}> 
-                <Text whiteSpace={'nowrap'}  textOverflow={'ellipsis'} overflow={'hidden'}>{element?t('Active'):t('Inactive')}</Text>
+
+            <Box boxShadow={`1px 1px 1px rgba(0, 0, 0, 0.15)`}   display="inline-flex" fontSize='.9em' py='2px' px='8px' fontWeight={'medium'} color={element?'green.600':'red.600'}  bg={element?'green.100':'red.100'} borderRadius={'.7rem'}> 
+                <Text whiteSpace={'nowrap'}  textOverflow={'ellipsis'} overflow={'hidden'}>{element?t('ActiveM'):t('InactiveM')}</Text>
             </Box>)
         case 'invitation_key':
             return (<> 
@@ -147,8 +146,8 @@ function AdminUsers () {
     
     //FETCH INITIAL DATA
     useEffect(() => {
-        fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/users`, setValue:setUserData, setWaiting:setWaitingInfo,auth:auth})
-        document.title = `${t('Organization')} - ${t('Users')} - ${auth.authData.organizationName} - Matil`
+        fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/users`, setValue:setUserData, setWaiting:setWaitingInfo, auth})
+        document.title = `${t('Settings')} - ${t('Users')} - ${auth.authData.organizationName} - Matil`
     }, [])
  
     //CREATE USER BOOLEAN
@@ -156,26 +155,17 @@ function AdminUsers () {
 
     //DELETE USERS LOGIC
     const [waitingDelete, setWaitingDelete] = useState<boolean>(false)
-    const [showConfirmDelete ,setShowConfirmDelete] = useState<boolean>(false)
-    const [selectedElements, setSelectedElements] = useState<number[]>([])
+    const [userToDelete, setUserToDelete] = useState<UserData | null>(null)
     const handleDeleteUsers = async() => {
 
-        const userToDelete = userData[selectedElements[0]]
-
-        const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/users`, setWaiting:setWaitingDelete, params:{email:userToDelete.email},auth:auth, method:'delete'})
+        const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/users`, setWaiting:setWaitingDelete, params:{email:userToDelete?.email},auth:auth, method:'delete'})
         if (response && response.status === 200) {
-            const updatedUserData = userData.filter(user => !selectedElements.map(element => userData[element].email).includes(user.email))
+            const updatedUserData = userData.filter(user =>  user.email !== userToDelete?.email)
             setUserData(updatedUserData)
-
             const updatedUsers = { ...auth.authData.users }
-            selectedElements.forEach(element => {
-                const userKey = Object.keys(auth.authData?.users || []).find(key => auth.authData?.users?.[key]?.email_address === userData[element].email)
-                if (userKey) delete updatedUsers[userKey]
-            })
             auth.setAuthData({users: updatedUsers})
         }
-        setSelectedElements([])
-        setShowConfirmDelete(false)
+        setUserToDelete(null)
     }
 
     const memoizedNewUserBox = useMemo(() => (
@@ -185,54 +175,42 @@ function AdminUsers () {
     ), [showCreateNewUser])
 
     const memoizedDeleteBox = useMemo(() => (
-        <ConfirmBox setShowBox={setShowConfirmDelete} isSectionWithoutHeader={true}> 
-              <Box p='15px'> 
-                <Text width={'400px'}  fontWeight={'medium'}>{t('DeleteUserMessage')}</Text>
-                <Box maxH='30vh' overflow={'scroll'} mt='2vh'>
-                {selectedElements.map((element, index) => (
-                    <Fragment key={`delete-elements-${index}`}> 
-                        <Text mt='.5vh'fontWeight={'medium'}>{userData[element].name} {userData[element].surname}</Text>
-                        <Text mt='.5vh'>{userData[element].email}</Text>
-                     </Fragment>
-                ))}
-                </Box>
-                </Box>
-                <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-                    <Button  size='sm' color='red' _hover={{color:'red.600', bg:'gray.200'}} onClick={handleDeleteUsers}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
-                    <Button  size='sm' onClick={()=>setShowConfirmDelete(false)}>{t('Cancel')}</Button>
-                </Flex>
-            </ConfirmBox>
-    ), [showConfirmDelete])
+        <ConfirmBox setShowBox={(b:boolean) => setUserToDelete(null)} isSectionWithoutHeader={true}> 
+            <Box maxW={'400px'} p='20px'> 
+                <Text>{parseMessageToBold(t('DeleteUserMessage', {user:(userData && userToDelete) ? userToDelete.name +  ' ' + userToDelete.surname:''}))}</Text>
+            </Box>
+            <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+                <Button  size='sm' bg='red.100' color='red.600' _hover={{bg:'red.200'}} onClick={handleDeleteUsers}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
+                <Button  size='sm' _hover={{color:'blue.400'}} onClick={()=> setUserToDelete(null)}>{t('Cancel')}</Button>
+            </Flex>
+        </ConfirmBox>
+    ), [userToDelete])
 
     return(<>
     <>        
-        {showConfirmDelete && memoizedDeleteBox}
+        {userToDelete && memoizedDeleteBox}
         {showCreateNewUser && memoizedNewUserBox}
 
         <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('UsersTable')}</Text>
         <Text color='gray.600' fontSize={'.9em'}>{t('UsersDes')}</Text>
 
-        <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='5vh'/>
-        <Skeleton isLoaded={!waitingInfo}> 
-            <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('UsersCount', {count:userData.length})}</Text>
-        </Skeleton>
+        <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/>
+      
+        <Box width={'350px'}> 
+            <EditText value={text} setValue={setText} searchInput={true}/>
+        </Box>
 
         <Flex  mt='2vh'justifyContent={'space-between'} alignItems={'end'}>
             <Skeleton isLoaded={!waitingInfo}> 
-                <Box width={'350px'}> 
-                    <EditText value={text} setValue={setText} searchInput={true}/>
-                </Box>
+                <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('UsersCount', {count:userData.length})}</Text>
             </Skeleton>
-            <Flex gap='10px'> 
-                {selectedElements.length === 1 && <Button size='sm' color='red' _hover={{color:'red.600', bg:'gray.200'}} leftIcon={<BsTrash3Fill/>} onClick={() => setShowConfirmDelete(true)} >{t('DeleteUser')}</Button>}
-                <Button leftIcon={<FaPlus/>} size='sm' onClick={() => {setShowCreateNewUser(!showCreateNewUser)}}>{t('CreateUser')}</Button>
-            </Flex>
+        
+            <Button leftIcon={<FaPlus/>} size='sm' onClick={() => {setShowCreateNewUser(!showCreateNewUser)}}>{t('CreateUser')}</Button>
+        
         </Flex>
 
-         <Skeleton mt='2vh' isLoaded={!waitingInfo}> 
- 
-                <Table data={filteredUserData} CellStyle={UserCellStyles} noDataMessage={t('NoUsers')} columnsMap={usersColumnsMap} onlyOneSelect selectedElements={selectedElements} setSelectedElements={setSelectedElements}/>
-     
+         <Skeleton  isLoaded={!waitingInfo}> 
+            <Table data={filteredUserData} CellStyle={UserCellStyles} noDataMessage={t('NoUsers')} columnsMap={usersColumnsMap} onlyOneSelect deletableFunction={(row, index) => setUserToDelete(row)}/>
         </Skeleton>
         </> 
     </>)

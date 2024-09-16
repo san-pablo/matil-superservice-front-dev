@@ -361,7 +361,14 @@ export type SubSectionProps = string[][]
 export type SectionsListProps = {[key in IconKey]: string}
 
 export type ActionsType = 'email_csat' |  'whatsapp_csat' | 'webchat_csat' | 'agent_email_notification' | 'motherstructure_update'
-
+export interface ActionDataType  {
+    name: string,
+    description: string,
+    all_conditions:FieldAction[]
+    any_conditions:FieldAction[]
+    actions:{type:ActionsType, content:any}[]
+}
+ 
 //MATILDA CONFIGURATION PROPS
 export interface configProps {
     is_matilda_enabled:boolean,

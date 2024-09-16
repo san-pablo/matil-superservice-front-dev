@@ -105,7 +105,7 @@ function Chatbot () {
 
         return(<Box mt='1vh'>
             {!showAddOption && <Flex   flexDir={'row-reverse'}>
-                <Button leftIcon={<FaPlus/>} size='xs' onClick={() => setShowAddOption(!showAddOption)}>{t('AddShortcut')}</Button>
+                <Button leftIcon={<FaPlus/>} size='xs' onClick={() => setShowAddOption(!showAddOption)}>{t('AddShortcutWeb')}</Button>
             </Flex>}
             {showAddOption && 
             <Flex> 
@@ -257,7 +257,7 @@ function Chatbot () {
                     </Box>
 
                     <Text fontWeight={'medium'} mt='2vh'>{t('Shortcuts')}</Text>
-                    <Text fontSize={'.8em'} color='gray.500'>{t('ShortcutsDes')}</Text>
+                    <Text fontSize={'.8em'} color='gray.500'>{t('ShortcutWebsDes')}</Text>
                     <Box width={'100%'} mt='2vh'> 
                         {chatBotData?.options.map((option, index) => (
                             <Flex key={`option-${index}`} mt={index === 0?'0':'1vh'} justifyContent={'space-between'} alignItems={'center'} p='5px' borderRadius=".5em" borderColor="gray.300" borderWidth="1px" bg="gray.50">

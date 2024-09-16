@@ -404,7 +404,7 @@ function Content ({userInfo}:{userInfo:userInfo}) {
             {memoizedCallWidget}
         
             {/*SIDEBAR*/}
-            <Flex flexDir='column'  alignItems='center' justifyContent='space-between' height={'100vh'} width='60px' py='3vh' bg='gray.50' borderRightColor={'gray.300'} borderRightWidth={'1px'}>
+            <Flex flexDir='column'  alignItems='center' justifyContent='space-between' height={'100vh'} width='60px' py='3vh' bg='gray.100' borderRightColor={'gray.200'} borderRightWidth={'1px'}>
                 <Flex alignItems='center' flexDir='column'>
                     <Box onClick={() => i18n.changeLanguage('en')}>
                         <Image src='/images/Isotipo.svg' height={'22px'} width={'22px'} alt='logo'/>
@@ -557,7 +557,7 @@ const NavBarItem = ({ icon, section }:NavBarItemProps) => {
     //FRONT
     return (
       <Tooltip isOpen={isHovered} label={sectionsMap[section]} placement='right' bg='black' ml='7px' borderRadius='.4rem' fontSize='sm' fontWeight={'medium'} p='6px'>
-        <Flex justifyContent='center' alignItems='center' mt='10px' py='10px' px='10px' cursor='pointer' borderRadius='.4rem' bg={isSelected ? (isHovered ? 'blue.200' : 'blue.100') : (isHovered ? 'blue.100' : 'transparent')} color={(isHovered || isSelected) ? 'blue.300' : 'gray.400'} onClick={handleClick} onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
+        <Flex justifyContent='center' alignItems='center' mt='10px' py='10px' px='10px' cursor='pointer' borderRadius='.4rem' bg={(isSelected) ? 'blue.100': isHovered ? 'blue.100':'transparent'} color={(isSelected) ? 'blue.400' : 'blackAlpha.800'} onClick={handleClick} onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
           <Icon as={icon} boxSize='21px'/>
         </Flex>
       </Tooltip>

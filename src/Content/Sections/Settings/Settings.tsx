@@ -102,6 +102,7 @@ function Settings () {
     const auth = useAuth()
     const isAdmin = auth.authData.users?.[auth.authData?.userId || '']?.is_admin
 
+    //SUBSECTINOS
     const subSections: SubSectionProps[] = [
         [[t('Data'), 'data'], [t('Payments'), 'payments'], [t('Users'),'admin-users'], [t('Groups'),'groups']],
         [[t('Perfil'), 'user'],[t('Views'), 'edit-views'], [t('Shortcuts'), 'shortcuts']],
@@ -109,7 +110,6 @@ function Settings () {
         [[t('Triggers'), 'triggers'], [t('Automations'), 'automations']],
         [[t('Web'),'web'], ['Whatsapp','whatsapp'], [t('Phone'),'phone'], ['Instagram','instagram'], ['Google Business','google-business'], [t('Mail'),'mail']],
         [['Shopify','shopify']]
-
     ] 
     
     const sectionsList: (IconKey | '')[] = isAdmin ? ['organization', 'user', 'rules', 'actions', 'channels', 'integrations'] : ['user']
@@ -130,7 +130,7 @@ function Settings () {
    
     return( 
     <Flex>  
-        <Flex flexDir="column" height={'100vh'} py="5vh" px='15px' bg="gray.50" width='200px' borderRightWidth="1px" borderRightColor="gray.200">
+        <Flex flexDir="column" height={'100vh'} py="5vh" px='15px' bg="gray.50" width='220px' borderRightWidth="1px" borderRightColor="gray.200">
             <Text fontSize={'1.2em'} fontWeight={'medium'}>Ajustes</Text>
             <Box height={'1px'} width={'100%'} bg='gray.300' mt='2vh' mb='2vh'/>
             <Section  section={'main'} subSections={[]}  />
@@ -141,7 +141,7 @@ function Settings () {
             </Box>
         </Flex>
 
-        <Box width={'calc(100vw - 260px)'} bg='white' px='2vw' height={'100vh'} overflow={'scroll'} ref={scrollRef}>
+        <Box width={'calc(100vw - 280px)'} bg='white' px='2vw' height={'100vh'} overflow={'scroll'} ref={scrollRef}>
             <Box py='5vh'> 
                 <Suspense fallback={<></>}>    
                     <Routes >

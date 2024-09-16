@@ -10,6 +10,8 @@ import showNotification from './Once/DesktopNotification'
 import { toast, ToastPosition } from 'react-toastify'
 import { Text, Flex } from '@chakra-ui/react'
 import 'react-toastify/dist/ReactToastify.css'
+//FUNCTIONS
+import parseMessageToBold from '../Functions/parseToBold'
 //ICONS
 import { FaCheckCircle , FaTimesCircle} from 'react-icons/fa'
 import { IoChatboxOutline } from 'react-icons/io5'
@@ -27,16 +29,6 @@ interface ShowToastOptions {
     navigate?:any
     isDesktop?:boolean
   }
-
- 
-//PARSE A MESSAGE TO SHOW BOLD TEXT
-const parseMessageToBold = (message:string, showLink:boolean) => {
-  const parts = message.split(/(\/{[^/]+}\/)/g)
-  return parts.map((part, index) => {
-    if (part.startsWith('/{') && part.endsWith('}/')) return <b key={index} style={{color:showLink?'blue':'black', textDecoration:showLink?'underline':''}} >{part.slice(2, -2)}</b>;
-    return part
-  })
-}
 
 //MAIN FUNCTION
 const showToast = ({message, duration = 3000, position = 'top-right', type = 'works', linkPath=false, id, navigate, isDesktop = false}: ShowToastOptions) => {
