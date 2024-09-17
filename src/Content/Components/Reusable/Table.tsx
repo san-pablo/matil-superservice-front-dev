@@ -160,12 +160,12 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort,  columnsMap, exclu
     return(
         <> 
        
-        <Box overflow={'scroll'} maxW={'calc(100% + 20px)'} ml='-10px' p='10px' >    
+        <Box  width={'100%'} mt='15px' overflowX={'scroll'}>    
         {(!data || dataToWork.length === 0) ? 
             <Box borderRadius={'.5rem'} width='100%' bg='gray.50' borderColor={'gray.200'} borderWidth={'1px'} p='15px'>    
                 <Text fontWeight={'medium'} fontSize={'1.1em'}>{noDataMessage}</Text>
             </Box>: 
-            <Box borderRadius={'.5em'} bg='gray.50'  overflow={'hidden'}   minWidth={`${totalWidth}px`}   >    
+            <Box borderRadius={'.5em'} bg='gray.50'  minWidth={`${totalWidth}px`}   >    
                 <Flex position={'sticky'}  borderTopRadius={'.5rem'} minWidth={`${totalWidth}px`}  borderColor={'gray.200'} borderWidth={'1px'} gap='20px' ref={headerRef} alignItems={'center'}  color='gray.600' p='10px' fontSize={'1em'} bg='gray.100' > 
                     
                     {selectedElements && <CustomCheckbox isChecked={selectedElements.length >= data.length} onChange={() => onInternalSelectAllElements(selectedElements.length >= data.length)}/>}

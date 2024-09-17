@@ -6,8 +6,8 @@
     "Business":"Empresa",
     "NoClients":"No hay clientes disponibles",
 
-    "Conversations_one":"Conversación",
-    "Conversations_other":"conversaciones",
+    "Conversations_one":"{{count}} conversación",
+    "Conversations_other":"{{count}} conversaciones",
     "ApplyFilters":"Aplicar filtros",
     "Page":"Página",
     "email_address": "Mail",

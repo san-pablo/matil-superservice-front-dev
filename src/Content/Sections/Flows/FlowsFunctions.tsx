@@ -52,7 +52,7 @@ function FlowsFunctions () {
                     })}
             </Flex>}
 
-            <Box bg='white' height={'calc(100vh - 60px)'}> 
+            <Box bg='white' height={'calc(100vh - 60px)'} width={'calc(100vw - 55px)'}> 
                 <Suspense fallback={<></>}>    
                     <Routes >
                         <Route path="/flows" element={<FlowsTable/>}  />

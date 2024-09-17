@@ -130,8 +130,8 @@ function Settings () {
    
     return( 
     <Flex>  
-        <Flex flexDir="column" height={'100vh'} py="5vh" px='15px' bg="gray.50" width='220px' borderRightWidth="1px" borderRightColor="gray.200">
-            <Text fontSize={'1.2em'} fontWeight={'medium'}>Ajustes</Text>
+        <Flex flexDir="column" height={'100vh'} py="5vh" px='15px'  bg='#f1f1f1' width='220px' borderRightWidth="1px" borderRightColor="gray.200">
+            <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('Settings')}</Text>
             <Box height={'1px'} width={'100%'} bg='gray.300' mt='2vh' mb='2vh'/>
             <Section  section={'main'} subSections={[]}  />
             <Box overflowY="auto" flex="1">
@@ -141,7 +141,7 @@ function Settings () {
             </Box>
         </Flex>
 
-        <Box width={'calc(100vw - 280px)'} position={'relative'} bg='white' px='2vw' height={'100vh'} overflow={'scroll'} ref={scrollRef}>
+        <Box width={'calc(100vw - 275px)'} position={'relative'} bg='white' px='2vw' height={'100vh'} overflow={'scroll'} ref={scrollRef}>
             <Box py='5vh'> 
                 <Suspense fallback={<></>}>    
                     <Routes >

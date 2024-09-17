@@ -135,7 +135,7 @@ const VariableTypeChanger = ({inputType, value, setValue}:{inputType:string, val
             return (<CustomSelect hide={false} selectedItem={value} setSelectedItem={(value) => setValue(value) }  options={Object.keys(statusMapDic)} labelsMap={statusMapDic} />)
         case 'is_matilda_engaged':
         case 'unseen_changes':
-        case 'is_satisfaction_offered':
+        case 'is_csat_offered':
             const boolDict = {"True":t('true'), "False":t('false')}
             return <CustomSelect hide={false} selectedItem={value} setSelectedItem={(value) => setValue(value)}  options={Object.keys(boolDict)} labelsMap={boolDict}/>
         case 'contact_business_id': return <FindBusinessComponent value={value} setValue={setValue} auth={auth}/>

@@ -144,7 +144,7 @@ function ClientsTable ({addHeaderSection}:{addHeaderSection:HeaderSectionType}) 
     
     //FRONT
     return(
-        <Box bg='white' height={'calc(100vh - 60px)'} maxW={'calc(100vw - 60px)'} overflowX={'scroll'} overflowY={'hidden'}  p='2vw'>
+        <Box bg='white' height={'calc(100vh - 60px)'} width={'calc(100vw - 55px)'} overflowX={'scroll'} overflowY={'hidden'}  p='2vw'>
     
             <Flex justifyContent={'space-between'} alignItems={'end'}> 
                 <Text fontWeight={'medium'} fontSize={'1.5em'}>{t('Clients')}</Text>

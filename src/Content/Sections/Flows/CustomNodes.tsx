@@ -721,7 +721,7 @@ export const MotherStructureUpdateNode = ({id, data}:{id:string, data:MotherStru
         }
         case 'is_matilda_engaged':
         case 'unseen_changes':
-        case 'is_satisfaction_offered':
+        case 'is_csat_offered':
         {
           const boolDict = {"True":t('true'), "False":t('false')}
           return value in boolDict? boolDict[value as keyof typeof boolDict] : 'True'

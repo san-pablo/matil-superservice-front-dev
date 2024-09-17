@@ -134,10 +134,9 @@ function Stats () {
         }
     }
  
-    console.log(sectionsData)
     return(<>
     <Box overflowY={'scroll'} height={'100vh'}> 
-        <Box p='2vw' bg='white'  width={'calc(100vw - 60px)'}   >
+        <Box p='2vw' bg='white'  width={'calc(100vw - 55px)'}   >
             
             <Box > 
                 <Flex justifyContent={'space-between'} alignItems={'end'}> 
@@ -166,7 +165,7 @@ function Stats () {
             </Box> 
             <Box height={'1px'} width={'100%'} bg='gray.300' mt='3vh' mb='3vh'/>
 
-            <Box height={'100vh'} width={'calc(96vw - 60px)'} bg='white'> 
+            <Box height={'100vh'} width={'calc(96vw - 55px)'} bg='white'> 
                 <Suspense fallback={<></>}>    
                     <Routes >
                         <Route path="/users" element={<Users waitingFilters={waitingFilters} data={sectionsData.users} />} />

@@ -152,7 +152,7 @@ function Ticket ({ addHeaderSection, deleteHeaderSection, socket }:TicketProps) 
     //FRONT
     return(
         <>
-        <Flex overflowX={'scroll'} width={'calc(100vw - 60px)'} px='30px' height='60px' bg='gray.100' borderBottomWidth={'1px'} borderBottomColor='gray.200' flex='1' alignItems={'center'} >
+        <Flex overflowX={'scroll'} width={'calc(100vw - 55px)'} px='30px' height='60px' bg='gray.100' borderBottomWidth={'1px'} borderBottomColor='gray.200' flex='1' alignItems={'center'} >
             <Flex borderRadius={'.3rem'} height={'70%'}  alignItems={'center'} borderWidth={'1px 1px 1px 1px'}  borderColor='gray.300'> 
                 
                 <Flex alignItems='center' gap='6px'   cursor={'pointer'}  bg={ticketSection === 'business' ?  'gray.300':'transparent' } height={'100%'}  borderRightWidth={'1px'} borderRightColor='gray.300'  px={{md:'10px',lg:'20px'}}> 

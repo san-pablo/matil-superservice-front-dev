@@ -132,6 +132,7 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
     
     //TRANSLATION
     const { t } = useTranslation('clients')
+    const t_ticket = useTranslation('tickets').t
     const t_formats = useTranslation('formats').t
 
     //CONSTANTS
@@ -148,10 +149,8 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
     }
 
     //TABLE MAPPING
-    const columnsTicketsMap:{[key in TicketColumn]:[string, number]} = {id: [t('id'), 50], local_id: [t('local_id'), 50], status:  [t('status'), 100], channel_type: [t('channel_type'), 150], subject:  [t('subject'), 200], user_id: [t('user_id'), 200], created_at: [t('created_at'), 150],updated_at: [t('updated_at'), 150], solved_at: ['solved_at', 150],closed_at: [t('closed_at'), 150],title: [t('title'), 300], urgency_rating: [t('urgency_rating'), 130], deletion_date: [t('deletion_date'), 180], unseen_changes: [t('unseen_changes'), 200]}
+    const columnsTicketsMap:{[key in TicketColumn]:[string, number]} = {id: [t_ticket('id'), 50], local_id: [t_ticket('local_id'), 50], status:  [t_ticket('status'), 100], channel_type: [t_ticket('channel_type'), 150], subject:  [t_ticket('subject'), 200], user_id: [t_ticket('user_id'), 200], created_at: [t_ticket('created_at'), 150],updated_at: [t_ticket('updated_at'), 150], solved_at: [t_ticket('solved_at'), 150],closed_at: [t_ticket('closed_at'), 150],title: [t_ticket('title'), 300], urgency_rating: [t_ticket('urgency_rating'), 130], deletion_date: [t_ticket('deletion_date'), 180], unseen_changes: [t_ticket('unseen_changes'), 200]}
     
-
-
     //WEBSOCKET ACTIONS, THEY TRIGEGR ONLY IF THE USER IS INSIDE THE SECTION
     useEffect(() =>  {
         socket?.current.on('client', (data:any) => {
@@ -539,7 +538,7 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
         {clientSection === 'client'?
          <>
             <Flex height={'calc(100vh - 120px)'}  width={'100%'}>
-                <Box ref={scrollRef1} p='2vw' bg='gray.50' width={'320px'} borderRightWidth={'1px'} borderRightColor='gray.200' overflow={'scroll'}  >
+                <Box ref={scrollRef1} p='2vw'  width={'280px'} bg='#f1f1f1' borderRightWidth={'1px'} borderRightColor='gray.200' overflow={'scroll'}  >
                     <Skeleton isLoaded={clientData !== null}> 
                         {Object.keys(clientDataEdit || {}).map((con, index) => (
                         <Fragment key={`channel-${index}`}> 
@@ -649,8 +648,7 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
                     </Flex>
 
                 </Box>
-                
-                <Box bg='white' p='2vw' width="calc(100vw - 380px)" overflow={'scroll'}>
+                <Box bg='white' p='2vw' width="calc(100vw - 335px)" overflow={'scroll'}>
                 <Flex gap='3vw' justifyContent={'space-between'}> 
                     <Flex  flex='1' gap='20px'  alignItems={'center'}>
                         <Avatar />
@@ -674,9 +672,9 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
                     <IconButton isRound size='xs' aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={ticketsFilters.page_index === 1} onClick={() => updateTable({...ticketsFilters,page_index:ticketsFilters.page_index - 1})}/>
                 </Flex>
                 <Skeleton isLoaded={clientTicketsEdit !== null}> 
-                    <Table data={clientTicketsEdit?.page_data || []} CellStyle={CellStyle} noDataMessage={t('NoTickets')} columnsMap={columnsTicketsMap} excludedKeys={['id', 'conversation_id', 'end_client_id',  'is_matilda_engaged']} onClickRow={(row:any, index:number) => {navigate(`/tickets/ticket/${row.id}`)}}/>
+                    <Table data={clientTicketsEdit?.page_data || []} CellStyle={CellStyle} noDataMessage={t('NoClients')} columnsMap={columnsTicketsMap} excludedKeys={['id', 'conversation_id', 'end_client_id',  'is_matilda_engaged']} onClickRow={(row:any, index:number) => {navigate(`/tickets/ticket/${row.id}`)}}/>
                 </Skeleton>
-            </Box>
+                </Box>
             </Flex>
 
             {showMerge && memoizedMergeBox}

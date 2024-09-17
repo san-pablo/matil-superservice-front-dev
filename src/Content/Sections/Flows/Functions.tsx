@@ -379,7 +379,7 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
         <Skeleton isLoaded={functionData !== null}> 
             <Box height={'calc(100vh - 60px)'} bg='white' width={'100%'} p='2vw' position='relative'> 
 
-                <Box minW={'500px'}  p='10px' left={'1vw'}  top='1vw' zIndex={100} position={'absolute'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} maxH={'calc(100vh - 10vw)'} overflow={'scroll'} bg='white' borderRadius={'.5rem'}  > 
+                <Box minW={'500px'}  p='10px' left={'2vw'}  top='1vw' zIndex={100} position={'absolute'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} maxH={'calc(100vh - 10vw)'} overflow={'scroll'} bg='white' borderRadius={'.5rem'}  > 
                     <Flex flex={1} gap='20px' alignItems={'center'}> 
                         <Tooltip label={'Atrás'}  placement='bottom' hasArrow bg='black'  color='white'  borderRadius='.4rem' fontSize='.75em' p='4px'> 
                             <IconButton aria-label='go-back' size='sm' bg='transparent' border='none' onClick={() => {if (location.split('/')[3]) {navigate(`/flows-functions/flows/flow/${location.split('/')[4]}`)};onSaveFunction('go-back')}} icon={<IoIosArrowBack size='20px'/>}/>

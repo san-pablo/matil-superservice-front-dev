@@ -288,8 +288,8 @@ function TicketResponse ( {ticketData, setTicketData, clientTickets, setClientTi
     //FRONT
     return(<> 
  
-        <Flex height={'calc(100vh - 120px)'} ref={scrollRef1} maxW={'calc(100vw - 60px)'}>
-            <Box position={'relative'}  p='2vw' bg='gray.50' overflow={'scroll'}   width={'280px'}   borderRightWidth={'1px'} borderRightColor='gray.200' >
+        <Flex height={'calc(100vh - 120px)'} ref={scrollRef1} maxW={'calc(100vw - 55px)'}>
+            <Box position={'relative'}  p='2vw' bg='#f1f1f1' overflow={'scroll'}   width={'280px'}   borderRightWidth={'1px'} borderRightColor='gray.200' >
                 <Text mb='1vh'fontWeight={'medium'} fontSize='.9em' >{t('subject')}</Text>
                 <Skeleton isLoaded={ticketDataEdit !== null}>
                     <CustomSelect isDisabled={ticketDataEdit?.user_id === -1 || ticketDataEdit?.status === 'closed'} containerRef={scrollRef1}  selectedItem={ticketDataEdit?.subject} options={auth.authData?.ticket_subjects || []} setSelectedItem={(value) => updateSelector('subject',value)} hide={false} />

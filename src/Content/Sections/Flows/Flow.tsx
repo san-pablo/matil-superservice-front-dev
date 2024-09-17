@@ -713,7 +713,7 @@ const Flow = () => {
         const node = nodes.find(node => node.id === showNodesAction?.nodeId)
         const scrollRef = useRef<HTMLDivElement>(null)
 
-        const ticketsList = ['user_id', 'group_id', 'channel_type', 'title', 'subject', 'urgency_rating', 'status', 'unseen_changes', 'tags', 'is_matilda_engaged', 'is_satisfaction_offered']
+        const ticketsList = ['user_id', 'group_id', 'channel_type', 'title', 'subject', 'urgency_rating', 'status', 'unseen_changes', 'tags', 'is_matilda_engaged', 'is_csat_offered']
         const ticketsLabelsMap:{[key:string]:string} = {}
         ticketsList.forEach((structure, index) => {ticketsLabelsMap[structure] = t(structure)})
         const clientsList = ['contact_business_id', 'name', 'language', 'rating', 'notes', 'labels']
@@ -867,7 +867,7 @@ const Flow = () => {
                 const firstRender = useRef<boolean>(true)
 
                 //MAPPING CONSTANTS
-                const operationTypesDict = {'user_id':['set'], 'group_id':['set'], 'channel_type':['set'], 'title':['set', 'concatenate'], 'subject':['set'], 'urgency_rating':['set', 'add', 'substract'], 'status':['set'], 'unseen_changes':['set'], 'tags':['append', 'remove'], 'is_matilda_engaged':['set'],'is_satisfaction_offered':['set'],
+                const operationTypesDict = {'user_id':['set'], 'group_id':['set'], 'channel_type':['set'], 'title':['set', 'concatenate'], 'subject':['set'], 'urgency_rating':['set', 'add', 'substract'], 'status':['set'], 'unseen_changes':['set'], 'tags':['append', 'remove'], 'is_matilda_engaged':['set'],'is_csat_offered':['set'],
                 'contact_business_id':['set'], 'name':['set', 'concatenate'], 'language':['set'], 'rating':['set', 'add', 'substract'], 'notes':['set', 'concatenate'], 'labels':['append', 'remove'],
                 'domain':['set', 'concatenate']
                 }

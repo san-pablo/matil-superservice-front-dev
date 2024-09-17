@@ -132,7 +132,7 @@ function ContactBusinessesTable ({addHeaderSection}:{addHeaderSection:HeaderSect
     return(<>
         {showCreateBusiness && memoizedCreateBusiness}
 
-        <Box bg='white' height={'calc(100vh - 60px)'} maxW={'calc(100vw - 60px)'} overflowX={'scroll'} overflowY={'hidden'} p='2vw'>
+        <Box bg='white' height={'calc(100vh - 60px)'} width={'calc(100vw - 55px)'} overflowX={'scroll'} overflowY={'hidden'} p='2vw'>
     
             {/*FILTRAR LA TABLA*/}
             <Flex justifyContent={'space-between'}> 

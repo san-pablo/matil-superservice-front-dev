@@ -421,18 +421,18 @@ function Content ({userInfo}:{userInfo:userInfo}) {
             </Flex>
 
             {/*CONTENT OF THE SECTIONS*/}
-            <Box width={'calc(100vw - 55px)'} height={'calc(100vh + 60px)'}>
+            <Box  height={'calc(100vh + 60px)'}>
  
                 {/*HEADER ELEMENTS*/}
                 <motion.div initial={{ y: !isHeaderSection ? -60 : 0 }} animate={{ y: !isHeaderSection ? -60 : 0 }} exit={{ y: !isHeaderSection ? -60 : 0 }} transition={{ duration: 0.2 }}
-                    style={{  height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+                    style={{  height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background:'#f1f1f1'}}>
                     <Flex height='100%' minW={0} flex='1' overflow={'scroll'} ref={containerRef} > 
                         <DragDropContext onDragEnd={onDragEnd}>
                             <Droppable droppableId="sections" direction="horizontal">
                                 {(provided) => (
                                 <Flex width='100%' ref={provided.innerRef} {...provided.droppableProps} height="100%">
                                     {headerSections.length === 0?
-                                        <Flex height="100%" justifyContent={'space-between'} alignItems='center' minW='120px' maxW='280px' bg={'gray.50'}  borderColor='gray.200' borderBottomWidth={'1px'}  px='15px'cursor='pointer' >
+                                        <Flex height="100%" bg='#f1f1f1' justifyContent={'space-between'} alignItems='center' minW='120px' maxW='280px'  borderColor='gray.200' borderBottomWidth={'1px'}  px='15px'cursor='pointer' >
                                             <Text fontSize={'.8em'} fontWeight={'medium'}>{t('NoSections')}</Text>
                                         </Flex>
                                         :
@@ -444,7 +444,7 @@ function Content ({userInfo}:{userInfo:userInfo}) {
                                             return (
                                                 <Draggable  key={`section-${element.type}-${element.code}`} draggableId={`${element.type}-${element.code}`} index={index}>
                                                 {(provided, snapshot) => (
-                                                    <Flex boxShadow={snapshot.isDragging?'0 4px 8px rgba(0, 0, 0, 0.3)':'none'}  height="100%" ref={provided.innerRef}  {...provided.draggableProps} {...provided.dragHandleProps} justifyContent={'space-between'} alignItems='center' w={width} minW='120px' maxW='280px' bg={isSectionSelected ? 'gray.100' : 'gray.50'} _hover={{ bg: isSectionSelected ? 'gray.100' : 'brand.hover_gray' }} borderColor='gray.200' borderBottomWidth={isSectionSelected?'0':'1px'} borderRightWidth='1px' px='15px'cursor='pointer' onClick={() => {navigate(sectionToSelect)}}>
+                                                    <Flex  boxShadow={snapshot.isDragging?'0 4px 8px rgba(0, 0, 0, 0.3)':'none'}  height="100%" ref={provided.innerRef}  {...provided.draggableProps} {...provided.dragHandleProps} justifyContent={'space-between'} alignItems='center' w={width} minW='120px' maxW='280px' bg={isSectionSelected ? 'gray.100' :  '#f1f1f1'} _hover={{ bg: isSectionSelected ? 'gray.100' : 'brand.hover_gray' }} borderColor='gray.200' borderBottomWidth={isSectionSelected?'0':'1px'} borderRightWidth='1px' px='15px'cursor='pointer' onClick={() => {navigate(sectionToSelect)}}>
                                                         <Flex flex='1' minW='0' gap='10px' alignItems={'center'}>
                                                             <Icon as={element.type === 'ticket' ? IoChatboxOutline : element.type === 'client' ? IoPersonOutline:BsBuildings } />
                                                             <Box flex='1' minW='0'>
@@ -505,8 +505,7 @@ function Content ({userInfo}:{userInfo:userInfo}) {
                 </motion.div>
             
                 {/*SECTIONS*/}
-                <motion.div initial={{ y: !isHeaderSection ? -60 : 0 }} animate={{ y: !isHeaderSection ? -60 : 0 }} exit={{ y: !isHeaderSection ? -60 : 0 }} transition={{ duration: 0.2 }}
-                    style={{ flex: '1'}}>
+                <motion.div initial={{ y: !isHeaderSection ? -60 : 0 }} animate={{ y: !isHeaderSection ? -60 : 0 }} exit={{ y: !isHeaderSection ? -60 : 0 }} transition={{ duration: 0.2 }}>
                     <Suspense fallback={<></>}>    
                         <Routes >
                             <Route path="/tickets" element={<TicketsTable socket={socket}/>}/>
@@ -526,8 +525,8 @@ function Content ({userInfo}:{userInfo:userInfo}) {
  
         </Flex>:
         <Flex height={'100vh'}  width={'100vw'} justifyContent={'center'} alignItems={'center'}> 
-              <LoadingIcon/>
-          </Flex>}
+            <LoadingIcon/>
+        </Flex>}
     </>)
 }
 

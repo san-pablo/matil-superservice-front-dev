@@ -310,7 +310,7 @@ function TicketsTable({socket}:{socket:any}) {
 
     //FRONT
     return(<> 
-        <Flex height={'calc(100vh - 60px)'} color='black' width={'100%'} >
+        <Flex height={'calc(100vh - 60px)'} color='black' width={'calc(100vw - 55px)'} >
     
             {/*VIEWS SELECTION*/}
             <Flex zIndex={100}  px='1vw' gap='20px' py='2vh' bg='#f1f1f1' width={'280px'} flexDir={'column'} justifyContent={'space-between'} borderRightWidth={'1px'} borderRightColor='gray.200' >
@@ -369,7 +369,7 @@ function TicketsTable({socket}:{socket:any}) {
             </Flex>
 
             {/* ACTIONS AND SHOW TABLE */}
-            <Box p='2vw' width={'calc(100vw - 335px)'} bg='green'>
+            <Box p='2vw' width={'calc(100vw - 335px)'}>
                 <Flex justifyContent={'space-between'} gap='10px'>
                     <Text flex='1' minW={0} fontWeight={'medium'} fontSize={'1.5em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{selectedView.name}</Text>
                     <ActionsButton items={tickets?.page_data} view={selectedView} section={'tickets'} />
