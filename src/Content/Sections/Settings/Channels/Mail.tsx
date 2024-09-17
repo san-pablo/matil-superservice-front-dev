@@ -7,7 +7,9 @@ import fetchData from "../../../API/fetchData"
 //FRONT
 import { Text, Box, Skeleton, Flex, Button, Icon, Tooltip, IconButton } from "@chakra-ui/react"
 //COMPONENTS
-import ChannelInfo from "./Components/Channelnfo"
+import CodeMirror from "@uiw/react-codemirror"
+import { html } from "@codemirror/lang-html"
+import { oneDark } from "@codemirror/theme-one-dark"
 import GetMatildaConfig from "./GetMatildaConfig"
 import LoadingIconButton from "../../../Components/Reusable/LoadingIconButton"
 import EditText from "../../../Components/Reusable/EditText"
@@ -36,16 +38,20 @@ function Mail () {
     const  { t } = useTranslation('settings')
 
     //WAITING BOOLEANS FOR CREATING AN ACCOUNT
+    const [waitingSend, setWaitingSend] = useState<boolean>(false)
     const [waitignCreate, setWaitingCreate] = useState<boolean>(false)
     const [waitignSes, setWaitingSes] = useState<boolean>(false)
     const [waitignForward, setWaitingForward] = useState<boolean>(false)
-
 
     //DATA
     const [selectedUuid, setSelectedUuid] = useState<string>('')
     const [introducedName, setIntroducedName] = useState<boolean>(true)
     const [data, setData] = useState<MailProps | null>(null)
     const dataRef = useRef<any>(null)
+
+    //MATILDA CONFIG 
+    const [matildaConfig, setMatildaConfig] = useState<configProps | null>(null)
+    const matildaConfigRef = useRef<configProps| null>(null)
 
     //FETCH DATA
     useEffect(() => {
@@ -60,7 +66,9 @@ function Mail () {
               const responseMail = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/${mailChannel}`,  setValue: setData, auth})
               if (responseMail?.status === 200) {
                 setIntroducedName(true)
+                setMatildaConfig(responseMail.data.matilda_configuraion)
                 setSelectedUuid(responseMail.data.uuid)
+                matildaConfigRef.current = responseMail.data.matilda_configuraion
                 dataRef.current = responseMail.data
               }
             }
@@ -75,7 +83,6 @@ function Mail () {
 
 
     const sendFirstEmailVerification = async () => {
-      console.log({name:data?.display_id,email_address:data?.display_id})
       const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/email`, method:'post',setWaiting:setWaitingCreate, requestForm:{name:data?.display_id,email_address:data?.display_id}, auth, toastMessages:{works:t('CorrectCreatedMail'), failed:t('FailedCreatedMail')}})
       if (response?.status === 200) setIntroducedName(true)
     }
@@ -87,19 +94,32 @@ function Mail () {
     }
 
     const sendEmailForward = async () => {
-      const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/email_ses_verification`,method:'post', setWaiting:setWaitingCreate, requestForm:{email_address:data?.display_id}, auth, toastMessages:{works:t('CorrectCreatedMail'), failed:t('FailedCreatedMail')}})
+      const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/email_ses_verification`,method:'post', setWaiting:setWaitingForward, requestForm:{email_address:data?.display_id}, auth, toastMessages:{works:t('CorrectCreatedMail'), failed:t('FailedCreatedMail')}})
       if (response?.status === 200) setIntroducedName(true)
+    }
+
+    const saveChanges = async () => {
+        const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/${dataRef.current.id}`, setValue:setWaitingSend, setWaiting:setWaitingSend, auth, method:'put', requestForm:{...data, matilda_configuration:matildaConfig}, toastMessages:{'works':t('CorrectUpdatedInfo'), 'failed':t('FailedUpdatedInfo')}})
+        if (response?.status === 200) {
+          dataRef.current = data
+          matildaConfigRef.current = matildaConfig
+        }
     }
 
     //FRONT 
     return(<> 
     <Box> 
-      <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Mail')}</Text>
-      <Box height={'1px'} width={'100%'} bg='gray.300' mt='1vh' mb='5vh'/>
-    </Box>
+      <Flex justifyContent={'space-between'}> 
+              <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Mail')}</Text>
+              {!(data?.display_id === '' || !data?.configuration.is_ses_verified || !data?.configuration.is_forward_verified) && <Button size='sm'  isDisabled={(JSON.stringify(dataRef.current) === JSON.stringify(data)) && (JSON.stringify(matildaConfigRef.current) === JSON.stringify(matildaConfig))} onClick={saveChanges}>{waitingSend?<LoadingIconButton/>:t('SaveChanges')}</Button>}
+          </Flex>       
+        <Box height={'1px'} width={'100%'} bg='gray.300' mt='1vh' mb='5vh'/>
+      </Box>
 
-    <Skeleton maxW={'800px'} isLoaded={data !== null}>
-      {(data?.display_id === '' || !data?.configuration.is_ses_verified || !data?.configuration.is_forward_verified) ? <>
+     
+      {(data?.display_id === '' || !data?.configuration.is_ses_verified || !data?.configuration.is_forward_verified) ? 
+        
+      <Skeleton maxW={'800px'} isLoaded={data !== null}>
         <Box >
           <Flex gap='15px'>
               <Icon boxSize={'25px'} as={Bs1CircleFill}/>
@@ -160,32 +180,26 @@ function Mail () {
          </Flex>
        </Box>
        </>}
-
-      </>:
-      <Box> 
-        <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('ActiveAccounts')} ({t('Mail')})</Text>
-        <Box height={'1px'} width={'100%'} bg='gray.300' mt='1vh' mb='2vh'/>
-      </Box>}
+      </Skeleton>
+      :
+      <Skeleton  isLoaded={data !== null && matildaConfig !== null}>
+        <Flex gap='2vw' width={'100%'}> 
+          <Box flex='1' > 
+            <Text fontSize={'1.1em'} mb='.5vh' fontWeight={'medium'}>{t('Mail')}</Text>
+            <EditText value={data.display_id} setValue={(value) => setData(prev => ({...prev as MailProps, display_id:value}))} isDisabled/>
+            <Text fontSize={'1.1em'} mt='3vh' fontWeight={'medium'}>{t('Template')}</Text>
+            <Text mb='1vh' color='gray.600' fontSize={'.8em'}>{t('TemplateDes')}</Text>
+            <CodeMirror value={data.configuration.template} height="100%" maxHeight={`300px`} extensions={[html()]} onChange={(value) => setData(prev => ({...prev as MailProps, configuration:{...(prev as MailProps)?.configuration, template:value}}))} theme={oneDark}/>
+          </Box>
+          <Box flex='1'> 
+            <GetMatildaConfig configDict={matildaConfig} setConfigDict={setMatildaConfig}/>
+          </Box>
+        </Flex>
+        </Skeleton>
+      }
     
-    </Skeleton>
+ 
     </>)
 }
-
-const ChangeCode = ({codeValue, index, editCode}:{codeValue:string, index:number, editCode:(code:string, index:number) => void}) => {
-  
-  const  { t } = useTranslation('settings')
-
-
-  return (
-  <Box px='7px' mt='5vh'>
-    <Text mt='1vh' fontWeight={'medium'}>{t('Template')}</Text>
-    <Text mb='1vh' color='gray.600' fontSize={'.8em'}>{t('TemplateDes')}</Text>
-    <Box flex='1'> 
-      <Box flex='1' dangerouslySetInnerHTML={{ __html: codeValue}}/>
-      <Box height={'500px'}  mt='3vh'   bg='black' color='white' p='10px' borderRadius={'.7em'}><textarea style={{outline:'none', background:'transparent', border:'none', width:'100%', height:'100%'}} value={codeValue} onChange={(e) => {editCode(e.target.value, index)}}/></Box>
-    </Box>
-  </Box>
-  )
- }
 
 export default Mail

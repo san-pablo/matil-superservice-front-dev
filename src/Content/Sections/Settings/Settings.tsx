@@ -108,7 +108,7 @@ function Settings () {
         [[t('Views'), 'edit-views'], [t('Shortcuts'), 'shortcuts']],
         [[t('Tickets'), 'tickets'], [t('Fields'), 'fields'],[t('Surveys'), 'surveys']],
         [[t('Triggers'), 'triggers'], [t('Automations'), 'automations']],
-        [[t('Web'),'web'], ['Whatsapp','whatsapp'], [t('Phone'),'phone'], ['Instagram','instagram'], ['Google Business','google-business'], [t('Mail'),'mail']],
+        [[t('Web'),'web'], ['Whatsapp','whatsapp'],['Instagram','instagram'], ['Google Business','google-business'], [t('Mail'),'mail']],
         [['Shopify','shopify']]
     ] 
     
@@ -141,7 +141,7 @@ function Settings () {
             </Box>
         </Flex>
 
-        <Box width={'calc(100vw - 280px)'} bg='white' px='2vw' height={'100vh'} overflow={'scroll'} ref={scrollRef}>
+        <Box width={'calc(100vw - 280px)'} position={'relative'} bg='white' px='2vw' height={'100vh'} overflow={'scroll'} ref={scrollRef}>
             <Box py='5vh'> 
                 <Suspense fallback={<></>}>    
                     <Routes >

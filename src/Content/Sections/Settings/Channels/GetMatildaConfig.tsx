@@ -62,7 +62,7 @@ const GetMatildaConfig = ({configDict, setConfigDict, updateData, configIndex, i
     }
  
 return(   
-   <Box mt='2vh' >
+   <Box >
         <Flex gap='10px' alignItems={'center'}>
             <Switch isChecked={configDict?.is_matilda_enabled} onChange={(e) => handleCheckboxChange('is_matilda_enabled', e.target.checked)}/>
             <Text fontSize={'1.1em'} fontWeight={'medium'}>{t('IAUse')}</Text>  

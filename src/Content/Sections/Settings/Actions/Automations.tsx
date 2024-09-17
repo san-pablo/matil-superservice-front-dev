@@ -185,7 +185,7 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
  
     //ADD A CONDITION OR AN ACTION
     const addElement = (type: 'all_conditions' | 'any_conditions' | 'actions') => {
-        const newElement = type === 'actions' ? {type:'email_csat', content:{content:''}}:{motherstructure:'ticket', is_customizable:false, name:'user_id', op:'eq', value:-1}
+        const newElement = type === 'actions' ? {type:'email_csat', arguments:{content:''}}:{motherstructure:'ticket', is_customizable:false, name:'user_id', op:'eq', value:-1}
         setCurrentAutomationData((prev) => ({ ...prev, [type]: [...prev[type],newElement]}))
     }
     //DELETE A CONDITION OR AN ACTION
@@ -225,10 +225,10 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
             const lastAction = [...prev.actions]
             let updatedAction
             if (actionKey)  {
-                if (actionType === 'motherstructure_update') updatedAction = {...lastAction[index], content: value}
+                if (actionType === 'motherstructure_update') updatedAction = {...lastAction[index], arguments: value}
                 else updatedAction = {...lastAction[index], arguments: {...(lastAction[index] as {type:ActionsType, arguments:any}).arguments, [actionKey]:value}}
             }
-            else updatedAction = {...lastAction[index], 'type': actionType, content:getDefaultContent(actionType)}
+            else updatedAction = {...lastAction[index], 'type': actionType, arguments:getDefaultContent(actionType)}
 
             const updatedConditionList = [...lastAction.slice(0, index), updatedAction, ...lastAction.slice(index + 1)]
             return {...prev, actions: updatedConditionList}
@@ -341,7 +341,6 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
                                         <Textarea resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('Message')}...`} maxH='300px' value={action.arguments.notification_message} onChange={(e) => editActions( index, 'agent_email_notification', 'notification_message', e.target.value) } p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
                                     </>
                                 )
-                                
                             case 'motherstructure_update':
                                 {
                                     const operationTypesDict = {'user_id':['set'], 'group_id':['set'], 'channel_type':['set'], 'title':['set', 'concatenate'], 'subject':['set'], 'urgency_rating':['set', 'add', 'substract'], 'status':['set'], 'unseen_changes':['set'], 'tags':['append', 'remove'], 'is_matilda_engaged':['set'],'is_satisfaction_offered':['set'],

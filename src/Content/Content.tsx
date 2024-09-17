@@ -30,8 +30,8 @@ import useOutsideClick from './Functions/clickOutside'
 import DetermineTicketViews from './MangeData/DetermineTicketViews'
 //ICONS
 import { IoFileTrayFull, IoChatboxOutline, IoPersonOutline } from "react-icons/io5" 
-import { BsFillPersonLinesFill, BsBarChartFill, BsBuildings, BsFillTelephoneInboundFill, BsFillTelephoneMinusFill, BsFillTelephoneXFill } from "react-icons/bs"
-import { FaPlus, FaArrowRightToBracket } from "react-icons/fa6"
+import { BsFillPersonLinesFill, BsBarChartFill, BsBuildings,BsStars,  BsFillTelephoneInboundFill, BsFillTelephoneMinusFill, BsFillTelephoneXFill } from "react-icons/bs"
+import { FaPlus, FaArrowRightToBracket, FaCode } from "react-icons/fa6"
 import { IoIosSettings, IoIosArrowDown } from "react-icons/io"
 import { RxCross2 } from "react-icons/rx"
 import { FiPlus } from "react-icons/fi"
@@ -39,7 +39,6 @@ import { BiSolidBuildings } from 'react-icons/bi'
 import { PiBuildingApartmentFill, PiKeyReturn } from "react-icons/pi"
 import { TbArrowBack } from 'react-icons/tb'
 import { VscFeedback } from "react-icons/vsc"
-import { TiFlowMerge } from "react-icons/ti"
 //TYPING 
 import { Organization, TicketData, userInfo, Views } from './Constants/typing'
 import { IconType } from 'react-icons'
@@ -82,7 +81,6 @@ function Content ({userInfo}:{userInfo:userInfo}) {
     const socket = useRef<any>(null)
 
     //TRANSLATION
-    const { i18n } = useTranslation()
     const { t } = useTranslation('main')
 
     //IMPORTANT REACT CONSTANTS
@@ -404,16 +402,14 @@ function Content ({userInfo}:{userInfo:userInfo}) {
             {memoizedCallWidget}
         
             {/*SIDEBAR*/}
-            <Flex flexDir='column'  alignItems='center' justifyContent='space-between' height={'100vh'} width='60px' py='3vh' bg='gray.100' borderRightColor={'gray.200'} borderRightWidth={'1px'}>
+            <Flex flexDir='column'  alignItems='center' justifyContent='space-between' height={'100vh'} width='55px' py='3vh' bg='#e8e8e8' >
                 <Flex alignItems='center' flexDir='column'>
-                    <Box onClick={() => i18n.changeLanguage('en')}>
-                        <Image src='/images/Isotipo.svg' height={'22px'} width={'22px'} alt='logo'/>
-                    </Box>
+              
                     <Box mt='4vh' width='100%'> 
                         <NavBarItem icon={IoFileTrayFull} section={'tickets'}/>
                         <NavBarItem icon={BsFillPersonLinesFill} section={'clients'}/>
                         <NavBarItem icon={PiBuildingApartmentFill} section={'contact-businesses'}/>
-                        {isAdmin && <NavBarItem icon={TiFlowMerge} section={'flows-functions'}/>}
+                        {isAdmin && <NavBarItem icon={BsStars} section={'flows-functions'}/>}
                         {isAdmin && <NavBarItem icon={BsBarChartFill} section={'stats'}/>}
                     </Box>
                 </Flex>
@@ -425,7 +421,7 @@ function Content ({userInfo}:{userInfo:userInfo}) {
             </Flex>
 
             {/*CONTENT OF THE SECTIONS*/}
-            <Box width={'calc(100vw - 60px)'} height={'calc(100vh + 60px)'}>
+            <Box width={'calc(100vw - 55px)'} height={'calc(100vh + 60px)'}>
  
                 {/*HEADER ELEMENTS*/}
                 <motion.div initial={{ y: !isHeaderSection ? -60 : 0 }} animate={{ y: !isHeaderSection ? -60 : 0 }} exit={{ y: !isHeaderSection ? -60 : 0 }} transition={{ duration: 0.2 }}
@@ -543,7 +539,7 @@ const NavBarItem = ({ icon, section }:NavBarItemProps) => {
     //NAVIGATE CONSTANT
     const navigate = useNavigate()
     const location = useLocation().pathname
-    const sectionsMap = {tickets: 'Tickets', clients: t('Clients'), stats: t('Stats'), 'flows-functions':t('Flows'), 'contact-businesses':t('Businesses'), settings: t('Settings')}
+    const sectionsMap = {tickets: 'Tickets', clients: t('Clients'), stats: t('Stats'), 'flows-functions':t('FlowsFunctions'), 'contact-businesses':t('Businesses'), settings: t('Settings')}
     
     //HOVER AND SELECT LOGIC
     const [isHovered, setIsHovered] = useState(false)
@@ -556,8 +552,8 @@ const NavBarItem = ({ icon, section }:NavBarItemProps) => {
   
     //FRONT
     return (
-      <Tooltip isOpen={isHovered} label={sectionsMap[section]} placement='right' bg='black' ml='7px' borderRadius='.4rem' fontSize='sm' fontWeight={'medium'} p='6px'>
-        <Flex justifyContent='center' alignItems='center' mt='10px' py='10px' px='10px' cursor='pointer' borderRadius='.4rem' bg={(isSelected) ? 'blue.100': isHovered ? 'blue.100':'transparent'} color={(isSelected) ? 'blue.400' : 'blackAlpha.800'} onClick={handleClick} onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
+      <Tooltip isOpen={isHovered} label={sectionsMap[section]} placement='right' color={'black'} bg='white' boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.15)'} borderWidth={'1px'} borderColor={'gray.200'} borderRadius='.4rem' fontSize='sm' fontWeight={'medium'} p='6px'>
+        <Flex justifyContent='center' alignItems='center' py='15px' width={'55px'} cursor='pointer'  bg={(isSelected) ? '#f1f1f1': isHovered ? '#f1f1f1':'transparent'} color={(isSelected) ? 'rgba(59, 90, 246)' : 'blackAlpha.700'} onClick={handleClick} onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
           <Icon as={icon} boxSize='21px'/>
         </Flex>
       </Tooltip>

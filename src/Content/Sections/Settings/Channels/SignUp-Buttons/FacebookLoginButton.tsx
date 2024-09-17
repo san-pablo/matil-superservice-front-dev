@@ -73,7 +73,7 @@ declare global {
     };
 
   return (
-    <Button isDisabled={name === ''} onClick={launchWhatsAppSignup} size='sm' bg='#1877f2' leftIcon={<FaFacebookSquare/>} _hover={{bg:'#0F6AE0'}} color='#fff'>
+    <Button isDisabled={name === ''} onClick={launchWhatsAppSignup} size='lg' bg='#1877f2' leftIcon={<FaFacebookSquare/>} _hover={{bg:'#0F6AE0'}} color='#fff'>
       {waitingInfo?<LoadingIconButton/>:'Registrarse con Facebook'}
     </Button>
   )

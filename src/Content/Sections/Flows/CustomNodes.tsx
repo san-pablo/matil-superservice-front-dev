@@ -194,7 +194,7 @@ export const FirstNode = ({id, data}:{id:string, data:TriggerNodeData}) => {
   }
 
   return (<> 
-    <Box cursor={'default'} bg="gray.50" borderRadius={'.5rem'} borderColor='blue.100' borderWidth={'2px'} p='15px' >
+    <Box width={'250px'} cursor={'default'} bg="gray.50" borderRadius={'.5rem'} borderColor='blue.100' borderWidth={'2px'} p='15px' >
         <Flex gap='20px' alignItems={'center'}> 
           <Flex justifyContent={'center'} bg='blue.400' alignItems={'center'} p='10px' borderRadius={'full'}> 
             <Icon color='white' boxSize={'20px'} as={IoMdChatbubbles}/>
@@ -212,11 +212,10 @@ export const FirstNode = ({id, data}:{id:string, data:TriggerNodeData}) => {
                 <Text fontWeight={'medium'} key={`variable-${index}`} fontSize={'.8em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{channel.name}</Text>
                 <Icon boxSize={'12px'} as={logosMap[channel.channel_type as Channels][0]}/>
               </Flex>
-              <Text color='gray.600' key={`variable-${index}`} fontSize={'.7em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{channel.id}</Text>
+              <Text width={'190px'} color='gray.600' key={`variable-${index}`} fontSize={'.7em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{channel.id}</Text>
             </Box>
           </Flex>
         ))}
-
     </Box>
     <Handle position={Position.Right} type='source'style={{visibility:'hidden'}} />
   </>)
@@ -759,6 +758,8 @@ export const MotherStructureUpdateNode = ({id, data}:{id:string, data:MotherStru
       </Box>
     )
   }
+
+  console.log(data)
 
   //FRONT
   return (<> 

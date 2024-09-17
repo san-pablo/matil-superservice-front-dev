@@ -7,7 +7,9 @@ import { Routes, Route, useNavigate, useLocation } from "react-router-dom"
 import { Flex, Box, Button } from '@chakra-ui/react'
 //ICONS
 import { TiFlowMerge } from "react-icons/ti"
-import { FaCode } from "react-icons/fa"
+import { FaCodeBranch } from "react-icons/fa6"
+import { TbMathFunction } from "react-icons/tb";
+
 //COMPONENTS
 const FlowsTable = lazy(() => import('./FlowsTable'))
 const Functions = lazy(() => import('./Functions'))
@@ -21,7 +23,8 @@ function FlowsFunctions () {
     const location = useLocation().pathname
     const auth = useAuth()
     const { t } = useTranslation('flows')
-    const sectionsList:['flows' | 'functions', ReactElement][] = [['flows', <TiFlowMerge/>], ['functions',<FaCode/>]]
+    const sectionsList:['flows' | 'functions', ReactElement][] = [['flows', <FaCodeBranch style={{ transform: 'rotate(90deg)' }}/>], ['functions',<TbMathFunction/>]]
+
 
     //SEECTED SECTION AND NAVIGATION
     const [selectedSection, setSelectedSection] = useState<'flows' | 'functions'>(localStorage.getItem('currentSectionFunctionsFlows') as 'flows' | 'functions' || 'flows')

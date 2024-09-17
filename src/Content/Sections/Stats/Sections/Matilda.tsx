@@ -65,7 +65,7 @@ function Matilda ({data, waitingFilters}:MatildaProps) {
                 <Box bg='white' p='1vw' borderRadius={'1rem'} width={'5%'} flex='1'boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.15)'} > 
                     <Text fontWeight={'medium'}>{t('TotalSubjectTickets')}</Text>
                     <Box height={'calc(100% - 2vw )'}  >
-                    <ColumnChart xaxis={data?.solved_transfered_tickets_by_subject.map((element:any) => {return element.subject}) || []} yaxis1={data?.solved_transfered_tickets_by_subject.map((element:any) => {return element.transfered}) || []} yaxis2={data?.solved_transfered_tickets_by_subject.map((element:any) => {return element.solved}) || []} ytitle1={t('Transfered')} ytitle2={t('Solved')}/>
+                        <ColumnChart xaxis={data?.solved_transfered_tickets_by_subject.map((element:any) => {return element.subject}) || []} yaxis1={data?.solved_transfered_tickets_by_subject.map((element:any) => {return element.transfered}) || []} yaxis2={data?.solved_transfered_tickets_by_subject.map((element:any) => {return element.solved}) || []} ytitle1={t('Transfered')} ytitle2={t('Solved')}/>
                     </Box>
                 </Box>
                 

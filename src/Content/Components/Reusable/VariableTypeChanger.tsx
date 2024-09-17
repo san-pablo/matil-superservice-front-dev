@@ -91,6 +91,8 @@ const VariableTypeChanger = ({inputType, value, setValue}:{inputType:string, val
     
     //USEFUL CONSTANTS
     const { t } = useTranslation('flows')
+    const t_tickets = useTranslation('tickets').t
+
     const auth = useAuth()
 
     switch(inputType) {
@@ -129,8 +131,8 @@ const VariableTypeChanger = ({inputType, value, setValue}:{inputType:string, val
             const ratingMapDic = {0:`${t('Priority_0')} (0)`, 1:`${t('Priority_1')} (1)`, 2:`${t('Priority_2')} (2)`, 3:`${t('Priority_3')} (3)`, 4:`${t('Priority_4')} (4)`}
             return (<CustomSelect hide={false} selectedItem={value} setSelectedItem={(value) => setValue(value) }  options={Object.keys(ratingMapDic).map(key => parseInt(key))} labelsMap={ratingMapDic} />)
         case 'status':
-            const statusMapDic = {'new':t('new'), 'open':t('open'), solved:t('solved'), 'pending':t('pending'), 'closed':t('closed')}
-            return (<CustomSelect hide={false} selectedItem={value} setSelectedItem={(value) => setValue(value) }  options={Object.keys(statusMapDic).map(key => parseInt(key))} labelsMap={statusMapDic} />)
+            const statusMapDic = {'new':t_tickets('new'), 'open':t_tickets('open'), solved:t_tickets('solved'), 'pending':t_tickets('pending'), 'closed':t_tickets('closed')}
+            return (<CustomSelect hide={false} selectedItem={value} setSelectedItem={(value) => setValue(value) }  options={Object.keys(statusMapDic)} labelsMap={statusMapDic} />)
         case 'is_matilda_engaged':
         case 'unseen_changes':
         case 'is_satisfaction_offered':

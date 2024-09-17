@@ -52,6 +52,15 @@
     "webchat":"Chat Web",
     "google_business":"Google Business",
     "instagram": "Instagram",
-    "phone":"Teléfono"
+    "phone":"Teléfono",
+    "OfferedSurveys":"Encuestas Ofrecidas",
+    "AnsweredSurveys":"Encuestas Respondidas",
+    "Offered":"Ofrecidas",
+    "Answered":"Respondidas",
+    "CommentedSurveys":"Encuestas con Comentarios",
+    "AverageScoreCSAT":"Puntuación CSAT Media",
+    "Score":"Puntuación",
+    "ScoreDistribution":"Distribución de las Puntuaciones",
+    "ScoreOverTime":"Evolución de las Puntuaciones CSAT"
 
 }

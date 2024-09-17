@@ -185,7 +185,7 @@ const EditTrigger = ({triggerData, selectedIndex, setSelectedIndex, allTriggers,
  
     //ADD A CONDITION OR AN ACTION
     const addElement = (type: 'all_conditions' | 'any_conditions' | 'actions') => {
-        const newElement = type === 'actions' ? {type:'email_csat', content:{content:''}}:{motherstructure:'ticket', is_customizable:false, name:'user_id', op:'eq', value:-1}
+        const newElement = type === 'actions' ? {type:'email_csat', arguments:{content:''}}:{motherstructure:'ticket', is_customizable:false, name:'user_id', op:'eq', value:-1}
         setCurrentAutomationData((prev) => ({ ...prev, [type]: [...prev[type],newElement]}))
     }
     //DELETE A CONDITION OR AN ACTION
@@ -225,10 +225,10 @@ const EditTrigger = ({triggerData, selectedIndex, setSelectedIndex, allTriggers,
             const lastAction = [...prev.actions]
             let updatedAction
             if (actionKey)  {
-                if (actionType === 'motherstructure_update') updatedAction = {...lastAction[index], content: value}
+                if (actionType === 'motherstructure_update') updatedAction = {...lastAction[index], arguments: value}
                 else updatedAction = {...lastAction[index], arguments: {...(lastAction[index] as {type:ActionsType, arguments:any}).arguments, [actionKey]:value}}
             }
-            else updatedAction = {...lastAction[index], 'type': actionType, content:getDefaultContent(actionType)}
+            else updatedAction = {...lastAction[index], 'type': actionType, arguments:getDefaultContent(actionType)}
 
             const updatedConditionList = [...lastAction.slice(0, index), updatedAction, ...lastAction.slice(index + 1)]
             return {...prev, actions: updatedConditionList}
@@ -315,8 +315,7 @@ const EditTrigger = ({triggerData, selectedIndex, setSelectedIndex, allTriggers,
                             case 'email_csat':
                                 return (<>
                                     <Text mb='.5vh' fontSize={'.9em'} fontWeight={'medium'}>{t('EditTemplate')}</Text>
-                                    <CodeMirror value={action.arguments.content} height="100%" maxHeight={`300px`} extensions={[html()]} onChange={(value) => editActions(index, 'email_csat', 'content', value)} theme={oneDark}
-                                        />
+                                    <CodeMirror value={action?.arguments?.content} height="100%" maxHeight={`300px`} extensions={[html()]} onChange={(value) => editActions(index, 'email_csat', 'content', value)} theme={oneDark}/>
                                 </>)
                             case 'whatsapp_csat':
                                 return <Box maxW={'600px'}>

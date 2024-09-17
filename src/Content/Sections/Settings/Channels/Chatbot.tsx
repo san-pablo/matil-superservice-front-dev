@@ -149,9 +149,7 @@ function Chatbot () {
         let chatAvatar = chatbotDataRef.current?.chat_avatar 
         if (logoFile) companyLogo = await getPreSignedUrl(logoFile)
         if (avatarFile) chatAvatar = await getPreSignedUrl(avatarFile)
-
-        console.log({...channelDict.current, configuration:{...chatBotData, company_logo:companyLogo, chat_avatar:chatAvatar}, matilda_configuration:matildaConfig})
-        fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/${channelDict.current.id}`, setValue:setWaitingSend, setWaiting:setWaitingSend, auth, method:'put', requestForm:{...channelDict.current, configuration:{...chatBotData, company_logo:companyLogo, chat_avatar:chatAvatar}, matilda_configuration:matildaConfig}, toastMessages:{'works':'Información del chat modificada con éxito', 'failed':'Error al modificar la información'}})
+        fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/${channelDict.current.id}`, setValue:setWaitingSend, setWaiting:setWaitingSend, auth, method:'put', requestForm:{...channelDict.current, configuration:{...chatBotData, company_logo:companyLogo, chat_avatar:chatAvatar}, matilda_configuration:matildaConfig}, toastMessages:{'works':t('CorrectUpdatedInfo'), 'failed':t('FailedUpdatedInfo')}})
         chatbotDataRef.current = chatBotData
         matildaConfigRef.current = matildaConfig
     }

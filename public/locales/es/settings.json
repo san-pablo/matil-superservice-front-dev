@@ -499,6 +499,17 @@
     "InstagramDes":"Configura la cuenta de Instagram y como se comportará Matilda en este canal.",
     "GoogleDes":"Configura la cuenta de Google Business y como se comportará Matilda en este canal.",
     "MailDes":"Configura la cuenta de correo elctrónico y añade estilos a través de plantillas.",
-    "ShopifyDes":"Conecta tu tienda online con Matilda, para que pueda tomar acciones complejas."
+    "ShopifyDes":"Conecta tu tienda online con Matilda, para que pueda tomar acciones complejas.",
+    "CorrectUpdatedInfo":"Información actualizada con éxito",
+    "CorrectFailedInfo":"Hubo un error al actualizar la información",
+    "MatildaConfig":"Configuración de Matilda",
+    "IntegrateWhatsapp":"Integra Matilda con Whatsapp",
+    "IntegrateWhatsappDes":"Actualmente no hay ninguna cuenta de Whatsapp asociada a la organización. Si quieres que Matilda empiece a trabajar a través de este canal, clica en el botón de abajo y completa la integración en unos pocos minutos.",
+    "IntegrateInstagram":"Integra Matilda con Instagram",
+    "IntegrateInstagramDes":"Actualmente no hay ninguna cuenta de Instagram asociada a la organización. Si quieres que Matilda empiece a trabajar a través de este canal, clica en el botón de abajo y completa la integración en unos pocos minutos.",
+    "IntegrateGoogle":"Integra Matilda con Google Business",
+    "IntegrateGoogleDes":"Actualmente no hay ninguna cuenta de Google Business asociada a la organización. Si quieres que Matilda empiece a contestar las reviews de Google de tu tienda, clica en el botón de abajo y completa la integración en unos pocos minutos."
+
+
 
 }

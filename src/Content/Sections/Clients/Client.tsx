@@ -435,7 +435,7 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
             
             <AnimatePresence> 
                 {showSearch && 
-                <MotionBox initial={{ opacity: 5, marginTop: -5 }} animate={{ opacity: 1, marginTop: 5 }}  exit={{ opacity: 0,marginTop:-5}} transition={{ duration: '0.2',  ease: '[0.0, 0.9, 0.9, 1.0]'}}
+                <MotionBox initial={{ opacity: 5, marginTop: -5 }} animate={{ opacity: 1, marginTop: 5 }}  exit={{ opacity: 0,marginTop:-5}} transition={{ duration: '0.2',  ease: 'easeOut'}}
                  maxH='30vh' overflow={'scroll'} width='140%' gap='10px' ref={boxRef} fontSize={'.9em'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000} position={'absolute'} right={0} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
                     <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Buscar..." style={{border:'none', outline:'none', background:'transparent', padding:'10px'}}/>
                     <Box height={'1px'} width={'100%'} bg='gray.200'/>
@@ -560,7 +560,7 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
                             <Text fontSize={'.85em'} onClick={() => setShowAddNewChannel(!showAddNewChannel)}>{t('AddContact')}</Text>
                         </Flex>
                         {showAddNewChannel && 
-                            <MotionBox initial={{ opacity: 0, height:0}} animate={{ opacity: 1, height:'auto' }}  transition={{ duration: '0.15',  ease: '[0.0, 0.9, 0.9, 1.0]'}}
+                            <MotionBox initial={{ opacity: 0, height:0}} animate={{ opacity: 1, height:'auto' }}  transition={{ duration: '0.15',  ease: 'easeOut'}}
                              maxH={'40vh'} overflowY={'scroll'} mt='5px' position='absolute' ref={addNewChannelBoxRef} bg='white'  zIndex={1000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.300' borderWidth='1px' borderRadius='.5rem'>         
                                 {Object.keys(contactDicRegex).map((con, index) => (
                                 <Fragment key={`select-channel-${index}`}> 

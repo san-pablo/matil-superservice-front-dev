@@ -54,6 +54,7 @@ import { IoPeopleSharp } from "react-icons/io5"
 //TYPING
 import { languagesFlags, actionTypesDefinition, nodeTypesDefinition, DataTypes, Branch, FlowMessage, FieldAction, FunctionType } from '../../Constants/typing.js'
 import { IconType } from 'react-icons'
+import showToast from '../../Components/ToastNotification.js'
   
 //FLOWS AND NODES DEFINITIONS
 const panOnDrag = [1, 2]
@@ -148,7 +149,7 @@ const Flow = () => {
 
     useEffect(() => {
         setNodes((nds) =>nds.map((node) => ({...node, data: { ...node.data, functions:{...node.data.functions, currentIndex: currentFlowIndexRef.current}}})))
-    }, [currentFlowIndexRef.current]);
+    }, [currentFlowIndexRef.current])
     
 
     const [flowInterpreterConfig, setFlowInterpreterConfig] = useState<{data_extraction_model: 'simple' | 'comprehensive', response_classification_model:'none' | 'simple' | 'comprehensive'}>({data_extraction_model:'comprehensive', response_classification_model:'comprehensive'})    
@@ -179,7 +180,7 @@ const Flow = () => {
             case 'reset': return {index, currentIndex:currentFlowIndexRef.current, flowVariables:flowVariablesRef.current, setShowNodesAction, editSimpleFlowData, editMessage, deleteNode, addNewNode, getAvailableNodes}
             case 'flow_swap': return {index, currentIndex:currentFlowIndexRef.current, flowsIds:flowsListRef.current, setShowNodesAction, editMessage, addNewNode, deleteNode, editSimpleFlowData} 
             case 'function': return {index, currentIndex:currentFlowIndexRef.current, flowId:location.split('/')[location.split('/').length - 1], functionsDict:functionsNameMap.current,  setShowNodesAction, editSimpleFlowData, addNewNode, deleteNode, getAvailableNodes, editFunctionError}
-            case 'motherstructure_updates': return {currentIndex:currentFlowIndexRef.current, setShowNodesAction, editFieldAction, addNewNode, deleteNode, getAvailableNodes}
+            case 'motherstructure_updates': return {index, currentIndex:currentFlowIndexRef.current, setShowNodesAction, editFieldAction, addNewNode, deleteNode, getAvailableNodes}
             default:{}
         }
     }
@@ -325,15 +326,15 @@ const Flow = () => {
             const position = { x, y }
             
             let newNodeObjectData = {}
-            if (type === 'brancher') newNodeObjectData = {branches:[{name:'',conditions:[], next_node_index:null}], functions:getNodeFunctions(targetType as nodeTypesDefinition, nds.length)}
+            if (type === 'brancher') newNodeObjectData = {branches:[{name:'',conditions:[], next_node_index:null}], functions:getNodeFunctions(targetType as nodeTypesDefinition, sourceData.sourceType === 'add' ? 1: nds.length)}
             else if (type === 'extractor') newNodeObjectData = {branches:[{name:'',conditions:[], next_node_index:null}], variables:[], functions:getNodeFunctions(targetType as nodeTypesDefinition, nds.length)}
-            else if (type === 'sender') newNodeObjectData =  {next_node_index:null, messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:getNodeFunctions(targetType as nodeTypesDefinition, nds.length)}
-            else if (type === 'terminator') newNodeObjectData = {flow_result:'', messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:getNodeFunctions(targetType as nodeTypesDefinition, nds.length)}
-            else if (type === 'transfer') newNodeObjectData = {user_id:0, group_id:0, messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:getNodeFunctions(targetType as nodeTypesDefinition, nds.length1)}
-            else if (type === 'reset') newNodeObjectData = {variable_indices:[],next_node_index:null, messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:getNodeFunctions(targetType as nodeTypesDefinition, nds.length)}
-            else if (type === 'flow_swap') newNodeObjectData = {new_flow_uuid:'-1', messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:getNodeFunctions(targetType as nodeTypesDefinition, nds.length)}
-            else if (type === 'function') newNodeObjectData = {uuid:'', variable_args:{}, motherstructure_args:{}, hardcoded_args:{}, error_nodes_ids:{}, next_node_index:null, output_to_variables:{}, functions:getNodeFunctions(targetType as nodeTypesDefinition, nds.length )}
-            else if (type === 'motherstructure_updates') newNodeObjectData = {updates:[], next_node_index:null, functions:getNodeFunctions(sourceData.sourceType, nds.length)}
+            else if (type === 'sender') newNodeObjectData =  {next_node_index:null, messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:getNodeFunctions(targetType as nodeTypesDefinition, sourceData.sourceType === 'add' ? 1: nds.length)}
+            else if (type === 'terminator') newNodeObjectData = {flow_result:'', messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:getNodeFunctions(targetType as nodeTypesDefinition, sourceData.sourceType === 'add' ? 1: nds.length)}
+            else if (type === 'transfer') newNodeObjectData = {user_id:0, group_id:0, messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:getNodeFunctions(targetType as nodeTypesDefinition, sourceData.sourceType === 'add' ? 1: nds.length)}
+            else if (type === 'reset') newNodeObjectData = {variable_indices:[],next_node_index:null, messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:getNodeFunctions(targetType as nodeTypesDefinition, sourceData.sourceType === 'add' ? 1: nds.length)}
+            else if (type === 'flow_swap') newNodeObjectData = {new_flow_uuid:'-1', messages:[{type:'generative', generation_instructions:'', preespecified_messages:{}}], functions:getNodeFunctions(targetType as nodeTypesDefinition, sourceData.sourceType === 'add' ? 1: nds.length)}
+            else if (type === 'function') newNodeObjectData = {uuid:'', variable_args:{}, motherstructure_args:{}, hardcoded_args:{}, error_nodes_ids:{}, next_node_index:null, output_to_variables:{}, functions:getNodeFunctions(targetType as nodeTypesDefinition, sourceData.sourceType === 'add' ? 1: nds.length )}
+            else if (type === 'motherstructure_updates') newNodeObjectData = {updates:[], next_node_index:null, functions:getNodeFunctions(targetType as nodeTypesDefinition, sourceData.sourceType === 'add' ? 1: nds.length)}
             return {id, position, data: newNodeObjectData, type:targetType}
         }
 
@@ -402,12 +403,15 @@ const Flow = () => {
     }
 
     //DELETE A NODE OR A BRANCH (THE LOGIC IS REUSED TO RESIZE NODES WHEN HIDING OR EXPANDING A NODE)
-    const deleteNode = (sourceId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean) => {
+    const deleteNode = (sourceId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean, nodeIndex?:number) => {
 
         setNodes((nds) => 
             {   
                 if (resize) return resizeNodes(nds, sourceId)
-                            
+                else if (nds.length !== 2 && nodeIndex === 1) {
+                    showToast({message:t('FailedFirstNode'), type:'failed'})
+                     return nds  
+                }
                 else {
                     let sourceNode:string = ''
                     let sourceHandle:number = -1
@@ -792,7 +796,7 @@ const Flow = () => {
                 useEffect(()=> {
                     setMessageData(prev => ({...prev, confirmation_message:confirmationMessage}))
                 },[confirmationMessage])
-
+ 
                 useEffect(()=> {
                     setMessageData(prev => ({...prev, message:instructionMessage}))
                 },[instructionMessage])
@@ -1327,7 +1331,7 @@ const Flow = () => {
                 </Flex>}
                 <Button size='sm' bg='transparent' isDisabled={numberOfWarnings > 0} borderColor={'gray.300'} borderWidth={'1px'} onClick={() => setShowTest(true)}>{t('Test')}</Button>
                 <Button size='sm' bg='red.400' _hover={{bg:'red.500'}}  color='white' onClick={() => setShowConfirmDelete(true)}>{t('Delete')}</Button>
-                <Button size='sm' bg='brand.gradient_blue' isDisabled={numberOfWarnings > 0} _hover={{bg:'brand.gradient_blue_hover'}} color='white' onClick={saveChanges}>{waitingSave? <LoadingIconButton/>:t('SaveChanges')}</Button>
+                <Button size='sm' bg='brand.gradient_blue'  _hover={{bg:'brand.gradient_blue_hover'}} color='white' onClick={saveChanges}>{waitingSave? <LoadingIconButton/>:t('SaveChanges')}</Button>
             </Flex>
             </>)
     }
