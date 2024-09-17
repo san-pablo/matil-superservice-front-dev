@@ -405,6 +405,13 @@
     "SelectFunctionArgsDes":"Introduce a continuación los argumentos que deseas pasar para probar la función ",
     "ErrorLine":"ERROR en linea {{line}}", 
     "ErrorArgument":"{{name}} del tipo '{{type}}' ({{value}})",
+    "DeleteFunctionAnswer":"¿Estás seguro de elimnar la función/{ {{name}}}/?",
+    "FunctionResult":"Resultado de la función",
+    "Accept":"Aceptar",
+    "RunSuccessefully":"No ha habido ningún error en la función",
+    "RunError":"Hubo un error en la función",
+    "OutputsReturned":"Resultado de salida:",
+
 
     "ConfirmDelete":"Confirmar eliminación",
     "email_csat":"Enviar encuesta CSAT por correo",

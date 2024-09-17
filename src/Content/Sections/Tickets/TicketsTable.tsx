@@ -33,7 +33,7 @@ import { FaExclamationCircle, FaExclamationTriangle, FaInfoCircle, FaCheckCircle
 import { FaArrowRotateLeft, FaFilter } from "react-icons/fa6"
 import { BiEditAlt } from "react-icons/bi"
 //TYPING
-import { Tickets, TicketColumn, Views, ViewType, TicketsTableProps, columnsTicketsMap, logosMap, Channels  } from "../../Constants/typing"
+import { Tickets, TicketColumn, Views, ViewType, TicketsTableProps, logosMap, Channels  } from "../../Constants/typing"
  
 //TYPING
 interface TicketFilters {
