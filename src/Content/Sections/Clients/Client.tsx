@@ -516,7 +516,7 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
     <Suspense fallback={<></>} >    
 
         {!comesFromTicket && 
-            <Flex px='30px' height='60px' bg='gray.100' borderBottomWidth={'1px'} borderBottomColor='gray.200' flex='1' alignItems={'center'} >
+            <Flex px='30px' height='60px' bg='#e8e8e8' borderBottomWidth={'1px'} borderBottomColor='gray.200' flex='1' alignItems={'center'} >
                 <Flex borderRadius={'.3rem'} height={'70%'}  alignItems={'center'} borderWidth={'1px 1px 1px 1px'}  borderColor='gray.300'> 
                     
                     <Flex alignItems='center' gap='6px'  onClick={() => {if (businessDataEdit?.id !== -1) setClientSection('business')}} cursor={'pointer'}  bg={clientSection === 'business' ?  'gray.300':'transparent' } height={'100%'}  borderRightWidth={'1px'} borderRightColor='gray.300'  px={{md:'10px',lg:'20px'}}> 
@@ -538,7 +538,7 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
         {clientSection === 'client'?
          <>
             <Flex height={'calc(100vh - 120px)'}  width={'100%'}>
-                <Box ref={scrollRef1} p='2vw'  width={'280px'} bg='#f1f1f1' borderRightWidth={'1px'} borderRightColor='gray.200' overflow={'scroll'}  >
+                <Box ref={scrollRef1} py='2vw'  px='1vw'   width={'280px'} bg='#f1f1f1' borderRightWidth={'1px'} borderRightColor='gray.200' overflow={'scroll'}  >
                     <Skeleton isLoaded={clientData !== null}> 
                         {Object.keys(clientDataEdit || {}).map((con, index) => (
                         <Fragment key={`channel-${index}`}> 

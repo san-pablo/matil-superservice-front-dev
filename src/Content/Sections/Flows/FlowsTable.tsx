@@ -98,7 +98,7 @@ function FlowsTable () {
                 <Box> 
                     <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Flows')}</Text>
                 </Box>
-                <Button  leftIcon={<FaPlus/>} onClick={() => navigate('/flows-functions/flows/flow/create')}>{t('CreateFlow')}</Button>
+                <Button size='sm' leftIcon={<FaPlus/>} _hover={{color:'blue.400'}} onClick={() => navigate('/flows-functions/flows/flow/create')}>{t('CreateFlow')}</Button>
             </Flex>
 
             <Box mt='2vh' width={'350px'}> 

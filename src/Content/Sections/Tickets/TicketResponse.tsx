@@ -69,7 +69,6 @@ function TicketResponse ( {ticketData, setTicketData, clientTickets, setClientTi
     const { t } = useTranslation('tickets')
     const t_clients = useTranslation('clients').t
     const t_formats = useTranslation('formats').t
-    
 
     //CONSTANTS
     const auth = useAuth()

@@ -444,7 +444,7 @@ function Content ({userInfo}:{userInfo:userInfo}) {
                                             return (
                                                 <Draggable  key={`section-${element.type}-${element.code}`} draggableId={`${element.type}-${element.code}`} index={index}>
                                                 {(provided, snapshot) => (
-                                                    <Flex  boxShadow={snapshot.isDragging?'0 4px 8px rgba(0, 0, 0, 0.3)':'none'}  height="100%" ref={provided.innerRef}  {...provided.draggableProps} {...provided.dragHandleProps} justifyContent={'space-between'} alignItems='center' w={width} minW='120px' maxW='280px' bg={isSectionSelected ? 'gray.100' :  '#f1f1f1'} _hover={{ bg: isSectionSelected ? 'gray.100' : 'brand.hover_gray' }} borderColor='gray.200' borderBottomWidth={isSectionSelected?'0':'1px'} borderRightWidth='1px' px='15px'cursor='pointer' onClick={() => {navigate(sectionToSelect)}}>
+                                                    <Flex  boxShadow={snapshot.isDragging?'0 4px 8px rgba(0, 0, 0, 0.3)':'none'}  height="100%" ref={provided.innerRef}  {...provided.draggableProps} {...provided.dragHandleProps} justifyContent={'space-between'} alignItems='center' w={width} minW='120px' maxW='280px' bg={isSectionSelected ? '#e8e8e8' :'#f1f1f1'} _hover={{ bg: isSectionSelected ? '#e8e8e8' : 'brand.hover_gray' }} borderColor='gray.200' borderBottomWidth={isSectionSelected?'0':'1px'} borderRightWidth='1px' px='15px'cursor='pointer' onClick={() => {navigate(sectionToSelect)}}>
                                                         <Flex flex='1' minW='0' gap='10px' alignItems={'center'}>
                                                             <Icon as={element.type === 'ticket' ? IoChatboxOutline : element.type === 'client' ? IoPersonOutline:BsBuildings } />
                                                             <Box flex='1' minW='0'>
@@ -475,7 +475,7 @@ function Content ({userInfo}:{userInfo:userInfo}) {
                                                             const isSectionSelected = location.startsWith(`/${sectionToSelect}/`) || location ===  `/${sectionToSelect}`
                                                                             
                                                             return(
-                                                                <Flex height='100%' key={`visible-header-${index}`}  justifyContent={'space-between'} alignItems='center' width={'200px'} bg={isSectionSelected?'gray.100':'transparent'} p='15px' cursor='pointer' _hover={{bg:isSectionSelected?'gray.100':'brand.hover_gray'}}  onClick={()=>{navigate(sectionToSelect)}}> 
+                                                                <Flex height='100%' key={`visible-header-${index}`}  justifyContent={'space-between'} alignItems='center' width={'200px'} bg={isSectionSelected?'#e8e8e8':'transparent'} p='15px' cursor='pointer' _hover={{bg:isSectionSelected?'#e8e8e8':'brand.hover_gray'}}  onClick={()=>{navigate(sectionToSelect)}}> 
                                                                     <Flex flex='1'minW='0'  gap='10px' alignItems={'center'} >
                                                                     <Icon as={element.type === 'ticket' ? IoChatboxOutline : element.type === 'client' ? IoPersonOutline:BsBuildings } />
                                                                         <Box  flex='1' minW='0'   > 
@@ -551,11 +551,14 @@ const NavBarItem = ({ icon, section }:NavBarItemProps) => {
   
     //FRONT
     return (
-      <Tooltip isOpen={isHovered} label={sectionsMap[section]} placement='right' color={'black'} bg='white' boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.15)'} borderWidth={'1px'} borderColor={'gray.200'} borderRadius='.4rem' fontSize='sm' fontWeight={'medium'} p='6px'>
-        <Flex justifyContent='center' alignItems='center' py='15px' width={'55px'} cursor='pointer'  bg={(isSelected) ? '#f1f1f1': isHovered ? '#f1f1f1':'transparent'} color={(isSelected) ? 'rgba(59, 90, 246)' : 'blackAlpha.700'} onClick={handleClick} onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
-          <Icon as={icon} boxSize='21px'/>
-        </Flex>
-      </Tooltip>
+        <Box position={'relative'}> 
+            {isSelected && <Box height={'100%'} position={'absolute'} left={0} top={0} width={'3px'} bg='rgba(59, 90, 246)'/>}
+            <Tooltip isOpen={isHovered} label={sectionsMap[section]} placement='right' color={'black'} bg='white' boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.15)'} borderWidth={'1px'} borderColor={'gray.200'} borderRadius='.4rem' fontSize='sm' fontWeight={'medium'} p='6px'>
+                <Flex justifyContent='center' alignItems='center' py='15px' width={'55px'} cursor='pointer'  bg={(isSelected) ? '#f1f1f1': isHovered ? '#f1f1f1':'transparent'} color={(isSelected) ? 'rgba(59, 90, 246)' : 'blackAlpha.700'} onClick={handleClick} onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
+                <Icon as={icon} boxSize='21px'/>
+                </Flex>
+            </Tooltip>
+      </Box>
     )
 }
   

@@ -75,11 +75,11 @@ const Section = ({ section, subSections }: ExpandableSectionProps) => {
     }
     return(<> 
         {section === 'main' ? 
-         <Flex gap='10px' p='5px' _hover={{ color:'black'}} color={selectedSection === 'main'?'black':'gray.500'}  fontWeight={selectedSection === 'main'?'medium':'normal'}  onClick={() => {navigateToSection('main')}}  bg={selectedSection === 'main'?'gray.100':'transparent'} cursor={'pointer'} alignItems={'center'} borderRadius={'.5rem'}>
+         <Flex gap='10px' p='5px' _hover={{ color:'black'}} color={selectedSection === 'main'?'black':'gray.600'}  fontWeight={selectedSection === 'main'?'medium':'normal'}  onClick={() => {navigateToSection('main')}}  bg={selectedSection === 'main'?'gray.200':'transparent'} cursor={'pointer'} alignItems={'center'} borderRadius={'.5rem'}>
             <Icon boxSize={'15px'} as={iconsMap[section]}/>
             <Text >{sectionsList[section]}</Text>
         </Flex>:
-       <Flex mt='1vh' gap='10px' p='5px' _hover={{ color:'black'}} color={selectedSection === section?'black':'gray.500'}  fontWeight={selectedSection === section?'medium':'normal'}  onClick={() => {navigateToSection(`${section}/${subSections[0][1]}`)}}  cursor={'pointer'}  alignItems={'center'} borderRadius={'.5rem'}>
+       <Flex mt='1vh' gap='10px' p='5px' _hover={{ color:'black'}} color={selectedSection === section?'black':'gray.600'}  fontWeight={selectedSection === section?'medium':'normal'}  onClick={() => {navigateToSection(`${section}/${subSections[0][1]}`)}}  cursor={'pointer'}  alignItems={'center'} borderRadius={'.5rem'}>
             <Icon boxSize={'16px'} as={iconsMap[section]}/>
             <Text >{sectionsList[section]}</Text>
         </Flex>}
@@ -136,7 +136,7 @@ function Settings () {
             <Section  section={'main'} subSections={[]}  />
             <Box overflowY="auto" flex="1">
                 {sectionsList.map((section, index) => (<Fragment  key={`settings-section-${index}`} > 
-                    {section !== '' &&<Section section={section} subSections={subSections[index]}  />}
+                    {section !== '' &&<Section section={section} subSections={subSections[index]}/>}
                 </Fragment>))}
             </Box>
         </Flex>

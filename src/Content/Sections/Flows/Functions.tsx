@@ -119,7 +119,7 @@ const Functions = () => {
                 <Box> 
                     <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Functions')}</Text>
                 </Box>
-                <Button  leftIcon={<FaPlus/>} onClick={() => setEditFunctionUuid('-1')}>{t('CreateFunction')}</Button>
+                <Button size='sm' leftIcon={<FaPlus/>} _hover={{color:'blue.400'}} onClick={() => setEditFunctionUuid('-1')}>{t('CreateFunction')}</Button>
             </Flex>
 
             <Box mt='2vh' width={'350px'}> 

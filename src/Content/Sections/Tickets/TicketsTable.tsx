@@ -327,7 +327,7 @@ function TicketsTable({socket}:{socket:any}) {
                                     const isSelected = selectedView.index === index && selectedView.type === 'private'
                                     return(
                                         <Flex justifyContent='space-between' key={`private-view-${index}`} onClick={() => {setSelectedView({index:index, type:'private', name:(view?.name || '')});localStorage.setItem('currentView', JSON.stringify({index:index, type:'private', name:view.name}))}}   _hover={{bg:isSelected?'blue.100':'gray.200'}} bg={isSelected? 'blue.100':'transparent'} fontWeight={isSelected? 'medium':'normal'} fontSize={'1em'} cursor={'pointer'} borderRadius={'.5rem'} p='10px'>
-                                            <Text>{view.name}</Text>
+                                            <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{view.name}</Text>
                                             <Text>{auth.authData.views?.number_of_tickets_per_private_view?.[index] || 0}</Text>
                                         </Flex>
                                         )
@@ -341,7 +341,7 @@ function TicketsTable({socket}:{socket:any}) {
                                 const isSelected = selectedView.index === index && selectedView.type === 'shared'
                                 return(
                                     <Flex justifyContent='space-between' key={`shared-view-${index}`} onClick={() => {setSelectedView({index:index, type:'shared', name:(view?.name || '')}); localStorage.setItem('currentView', JSON.stringify({index:index, type:'shared', name:view.name}))}} _hover={{bg:isSelected?'blue.100':'gray.200'}} bg={isSelected? 'blue.100':'transparent'} fontWeight={isSelected? 'medium':'normal'}fontSize={'1em'} cursor={'pointer'} borderRadius={'.5rem'} p='10px'>
-                                        <Text>{view.name}</Text>
+                                        <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{view.name}</Text>
                                         <Text>{auth.authData.views?.number_of_tickets_per_shared_view?.[index] || 0}</Text>
                                     </Flex>
                                     )

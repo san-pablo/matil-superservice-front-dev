@@ -243,7 +243,7 @@ function Business ({comesFromTicket, socket, addHeaderSection, businessData, set
     
     return (<> 
         {!comesFromTicket && 
-            <Flex px='30px' height='60px' bg='gray.100' borderBottomWidth={'1px'} borderBottomColor='gray.200' flex='1' alignItems={'center'} >
+            <Flex px='30px' height='60px' bg='#e8e8e8' borderBottomWidth={'1px'} borderBottomColor='gray.200' flex='1' alignItems={'center'} >
                 <Flex borderRadius={'.3rem'} height={'70%'}  alignItems={'center'} borderWidth={'1px 1px 1px 1px'}  borderColor='gray.300'> 
                     <Flex alignItems='center' gap='6px' cursor={'pointer'}  bg={'gray.300'} height={'100%'}  borderRightWidth={'1px'} borderRightColor='gray.300'  px={{md:'10px',lg:'20px'}}> 
                         <Icon as={FaBuilding} boxSize={'14px'} />
@@ -254,9 +254,9 @@ function Business ({comesFromTicket, socket, addHeaderSection, businessData, set
         }
 
         <Flex height={'calc(100vh - 120px)'}  width={'100%'}>
-            <Box ref={scrollRef1} p='2vw' bg='gray.50' width={'320px'} borderRightWidth={'1px'} borderRightColor='gray.200' overflow={'scroll'}  >
+            <Box ref={scrollRef1} py='2vw'  px='1vw'  bg='gray.50' width={'320px'} borderRightWidth={'1px'} borderRightColor='gray.200' overflow={'scroll'}  >
              
-            <Flex mt='3vh' gap='10px'> 
+                <Flex mt='3vh' gap='10px'> 
                         <Box width={'70px'} mt='11px'> 
                             <Text fontSize='.8em' fontWeight={'medium'} color='gray' >{t('labels')}</Text>
                         </Box>

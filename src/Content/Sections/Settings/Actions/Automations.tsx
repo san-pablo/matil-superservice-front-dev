@@ -243,7 +243,6 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
     'domain':['eq', 'neq', 'contains', 'ncontains', 'exists'], 'hours_since_created':['eq', 'neq', 'leq', 'geq',  'exists'], 'hours_since_updated':['eq', 'neq', 'leq', 'geq',   'exists']
     }
  
-    console.log(currentAutomationData)
     //FRONT
     return (<>
     <Flex height={'100%'} minH='90vh' width={'100%'} flexDir={'column'}> 
@@ -336,7 +335,7 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
                                 return (
                                     <>
                                         <Text mb='.5vh' fontSize={'.9em'} fontWeight={'medium'}>{t('AgentToNotify')}</Text>
-                                        <VariableTypeChanger inputType={'user_id'} value={action.arguments.user_id} setValue={(value) => editActions( index, 'agent_email_notification', 'header', value)}/>
+                                        <VariableTypeChanger inputType={'user_id'} value={action.arguments.user_id} setValue={(value) => editActions( index, 'agent_email_notification', 'header', value)} />
                                         <Text mt='1vh'  mb='.5vh' fontSize={'.9em'} fontWeight={'medium'}>{t('Message')}</Text>
                                         <Textarea resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('Message')}...`} maxH='300px' value={action.arguments.notification_message} onChange={(e) => editActions( index, 'agent_email_notification', 'notification_message', e.target.value) } p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
                                     </>

@@ -410,7 +410,7 @@ const Flow = () => {
                 if (resize) return resizeNodes(nds, sourceId)
                 else if (nds.length !== 2 && nodeIndex === 1) {
                     showToast({message:t('FailedFirstNode'), type:'failed'})
-                     return nds  
+                    return nds  
                 }
                 else {
                     let sourceNode:string = ''
@@ -919,7 +919,7 @@ const Flow = () => {
                             </Box>
                             <Text>{fieldsData.operation ? t(`${fieldsData.operation}_2`):''}</Text>
                             <Box flex='1'> 
-                                <VariableTypeChanger inputType={fieldsData.name} value={fieldsData.value} setValue={(value) => setFieldsData((prev) => ({...prev, value}))}/>
+                                <VariableTypeChanger inputType={fieldsData.name} value={fieldsData.value} setValue={(value) => setFieldsData((prev) => ({...prev, value}))} operation={fieldsData.operation}/>
                             </Box>
                         </Flex>}
                     </Box>

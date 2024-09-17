@@ -41,7 +41,7 @@ interface BrancherNodeData {
     setShowNodesAction:Dispatch<SetStateAction<null | {nodeId:string, actionType:actionTypesDefinition, actionData:any}>>
     editBranch:(nodeId:string | undefined, index:number | undefined, type:'remove' | 'add' | 'remove-branch') => void
     addNewNode:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}, targetType:nodeTypesDefinition | '', nodeId?:string) => void
-    deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean) => void
+    deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean,  nodeIndex?:number) => void
     getAvailableNodes:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}) => {id:string, index:number}[]
   }
 }
@@ -58,7 +58,7 @@ interface ExtractorNodeData {
     editBranch:(nodeId:string | undefined, index:number | undefined, type:'remove' | 'add' | 'remove-branch') => void
     editExtractor:(nodeId:string | undefined, index:number | undefined, type:'remove' | 'add') => void
     addNewNode:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}, targetType:nodeTypesDefinition | '', nodeId?:string) => void
-    deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean) => void
+    deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean,  nodeIndex?:number) => void
     getAvailableNodes:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}) => {id:string, index:number}[]
   }
 }
@@ -71,7 +71,7 @@ interface SenderNodeData {
     index:number
     currentIndex:number
     deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean) => void
-    addNewNode:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}, targetType:nodeTypesDefinition | '', nodeId?:string) => void
+    addNewNode:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}, targetType:nodeTypesDefinition | '', nodeId?:string,  nodeIndex?:number) => void
     setShowNodesAction:Dispatch<SetStateAction<null | {nodeId:string, actionType:actionTypesDefinition, actionData:any}>>
     editMessage:(nodeId:string | undefined, index:number | undefined, type:'remove' | 'add' | 'edit', newMessage?:FlowMessage ) => void
     getAvailableNodes:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}) => {id:string, index:number}[]
@@ -95,7 +95,7 @@ interface FunctionNodeData {
     editSimpleFlowData:(nodeId:string | undefined, keyToUpdate:string, newData:any ) => void
     setShowNodesAction:Dispatch<SetStateAction<null | {nodeId:string, actionType:actionTypesDefinition, actionData:any}>>
     addNewNode:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}, targetType:nodeTypesDefinition | '', nodeId?:string) => void
-    deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean) => void
+    deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean,  nodeIndex?:number) => void
     getAvailableNodes:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}) => {id:string, index:number}[]
     editFunctionError: (nodeId:string | undefined, type:'add' | 'remove' | 'remove-branch', keyToEdit:number, index?:number) => void
   }
@@ -108,7 +108,7 @@ interface TerminatorNodeData {
   functions: {
     index:number
     currentIndex:number
-    deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean) => void
+    deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean, nodeIndex?:number) => void
     setShowNodesAction:Dispatch<SetStateAction<null | {nodeId:string, actionType:actionTypesDefinition, actionData:any}>>
     editMessage:(nodeId:string | undefined, index:number | undefined, type:'remove' | 'add' | 'edit', newMessage?:FlowMessage ) => void
   }
@@ -123,7 +123,7 @@ interface TransferNodeData {
     index:number
     currentIndex:number
     groupsList:{name:string, id:number}[]
-    deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean) => void
+    deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean, nodeIndex?:number) => void
     setShowNodesAction:Dispatch<SetStateAction<null | {nodeId:string, actionType:actionTypesDefinition, actionData:any}>>
     editSimpleFlowData:(nodeId:string | undefined, keyToUpdate:string, newData:number | string ) => void
     editMessage:(nodeId:string | undefined, index:number | undefined, type:'remove' | 'add' | 'edit', newMessage?:FlowMessage ) => void
@@ -139,7 +139,7 @@ interface ResetNodeData {
     index:number
     currentIndex:number
     flowVariables:VariableType[]
-    deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean) => void
+    deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean, nodeIndex?:number) => void
     addNewNode:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}, targetType:nodeTypesDefinition | '', nodeId?:string) => void
     setShowNodesAction:Dispatch<SetStateAction<null | {nodeId:string, actionType:actionTypesDefinition, actionData:any}>>
     editSimpleFlowData:(nodeId:string | undefined, keyToUpdate:string, newData:number[] ) => void
@@ -157,7 +157,7 @@ interface FlowSwapData {
     index:number
     currentIndex:number
     flowsIds:{name:string, uuid:string}[]
-    deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean) => void
+    deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean,  nodeIndex?:number) => void
     setShowNodesAction:Dispatch<SetStateAction<null | {nodeId:string, actionType:actionTypesDefinition, actionData:any}>>
     editSimpleFlowData:(nodeId:string | undefined, keyToUpdate:string, newData:number | string ) => void
     editMessage:(nodeId:string | undefined, index:number | undefined, type:'remove' | 'add' | 'edit', newMessage?:FlowMessage ) => void
@@ -173,7 +173,7 @@ interface MotherStructureUpdateNodeData {
     currentIndex:number
     setShowNodesAction:Dispatch<SetStateAction<null | {nodeId:string, actionType:actionTypesDefinition, actionData:any}>>
     editFieldAction:(nodeId:string | undefined, index:number | undefined, type:'remove' | 'add' | 'edit', newField?:FieldAction ) => void
-    deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean) => void
+    deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean, nodeIndex?:number) => void
     addNewNode:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}, targetType:nodeTypesDefinition | '', nodeId?:string) => void
     getAvailableNodes:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}) => {id:string, index:number}[]
   }
@@ -838,7 +838,7 @@ const NodesBox = ({disabledNodes, sourceData, addNewNode, clickFunc, getAvailabl
 }
 
 //HEADER COMPONENT (SHARED FOR ALL NODES)
-const NodeHeader = ({nodeId, nodeIndex, nodeType, isExpanded, setIsExpanded, deleteNode, getAvailableNodes, addNewNode, next_node_index}:{nodeId:string, nodeIndex:number, nodeType:nodeTypesDefinition, isExpanded:boolean, setIsExpanded:Dispatch<SetStateAction<boolean>>, deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean) => void,getAvailableNodes?:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}) => {id:string, index:number}[], addNewNode?:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}, targetType:nodeTypesDefinition | '', nodeId?:string, nodeIndex?:number) => void, next_node_index?:number | null}) => {
+const NodeHeader = ({nodeId, nodeIndex, nodeType, isExpanded, setIsExpanded, deleteNode, getAvailableNodes, addNewNode, next_node_index}:{nodeId:string, nodeIndex:number, nodeType:nodeTypesDefinition, isExpanded:boolean, setIsExpanded:Dispatch<SetStateAction<boolean>>, deleteNode:(nodeId:string, resize?:boolean, delete_branch?:boolean, isSource?:boolean, nodeIndex?:number) => void,getAvailableNodes?:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}) => {id:string, index:number}[], addNewNode?:(sourceData:{sourceId:string, sourceType:nodeTypesDefinition, branchIndex?:number}, targetType:nodeTypesDefinition | '', nodeId?:string, nodeIndex?:number) => void, next_node_index?:number | null}) => {
 
   let disabledNodes:number[]
   if (nodeType === 'brancher' || nodeType === 'sender' || nodeType === 'reset' || nodeType === 'motherstructure_updates') disabledNodes = [8]
@@ -877,7 +877,7 @@ const NodeHeader = ({nodeId, nodeIndex, nodeType, isExpanded, setIsExpanded, del
             {showDelete && 
               <MotionBox initial={{ opacity: 0, marginTop: -10 }} animate={{ opacity: 1, marginTop: 0 }}  exit={{ opacity: 0,marginTop: -10}} transition={{ duration: '0.2',  ease: 'easeOut'}}
                 maxH='40vh' p='7px' overflow={'scroll'} gap='10px' ref={boxRef} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='gray.50' zIndex={100000}   position={'absolute'} borderRadius={'.3rem'} >
-                <Flex color='black'  fontSize={'.9em'}  _hover={{bg:'gray.200'}} borderRadius={'.5rem'} p='5px' cursor={'pointer'}  alignItems={'center'} gap='10px' onClick={() => deleteNode(nodeId, false, false, false)}>
+                <Flex color='black'  fontSize={'.9em'}  _hover={{bg:'gray.200'}} borderRadius={'.5rem'} p='5px' cursor={'pointer'}  alignItems={'center'} gap='10px' onClick={() => deleteNode(nodeId, false, false, false, nodeIndex)}>
                     <Icon as={BsTrash3Fill}/>
                     <Text whiteSpace={'nowrap'} >{t('DeleteNode')}</Text>
                 </Flex>

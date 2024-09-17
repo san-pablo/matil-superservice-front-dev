@@ -155,7 +155,6 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort,  columnsMap, exclu
 
     const dataToWork = (requestSort)? data : sortedData
 
-
     //FRONT
     return(
         <> 

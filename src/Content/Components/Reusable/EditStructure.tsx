@@ -162,7 +162,7 @@ const EditStructure = ({data, setData, operationTypesDict, scrollRef}:{data:Fiel
                     <CustomSelect containerRef={scrollRef} hide={false} selectedItem={data.operation} setSelectedItem={(value) => setData({...data, 'operation':value})} options={(operationTypesDict[data.name as keyof typeof operationTypesDict] || [])} labelsMap={operationLabelsMap} />
                 </Box>
                 <Box flex='1'> 
-                    <VariableTypeChanger inputType={data.name} value={data.value} setValue={(value) => setData({...data, 'value':value})}/>
+                    <VariableTypeChanger inputType={data.name} value={data.value} setValue={(value) => setData({...data, 'value':value})} operation={data.operation}/>
                 </Box>
             </Flex>
         </>)

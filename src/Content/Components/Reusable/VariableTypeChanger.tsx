@@ -19,8 +19,7 @@ import { IoIosArrowDown } from 'react-icons/io'
 //TYPING
 import { languagesFlags, ContactBusinessesTable} from '../../Constants/typing.js'
  
-
-//MOTIOSN BOX
+//MOTION BOX
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
 
 //FIND BUSINESS COMPONENT
@@ -87,7 +86,7 @@ const FindBusinessComponent = ({value, setValue, auth}:{value:number, setValue:a
 }
 
 //SHOWING THE VALUE TYPE DEPENDING ON THE VATIABLE TO EDIT IN MOTHERSTRUCTURE
-const VariableTypeChanger = ({inputType, value, setValue}:{inputType:string, value:any, setValue:(value:any) => void}) => {
+const VariableTypeChanger = ({inputType, value, setValue, operation}:{inputType:string, value:any, setValue:(value:any) => void, operation?:string}) => {
     
     //USEFUL CONSTANTS
     const { t } = useTranslation('flows')
@@ -95,6 +94,7 @@ const VariableTypeChanger = ({inputType, value, setValue}:{inputType:string, val
 
     const auth = useAuth()
 
+    if (operation === 'exists') return null
     switch(inputType) {
         case 'user_id':
             {
@@ -136,7 +136,7 @@ const VariableTypeChanger = ({inputType, value, setValue}:{inputType:string, val
         case 'is_matilda_engaged':
         case 'unseen_changes':
         case 'is_csat_offered':
-            const boolDict = {"True":t('true'), "False":t('false')}
+            const boolDict = {true:t('true'), false:t('false')}
             return <CustomSelect hide={false} selectedItem={value} setSelectedItem={(value) => setValue(value)}  options={Object.keys(boolDict)} labelsMap={boolDict}/>
         case 'contact_business_id': return <FindBusinessComponent value={value} setValue={setValue} auth={auth}/>
         case 'language': {
