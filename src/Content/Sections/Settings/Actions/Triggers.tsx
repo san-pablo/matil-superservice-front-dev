@@ -261,12 +261,12 @@ const EditTrigger = ({triggerData, selectedIndex, setSelectedIndex, allTriggers,
                     <Text fontSize={'.8em'} color='gray.600'>{t('AllConditionsAutDes')}</Text>
 
                     {currentAutomationData.all_conditions.map((condition, index) => (
-                        <>
-                            <Box position={'absolute'} top={'15px'} right={'15px'}> 
-                                <IconButton bg='transaprent' border='none' color='red' size='sm' _hover={{bg:'gray.200'}} icon={<RxCross2/>} aria-label='delete-all-condition' onClick={() => removeElement('all_conditions', index)}/>
-                            </Box>
+                        <Flex mt='2vh' gap='10px'>
+                            <Box flex={'1'}> 
                             <EditStructure data={condition} setData={(newCondition) => {editElement('all_conditions', index, newCondition)}} scrollRef={scrollRef} operationTypesDict={operationTypesDict}/>
-                        </>
+                            </Box>
+                           <IconButton bg='transaprent' border='none' color='red' size='sm' _hover={{bg:'gray.200'}} icon={<RxCross2/>} aria-label='delete-all-condition' onClick={() => removeElement('all_conditions', index)}/>
+                         </Flex>
                     ))}
                     <Button mt='2vh'  leftIcon={<FaPlus/>} size='sm'  onClick={() => addElement('all_conditions')}>{t('AddCondition')}</Button>
                 </Box>
@@ -276,12 +276,12 @@ const EditTrigger = ({triggerData, selectedIndex, setSelectedIndex, allTriggers,
                     <Text fontSize={'.8em'} color='gray.600'>{t('AnyConditionsAutDes')}</Text>
 
                     {currentAutomationData.any_conditions.map((condition, index) => (
-                        <>
-                            <Box position={'absolute'} top={'15px'} right={'15px'}> 
-                                <IconButton bg='transparent' border='none' color='red' size='sm' _hover={{bg:'gray.200'}} icon={<RxCross2/>} aria-label='delete-any-condition' onClick={() => removeElement('any_conditions', index)}/>
+                        <Flex mt='2vh' gap='10px'>
+                            <Box flex={'1'}> 
+                                <EditStructure data={condition} setData={(newCondition) => {editElement('any_conditions', index, newCondition)}} scrollRef={scrollRef} operationTypesDict={operationTypesDict}/>
                             </Box>
-                            <EditStructure data={condition} setData={(newCondition) => {editElement('any_conditions', index, newCondition)}} scrollRef={scrollRef} operationTypesDict={operationTypesDict}/>
-                        </>
+                            <IconButton bg='transparent' border='none' color='red' size='sm' _hover={{bg:'gray.200'}} icon={<RxCross2/>} aria-label='delete-any-condition' onClick={() => removeElement('any_conditions', index)}/>
+                        </Flex>
                     ))}
                     <Button mt='2vh' display={'inline-flex'} leftIcon={<FaPlus/>} size='sm' onClick={() => addElement('any_conditions')}>{t('AddCondition')}</Button>
                 </Box>

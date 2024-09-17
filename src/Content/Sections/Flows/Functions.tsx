@@ -188,6 +188,8 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction }:{selectedUuid:string, o
     const handleEditFunctions = async() => {
         setWaitingEdit(true)
         const isNew = selectedUuid === '-1' 
+        
+        console.log(functionData)
         let response
         if (isNew) response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/functions`, setWaiting:setWaitingEdit, method:'post', requestForm:functionData as FunctionType, auth, toastMessages:{'works':t('CorrectAddedFunction'), 'failed':t('FailedAddedFunction')}})  
         else response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/functions/${selectedUuid}`, setWaiting:setWaitingEdit, method:'put', requestForm:functionData as FunctionType, auth, toastMessages:{'works':t('CorrectEditedFunction'), 'failed':t('FailedEditedFunction')}})
@@ -268,7 +270,6 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction }:{selectedUuid:string, o
                 return acc;
             }, {} as Record<string, any>); // Le indicamos a TypeScript que es un objeto con claves string y valores any
         
-            console.log(requestDict)
             const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/functions/${selectedUuid}/run`, method:'post', setWaiting:setWaitingTest,  auth, requestForm:requestDict})
             if (response?.status === 200) {
                 console.log(response.data)
@@ -333,7 +334,7 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction }:{selectedUuid:string, o
                             <IconButton aria-label='go-back' size='sm' bg='transparent' border='none' onClick={() => {if (location.split('/')[3]) {navigate(`/flows-functions/flows/flow/${location.split('/')[4]}`)};onSaveFunction('go-back')}} icon={<IoIosArrowBack size='20px'/>}/>
                         </Tooltip>
                         <Box flex={1}> 
-                            <EditText nameInput={true} size='md' value={functionData?.name} setValue={(value) =>editFunctionData('name', value)}/>
+                            <EditText nameInput={true} size='md' value={functionData?.name} setValue={(value) => setFunctionData(prev => ({...prev as FunctionType, name:value}))}/>
                         </Box>
                         <Button leftIcon={<IoIosArrowDown className={!showMoreInfo ? "rotate-icon-up" : "rotate-icon-down"}/>} size='sm' bg='transparent' borderColor={'transparent'} borderWidth={'1px'} onClick={() => setShowMoreInfo(!showMoreInfo)}>{t('SeeMoreData')}</Button>
                     </Flex>
@@ -341,7 +342,7 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction }:{selectedUuid:string, o
                     {showMoreInfo && 
                         <Box p='15px'>
                             <Text  mt='3vh' mb='.5vh' fontWeight={'medium'}>{t('Description')}</Text>
-                            <Textarea maxW={'1000px'} resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('DescriptionPlaceholder')}...`}  value={functionData?.description} onChange={(e) => editFunctionData('description', e.target.value)} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
+                            <Textarea maxW={'1000px'} resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('DescriptionPlaceholder')}...`}  value={functionData?.description} onChange={(e) => setFunctionData(prev => ({...prev as FunctionType, name:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
                         </Box>}
                 </Box>
 
@@ -349,7 +350,7 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction }:{selectedUuid:string, o
                     <Flex  gap='2vw' justifyContent={'space-between'} flexDir={'row-reverse'} alignItems={'center'}>     
                         <Flex gap='20px'> 
                             {selectedUuid !== '-1' && <Button  color='red' leftIcon={<BsTrash3Fill/>} onClick={() => setShowConfirmDelete(true)}>{t('DeleteFunction')}</Button>}
-                            <Button  isDisabled={functionData?.name=== '' || functionData?.code === ''} onClick={() => handleEditFunctions()}>{waitingEdit?<LoadingIconButton/>:t('SaveChanges')}</Button>
+                            <Button  isDisabled={functionData?.name=== '' || functionData?.code === ''} onClick={handleEditFunctions}>{waitingEdit?<LoadingIconButton/>:t('SaveChanges')}</Button>
                          </Flex>
                     </Flex>
 
@@ -361,7 +362,7 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction }:{selectedUuid:string, o
                                 <Button leftIcon={<FaPlay/>} ref={testButtonRef} size='sm' onClick={() => setShowTestFunction(true)} color='white' _hover={{bg:'brand.gradient_blue_hover'}} bg='brand.gradient_blue'> {t('Test')}</Button>
                             </Flex>
                             <Box  mt='1vh' width='100%' height={'100%'} ref={codeBoxRef}> 
-                                <CodeMirror value={functionData?.code} maxHeight={`${codeBoxHeight}px`} extensions={[python()]} onChange={(value) => editFunctionData('code', value)} theme={oneDark}/>
+                                <CodeMirror value={functionData?.code} maxHeight={`${codeBoxHeight}px`} extensions={[python()]} onChange={(value) => setFunctionData(prev => ({...prev as FunctionType, code:value}))} theme={oneDark}/>
                             </Box>
                         </Box>
                         <Box flex='1'> 
