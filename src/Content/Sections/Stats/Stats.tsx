@@ -154,7 +154,7 @@ function Stats () {
                         <Flex alignItems={'end'} gap='5px'> 
                              <Flex alignItems={'center'} gap='10px' display={'inline-flex'} height={'31px'}  px='5px' borderColor='gray.300' borderWidth={'1px'} borderRadius={'.7rem'}>
                                 <IconButton size='10px' p='2px' color='gray.600' _hover={{color:'black', bg:'brand.hover_gray'}}  border='none' bg='transparent' aria-label='month-back' icon={<IoIosArrowBack/>} onClick={handleMonthBack}/>
-                                <Text width={'80px'} textAlign={'center'}>{months[selectedMonthIndex]}</Text>
+                                <Text width={'100px'} textAlign={'center'}>{months[selectedMonthIndex]}</Text>
                                 <IconButton isDisabled={selectedYear === new Date().getFullYear() && selectedMonthIndex === new Date().getMonth()}  size='10px' p='2px' color='gray.600' _hover={{color:'black', bg:'brand.hover_gray'}} border='none' bg='transparent' aria-label='month-forward' icon={<IoIosArrowForward/>} onClick={handleMonthForward}/>
                             </Flex>
                          

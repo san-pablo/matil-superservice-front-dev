@@ -310,7 +310,18 @@
     "CommentsPlaceholderPlaceholder":"Deja tu comentario",
     "ThanksMessage":"Mensaje de Agradecimiento",
     "ThanksMessageDes":"Establece el mensaje que los usuarios verán después de completar la encuesta, agradeciéndoles por su tiempo.",
-    "ThanksMessagePlaceholder":"Muchas gracias por tu tiempo",
+
+    "BackgroundColorSurvey":"Color de fondo",
+    "BackgroundColorSurveyDes":"Color de fondo de la encuesta. Ocupará toda la pantalla y podrán combinarse dos colores para hacer un degradado.",
+    "TextColorSurvey":"Color del texto",
+    "TextColorSurveyDes":"Color del texto de los mensajes de calificación, comentarios y agradecimiento.",
+     "ThanksMessagePlaceholder":"Muchas gracias por tu tiempo",
+    "ButtonBackgroundColor":"Color de fondo de los botones",
+    "ButtonBackgroundColorDes":"Color del fondo de los botones de enviar puntuación y mensaje. Pueden combinarse dos colores para hacer un degradado",
+    "ButtonColor":"Color del texto de los botones",
+    "ButtonColorDes":"Color del fondo de los botones de enviar puntuación y mensaje.",
+
+
     "CorrectSurvey":"Encuesta guardada con éxito",
     "FailedSurvey":"HUbo un error al guardar la encuesta",
 

@@ -158,7 +158,7 @@ function Settings () {
 
                         <Route path="/rules/tickets" element={<TicketsData />} />
                         <Route path="/rules/fields" element={<Fields/>} />
-                        <Route path="/rules/surveys" element={<Surveys />} />
+                        <Route path="/rules/surveys" element={<Surveys scrollRef={scrollRef}/>} />
                         
                         <Route path="/actions/triggers" element={<Triggers scrollRef={scrollRef}/>} />
                         <Route path="/actions/automations" element={<Automations scrollRef={scrollRef}/>} />
