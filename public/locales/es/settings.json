@@ -349,7 +349,7 @@
     "ActionsToDoDes":"Conjunto de acciones que tendrá lugar si se cumplen todas las condiciones",
 
     "AddAction":"Añadir acción",
-    "ActionType":"Tipo de acción",
+    "ActionType":"Selecciona un tipo de acción",
     "ActionConfiguration":"Configuración de la acción",
     "NoConfig":"Esta acción no tiene configuración",
     "AgentToNotify":"Agente a notificar",
@@ -363,7 +363,7 @@
     "CorrectUpdatedAutomation":"Automatización actualizada con éxito",
     "FailedCreatedAutomation":"Hubo un error al crear la automatización",
     "FailedUpdatedAutomation":"Hubo un error al actualizar la automatización",
-    "CorrectDeletedAutomation":"Automatización eliminada correctamente",
+    "CorrectDeletedAutomation":"Automatización eliminada con éxito",
     "FailedDeletedAutomation":"Hubo un error al eliminar la automatización",
     "ConfirmDeleteAutomation":"¿Estás seguro de que deseas eliminar la automatización?",
     "HeaderPlaceholder":"Ayúdanos a mejorar",

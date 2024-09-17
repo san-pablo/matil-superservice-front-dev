@@ -104,8 +104,8 @@ function Settings () {
 
     //SUBSECTINOS
     const subSections: SubSectionProps[] = [
-        [[t('Data'), 'data'], [t('Payments'), 'payments'], [t('Users'),'admin-users'], [t('Groups'),'groups']],
-        [[t('Perfil'), 'user'],[t('Views'), 'edit-views'], [t('Shortcuts'), 'shortcuts']],
+        [[t('Data'), 'data'], [t('Users'),'admin-users'], [t('Groups'),'groups']],
+        [[t('Views'), 'edit-views'], [t('Shortcuts'), 'shortcuts']],
         [[t('Tickets'), 'tickets'], [t('Fields'), 'fields'],[t('Surveys'), 'surveys']],
         [[t('Triggers'), 'triggers'], [t('Automations'), 'automations']],
         [[t('Web'),'web'], ['Whatsapp','whatsapp'], [t('Phone'),'phone'], ['Instagram','instagram'], ['Google Business','google-business'], [t('Mail'),'mail']],
@@ -160,8 +160,8 @@ function Settings () {
                         <Route path="/rules/fields" element={<Fields/>} />
                         <Route path="/rules/surveys" element={<Surveys />} />
                         
-                        <Route path="/actions/triggers" element={<Triggers/>} />
-                        <Route path="/actions/automations" element={<Automations/>} />
+                        <Route path="/actions/triggers" element={<Triggers scrollRef={scrollRef}/>} />
+                        <Route path="/actions/automations" element={<Automations scrollRef={scrollRef}/>} />
 
                         <Route path="/channels/web" element={<Chatbot />} />
                         <Route path="/channels/whatsapp" element={<Whatsapp />} />

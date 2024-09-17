@@ -184,13 +184,12 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction }:{selectedUuid:string, o
     const [waitingEdit, setWaitingEdit] = useState<boolean>(false)
     const [waitingDelete, setWaitingDelete] = useState<boolean>(false)
 
+    console.log(functionData)
     //EDIT AND ADD NEW FUNCTION
     const handleEditFunctions = async() => {
         setWaitingEdit(true)
         const isNew = selectedUuid === '-1' 
-        
-        console.log(functionData)
-        let response
+                let response
         if (isNew) response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/functions`, setWaiting:setWaitingEdit, method:'post', requestForm:functionData as FunctionType, auth, toastMessages:{'works':t('CorrectAddedFunction'), 'failed':t('FailedAddedFunction')}})  
         else response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/functions/${selectedUuid}`, setWaiting:setWaitingEdit, method:'put', requestForm:functionData as FunctionType, auth, toastMessages:{'works':t('CorrectEditedFunction'), 'failed':t('FailedEditedFunction')}})
 
@@ -438,10 +437,10 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction }:{selectedUuid:string, o
         {(functionData?.errors?.length || 0) > 0 &&
             <Box position={'relative'} > 
 
-            <Button position={'absolute'} right={'2vw'} bottom={'2vw'} shadow='xl'  bg="red.500" leftIcon={<IoWarning/>} color='white' _hover={{ bg:'red.600'}} onClick={() => setShowErrros(true)}>{t('ErrorsCount', {count:functionData?.errors.length})}</Button>
-            
-            {showErrors && 
-                <Box overflow={'scroll'}  maxH={'80vh'} borderColor={'gray.300'} borderWidth={'1px'} borderRadius={'.5rem'}>
+                <Button position={'absolute'} right={'2vw'} bottom={'2vw'} shadow='xl'  bg="red.500" leftIcon={<IoWarning/>} color='white' _hover={{ bg:'red.600'}} onClick={() => setShowErrros(true)}>{t('ErrorsCount', {count:functionData?.errors.length})}</Button>
+                
+                {showErrors && 
+                <Box overflow={'scroll'} position={'absolute'} bottom={0}  maxH={'80vh'} borderColor={'gray.300'} borderWidth={'1px'} borderRadius={'.5rem'}>
                     {functionData?.errors.map((error, index) => (
                             <Flex bg={index % 2 === 0?'gray.100':'gray.50'} p='15px' alignItems={'center'} key={`error-${index}`} justifyContent={'space-between'} gap='30px'>
                                 <Box flex='1' gap='30px' >
@@ -449,7 +448,7 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction }:{selectedUuid:string, o
                                         <Text whiteSpace={'nowrap'} fontWeight={'medium'}>{error.timestamp}</Text>
                                         <Box> 
                                             <Text>{error.message}</Text>
-                                            <Text color='red'>[{t('ErrorLine', {line:error.line})}] {error.arguments.map((arg, argIndex) => (<span>{t('ErrorArgument', {name:arg.name, type:arg.type, value:arg.value})}{argIndex === error.arguments.length - 1 ?'':', '}</span>))} </Text>
+                                            <Text color='red'>[{t('ErrorLine', {line:error.line})}] {Object.keys(error.arguments).map((arg, argIndex) => (<span>{t('ErrorArgument', {name:arg, value:error.arguments[arg as any]})}{argIndex === error.arguments.length - 1 ?'':', '}</span>))} </Text>
                                         </Box>
                                     </Flex>
                                 </Box>        

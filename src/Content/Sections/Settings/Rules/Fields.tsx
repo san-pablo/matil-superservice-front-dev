@@ -92,8 +92,9 @@ const Fields = () => {
     useEffect(() => {        
         document.title = `${t('Settings')} - ${t('Fields')} - ${auth.authData.organizationId} - Matil`
         const fetchInitialData = async() => {
-            const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/custom_attributes`, setValue:setFieldsData, auth})
+            const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/custom_attributes`, auth})
             if (response?.status === 200 ) setFieldsData(parseBack(response.data))
+            
         }
         fetchInitialData()
     }, [])

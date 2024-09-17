@@ -1,6 +1,6 @@
 
 //REACT
-import  { useState, useEffect, useRef, Dispatch, SetStateAction, useMemo } from 'react'
+import  { useState, useEffect, useRef, Dispatch, SetStateAction, useMemo, RefObject } from 'react'
 import { useAuth } from '../../../../AuthContext'
 import { useTranslation } from 'react-i18next'
 //FETCH DATA
@@ -23,16 +23,16 @@ import parseMessageToBold from '../../../Functions/parseToBold'
 //ICONS
 import { IoIosArrowForward } from "react-icons/io"
 import { FaPlus } from 'react-icons/fa6'
-import { IoIosArrowBack } from 'react-icons/io'
 import { RxCross2 } from 'react-icons/rx'
 //TYPING 
 import { ActionDataType, ActionsType, FieldAction } from '../../../Constants/typing'
+import { BsTrash3Fill } from 'react-icons/bs'
  
  
 const CellStyle = ({column, element}:{column:string, element:any}) => {return <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element}</Text>}
 
 //MAIN FUNCTION
-function Triggers () {
+function Triggers ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
 
     //AUTH CONSTANT
     const auth = useAuth()
@@ -123,7 +123,7 @@ function Triggers () {
     //FRONT
     return(<>
         {triggerToDeleteIndex !== null && memoizedDeleteBox}
-        {(selectedIndex >= -1 && triggerData !==  null) ? <EditTrigger triggerData={selectedIndex === -1 ?newTrigger :triggerData?.[selectedIndex] as ActionDataType} selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex}  allTriggers={triggerData} setAllTriggers={setTriggerData}/>:<>
+        {(selectedIndex >= -1 && triggerData !==  null) ? <EditTrigger triggerData={selectedIndex === -1 ?newTrigger :triggerData?.[selectedIndex] as ActionDataType} selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex}  allTriggers={triggerData} setAllTriggers={setTriggerData} scrollRef={scrollRef}/>:<>
         <Flex justifyContent={'space-between'} alignItems={'end'}> 
             <Box> 
                 <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Triggers')}</Text>
@@ -152,20 +152,14 @@ function Triggers () {
 }
 
 //COMPONENT FOR EDITING AUTOMATIONS
-const EditTrigger = ({triggerData, selectedIndex, setSelectedIndex, allTriggers, setAllTriggers }:{triggerData:ActionDataType, selectedIndex:number, setSelectedIndex:Dispatch<SetStateAction<number >>,allTriggers:ActionDataType[], setAllTriggers:Dispatch<SetStateAction<ActionDataType[] | null>>}) => {
+const EditTrigger = ({triggerData, selectedIndex, setSelectedIndex, allTriggers, setAllTriggers, scrollRef }:{triggerData:ActionDataType, selectedIndex:number, setSelectedIndex:Dispatch<SetStateAction<number >>,allTriggers:ActionDataType[], setAllTriggers:Dispatch<SetStateAction<ActionDataType[] | null>>, scrollRef:RefObject<HTMLDivElement>}) => {
 
     //CONSTANTS
     const auth = useAuth()
     const { t } = useTranslation('settings')
 
-    //BOX SCROLL REF
-    const scrollRef = useRef<HTMLDivElement>(null)
-
     //BOOLEAN FOR WAIT TO THE SEND GROUP
     const [waitingSend, setWaitingSend] = useState<boolean>(false)
-
-    //BOOLEAN SHOWING DELETE BOX
-    const [showConfirmDelete, setShowConfirmDelete] = useState<boolean>(false)
 
     //GROUP DATA
     const automationDataRef = useRef<ActionDataType>(triggerData)
@@ -210,20 +204,36 @@ const EditTrigger = ({triggerData, selectedIndex, setSelectedIndex, allTriggers,
             return {...prev, [type]: updatedConditionList}
         })
     }
-    const editElement2 = (type:'all_conditions' | 'any_conditions' | 'actions', index:number, keyToEdit:'type' | 'content' | 'motherstructure' | 'is_customizable' | 'name' | 'op' | 'value', value:any, actionKey?:string) => {
+    const editActions = (index:number, actionType:ActionsType, actionKey?:string, value?:any) => {
+        
+        const getDefaultContent = (selectedAction:ActionsType) => {
+            switch (selectedAction) {
+                case 'email_csat':
+                    return {content:''}
+                case 'whatsapp_csat':
+                    return {header:'', body:'', footer:'', cta:''}
+                case 'webchat_csat':
+                    return {}
+                case 'agent_email_notification':
+                    return {user_id:-1, notification_message:''}
+                case 'motherstructure_update':
+                    return {motherstructure:'ticket', is_customizable:false, name:'user_id', operation:'eq', value:-1}
+            }
+        }
+
         setCurrentAutomationData((prev) => {
-            const lastConditionList = [...prev[type]]
+            const lastAction = [...prev.actions]
+            let updatedAction
+            if (actionKey)  {
+                if (actionType === 'motherstructure_update') updatedAction = {...lastAction[index], content: value}
+                else updatedAction = {...lastAction[index], content: {...(lastAction[index] as {type:ActionsType, content:any}).content, [actionKey]:value}}
+            }
+            else updatedAction = {...lastAction[index], 'type': actionType, content:getDefaultContent(actionType)}
 
-            let updatedCondition
-            if (actionKey) updatedCondition = {...lastConditionList[index], content: {...(lastConditionList[index] as {type:ActionsType, content:any}).content, [actionKey]:value}}
-            else updatedCondition = {...lastConditionList[index], [keyToEdit]: value}
-
-            const updatedConditionList = [...lastConditionList.slice(0, index), updatedCondition, ...lastConditionList.slice(index + 1)]
-            return {...prev, [type]: updatedConditionList}
+            const updatedConditionList = [...lastAction.slice(0, index), updatedAction, ...lastAction.slice(index + 1)]
+            return {...prev, actions: updatedConditionList}
         })
     }
-
-
 
     //ACTIONS MAPPING
     const actionsList:ActionsType[] = ['email_csat', 'whatsapp_csat', 'webchat_csat', 'agent_email_notification', 'motherstructure_update']
@@ -236,7 +246,7 @@ const EditTrigger = ({triggerData, selectedIndex, setSelectedIndex, allTriggers,
     //FRONT
     return (<>
     <Flex height={'100%'} minH='90vh' width={'100%'} flexDir={'column'}> 
-        <Box flex='1'  py='2vh'> 
+        <Box flex='1' > 
             <Flex fontWeight={'medium'} fontSize={'1.4em'} gap='10px' alignItems={'center'}> 
                 <Text onClick={() => setSelectedIndex(-2)} color='blue.500' cursor={'pointer'}>{t('Triggers')}</Text>
                 <Icon as={IoIosArrowForward}/>
@@ -261,14 +271,14 @@ const EditTrigger = ({triggerData, selectedIndex, setSelectedIndex, allTriggers,
                     <Text fontSize={'.8em'} color='gray.600'>{t('AllConditionsAutDes')}</Text>
 
                     {currentAutomationData.all_conditions.map((condition, index) => (
-                        <Flex mt='2vh' gap='10px'>
+                        <Flex  key={`all-automation-${index}`} mt='2vh' gap='10px'>
                             <Box flex={'1'}> 
-                            <EditStructure data={condition} setData={(newCondition) => {editElement('all_conditions', index, newCondition)}} scrollRef={scrollRef} operationTypesDict={operationTypesDict}/>
+                                <EditStructure   data={condition} setData={(newCondition) => {editElement('all_conditions', index, newCondition)}} scrollRef={scrollRef} operationTypesDict={operationTypesDict}/>
                             </Box>
-                           <IconButton bg='transaprent' border='none' color='red' size='sm' _hover={{bg:'gray.200'}} icon={<RxCross2/>} aria-label='delete-all-condition' onClick={() => removeElement('all_conditions', index)}/>
+                            <IconButton bg='transaprent' border='none' color='red' size='sm' _hover={{bg:'gray.200'}} icon={<RxCross2/>} aria-label='delete-all-condition' onClick={() => removeElement('all_conditions', index)}/>
                          </Flex>
                     ))}
-                    <Button mt='2vh'  leftIcon={<FaPlus/>} size='sm'  onClick={() => addElement('all_conditions')}>{t('AddCondition')}</Button>
+                    <Button mt='2vh'  leftIcon={<FaPlus/>} size='xs'  onClick={() => addElement('all_conditions')}>{t('AddCondition')}</Button>
                 </Box>
 
                 <Box flex='1'> 
@@ -276,61 +286,59 @@ const EditTrigger = ({triggerData, selectedIndex, setSelectedIndex, allTriggers,
                     <Text fontSize={'.8em'} color='gray.600'>{t('AnyConditionsAutDes')}</Text>
 
                     {currentAutomationData.any_conditions.map((condition, index) => (
-                        <Flex mt='2vh' gap='10px'>
+                        <Flex key={`any-automation-${index}`} mt='2vh' gap='10px'>
                             <Box flex={'1'}> 
                                 <EditStructure data={condition} setData={(newCondition) => {editElement('any_conditions', index, newCondition)}} scrollRef={scrollRef} operationTypesDict={operationTypesDict}/>
                             </Box>
                             <IconButton bg='transparent' border='none' color='red' size='sm' _hover={{bg:'gray.200'}} icon={<RxCross2/>} aria-label='delete-any-condition' onClick={() => removeElement('any_conditions', index)}/>
                         </Flex>
                     ))}
-                    <Button mt='2vh' display={'inline-flex'} leftIcon={<FaPlus/>} size='sm' onClick={() => addElement('any_conditions')}>{t('AddCondition')}</Button>
+                    <Button mt='2vh' display={'inline-flex'} leftIcon={<FaPlus/>} size='xs' onClick={() => addElement('any_conditions')}>{t('AddCondition')}</Button>
                 </Box>
             </Flex>
 
             <Text fontWeight={'medium'} fontSize={'1.1em'} mt='3vh'>{t('ActionsToDo')}</Text>
+            <Text fontSize={'.8em'} color='gray.600'>{t('ActionsToDoDes')}</Text>
+
             {currentAutomationData.actions.map((action, index) => (
-                <Box  overflow={'scroll'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} borderRadius={'.5em'} mt='2vh' p='15px'>
+                <Box shadow='md' maxW={'1000px'} mt='2vh' bg='gray.50' borderColor={'gray.200'} borderWidth={'1px'} p='15px' borderRadius={'.5rem'} key={`arg-${index}`}>
+
                     <Flex alignItems={'center'} justifyContent={'space-between'}> 
-                        <Text mb='1vh'color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('ActionType')}</Text>
-                        <IconButton bg='transaprent' border='none' color='red' size='sm' _hover={{bg:'gray.200'}} icon={<RxCross2/>} aria-label='delete-all-condition' onClick={() => removeElement('actions', index)}/>
+                        <Text mb='.3vh' fontSize={'.9em'} fontWeight={'medium'}>{t('ActionType')}</Text>
+                        <Button size='xs' leftIcon={<BsTrash3Fill/>} colorScheme='red'  onClick={() => removeElement('actions', index)}>{t('Delete')}</Button>
                     </Flex>
-                    <Box maxW='500px'> 
-                        <CustomSelect containerRef={scrollRef} hide={false} selectedItem={action.type} setSelectedItem={(value) => {editElement2('actions', index, 'type', value )}} options={actionsList} labelsMap={actionsMap} />
+                    <Box maxW='350px' mb='2vh'> 
+                        <CustomSelect containerRef={scrollRef} hide={false} selectedItem={action.type} setSelectedItem={(value) => {editActions(index, value)}} options={actionsList} labelsMap={actionsMap} />
                     </Box>
-                    <Text  mt='2vh' mb='1vh'color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('ActionConfiguration')}</Text>
                     {(() => {
                            switch (action.type){
                             case 'email_csat':
                                 return (<>
-                                    <Text mb='1vh'color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('EditTemplate')}</Text>
-                                    <CodeMirror value={action.content.content} height="100%" maxHeight={`300px`} extensions={[html()]} onChange={(value) => editElement2('actions', index, 'content', value, 'content')} theme={oneDark}
+                                    <Text mb='.5vh' fontSize={'.9em'} fontWeight={'medium'}>{t('EditTemplate')}</Text>
+                                    <CodeMirror value={action.content.content} height="100%" maxHeight={`300px`} extensions={[html()]} onChange={(value) => editActions(index, 'email_csat', 'content', value)} theme={oneDark}
                                         />
                                 </>)
                             case 'whatsapp_csat':
-                                return <>
-                                <Text mb='.5'color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('Header')}</Text>
-                                <EditText placeholder={t('HeaderPlaceholder')} value={action.content.header} setValue={(value) => editElement2('actions', index, 'content', value, 'header')} hideInput={false}/>
-                                <Text mt='1vh' mb='.5vh'color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('Body')}</Text>
-                                <EditText placeholder={t('BodyPlaceholder')}  value={action.content.body} setValue={(value) => editElement2('actions', index, 'content', value, 'body')} hideInput={false}/>
-                                <Text mt='1vh' mb='.5vh'color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('Footer')}</Text>
-                                <EditText placeholder={t('FooterPlaceholder')}  value={action.content.footer} setValue={(value) => editElement2('actions', index, 'content', value, 'footer')} hideInput={false}/>
-                                <Text mt='1vh' mb='.5vh' color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('CTA')}</Text>
-                                <EditText placeholder={t('CTAPlaceholder')}  value={action.content.cta} setValue={(value) => editElement2('actions', index, 'content', value, 'cta')} hideInput={false}/>
-                                </>
+                                return <Box maxW={'600px'}>
+                                    <Text fontSize={'.9em'} fontWeight={'medium'}>{t('Header')}</Text>
+                                    <EditText placeholder={t('HeaderPlaceholder')} value={action.content.header} setValue={(value) => editActions( index, 'whatsapp_csat', 'header', value)} hideInput={false}/>
+                                    <Text mt='1vh' fontSize={'.9em'} fontWeight={'medium'}>{t('Body')}</Text>
+                                    <EditText placeholder={t('BodyPlaceholder')}  value={action.content.body} setValue={(value) => editActions( index, 'whatsapp_csat', 'body', value)}hideInput={false}/>
+                                    <Text mt='1vh' fontSize={'.9em'} fontWeight={'medium'}>{t('Footer')}</Text>
+                                    <EditText placeholder={t('FooterPlaceholder')}  value={action.content.footer}setValue={(value) => editActions( index, 'whatsapp_csat', 'footer', value)}hideInput={false}/>
+                                    <Text mt='1vh'  fontSize={'.9em'} fontWeight={'medium'}>{t('CTA')}</Text>
+                                    <EditText placeholder={t('CTAPlaceholder')}  value={action.content.cta} setValue={(value) => editActions( index, 'whatsapp_csat', 'cta', value)} hideInput={false}/>
+                                </Box>
                             case 'webchat_csat':
                                 return <Text>{t('NoConfig')}</Text>
                             case 'agent_email_notification':
                                 return (
-                                    <Flex gap='30px'>
-                                        <Box flex='1'> 
-                                            <Text mb='1vh'color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('AgentToNotify')}</Text>
-                                            <VariableTypeChanger inputType={'user_id'} value={action.content.user_id} setValue={(value) => editElement2('actions', index, 'content', value, 'user_id')}/>
-                                        </Box>
-                                        <Box flex='2'> 
-                                            <Text mb='1vh'color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('Message')}</Text>
-                                            <Textarea resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('Message')}...`} maxH='300px' value={action.content.notification_message} onChange={(e) => editElement2('actions', index, 'content', e.target.value, 'notification_message') } p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
-                                        </Box>
-                                    </Flex>
+                                    <>
+                                        <Text mb='.5vh' fontSize={'.9em'} fontWeight={'medium'}>{t('AgentToNotify')}</Text>
+                                        <VariableTypeChanger inputType={'user_id'} value={action.content.user_id} setValue={(value) => editActions( index, 'agent_email_notification', 'header', value)}/>
+                                        <Text mt='1vh'  mb='.5vh' fontSize={'.9em'} fontWeight={'medium'}>{t('Message')}</Text>
+                                        <Textarea resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('Message')}...`} maxH='300px' value={action.content.notification_message} onChange={(e) => editActions( index, 'agent_email_notification', 'notification_message', e.target.value) } p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
+                                    </>
                                 )
                                 
                             case 'motherstructure_update':
@@ -339,18 +347,19 @@ const EditTrigger = ({triggerData, selectedIndex, setSelectedIndex, allTriggers,
                                     'contact_business_id':['set'], 'name':['set', 'concatenate'], 'language':['set'], 'rating':['set', 'add', 'substract'], 'notes':['set', 'concatenate'], 'labels':['append', 'remove'],
                                     'domain':['set', 'concatenate']
                                     }
-                                    return (<EditStructure data={action.content} setData={(newCondition) => {editElement('actions', index, newCondition)}} scrollRef={scrollRef} operationTypesDict={operationTypesDict}/>)
+                                    return (<EditStructure data={action.content} setData={(newCondition) => {editActions(index, 'motherstructure_update', 'new', newCondition)}} scrollRef={scrollRef} operationTypesDict={operationTypesDict}/>)
                                 }
-                
                         }
                     })()}
                 </Box>
             ))}
+ 
             <Button mt='2vh' display={'inline-flex'} leftIcon={<FaPlus/>} size='sm' onClick={() => addElement('actions')}>{t('AddAction')}</Button>
-
         </Box>
-        <Button size='sm'  onClick={sendTrigger} isDisabled={currentAutomationData.name === ''  || currentAutomationData.actions.length === 0 || ((JSON.stringify(currentAutomationData) === JSON.stringify(automationDataRef.current)))}>{waitingSend?<LoadingIconButton/>:t('SaveChanges')}</Button> 
-
+        <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/>
+        <Flex flexDir={'row-reverse'}> 
+            <Button onClick={sendTrigger} isDisabled={currentAutomationData.name === ''  || currentAutomationData.actions.length === 0 || ((JSON.stringify(currentAutomationData) === JSON.stringify(automationDataRef.current)))}>{waitingSend?<LoadingIconButton/>:t('SaveChanges')}</Button> 
+        </Flex>
     </Flex>
     </>)
 }
