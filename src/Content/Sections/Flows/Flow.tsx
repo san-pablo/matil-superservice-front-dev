@@ -32,8 +32,6 @@ import LoadingIconButton from '../../Components/Reusable/LoadingIconButton.js'
 import ConfirmBox from '../../Components/Reusable/ConfirmBox.js'
 import VariableTypeChanger from '../../Components/Reusable/VariableTypeChanger.js'
 import '../../Components/styles.css'
- 
-
 //FUNCTIONS
 import useOutsideClick from '../../Functions/clickOutside.js'
 import determineBoxStyle from '../../Functions/determineBoxStyle.js'
@@ -45,7 +43,6 @@ import { BsTrash3Fill } from 'react-icons/bs'
 import { AiOutlineCheckCircle } from 'react-icons/ai';
 import { FiHash } from 'react-icons/fi';
 import { TbMathFunction, TbBraces, TbListDetails } from "react-icons/tb";
-
 import { FiType } from 'react-icons/fi';
 import { AiOutlineCalendar } from 'react-icons/ai';
 import { MdOutlineFormatListBulleted } from 'react-icons/md'

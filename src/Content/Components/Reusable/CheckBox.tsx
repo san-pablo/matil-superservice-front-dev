@@ -5,7 +5,7 @@ const CustomCheckbox = ({onChange, isChecked}:{onChange:() => void, isChecked:bo
     return (
         <Flex mt='4px' onClick={onChange} > 
             <div className="checkbox-wrapper-4">
-                <input className="inp-cbx" id="morning" type="checkbox"  checked={isChecked}/>
+                <input className="inp-cbx" id="morning" type="checkbox"  checked={isChecked} readOnly />
                 <label className="cbx" htmlFor="morning"><span>
                 <svg width="12px" height="10px">
                     <use xlinkHref="#check-4"></use>

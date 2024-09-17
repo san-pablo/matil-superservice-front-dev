@@ -355,7 +355,7 @@ function TextEditor({clientName, ticketData, updateData, deleteHeaderSection, ta
                 }
                 <AnimatePresence> 
                     {isHovering && 
-                        <MotionBox p='5px'  overflow={'hidden'} alignItems={'center'} position='absolute' bottom={0} width={'100%'} display={'flex'} gap='5px' bg='blackAlpha.700' color='white' initial={{bottom:-50}} animate={{bottom:0}} exit={{bottom:-50}}  transition={{ duration: '0.2',  ease: 'cubic-bezier(0.0, 0.9, 0.9, 1.0)'}} >
+                        <MotionBox p='5px'  overflow={'hidden'} alignItems={'center'} position='absolute' bottom={0} width={'100%'} display={'flex'} gap='5px' bg='blackAlpha.700' color='white' initial={{bottom:-50}} animate={{bottom:0}} exit={{bottom:-50}}  transition={{ duration: '0.2',  ease: 'easeOut'}} >
                             <Text fontWeight={'medium'} fontSize={'.8em'} flex='1' minW={0} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{file.name}</Text>
                             <Icon boxSize='16px' onClick={removeFileAtIndex} as={RxCross2} color='white' borderRadius={'.2rem'} p='2px' _hover={{bg:'gray.600'}}/>
                         </MotionBox>}
@@ -492,7 +492,7 @@ function TextEditor({clientName, ticketData, updateData, deleteHeaderSection, ta
                         <Flex alignItems={'center'} gap='9px' maxW={'100%'}>
                             <Portal > 
                                 {showSelector &&
-                                    <MotionBox ref={boxRef} initial={{ opacity: 0, marginBottom: -10}} animate={{ opacity: 1, marginBottom: 0 }}  exit={{ opacity: 0, marginBottom: -10}} transition={{ duration: '0.2',  ease: 'cubic-bezier(0.0, 0.9, 0.9, 1.0)'}} 
+                                    <MotionBox ref={boxRef} initial={{ opacity: 0, marginBottom: -10}} animate={{ opacity: 1, marginBottom: 0 }}  exit={{ opacity: 0, marginBottom: -10}} transition={{ duration: '0.2',  ease: 'easeOut'}} 
                                     fontSize={'.8em'} overflow={'hidden'} bottom={window.innerHeight -  (noteRef.current?.getBoundingClientRect().top || 0) + 10}  left={noteRef.current?.getBoundingClientRect().left} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000}   position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
                                         <Flex p='10px' alignItems={'center'} gap='7px' cursor={'pointer'} _hover={{bg:'brand.hover_gray'}} onClick={() => {setIsInternalNote(true);setShowSelector(false)}}>
                                             <Icon as={FaRegEdit}/>
@@ -548,7 +548,7 @@ function TextEditor({clientName, ticketData, updateData, deleteHeaderSection, ta
                             <Box position={'relative'}>  
                                 {showChangeAction &&  
                                 <Portal > 
-                                    <MotionBox  bottom={window.innerHeight -  (actionNoteRef.current?.getBoundingClientRect().top || 0) + 10}  right={window.innerWidth - (actionNoteRef.current?.getBoundingClientRect().right || 0)}  ref={actionBoxRef} initial={{ opacity: 0, marginBottom: -10}} animate={{ opacity: 1, marginBottom: 0 }}  exit={{ opacity: 0, marginBottom: -10}} transition={{ duration: '0.2', ease: 'cubic-bezier(0.0, 0.9, 0.9, 1.0)'}} 
+                                    <MotionBox  bottom={window.innerHeight -  (actionNoteRef.current?.getBoundingClientRect().top || 0) + 10}  right={window.innerWidth - (actionNoteRef.current?.getBoundingClientRect().right || 0)}  ref={actionBoxRef} initial={{ opacity: 0, marginBottom: -10}} animate={{ opacity: 1, marginBottom: 0 }}  exit={{ opacity: 0, marginBottom: -10}} transition={{ duration: '0.2', ease: 'easeOut'}} 
                                         fontSize={'.8em'} overflow={'hidden'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={1000}   position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
                                         <Flex p='7px' alignItems={'center'} gap='7px' cursor={'pointer'} _hover={{bg:'brand.hover_gray'}} onClick={() => {setShowChangeAction(false);setSendAction('close');localStorage.setItem('sendAction','close')}}>
                                             <Text whiteSpace={'nowrap'}>{t('CloseAction_1')}</Text>
@@ -571,7 +571,7 @@ function TextEditor({clientName, ticketData, updateData, deleteHeaderSection, ta
                             <Box position={'relative'} >  
                                 {showSendLike &&  
                                     <Portal > 
-                                        <MotionBox bottom={window.innerHeight - (sendLikeButtonRef.current?.getBoundingClientRect().top || 0) + 10}  right={window.innerWidth - (sendLikeButtonRef.current?.getBoundingClientRect().right || 0)} ref={sendLikeBoxRef} initial={{ opacity: 0, marginBottom: -10}} animate={{ opacity: 1, marginBottom: 0 }}  exit={{ opacity: 0, marginBottom: -10}} transition={{ duration: '0.2',  ease: 'cubic-bezier(0.0, 0.9, 0.9, 1.0)'}} 
+                                        <MotionBox bottom={window.innerHeight - (sendLikeButtonRef.current?.getBoundingClientRect().top || 0) + 10}  right={window.innerWidth - (sendLikeButtonRef.current?.getBoundingClientRect().right || 0)} ref={sendLikeBoxRef} initial={{ opacity: 0, marginBottom: -10}} animate={{ opacity: 1, marginBottom: 0 }}  exit={{ opacity: 0, marginBottom: -10}} transition={{ duration: '0.2',  ease: 'easeOut'}} 
                                             fontSize={'.8em'} overflow={'hidden'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={1000}   position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
                                         {Object.keys(statesMap).map((state, index) => (
                                             (state !== 'closed' && state !== 'new') && 

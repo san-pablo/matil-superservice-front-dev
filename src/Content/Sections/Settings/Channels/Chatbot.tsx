@@ -47,6 +47,7 @@ function Chatbot () {
     //CONSTANTS
     const auth = useAuth()
     const { t } = useTranslation('settings')
+    const channelDict = useRef<any>(null)
 
     //REF FOR ALL THE COLOR PICKER CONTAINERS
     const containerRef = useRef<HTMLDivElement>(null)
@@ -114,22 +115,32 @@ function Chatbot () {
         </Box>)
     }
 
- 
-
     //FETCH NEW DATA WHEN THE VIEW CHANGE
-    useEffect(() => {
+     useEffect(() => {
+        document.title = `${t('Channels')} - ${t('Web')} - ${auth.authData.organizationName} - Matil`
+  
         const fetchInitialData = async() => {
-            const fetchedData = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/chatbot`, setWaiting:setWaitingInfo, auth})
-            if (fetchedData?.status === 200 && fetchedData?.data){
-                setChatBotData(fetchedData.data.chatbot_configuration)
-                chatbotDataRef.current = fetchedData.data.chatbot_configuration
-                setMatildaConfig(fetchedData.data.matilda_configuration)
-                matildaConfigRef.current = fetchedData.data.matilda_configuration
+            const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/all_channels_basic_data`, auth})
+             if (response?.status === 200){
+              let chatChannel:any 
+              response.data.map((cha:any) => {if (cha.channel_type === 'webchat')  chatChannel = cha})
+              if (chatChannel) {
+                channelDict.current = chatChannel
+                const responseChat = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/${chatChannel?.id}`, auth})
+                if (responseChat?.status === 200) {
+                    console.log(responseChat.data)
+                    setChatBotData(responseChat.data.configuration)
+                    chatbotDataRef.current = responseChat.data.configuration
+                    setMatildaConfig(responseChat.data.matilda_configuration)
+                    matildaConfigRef.current = responseChat.data.matilda_configuration
+                    setWaitingInfo(false)
+                }
+              }
+            
             }
         }
         fetchInitialData()
-        document.title = `${t('Channels')} - ${t('Web')} - ${auth.authData.organizationName} - Matil`
-     }, [])
+      }, [])
 
 
     // SEND THE CHATBOT CONFIGURATION
@@ -139,7 +150,8 @@ function Chatbot () {
         if (logoFile) companyLogo = await getPreSignedUrl(logoFile)
         if (avatarFile) chatAvatar = await getPreSignedUrl(avatarFile)
 
-        fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/chatbot`, setValue:setWaitingSend, setWaiting:setWaitingSend, auth:auth, method:'put', requestForm:{chatbot_configuration:{...chatBotData, company_logo:companyLogo, chat_avatar:chatAvatar}, matilda_configuration:matildaConfig}, toastMessages:{'works':'Información del chat modificada con éxito', 'failed':'Error al modificar la información'}})
+        console.log({...channelDict.current, configuration:{...chatBotData, company_logo:companyLogo, chat_avatar:chatAvatar}, matilda_configuration:matildaConfig})
+        fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/${channelDict.current.id}`, setValue:setWaitingSend, setWaiting:setWaitingSend, auth, method:'put', requestForm:{...channelDict.current, configuration:{...chatBotData, company_logo:companyLogo, chat_avatar:chatAvatar}, matilda_configuration:matildaConfig}, toastMessages:{'works':'Información del chat modificada con éxito', 'failed':'Error al modificar la información'}})
         chatbotDataRef.current = chatBotData
         matildaConfigRef.current = matildaConfig
     }
@@ -265,7 +277,7 @@ function Chatbot () {
                                 <IconButton onClick={() => removeOption(index)} aria-label="remove-option" icon={<RxCross2  size='15px'/>} size="xs" border='none' bg='transparent'  />
                             </Flex>
                         ))}
-                    </Box>
+                    </Box> 
                     <AddOptionComponent/>
                     <Box height={'5vh'}/>
                     </Box>

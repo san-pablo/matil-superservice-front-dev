@@ -2,7 +2,7 @@
 import { Dispatch, SetStateAction } from "react"
 import { useTranslation } from "react-i18next"
 //FRONT
-import { Text, Box, Flex, Button, NumberInput, NumberInputField } from "@chakra-ui/react"
+import { Text, Box, Flex, Button, NumberInput, NumberInputField, Switch } from "@chakra-ui/react"
 //ICONS
 import EditText from "../../../Components/Reusable/EditText"
 //TYPING
@@ -63,67 +63,75 @@ const GetMatildaConfig = ({configDict, setConfigDict, updateData, configIndex, i
  
 return(   
    <Box mt='2vh' >
-   
-        <Text mt='2vh' fontWeight={'medium'}>{t('IAUse')}</Text>
-        <Text mb='1vh' fontSize={'.8em'} color='gray.500'>{t('IAUse')}</Text>
-        <Flex mt='1vh' gap='10px'>
-            <Button size='sm' onClick={(e) => handleCheckboxChange('is_matilda_enabled', true)} bg={configDict?.is_matilda_enabled?'brand.gradient_blue':'gray.100'} color={configDict?.is_matilda_enabled?'white':'black'} _hover={{bg:configDict?.is_matilda_enabled?'brand.gradient_blue_hover':'gray.200'}}>{t('Active')}</Button>
-            <Button size='sm' onClick={(e) => handleCheckboxChange('is_matilda_enabled', false)} bg={!configDict?.is_matilda_enabled?'brand.gradient_blue':'gray.100'} color={!configDict?.is_matilda_enabled?'white':'black'} _hover={{bg:!configDict?.is_matilda_enabled?'brand.gradient_blue_hover':'gray.200'}}>{t('Inactive')}</Button>
+        <Flex gap='10px' alignItems={'center'}>
+            <Switch isChecked={configDict?.is_matilda_enabled} onChange={(e) => handleCheckboxChange('is_matilda_enabled', e.target.checked)}/>
+            <Text fontSize={'1.1em'} fontWeight={'medium'}>{t('IAUse')}</Text>  
         </Flex>
+        <Text fontSize={'.8em'} color='gray.600'>{t('IAUseDes')}</Text>
 
- 
+    
         {configDict?.is_matilda_enabled && <>
-            {!isPhone && <> 
-                <Text mt='4vh' fontWeight={'medium'}>{t('ResponseTime')}</Text>
-                <Text mb='1vh' fontSize={'.8em'} color='gray.500'>{t('ResponseTimeDes')}</Text>
-                <Flex mt='1vh' gap='10px'>
-                    <Button size='sm' onClick={(e) => handleCheckboxChange('answer_inmediately', true)} bg={configDict?.answer_inmediately?'brand.gradient_blue':'gray.100'} color={configDict?.answer_inmediately?'white':'black'} _hover={{bg:configDict?.answer_inmediately?'brand.gradient_blue_hover':'gray.200'}}>{t('InstantResponse')}</Button>
-                    <Button  size='sm' onClick={(e) => handleCheckboxChange('answer_inmediately', false)} bg={!configDict?.answer_inmediately?'brand.gradient_blue':'gray.100'} color={!configDict?.answer_inmediately?'white':'black'} _hover={{bg:!configDict?.answer_inmediately?'brand.gradient_blue_hover':'gray.200'}}>{t('AdvancedConfig')}</Button>
-                </Flex>
 
+     
+            <Text fontSize={'.9em'} mt='2vh' fontWeight={'medium'}>{t('Tone')}</Text>
+            <Text fontSize={'.8em'} mb='.5vh' color='gray.600'>{t('ToneDes')}</Text>
+            <EditText placeholder={`${t('Tone')}...`} hideInput={false} value={configDict.tone}  setValue={(value) => handleTextChange('tone', value)}/>
+            
+            <Flex gap='10px' mt='2vh' alignItems={'center'}>
+                <Switch isChecked={configDict?.ask_if_intention_is_not_clear} onChange={(e) => handleCheckboxChange('ask_if_intention_is_not_clear', e.target.checked)}/>
+                <Text fontSize={'.9em'} fontWeight={'medium'}>{t('AskIfIntention')}</Text>
+            </Flex>
+            <Text mt='2vh' fontSize={'.9em'} fontWeight={'medium'}>{t('AvailableEmojis')}</Text>
+
+            {!isPhone && <> 
+                <Flex gap='10px' mt='4vh' alignItems={'center'}>
+                    <Switch isChecked={configDict?.answer_inmediately} onChange={(e) => handleCheckboxChange('answer_inmediately', e.target.checked)}/>
+                    <Text fontSize={'1.1em'} fontWeight={'medium'}>{t('AnswerInmediatly')}</Text>
+                </Flex>
+                <Text fontSize={'.8em'} color='gray.600'>{t('AnswerInmediatlyDes')}</Text>
  
                 {!configDict.answer_inmediately && 
-                    <Flex gap='20px'> 
+                    <Flex gap='20px' mt='1vh'> 
                         <Box> 
-                            <Text mt='2vh' fontSize={'.9em'}>{t('minimum_seconds_to_respond')}</Text>
-                            <NumberInput size='sm' value={configDict?.['minimum_seconds_to_respond'] || 0} onChange={(valueString) => handleNumberChange('minimum_seconds_to_respond', valueString)} min={1} max={parseInt(configDict.maximum_seconds_to_respond)}>
+                            <Text fontWeight={'medium'} fontSize={'.9em'}>{t('minimum_seconds_to_respond')}</Text>
+                            <NumberInput size='sm' mt='.5vh' value={configDict?.['minimum_seconds_to_respond'] || 0} onChange={(valueString) => handleNumberChange('minimum_seconds_to_respond', valueString)} min={1} max={configDict.maximum_seconds_to_respond}>
                                 <NumberInputField  fontSize={'.9em'} borderRadius='.5rem'   borderColor={'gray.300'} _hover={{ border: '1px solid #CBD5E0' }} _focus={{ borderColor: 'rgb(77, 144, 254)', borderWidth: '2px', px:'6px' }} px='7px' />
                             </NumberInput>
                         </Box>
                         <Box>
-                            <Text fontSize={'.9em'} mt='2vh'>{t('maximum_seconds_to_respond')}</Text>
-                            <NumberInput size='sm' value={configDict?.['maximum_seconds_to_respond'] || 0} onChange={(valueString) => handleNumberChange('maximum_seconds_to_respond', valueString)} min={parseInt(configDict.minimum_seconds_to_respond)} max={14400}>
-                                <NumberInputField  fontSize={'.9em'} borderRadius='.5rem'   borderColor={'gray.300'} _hover={{ border: '1px solid #CBD5E0' }} _focus={{ borderColor: 'rgb(77, 144, 254)', borderWidth: '2px', px:'6px' }} px='7px' />
+                            <Text fontSize={'.9em'} fontWeight={'medium'}  >{t('maximum_seconds_to_respond')}</Text>
+                            <NumberInput size='sm' mt='.5vh' value={configDict?.['maximum_seconds_to_respond'] || 0} onChange={(valueString) => handleNumberChange('maximum_seconds_to_respond', valueString)} min={configDict.minimum_seconds_to_respond} max={14400}>
+                                <NumberInputField fontSize={'.9em'} borderRadius='.5rem'   borderColor={'gray.300'} _hover={{ border: '1px solid #CBD5E0' }} _focus={{ borderColor: 'rgb(77, 144, 254)', borderWidth: '2px', px:'6px' }} px='7px' />
                             </NumberInput>
                         </Box>
                     </Flex>}
             </>}
   
-            <Text mt='4vh' fontWeight={'medium'}>{t('WorksDays')}</Text>
-            <Text mb='1vh'  fontSize={'.8em'} color='gray.500'>{t('WorksDaysDes')}</Text>
-            <Flex mt='1vh' gap='10px'>
-                <Button size='sm' onClick={(e) => handleCheckboxChange('is_restricted_to_business_days', true)} bg={configDict?.is_restricted_to_business_days?'brand.gradient_blue':'gray.100'} color={configDict.is_restricted_to_business_days?'white':'black'} _hover={{bg:configDict.is_restricted_to_business_days?'brand.gradient_blue_hover':'gray.200'}}>{t('OnlyAnswerWorkDays')}</Button>
-                <Button  size='sm' onClick={(e) => handleCheckboxChange('is_restricted_to_business_days', false)} bg={!configDict?.is_restricted_to_business_days?'brand.gradient_blue':'gray.100'} color={!configDict.is_restricted_to_business_days?'white':'black'} _hover={{bg:!configDict.is_restricted_to_business_days?'brand.gradient_blue_hover':'gray.200'}}>{t('AnswerAlways')}</Button>
+            <Flex gap='10px' mt='4vh' alignItems={'center'}>
+                <Switch isChecked={configDict?.is_restricted_to_business_days} onChange={(e) => handleCheckboxChange('is_restricted_to_business_days', e.target.checked)}/>
+                <Text fontSize={'1.1em'} fontWeight={'medium'}>{t('OnlyAnswerWorkDays')}</Text>
             </Flex>
+            <Text fontSize={'.8em'} color='gray.600'>{t('OnlyAnswerWorkDaysDes')}</Text>
 
-            {configDict.is_restricted_to_business_days && <><Text mt='2vh' mb='1vh' fontSize={'.9em'}>{t('business_days')}</Text>
+            {configDict.is_restricted_to_business_days && <>
+            <Text mt='1vh' mb='.5vh' fontWeight={'medium'} fontSize={'.9em'}>{t('business_days')}</Text>
             <Flex gap='10px'>
                 {weekDaysList.map((weekday, index) => {
                     return (
                     <Flex bg={configDict.business_days?.includes(( index )) ? 'gray.200' : 'transparent'} _hover={{bg:configDict?.business_days?.includes((index)) ? 'gray.300' : 'gray.100'}} onClick={() => toggleDaySelection(index)} cursor='pointer' borderWidth={'1px'} borderColor={'gray.200'}  borderRadius='full' key={`weekdays-${index}`} width='30px' height={'30px'} justifyContent={'center'} alignItems={'center'}>
                         <Text fontWeight={'medium'} fontSize={'.8em'}>{weekday}</Text>
                     </Flex>)
-            })}
+                })}
             </Flex>
-            <Flex gap='20px'> 
+            <Flex fontWeight={'medium'} gap='20px'  mt='1vh'> 
                 <Box> 
-                    <Text fontSize={'.9em'} mt='2vh'>{t('business_day_start')}</Text>
+                    <Text fontSize={'.9em'}>{t('business_day_start')}</Text>
                     <Box minW='150px'> 
                         <EditText type={'time'} hideInput={false} value={`${Math.floor(configDict?.['business_day_start'] || 0).toString().padStart(2, '0')}:${(((configDict?.['business_day_start'] || 0) % 1) * 60).toFixed(0).toString().padStart(2, '0')}`}  setValue={(value) => handleSelectChange('business_day_start', value)}/>
                     </Box>
                 </Box>
                 <Box> 
-                    <Text fontSize={'.9em'} mt='2vh' >{t('business_day_end')}</Text>
+                    <Text fontSize={'.9em'}>{t('business_day_end')}</Text>
                     <Box minW='150px' > 
                         <EditText type={'time'} hideInput={false} value={`${Math.floor(configDict?.['business_day_end'] || 0).toString().padStart(2, '0')}:${(((configDict?.['business_day_end'] || 0)% 1) * 60).toFixed(0).toString().padStart(2, '0')}`} setValue={(value) => handleSelectChange('business_day_end', value)}/>
                     </Box>
@@ -132,29 +140,32 @@ return(
             </>}
 
         {!isPhone && <> 
-            <Text mt='4vh' fontWeight={'medium'}>{t('AgentTransfer')}</Text>
-            <Text mb='1vh' fontSize={'.8em'} color='gray.500' >{t('AgentTransferDes')}</Text>
-            <Flex mt='1vh' gap='10px'>
-                <Button size='sm' onClick={(e) => handleCheckboxChange('notify_about_agent_transfer', true)} bg={configDict?.notify_about_agent_transfer?'brand.gradient_blue':'gray.100'} color={configDict?.notify_about_agent_transfer?'white':'black'} _hover={{bg:configDict?.notify_about_agent_transfer?'brand.gradient_blue_hover':'gray.200'}}>{t('NotifyClient')}</Button>
-                <Button  size='sm' onClick={(e) => handleCheckboxChange('notify_about_agent_transfer', false)} bg={!configDict?.notify_about_agent_transfer?'brand.gradient_blue':'gray.100'} color={!configDict?.notify_about_agent_transfer?'white':'black'} _hover={{bg:!configDict?.notify_about_agent_transfer?'brand.gradient_blue_hover':'gray.200'}}>{t('NoNotify')}</Button>
+            <Flex gap='10px' mt='4vh' alignItems={'center'}>
+                <Switch isChecked={configDict?.notify_about_agent_transfer} onChange={(e) => handleCheckboxChange('notify_about_agent_transfer', e.target.checked)}/>
+                <Text fontSize={'1.1em'} fontWeight={'medium'}>{t('AgentTransfer')}</Text>
             </Flex>
+            <Text fontSize={'.8em'} color='gray.600'>{t('AgentTransferDes')}</Text>
+            
+            {configDict?.notify_about_agent_transfer && <>
 
-            <Text mt='2vh' fontSize={'.9em'}>{t('agent_transfer_message')}</Text>
-            <Box maxW={'550px'} mt='.5vh'> 
+            <Text mt='1vh' fontWeight={'medium'} fontSize={'.9em'}>{t('agent_transfer_message')}</Text>
+            <Box  mt='.3vh'> 
                 <EditText hideInput={false} value={`${configDict?.['agent_transfer_message']}`} setValue={(value) => handleTextChange('agent_transfer_message', value)}/>
             </Box>
 
-            <Text mt='2vh' fontSize={'.9em'}>{t('out_of_business_agent_transfer_message')}</Text>
-            <Box maxW={'550px'} mt='.5vh'> 
+            <Text mt='1.5vh' fontWeight={'medium'}  fontSize={'.9em'}>{t('out_of_business_agent_transfer_message')}</Text>
+            <Box  mt='.3vh'> 
                 <EditText hideInput={false} value={`${configDict?.['out_of_business_agent_transfer_message']}`} setValue={(value) => handleTextChange('out_of_business_agent_transfer_message', value)}/>
             </Box>
+            </>}
 
-            <Text mt='4vh' fontWeight={'medium'}>{t('ConfirmInfo')}</Text>
-            <Text mb='1vh' fontSize={'.8em'} color='gray.500'>{t('ConfirmInfoDes')}</Text>
-            <Flex mt='1vh' gap='10px'>
-                <Button  size='sm'  onClick={(e) => handleCheckboxChange('ask_for_requirement_confirmation', true)}  bg={configDict?.ask_for_requirement_confirmation ? 'brand.gradient_blue' : 'gray.100'}  color={configDict?.ask_for_requirement_confirmation ? 'white' : 'black'}  _hover={{ bg: configDict?.ask_for_requirement_confirmation ? 'brand.gradient_blue_hover' : 'gray.200' }}>{t('Confirm')}</Button>
-                <Button size='sm'  onClick={(e) => handleCheckboxChange('ask_for_requirement_confirmation', false)} bg={!configDict?.ask_for_requirement_confirmation ? 'brand.gradient_blue' : 'gray.100'} color={!configDict?.ask_for_requirement_confirmation ? 'white' : 'black'}  _hover={{ bg: !configDict?.ask_for_requirement_confirmation ? 'brand.gradient_blue_hover' : 'gray.200' }}>{t('NoConfirm')}</Button>
+
+            <Flex gap='10px' mt='4vh' alignItems={'center'}>
+                <Switch isChecked={configDict?.allow_variable_confirmation} onChange={(e) => handleCheckboxChange('allow_variable_confirmation', e.target.checked)}/>
+                <Text fontSize={'1.1em'} fontWeight={'medium'}>{t('ConfirmInfo')}</Text>
             </Flex>
+            <Text fontSize={'.8em'} color='gray.600'>{t('ConfirmInfoDes')}</Text>
+        
         </>}
         </>}
 

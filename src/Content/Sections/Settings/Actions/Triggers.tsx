@@ -27,7 +27,7 @@ import { RxCross2 } from 'react-icons/rx'
 //TYPING 
 import { ActionDataType, ActionsType, FieldAction } from '../../../Constants/typing'
 import { BsTrash3Fill } from 'react-icons/bs'
- 
+  
  
 const CellStyle = ({column, element}:{column:string, element:any}) => {return <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element}</Text>}
 
@@ -226,7 +226,7 @@ const EditTrigger = ({triggerData, selectedIndex, setSelectedIndex, allTriggers,
             let updatedAction
             if (actionKey)  {
                 if (actionType === 'motherstructure_update') updatedAction = {...lastAction[index], content: value}
-                else updatedAction = {...lastAction[index], content: {...(lastAction[index] as {type:ActionsType, content:any}).content, [actionKey]:value}}
+                else updatedAction = {...lastAction[index], arguments: {...(lastAction[index] as {type:ActionsType, arguments:any}).arguments, [actionKey]:value}}
             }
             else updatedAction = {...lastAction[index], 'type': actionType, content:getDefaultContent(actionType)}
 
@@ -315,19 +315,19 @@ const EditTrigger = ({triggerData, selectedIndex, setSelectedIndex, allTriggers,
                             case 'email_csat':
                                 return (<>
                                     <Text mb='.5vh' fontSize={'.9em'} fontWeight={'medium'}>{t('EditTemplate')}</Text>
-                                    <CodeMirror value={action.content.content} height="100%" maxHeight={`300px`} extensions={[html()]} onChange={(value) => editActions(index, 'email_csat', 'content', value)} theme={oneDark}
+                                    <CodeMirror value={action.arguments.content} height="100%" maxHeight={`300px`} extensions={[html()]} onChange={(value) => editActions(index, 'email_csat', 'content', value)} theme={oneDark}
                                         />
                                 </>)
                             case 'whatsapp_csat':
                                 return <Box maxW={'600px'}>
                                     <Text fontSize={'.9em'} fontWeight={'medium'}>{t('Header')}</Text>
-                                    <EditText placeholder={t('HeaderPlaceholder')} value={action.content.header} setValue={(value) => editActions( index, 'whatsapp_csat', 'header', value)} hideInput={false}/>
+                                    <EditText placeholder={t('HeaderPlaceholder')} value={action.arguments.header} setValue={(value) => editActions( index, 'whatsapp_csat', 'header', value)} hideInput={false}/>
                                     <Text mt='1vh' fontSize={'.9em'} fontWeight={'medium'}>{t('Body')}</Text>
-                                    <EditText placeholder={t('BodyPlaceholder')}  value={action.content.body} setValue={(value) => editActions( index, 'whatsapp_csat', 'body', value)}hideInput={false}/>
+                                    <EditText placeholder={t('BodyPlaceholder')}  value={action.arguments.body} setValue={(value) => editActions( index, 'whatsapp_csat', 'body', value)}hideInput={false}/>
                                     <Text mt='1vh' fontSize={'.9em'} fontWeight={'medium'}>{t('Footer')}</Text>
-                                    <EditText placeholder={t('FooterPlaceholder')}  value={action.content.footer}setValue={(value) => editActions( index, 'whatsapp_csat', 'footer', value)}hideInput={false}/>
+                                    <EditText placeholder={t('FooterPlaceholder')}  value={action.arguments.footer}setValue={(value) => editActions( index, 'whatsapp_csat', 'footer', value)}hideInput={false}/>
                                     <Text mt='1vh'  fontSize={'.9em'} fontWeight={'medium'}>{t('CTA')}</Text>
-                                    <EditText placeholder={t('CTAPlaceholder')}  value={action.content.cta} setValue={(value) => editActions( index, 'whatsapp_csat', 'cta', value)} hideInput={false}/>
+                                    <EditText placeholder={t('CTAPlaceholder')}  value={action.arguments.cta} setValue={(value) => editActions( index, 'whatsapp_csat', 'cta', value)} hideInput={false}/>
                                 </Box>
                             case 'webchat_csat':
                                 return <Text>{t('NoConfig')}</Text>
@@ -335,9 +335,9 @@ const EditTrigger = ({triggerData, selectedIndex, setSelectedIndex, allTriggers,
                                 return (
                                     <>
                                         <Text mb='.5vh' fontSize={'.9em'} fontWeight={'medium'}>{t('AgentToNotify')}</Text>
-                                        <VariableTypeChanger inputType={'user_id'} value={action.content.user_id} setValue={(value) => editActions( index, 'agent_email_notification', 'header', value)}/>
+                                        <VariableTypeChanger inputType={'user_id'} value={action.arguments.user_id} setValue={(value) => editActions( index, 'agent_email_notification', 'header', value)}/>
                                         <Text mt='1vh'  mb='.5vh' fontSize={'.9em'} fontWeight={'medium'}>{t('Message')}</Text>
-                                        <Textarea resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('Message')}...`} maxH='300px' value={action.content.notification_message} onChange={(e) => editActions( index, 'agent_email_notification', 'notification_message', e.target.value) } p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
+                                        <Textarea resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('Message')}...`} maxH='300px' value={action.arguments.notification_message} onChange={(e) => editActions( index, 'agent_email_notification', 'notification_message', e.target.value) } p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
                                     </>
                                 )
                                 
@@ -347,7 +347,7 @@ const EditTrigger = ({triggerData, selectedIndex, setSelectedIndex, allTriggers,
                                     'contact_business_id':['set'], 'name':['set', 'concatenate'], 'language':['set'], 'rating':['set', 'add', 'substract'], 'notes':['set', 'concatenate'], 'labels':['append', 'remove'],
                                     'domain':['set', 'concatenate']
                                     }
-                                    return (<EditStructure data={action.content} setData={(newCondition) => {editActions(index, 'motherstructure_update', 'new', newCondition)}} scrollRef={scrollRef} operationTypesDict={operationTypesDict}/>)
+                                    return (<EditStructure data={action.arguments} setData={(newCondition) => {editActions(index, 'motherstructure_update', 'new', newCondition)}} scrollRef={scrollRef} operationTypesDict={operationTypesDict}/>)
                                 }
                         }
                     })()}

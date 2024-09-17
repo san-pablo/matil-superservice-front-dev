@@ -16,14 +16,17 @@ import { IconType } from "react-icons"
 import { FaRobot, FaTicket } from "react-icons/fa6"
 import { IoPeople} from "react-icons/io5"
 import { IoIosArrowForward, IoIosArrowBack } from "react-icons/io"
- 
+import { FaClipboardList } from "react-icons/fa"
+
 //STATS SECTIONS
 const Users = lazy(() => import('./Sections/Users'))
 const Tickets = lazy(() => import('./Sections/Tickets'))
 const Matilda = lazy(() => import('./Sections/Matilda'))
+const CSAT = lazy(() => import('./Sections/CSAT'))
+
  
 //TYPING
-type IconKey = 'tickets' | 'matilda' | 'users'
+type IconKey = 'tickets' | 'matilda' | 'users' | 'csat'
 type filter = {'initial_date':string, 'final_date':string, 'channel_types':string[]}
 
 
@@ -33,7 +36,7 @@ function Stats () {
     //CONSTANTS
     const { t } = useTranslation('stats')
     const auth = useAuth()
-    const sectionsMap: Record<IconKey, [string, IconType]> = {tickets: [t('Tickets'),FaTicket], matilda: ['Matilda',FaRobot], users: [t('Users'),IoPeople]}
+    const sectionsMap: Record<IconKey, [string, IconType]> = {tickets: [t('Tickets'),FaTicket], matilda: ['Matilda',FaRobot], users: [t('Users'),IoPeople], csat:[t('CSAT'),FaClipboardList ]}
     const sectionsList: IconKey[] = ['tickets', 'matilda', 'users']
     const curentSectionTickets = localStorage.getItem('curentSectionTickets') || 'tickets'
 
@@ -63,14 +66,16 @@ function Stats () {
     const [sectionsData, setSectionsData] = useState<{[key in IconKey]:null | Object}>({
         'tickets':null,
         'matilda':null,
-        'users':null
+        'users':null,
+        'csat':null,
     })
 
     //GLOBAL FILTERS
     const [sectionsFilters, setSectionFilters] = useState<{[key in IconKey]:filter}>({
         'tickets':{'initial_date':obtainDates().startDate,'final_date':obtainDates().endDate, 'channel_types':[]},
         'matilda':{'initial_date':obtainDates().startDate,'final_date':obtainDates().endDate,'channel_types':[]},
-        'users':{'initial_date':obtainDates().startDate,'final_date':obtainDates().endDate, 'channel_types':[]}
+        'users':{'initial_date':obtainDates().startDate,'final_date':obtainDates().endDate, 'channel_types':[]},
+        'csat':{'initial_date':obtainDates().startDate,'final_date':obtainDates().endDate, 'channel_types':[]}
     })
 
     //DATES LOGIC AND UPDATE FILTERS WITH MONTH CHANGE
@@ -91,8 +96,6 @@ function Stats () {
         
     }
     useEffect(() => {
-
-
         const formatDate = (date:Date) => {return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`}
         const updateFilters = () => {
 
@@ -130,7 +133,6 @@ function Stats () {
             setSectionFilters(prevFilters => ({...prevFilters, [selectedSection]:newFilters}))
         }
     }
-    
  
     return(<>
     <Box overflowY={'scroll'} height={'100vh'}> 
@@ -163,13 +165,14 @@ function Stats () {
             </Box> 
             <Box height={'1px'} width={'100%'} bg='gray.300' mt='3vh' mb='3vh'/>
 
-
             <Box  width={'calc(96vw - 60px)'} bg='white'> 
                 <Suspense fallback={<></>}>    
                     <Routes >
                         <Route path="/users" element={<Users waitingFilters={waitingFilters} data={sectionsData.users} />} />
                         <Route path="/tickets" element={<Tickets waitingFilters={waitingFilters}  data={sectionsData.tickets} />} />
                         <Route path="/matilda" element={<Matilda waitingFilters={waitingFilters} data={sectionsData.matilda} />} />
+                        <Route path="/csat" element={<Matilda waitingFilters={waitingFilters} data={sectionsData.csat} />} />
+
                     </Routes>
                 </Suspense>
             </Box>

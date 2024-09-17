@@ -126,7 +126,8 @@ function TicketsTable({socket}:{socket:any}) {
     const auth = useAuth()
     const session= useSession()
     const navigate = useNavigate()
-
+    const tableRef = useRef<HTMLDivElement>(null)
+    
     //TABLE MAPPING
     const columnsTicketsMap:{[key in TicketColumn]:[string, number]} = {id: [t('id'), 50], local_id: [t('local_id'), 50], status:  [t('status'), 100], channel_type: [t('channel_type'), 150], subject:  [t('subject'), 200], user_id: [t('user_id'), 200], created_at: [t('created_at'), 150],updated_at: [t('updated_at'), 150], solved_at: [t('solved_at'), 150],closed_at: [t('closed_at'), 150],title: [t('title'), 300], urgency_rating: [t('urgency_rating'), 130], deletion_date: [t('deletion_date'), 180], unseen_changes: [t('unseen_changes'), 200]}
     
@@ -294,12 +295,11 @@ function TicketsTable({socket}:{socket:any}) {
                 setSelectedElements([])
             }
         }
-
         return(<>
         <Box p='15px'> 
             <Text fontWeight={'medium'} fontSize={'1.2em'}>{'Confirmar eliminación'}</Text>
             <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
-            <Text >Estás a punto de eliminar permanentemente {selectedElements.length > 1?'el':'los'} elemento{selectedElements.length > 1?'s':''}  seleccionado{selectedElements.length > 1?'s':''}. Esta acción <span style={{fontWeight:500}}> no se puede deshacer</span>. Una vez eliminados, no podrás recuperar los datos.</Text>
+            <Text >{t('DeleteWarning')}</Text>
         </Box>
         <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
             <Button  size='sm' color='red' _hover={{color:'red.600', bg:'gray.200'}} onClick={deleteTicketsPermanently}>{showWaitingDeletePermanently?<LoadingIconButton/>:t('Delete')}</Button>
@@ -310,7 +310,7 @@ function TicketsTable({socket}:{socket:any}) {
 
     //FRONT
     return(<> 
-        <Flex height={'calc(100vh - 60px)'} color='black' width={'100%'}>
+        <Flex height={'calc(100vh - 60px)'} color='black' width={'100%'} >
     
             {/*VIEWS SELECTION*/}
             <Flex zIndex={100}  px='1vw' gap='20px' py='2vh' bg='gray.50' width={'320px'} flexDir={'column'} justifyContent={'space-between'} borderRightWidth={'1px'} borderRightColor='gray.200' >
@@ -393,30 +393,31 @@ function TicketsTable({socket}:{socket:any}) {
                     </Flex>
                 </Flex>
                 
-                <Skeleton isLoaded={!waitingInfo}>
-                    <Table data={(tickets?.page_data || [])} CellStyle={CellStyle} noDataMessage={t('NoTickets')} requestSort={requestSort} columnsMap={columnsTicketsMap} excludedKeys={['id', 'conversation_id', 'end_client_id',  'is_matilda_engaged']} onClickRow={handleClickRow} selectedElements={selectedElements} setSelectedElements={setSelectedElements} onSelectAllElements={() => {}} currentIndex={selectedIndex}/> 
+                <Skeleton ref={tableRef} isLoaded={!waitingInfo}>
+                    <Table height={(tableRef.current?.getBoundingClientRect().top || 0) - (selectedElements.length > 0 ? 300:window.innerWidth * 0.02)} data={(tickets?.page_data || [])} CellStyle={CellStyle} noDataMessage={t('NoTickets')} requestSort={requestSort} columnsMap={columnsTicketsMap} excludedKeys={['id', 'conversation_id', 'end_client_id',  'is_matilda_engaged']} onClickRow={handleClickRow} selectedElements={selectedElements} setSelectedElements={setSelectedElements} onSelectAllElements={() => {}} currentIndex={selectedIndex}/> 
                 </Skeleton >             
               
             </Box>
 
+            <AnimatePresence> 
+                {selectedElements.length > 0 && 
+                <motion.div initial={{bottom:-200}} animate={{bottom:0}} exit={{bottom:-200}} transition={{duration:.2}} style={{backgroundColor:'#F7FAFC',display:'flex', justifyContent:'space-between', alignItems:'center',padding:'0 2vw 0 2vw', height:'80px', left:'380px', gap:'20px',position:'fixed',  borderTop:' 1px solid #E2E8F0', overflow:'scroll', width:`calc(100vw - 380px)`}}>
+                    <Flex gap='1vw' alignItems={'center'}> 
+                        <Text whiteSpace={'nowrap'} fontWeight={'medium'}>{selectedElements.length} ticket{selectedElements.length > 1 ? 's':''}</Text>
+                        <Button onClick={() => setSelectedElements([])} size='sm' bg='transparent' borderColor={'transparent'} color='blue.400' _hover={{bg:'gray.100', color:'blue.500'}} leftIcon={<MdDeselect/>}>{t('DeSelect')}</Button> 
+                        {selectedView.type === 'deleted' ? 
+                            <Button  size='sm' bg='transparent' borderColor={'transparent'} color='blue.400' _hover={{bg:'gray.100', color:'blue.500'}} leftIcon={<FaArrowRotateLeft/>} onClick={recoverTickets}>{t('Recover')}</Button>
+                        :
+                            <> {selectedElements.length <= 1 && <Button onClick={() => `/tickets/ticket/${selectedElements[0]}`} size='sm' bg='transparent' borderColor={'transparent'} color='blue.400' _hover={{bg:'gray.100', color:'blue.500'}} leftIcon={<BiEditAlt/>}>{t('Edit')}</Button>}</>
+                        } 
+                        <Button size='sm' onClick={() => {if (selectedView.type === 'deleted') setShowConfirmDelete(true);else{deleteTickets()}}} bg='transparent' borderColor={'transparent'} color='red.500' _hover={{bg:'gray.100', color:'red.700'}}leftIcon={<BsTrash3Fill/>}>{waitingDelete?<LoadingIconButton/>:selectedView.type === 'deleted'?t('Delete'):t('MoveToBin')}</Button>
+                    </Flex>
+                    <Button sx={{ whiteSpace: 'nowrap', minWidth: 'auto' }} size='sm' color='red' onClick={() => setSelectedElements([])} _hover={{color:'red.700'}}>{t('Cancel')}</Button>
+                </motion.div>}
+            </AnimatePresence>
         </Flex>
         
-        <AnimatePresence> 
-            {selectedElements.length > 0 && 
-            <motion.div initial={{bottom:-200}} animate={{bottom:0}} exit={{bottom:-200}} transition={{duration:.2}} style={{backgroundColor:'#F7FAFC',display:'flex', justifyContent:'space-between', alignItems:'center',padding:'0 2vw 0 2vw', height:'80px', gap:'20px',position:'fixed', marginLeft:'-2vw',  borderTop:' 1px solid #E2E8F0', overflow:'scroll', width:`calc(100vw - 380px)`}}>
-                <Flex gap='1vw' alignItems={'center'}> 
-                    <Text whiteSpace={'nowrap'} fontWeight={'medium'}>{selectedElements.length} ticket{selectedElements.length > 1 ? 's':''}</Text>
-                    <Button onClick={() => setSelectedElements([])} size='sm' bg='transparent' borderColor={'transparent'} color='blue.400' _hover={{bg:'gray.100', color:'blue.500'}} leftIcon={<MdDeselect/>}>{t('DeSelect')}</Button> 
-                    {selectedView.type === 'deleted' ? 
-                        <Button  size='sm' bg='transparent' borderColor={'transparent'} color='blue.400' _hover={{bg:'gray.100', color:'blue.500'}} leftIcon={<FaArrowRotateLeft/>} onClick={recoverTickets}>{t('Recover')}</Button>
-                    :
-                        <> {selectedElements.length <= 1 && <Button onClick={() => `/tickets/ticket/${selectedElements[0]}`} size='sm' bg='transparent' borderColor={'transparent'} color='blue.400' _hover={{bg:'gray.100', color:'blue.500'}} leftIcon={<BiEditAlt/>}>{t('Edit')}</Button>}</>
-                    } 
-                    <Button size='sm' onClick={() => {if (selectedView.type === 'deleted') setShowConfirmDelete(true);else{deleteTickets()}}} bg='transparent' borderColor={'transparent'} color='red.500' _hover={{bg:'gray.100', color:'red.700'}}leftIcon={<BsTrash3Fill/>}>{waitingDelete?<LoadingIconButton/>:selectedView.type === 'deleted'?t('Delete'):t('MoveToBin')}</Button>
-                </Flex>
-                <Button sx={{ whiteSpace: 'nowrap', minWidth: 'auto' }} size='sm' color='red' onClick={() => setSelectedElements([])} _hover={{color:'red.700'}}>{t('Cancel')}</Button>
-            </motion.div>}
-        </AnimatePresence>
+ 
 
         {showConfirmDelete && 
         <ConfirmBox setShowBox={setShowConfirmDelete}> 

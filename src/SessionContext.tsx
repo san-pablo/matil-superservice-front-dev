@@ -46,6 +46,7 @@ type StatsSectionData = {
     tickets: StatsSection
     matilda: StatsSection
     users: StatsSection
+    csat: StatsSection
 }
 
 //SESSION DATA TYPE
@@ -76,7 +77,8 @@ const initialState: SessionData = {
     statsSectionData: {
         tickets: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } },
         matilda: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } },
-        users: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } }
+        users: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } },
+        csat: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } }
     }
 }
 
@@ -252,7 +254,8 @@ const sessionReducer = (state: SessionData, action: { type: string; payload: any
                 statsSectionData: {
                     tickets: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } },
                     matilda: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } },
-                    users: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } }
+                    users: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } },
+                    csat: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } }
                 }
             }
 

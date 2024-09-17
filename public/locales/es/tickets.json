@@ -93,5 +93,7 @@
     "TicketsTrashFailed":"Hubo un problema al enviar los tickets a la papelera",
     "TicketsDeleted":"Tickets eliminados correctamente",
     "TicketsDeletedFailed":"Hubo un problema al eliminar los tickets",
-    "NoTrash":"No se puede acceder a un ticket de la papelera"
+    "NoTrash":"No se puede acceder a un ticket de la papelera",
+    "DeleteWarning":"Estás a punto de eliminar permanentemente los elementos seleccionados. Esta acción /{no se puede deshacer}/. Una vez eliminados, no podrás recuperar los datos."
+
 }

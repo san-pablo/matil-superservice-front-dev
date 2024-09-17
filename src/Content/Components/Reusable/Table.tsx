@@ -30,10 +30,11 @@ interface TableProps{
     onSelectAllElements?:(isSeleceted:boolean) =>void
     currentIndex?:number
     deletableFunction?:(value:any, index:number) => void
+    height?:number 
 }
     
 //MAIN FUNCTION
-const Table = ({ data, CellStyle, noDataMessage, requestSort,  columnsMap, excludedKeys = [], onClickRow, selectedElements, onlyOneSelect = false, setSelectedElements, onSelectAllElements, currentIndex = -1, deletableFunction }:TableProps ) =>{
+const Table = ({ data, CellStyle, noDataMessage, requestSort,  columnsMap, excludedKeys = [], onClickRow, selectedElements, onlyOneSelect = false, setSelectedElements, onSelectAllElements, currentIndex = -1, deletableFunction, height }:TableProps ) =>{
 
     //CALCULATE DYNAMIC HEIGHT OF TABLE
     const tableBoxRef = useRef<HTMLDivElement>(null)
@@ -64,8 +65,10 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort,  columnsMap, exclu
             const itemBottom = itemTop + (item as HTMLElement).offsetHeight
             const containerTop = tableBoxRef.current.scrollTop
             const containerBottom = containerTop + tableBoxRef.current.offsetHeight
-            if (itemTop < containerTop) tableBoxRef.current.scrollTop = itemTop
-            else if (itemBottom > containerBottom) tableBoxRef.current.scrollTop = itemBottom - tableBoxRef.current.offsetHeight
+            if (tableBoxRef.current.scrollHeight > tableBoxRef.current.offsetHeight) {
+                if (itemTop < containerTop) tableBoxRef.current.scrollTop = itemTop
+                else if (itemBottom > containerBottom) tableBoxRef.current.scrollTop = itemBottom - tableBoxRef.current.offsetHeight
+            }
         }
       }}
     
@@ -177,7 +180,7 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort,  columnsMap, exclu
                     }
                     {deletableFunction && <Flex width={'60px'}/>}
                 </Flex>
-                 <Box minWidth={`${totalWidth}px`} overflowX={'hidden'} ref={tableBoxRef} overflowY={'scroll'} maxH={boxHeight}> 
+                 <Box minWidth={`${totalWidth}px`} overflowX={'hidden'} ref={tableBoxRef} overflowY={'scroll'} maxH={height?height - (headerRef.current?.getBoundingClientRect().bottom || 0):boxHeight}> 
                     {dataToWork.map((row:any, index:number) => {  
                         
                         return (

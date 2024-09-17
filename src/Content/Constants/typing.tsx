@@ -366,24 +366,27 @@ export interface ActionDataType  {
     description: string,
     all_conditions:FieldAction[]
     any_conditions:FieldAction[]
-    actions:{type:ActionsType, content:any}[]
+    actions:{type:ActionsType, arguments:any}[]
 }
  
 //MATILDA CONFIGURATION PROPS
 export interface configProps {
-    is_matilda_enabled:boolean,
-    is_restricted_to_business_days:boolean,
-    answer_inmediately:boolean
-    maximum_seconds_to_respond:string,
-    minimum_seconds_to_respond:string
-    business_day_end:number
-    business_day_start:number
-    business_days:number[]
-    notify_about_agent_transfer:boolean
-    agent_transfer_message:string
+    is_matilda_enabled: boolean
+    tone: "professional"
+    ask_if_intention_is_not_clear: boolean
+    allowed_emojis: string[]
+    answer_inmediately: boolean
+    minimum_seconds_to_respond: number
+    maximum_seconds_to_respond: number
+    is_restricted_to_business_days: boolean
+    business_days: number[]
+    business_day_start: number
+    business_day_end: number
+    notify_about_agent_transfer: boolean
+    agent_transfer_message: string
     out_of_business_agent_transfer_message: string
-    ask_for_requirement_confirmation:boolean
-}
+    allow_variable_confirmation: boolean
+ }
 
 //CONDITIONS TYPES
 export type DataTypes = 'bool' | 'int' | 'float' | 'str' | 'timestamp' | 'list'
