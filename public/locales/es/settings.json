@@ -347,6 +347,9 @@
     "CorrectDeletedTrigger":"Disparador creado correctamente",
     "FailedDeletedTrigger":"Hubo un error al eliminar el disparador",
     "ConfirmDeleteTrigger":"¿Estás seguro de que deseas eliminar el disparador/{ {{name}}}/?",
+    "CSATProbability":"Probabilidad de la encuesta",
+    "CSATProbabilityDes":"Determina, en base a una probailidad, la frecuencia con la que las encuestas le apareceran a los clientes.",
+
 
     "Automations":"Automatizaciones",
     "AutomationsDes":"Modifica propiedades de los tickets en un momento determinado después de que el ticket haya sido actualizado.",

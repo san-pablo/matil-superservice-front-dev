@@ -154,7 +154,7 @@ const VariableTypeChanger = ({inputType, value, setValue, operation}:{inputType:
         case 'hours_since_created': 
         case 'hours_since_updated': 
             return (
-                <NumberInput value={value} onChange={(value) => setValue(value)} min={1} max={1000000} clampValueOnBlur={false} >
+                <NumberInput value={value} onChange={(value) => setValue(value)} min={0} max={1000000} clampValueOnBlur={false} >
                     <NumberInputField borderRadius='.5rem'  fontSize={'.9em'} height={'37px'}  borderColor={'gray.300'} _hover={{ border:'1px solid #CBD5E0'}} _focus={{ px:'11px', borderColor: "rgb(77, 144, 254)", borderWidth: "2px" }} px='12px' />
                 </NumberInput>)
         default: 

@@ -232,6 +232,7 @@
     "ConfirmationMessageDes":"Configura el mensaje que mostrará Matilda para confirmar la extracción de la variable.",
     "EditOuputVariables":"Editar argumentos",
      
+    "is_csat_offered":"Encuesta enviada",
     "VariableArgs":"Definición de argumentos",
     "VariableArgsDes":"Selecciona que valores tomarán los argumentos a la hora de llamar a la función. Los argumentos podrán definirse a partir de variables del propio flujo, valores de los campos y también podrán ser hardcodeados.",
     "VariableArg":"Variable",

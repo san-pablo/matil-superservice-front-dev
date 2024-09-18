@@ -308,6 +308,9 @@ function TicketsTable({socket}:{socket:any}) {
     </>)
     }
 
+
+    console.log(tableRef.current?.getBoundingClientRect().top)
+
     //FRONT
     return(<> 
         <Flex height={'calc(100vh - 60px)'} color='black' width={'calc(100vw - 55px)'} >
@@ -394,14 +397,14 @@ function TicketsTable({socket}:{socket:any}) {
                 </Flex>
                 
                 <Skeleton ref={tableRef} isLoaded={!waitingInfo}>
-                    <Table height={(tableRef.current?.getBoundingClientRect().top || 0) - (selectedElements.length > 0 ? 300:window.innerWidth * 0.02)} data={(tickets?.page_data || [])} CellStyle={CellStyle} noDataMessage={t('NoTickets')} requestSort={requestSort} columnsMap={columnsTicketsMap} excludedKeys={['id', 'conversation_id', 'end_client_id',  'is_matilda_engaged']} onClickRow={handleClickRow} selectedElements={selectedElements} setSelectedElements={setSelectedElements} onSelectAllElements={() => {}} currentIndex={selectedIndex}/> 
+                    <Table height={selectedElements.length > 0 ?window.innerHeight - (tableRef.current?.getBoundingClientRect().top || 0) - 150:undefined } data={(tickets?.page_data || [])} CellStyle={CellStyle} noDataMessage={t('NoTickets')} requestSort={requestSort} columnsMap={columnsTicketsMap} excludedKeys={['id', 'conversation_id', 'end_client_id',  'is_matilda_engaged']} onClickRow={handleClickRow} selectedElements={selectedElements} setSelectedElements={setSelectedElements} onSelectAllElements={() => {}} currentIndex={selectedIndex}/> 
                 </Skeleton >             
               
             </Box>
 
             <AnimatePresence> 
                 {selectedElements.length > 0 && 
-                <motion.div initial={{bottom:-200}} animate={{bottom:0}} exit={{bottom:-200}} transition={{duration:.2}} style={{backgroundColor:'#F7FAFC',display:'flex', justifyContent:'space-between', alignItems:'center',padding:'0 2vw 0 2vw', height:'80px', left:'380px', gap:'20px',position:'fixed',  borderTop:' 1px solid #E2E8F0', overflow:'scroll', width:`calc(100vw - 380px)`}}>
+                <motion.div initial={{bottom:-200}} animate={{bottom:0}} exit={{bottom:-200}} transition={{duration:.2}} style={{backgroundColor:'#F7FAFC',display:'flex', justifyContent:'space-between', alignItems:'center',padding:'0 2vw 0 2vw', height:'80px', left:'335px', gap:'20px',position:'fixed',  borderTop:' 1px solid #E2E8F0', overflow:'scroll', width:`calc(100vw - 335px)`}}>
                     <Flex gap='1vw' alignItems={'center'}> 
                         <Text whiteSpace={'nowrap'} fontWeight={'medium'}>{selectedElements.length} ticket{selectedElements.length > 1 ? 's':''}</Text>
                         <Button onClick={() => setSelectedElements([])} size='sm' bg='transparent' borderColor={'transparent'} color='blue.400' _hover={{bg:'gray.100', color:'blue.500'}} leftIcon={<MdDeselect/>}>{t('DeSelect')}</Button> 

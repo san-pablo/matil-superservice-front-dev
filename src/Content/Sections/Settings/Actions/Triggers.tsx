@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next'
 //FETCH DATA
 import fetchData from "../../../API/fetchData"
 //FRONT
-import { Flex, Text, Box, Button, Skeleton, Tooltip, IconButton, Textarea, Icon } from "@chakra-ui/react"
+import { Flex, Text, Box, Button, Skeleton, IconButton, Textarea, Icon, SliderMark, Slider, SliderFilledTrack, SliderTrack, SliderThumb } from "@chakra-ui/react"
 //COMPONENTS
 import CodeMirror from "@uiw/react-codemirror"
 import { html } from "@codemirror/lang-html"
@@ -94,7 +94,7 @@ function Triggers ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
             const response = await fetchData({endpoint: `superservice/${auth.authData.organizationId}/admin/settings/triggers`, requestForm: newTriggers, method: 'put', setWaiting: setWaitingDelete, auth, toastMessages: {works: t('CorrectDeletedTrigger'), failed: t('FailedDeletedTrigger')}})
             if (response?.status === 200) {
                 setTriggerData(newTriggers as ActionDataType[])
-                setSelectedIndex(-2)
+                setTriggerToDeleteIndex(null)
             }
         }
 
@@ -209,11 +209,11 @@ const EditTrigger = ({triggerData, selectedIndex, setSelectedIndex, allTriggers,
         const getDefaultContent = (selectedAction:ActionsType) => {
             switch (selectedAction) {
                 case 'email_csat':
-                    return {content:''}
+                    return {content:'', probability:50}
                 case 'whatsapp_csat':
-                    return {header:'', body:'', footer:'', cta:''}
+                    return {header:'', body:'', footer:'', cta:'', probability:50}
                 case 'webchat_csat':
-                    return {}
+                    return {probability:50}
                 case 'agent_email_notification':
                     return {user_id:-1, notification_message:''}
                 case 'motherstructure_update':
@@ -315,7 +315,21 @@ const EditTrigger = ({triggerData, selectedIndex, setSelectedIndex, allTriggers,
                             case 'email_csat':
                                 return (<>
                                     <Text mb='.5vh' fontSize={'.9em'} fontWeight={'medium'}>{t('EditTemplate')}</Text>
-                                    <CodeMirror value={action?.arguments?.content} height="100%" maxHeight={`300px`} extensions={[html()]} onChange={(value) => editActions(index, 'email_csat', 'content', value)} theme={oneDark}/>
+                                    <CodeMirror value={action.arguments.content} height="100%" maxHeight={`300px`} extensions={[html()]} onChange={(value) => editActions(index, 'email_csat', 'content', value)} theme={oneDark}/>
+                                    <Text mt='3vh' mb='.5vh' fontSize={'.9em'} fontWeight={'medium'}>{t('CSATProbability')}</Text>
+                                    <Text fontSize={'.8em'} color='gray.600'>{t('CSATProbabilityDes')}</Text>
+                                    <Slider mb='1vh' mt='5vh' aria-label='slider-ex-6' onChange={(value) => editActions(index, 'email_csat', 'probability', value)}>
+                                        <SliderMark value={25} mt='1vh' fontWeight={'medium'}>25%</SliderMark>
+                                        <SliderMark value={50} mt='1vh'  fontWeight={'medium'}>50%</SliderMark>
+                                        <SliderMark value={75}mt='1vh'  fontWeight={'medium'}>75%</SliderMark>
+                                        <SliderMark borderRadius={'.3em'} value={action.arguments.probability} textAlign='center' bg='blackAlpha.800' color='white' mt='-10' ml='-5' w='12'>
+                                            {action.arguments.probability} %
+                                        </SliderMark>
+                                        <SliderTrack>
+                                            <SliderFilledTrack />
+                                        </SliderTrack>
+                                        <SliderThumb />
+                                    </Slider>
                                 </>)
                             case 'whatsapp_csat':
                                 return <Box maxW={'600px'}>
@@ -327,9 +341,37 @@ const EditTrigger = ({triggerData, selectedIndex, setSelectedIndex, allTriggers,
                                     <EditText placeholder={t('FooterPlaceholder')}  value={action.arguments.footer}setValue={(value) => editActions( index, 'whatsapp_csat', 'footer', value)}hideInput={false}/>
                                     <Text mt='1vh'  fontSize={'.9em'} fontWeight={'medium'}>{t('CTA')}</Text>
                                     <EditText placeholder={t('CTAPlaceholder')}  value={action.arguments.cta} setValue={(value) => editActions( index, 'whatsapp_csat', 'cta', value)} hideInput={false}/>
-                                </Box>
+                                
+                                    <Text fontSize={'.8em'} color='gray.600'>{t('CSATProbabilityDes')}</Text>
+                                    <Slider mb='1vh' mt='5vh' aria-label='slider-ex-6' onChange={(value) => editActions(index, 'whatsapp_csat', 'probability', value)}>
+                                        <SliderMark value={25} mt='1vh' fontWeight={'medium'}>25%</SliderMark>
+                                        <SliderMark value={50} mt='1vh'  fontWeight={'medium'}>50%</SliderMark>
+                                        <SliderMark value={75}mt='1vh'  fontWeight={'medium'}>75%</SliderMark>
+                                        <SliderMark borderRadius={'.3em'} value={action.arguments.probability} textAlign='center' bg='blackAlpha.800' color='white' mt='-10' ml='-5' w='12'>
+                                            {action.arguments.probability} %
+                                        </SliderMark>
+                                        <SliderTrack>
+                                            <SliderFilledTrack />
+                                        </SliderTrack>
+                                        <SliderThumb />
+                                    </Slider>
+                                    </Box>
                             case 'webchat_csat':
-                                return <Text>{t('NoConfig')}</Text>
+                                return <>
+                                    <Text fontSize={'.8em'} color='gray.600'>{t('CSATProbabilityDes')}</Text>
+                                    <Slider mb='1vh' mt='5vh' aria-label='slider-ex-6' onChange={(value) => editActions(index, 'webchat_csat', 'probability', value)}>
+                                        <SliderMark value={25} mt='1vh' fontWeight={'medium'}>25%</SliderMark>
+                                        <SliderMark value={50} mt='1vh'  fontWeight={'medium'}>50%</SliderMark>
+                                        <SliderMark value={75}mt='1vh'  fontWeight={'medium'}>75%</SliderMark>
+                                        <SliderMark borderRadius={'.3em'} value={action.arguments.probability} textAlign='center' bg='blackAlpha.800' color='white' mt='-10' ml='-5' w='12'>
+                                            {action.arguments.probability} %
+                                        </SliderMark>
+                                        <SliderTrack>
+                                            <SliderFilledTrack />
+                                        </SliderTrack>
+                                        <SliderThumb />
+                                    </Slider>
+                                    </>
                             case 'agent_email_notification':
                                 return (
                                     <>

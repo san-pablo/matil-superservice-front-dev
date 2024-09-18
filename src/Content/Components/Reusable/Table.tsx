@@ -155,6 +155,7 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort,  columnsMap, exclu
 
     const dataToWork = (requestSort)? data : sortedData
 
+    console.log(height)
     //FRONT
     return(
         <> 
@@ -179,11 +180,11 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort,  columnsMap, exclu
                     }
                     {deletableFunction && <Flex width={'60px'}/>}
                 </Flex>
-                 <Box minWidth={`${totalWidth}px`} overflowX={'hidden'} ref={tableBoxRef} overflowY={'scroll'} maxH={height?height - (headerRef.current?.getBoundingClientRect().bottom || 0):boxHeight}> 
+                 <Box minWidth={`${totalWidth}px`} overflowX={'hidden'} ref={tableBoxRef} overflowY={'scroll'} maxH={height?height:boxHeight}> 
                     {dataToWork.map((row:any, index:number) => {  
                         
                         return (
-                            <Flex data-index={index}  position={'relative'} overflow={'hidden'} gap='20px' minWidth={`${totalWidth}px`} borderRadius={index === data.length - 1?'0 0 .5rem .5rem':'0'} borderWidth={'0 1px 1px 1px'}  cursor={onClickRow?'pointer':'not-allowed'} onClick={() => {if (onClickRow) onClickRow(row, index)}} key={`row-${index}`}  bg={selectedIndex === index ? 'blue.50':(selectedElements || []).includes(index)?'blue.100':index%2 === 1?'#FCFCFC':'white'} alignItems={'center'}  fontSize={'.9em'} color='black' p='10px' borderColor={'gray.200'} _hover={{bg:(selectedElements || [] ).includes(index)?'blue.100':'blue.50'}}  > 
+                            <Flex height={'50px'} data-index={index}  position={'relative'} overflow={'hidden'} gap='20px' minWidth={`${totalWidth}px`} borderRadius={index === data.length - 1?'0 0 .5rem .5rem':'0'} borderWidth={'0 1px 1px 1px'}  cursor={onClickRow?'pointer':'not-allowed'} onClick={() => {if (onClickRow) onClickRow(row, index)}} key={`row-${index}`}  bg={selectedIndex === index ? 'blue.50':(selectedElements || []).includes(index)?'blue.100':index%2 === 1?'#FCFCFC':'white'} alignItems={'center'}  fontSize={'.9em'} color='black' p='10px' borderColor={'gray.200'} _hover={{bg:(selectedElements || [] ).includes(index)?'blue.100':'blue.50'}}  > 
                                 {selectedIndex === index && <Box position='absolute' left={0} top={0} height={'100%'} width={'2px'} bg='blue.400'/>}
                                 {selectedElements &&
                                 <Flex onClick={(e) => e.stopPropagation()}> 
