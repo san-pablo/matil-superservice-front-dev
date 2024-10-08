@@ -3,7 +3,7 @@
 */
 
 //REACT
-import { useState, useRef, useEffect, Dispatch, SetStateAction, Fragment, ChangeEvent, memo, useMemo } from "react"
+import { useState, useRef, useEffect, Dispatch, SetStateAction, Fragment, ChangeEvent, memo, useMemo, KeyboardEvent } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../../../AuthContext"
 import { useSession } from "../../../SessionContext"
@@ -12,15 +12,17 @@ import { useTranslation } from 'react-i18next'
 //FETCH DATA
 import fetchData from "../../API/fetchData"
 //FRONT
-import { Flex, Box, Text, Avatar, Icon, Skeleton, Button, IconButton, Tooltip, Textarea, Link, Image, NumberInput, NumberInputField, chakra, shouldForwardProp } from '@chakra-ui/react'
+import { Flex, Box, Text, Avatar, Icon, Skeleton, Button, IconButton, Tooltip, Textarea, Link, Image, NumberInput, NumberInputField, chakra, shouldForwardProp, useDisclosure, Modal, ModalOverlay, ModalContent, ModalBody, ModalCloseButton } from '@chakra-ui/react'
 import { motion, AnimatePresence, isValidMotionProp } from 'framer-motion'
 import '../../Components/styles.css'
 //COMPONENTS
 import LoadingIconButton from "../../Components/Reusable/LoadingIconButton"
 import TextEditor from "./TextEditor"
 import CustomSelect from "../../Components/Reusable/CustomSelect"
-import ConfirmmBox from "../../Components/Reusable/ConfirmBox" 
+import ConfirmBox from "../../Components/Reusable/ConfirmBox" 
 import Countdown from "../../Components/Once/CountDown"
+import GradientBox from "../../Components/Once/Wave2"
+import CustomAttributes from "../../Components/Reusable/CustomAttributes"
 //FUNCTIONS
 import timeAgo from "../../Functions/timeAgo"
 import useOutsideClick from "../../Functions/clickOutside"
@@ -29,9 +31,9 @@ import downloadFile from "../../Functions/downloadFile"
 import timeStampToDate from "../../Functions/timeStampToString"
 //ICONS
 import { IoIosArrowDown, IoIosArrowBack } from "react-icons/io"
-import { BsPersonFill, BsThreeDotsVertical } from "react-icons/bs"
+import { BsPersonFill, BsThreeDotsVertical,  } from "react-icons/bs"
 import { MdFileDownload, } from 'react-icons/md'
-import { TbArrowMerge,  TbTrash, TbDatabase } from 'react-icons/tb'
+import { TbArrowMerge,  TbTrash, TbDatabase, TbFileDescription } from 'react-icons/tb'
 import { FaClockRotateLeft } from "react-icons/fa6"
 import { HiOutlinePaperClip } from "react-icons/hi"
 
@@ -61,6 +63,7 @@ interface MergeBoxProps {
 
 //MOTION BOX
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
+
  
 //MAIN FUNCTION
 function TicketResponse ( {ticketData, setTicketData, clientTickets, setClientTickets, messagesList, setMessagesList, clientData, setClientData, clientId, deleteHeaderSection, socket }:RespuestaProps) {
@@ -89,6 +92,18 @@ function TicketResponse ( {ticketData, setTicketData, clientTickets, setClientTi
     const scrollRef1 = useRef<HTMLDivElement>(null)
     const scrollRef2 = useRef<HTMLDivElement>(null)
   
+    //MESSAGES QUEUE
+    const messageQueue = useRef<any[]>([])
+    const processQueue = () => {
+        if (messageQueue.current.length > 0) {
+            const { newMessage, type } = messageQueue.current.shift()
+            updateMessagesList(newMessage, type)
+        }
+    }
+    useEffect(() => {
+        if (messageQueue.current.length > 0) processQueue()    
+    }, [messagesList])
+    
     //BOOLEAN FOR MERGE A TICKET
     const [showMerge, setShowMerge] = useState(false)
 
@@ -127,33 +142,32 @@ function TicketResponse ( {ticketData, setTicketData, clientTickets, setClientTi
     //UPDATE MESSAGES ON A NEW SOCKET ENTRY
     const updateMessagesList = (newMessage:any, type:'message'| 'scheduled-new' | 'scheduled-canceled' ) => {
     
-
         if (type === 'message' && newMessage.id === ticketDataRef?.current?.conversation_id) {
             setMessagesList((prev: MessagesData | null) => {
-                    if (prev === null) {return null}
-                    return {...prev, messages: [...prev.messages, ...newMessage.new_messages],  scheduled_messages: []}}
-                )
+                if (prev === null) {return null}
+                return {...prev, messages: [...prev.messages, ...newMessage.new_messages],  scheduled_messages: []}}
+            )
         }
         else if (type === 'scheduled-new' && newMessage.id === ticketDataRef?.current?.conversation_id) {
             setMessagesList((prev: MessagesData | null) => {
                 if (prev === null) {return null}
-                return {...prev, scheduled_messages: [...prev.scheduled_messages, ...newMessage.new_messages]}}
+                return {...prev, scheduled_messages: newMessage.new_messages}}
             )
         } 
-
         else if (type === 'scheduled-canceled' && newMessage.id === ticketDataRef?.current?.conversation_id) {
             setMessagesList((prev: MessagesData | null) => {
                 if (prev === null) { return null }
                 return {...prev, scheduled_messages: []}
             })
         } 
-        
     }
+
     //WEBSOCKET ACTIONS, THEY TRIGEGR ONLY IF THE USER IS INSIDE THE SECTION
     useEffect(() => {
 
         //UPDATE TICKERT DATA
         socket.current.on('ticket', (data:any) => {
+
             if ( data.new_data.id === ticketDataRef?.current?.id) setTicketData(data.new_data)
             if (data.client_id === clientDataRef.current?.id && setClientTickets) {
                 setClientTickets(prev => {
@@ -173,21 +187,25 @@ function TicketResponse ( {ticketData, setTicketData, clientTickets, setClientTi
 
         //UPDATE A CONVERSATIOPN MESSAGE
         socket.current.on('conversation_messages', (data:any) => {
-            data.new_messages.forEach((msg:any) => {msg.sender_type = data.sender_type})
-            updateMessagesList(data, 'message')
+            data.new_messages.forEach((msg: any) => { msg.sender_type = data.sender_type })
+            messageQueue.current.push({ newMessage: data, type: 'message' });
+            if (messageQueue.current.length === 1) processQueue()
         })
 
         //RECEIVE A NEW SCHEDULED MESSAGE
         socket.current.on('conversation_scheduled_messages', (data:any) => {
-            updateMessagesList(data, 'scheduled-new')
+            messageQueue.current.push({ newMessage: data, type: 'scheduled-new' });
+            if (messageQueue.current.length === 1) processQueue()
          })
 
         //SCHEDULED MESSAGE CANCELED
         socket.current.on('conversation_canceled_scheduled_messages', (data:any) => {
-            updateMessagesList(data, 'scheduled-canceled')
+            messageQueue.current.push({ newMessage: data, type: 'scheduled-canceled' });
+            if (messageQueue.current.length === 1) processQueue()
         })
     }, [])
 
+    console.log(ticketDataEdit)
     //NOTES CHANGE
     const textareaNotasRef = useRef<HTMLTextAreaElement>(null)
     const adjustTextareaHeight = (textarea:any) => {
@@ -220,21 +238,87 @@ function TicketResponse ( {ticketData, setTicketData, clientTickets, setClientTi
         if (ticketDataEdit) setTicketDataEdit({...ticketDataEdit, [key]:item})
     }
 
+    //UPDATE A CISTOM ATTRIBUTE
+    const updateCustomAttributes = (newValue:any, index:number) => {
+        const newTicketData = { ...ticketDataEdit } as TicketData;
+        if (newTicketData.custom_attributes && Array.isArray(newTicketData.custom_attributes)) {
+            const updatedCustomAttributes = [...newTicketData.custom_attributes]
+            updatedCustomAttributes[index] = {... updatedCustomAttributes[index], value:newValue}
+            newTicketData.custom_attributes = updatedCustomAttributes
+        }
+        updateData('ticket', newTicketData)
+    }
+
     //SCROLLING TO LAST MESSAGE LOGIC
     const scrollRef = useRef<HTMLDivElement>(null)
+    const scrollRefGradient = useRef<HTMLDivElement>(null)
     const lastMessageRef = useRef<HTMLDivElement>(null)
     useEffect(() => {
         const timer = setTimeout(() => {
-            if (lastMessageRef.current && scrollRef.current) {
-                scrollRef.current.scroll({
-                    top: lastMessageRef.current.offsetTop + lastMessageRef.current.offsetHeight - scrollRef.current.offsetHeight,
-                    behavior: 'smooth'
-                })
+            if (lastMessageRef.current) {
+                if (scrollRef.current)
+                    {
+                        scrollRef.current.scroll({
+                            top: lastMessageRef.current.offsetTop + lastMessageRef.current.offsetHeight - scrollRef.current.offsetHeight + 50,
+                            behavior: 'smooth'
+                        })
+                    }
+                if (scrollRefGradient.current)
+                    {
+                        scrollRefGradient.current.scroll({
+                            top: lastMessageRef.current.offsetTop + lastMessageRef.current.offsetHeight - scrollRefGradient.current.offsetHeight + 50,
+                            behavior: 'smooth'
+                        })
+                    }
             }
         }, 300)
 
         return () => clearTimeout(timer)
     }, [messagesList])
+
+    //TAKE THE CONTROL OF A CONVERSATION
+    const exportConversation = (messagesList:MessagesData | null) => {
+
+        const WriteMessages = (type:string, content:any) => {
+            if (type === 'plain' || type === 'email' || type === 'site') return content.text
+            else if (type === 'options') return t('OptionsMessage')
+            else if (type === 'image') return t('ImageMessage')
+            else if (type === 'pdf' || type === 'file' || type === 'video' || type === 'audio') return t('FileMessage')       
+            else if (type === 'system') {
+                switch (content.event) {
+                    case 'merge':
+                       return t('MergedMessage')
+                    case 'agent_transfer':
+                        return t('AgentTransferMessage')
+                    case 'solved':
+                        return t('SolvedMessage')
+                    case 'closed':
+                        return t('ClosedMessage')
+                }
+            }  
+        }
+
+        if (messagesList) {
+            let conversationText = `Ticket #${ticketDataEdit?.local_id} (${auth.authData.organizationName})\n\n`
+
+            messagesList.messages.forEach(con => {
+                const sender = (con.sender_type === -3?t('SystemMessage'):con.sender_type === -2?t('InternalNote'):con.sender_type === -1?'Matilda':con.sender_type === 0?clientDataEdit?.name:auth.authData?.users?.[con.sender_type].name) || ''
+                conversationText += `${sender}: ${WriteMessages(con.type, con.content)}\n\n`
+            })
+            messagesList.scheduled_messages.forEach(con => {
+                conversationText += `Matilda: ${WriteMessages(con.type, con.content)}\n\n`
+            })
+
+            const blob = new Blob([conversationText], { type: 'text/plain' })
+            const link = document.createElement('a')
+            link.href = URL.createObjectURL(blob)
+            link.download = `conversation_ticket_${ticketDataEdit?.local_id}.txt`
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+        }
+        
+    }
 
     //TAKE THE CONTROL OF A CONVERSATION
     const takeConversationControl = () => {
@@ -259,128 +343,153 @@ function TicketResponse ( {ticketData, setTicketData, clientTickets, setClientTi
 
         //BOX FOR CONFIRM THE DELETE
         return(<>
-            <Box p='15px'> 
+            <Box p='20px'> 
                 <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('ConfirmDelete')}</Text>
                 <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
                 <Text >{t('ConfirmDeleteQuestion')}</Text>
             </Box>
-            <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-                <Button  size='sm' colorScheme='red' onClick={deleteTicket}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
-                <Button  size='sm' onClick={()=>setShowConfirmDelete(false)}>{t('Cancel')}</Button>
+            <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+                <Button  size='sm'  bg='red.100' color='red.600' _hover={{bg:'red.200'}} onClick={deleteTicket}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
+                <Button  size='sm' _hover={{color:'blue.400'}}  onClick={()=>setShowConfirmDelete(false)}>{t('Cancel')}</Button>
             </Flex>
         </>)
     }
 
+ 
+    //COPONENT FOR RENDERING THE MESSAGES
+    const MessagesContent = () => {
+        return (<>
+                {(showExtractedData && messagesList) ? 
+                    <>
+                        <Flex gap='10px' mb='4vh' alignItems={'center'}> 
+                            <Tooltip label={t('ReturnConversation')}  placement='top' hasArrow bg='black'  color='white'  borderRadius='.4rem' fontSize='.75em' p='5px'> 
+                                <IconButton aria-label='go-back' size='xs' bg='transparent' border='none' onClick={() => setShowExtractedData(false)} icon={<IoIosArrowBack size={'15px'}/>}/>
+                            </Tooltip>
+                            <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('ExtractedData')}</Text>
+                        </Flex>       
+                        <ExtractedData t={t} extractedData={messagesList?.extracted_data} />
+                    </>
+                    :<> 
+                    {(messagesList === null ) ? <> {Array.from({ length: 8 }).map((_, index) => (<Skeleton key={`skeleton-${index}`} height="1em" mt='10px' />))}</>
+                    : 
+                    <>
+                        {messagesList.messages.map((con:any, index:number) => (               
+                        <Box  mt={'5vh'} key={`message-${index}`} ref={index === (messagesList?.messages.length || 0) - 1 ? lastMessageRef : null}> 
+                            <MessageComponent con={con} sender={(con.sender_type === -3?'':con.sender_type === -2?t('InternalNote'):con.sender_type === -1?'Matilda':con.sender_type === 0?clientDataEdit?.name:auth.authData?.users?.[parseInt(con.sender_type)].name) || ''} navigate={navigate}/>
+                        </Box>))}
 
-    const memoizedDeleteBox = useMemo(() => (
-        <ConfirmmBox setShowBox={setShowConfirmDelete}> 
+                        {messagesList.scheduled_messages.map((con:any, index:number) =>(
+                            <Box  mt={'5vh'} gap='10px'  key={`scheduled-message-${index}`} ref={index === (messagesList?.messages.length || 0) - 1 ? lastMessageRef : null}> 
+                                <MessageComponent con={con} isScheduled={true} navigate={navigate} sender={'Matilda'} />
+                            </Box>)
+                        )}
+                    </>}           
+                </>}
+        </>)
+    }
+
+    //MEMOIZED BOXES
+   const memoizedDeleteBox = useMemo(() => (
+        <ConfirmBox setShowBox={setShowConfirmDelete}> 
             <DeleteComponent t={t}/>
-        </ConfirmmBox>
+        </ConfirmBox>
     ), [showConfirmDelete])
-
     const memoizedMergeBox = useMemo(() => (
-        <ConfirmmBox setShowBox={setShowMerge}> 
+        <ConfirmBox setShowBox={setShowMerge}> 
             <MergeBox t={t} ticketData={ticketDataEdit} clientName={clientDataEdit?.name || 'Sin cliente'} setShowMerge={setShowMerge}/>
-        </ConfirmmBox>
+        </ConfirmBox>
     ), [showMerge])
    
+
     //FRONT
     return(<> 
  
         <Flex height={'calc(100vh - 120px)'} ref={scrollRef1} maxW={'calc(100vw - 55px)'}>
             <Box position={'relative'}  p='2vw' bg='#f1f1f1' overflow={'scroll'}   width={'280px'}   borderRightWidth={'1px'} borderRightColor='gray.200' >
-                <Text mb='1vh'fontWeight={'medium'} fontSize='.9em' >{t('subject')}</Text>
+                <Text mb='.5vh'fontWeight={'medium'} fontSize='.9em' >{t('subject')}</Text>
                 <Skeleton isLoaded={ticketDataEdit !== null}>
-                    <CustomSelect isDisabled={ticketDataEdit?.user_id === -1 || ticketDataEdit?.status === 'closed'} containerRef={scrollRef1}  selectedItem={ticketDataEdit?.subject} options={auth.authData?.ticket_subjects || []} setSelectedItem={(value) => updateSelector('subject',value)} hide={false} />
+                    <CustomSelect  isDisabled={ticketDataEdit?.user_id === -1 || ticketDataEdit?.status === 'closed'} containerRef={scrollRef1}  selectedItem={ticketDataEdit?.subject} options={auth.authData?.ticket_subjects || []} setSelectedItem={(value) => updateSelector('subject',value)} hide={false} />
                 </Skeleton>
 
-                <Text mb='1vh'fontWeight={'medium'} fontSize='.9em' mt='3vh' >{t('user_id')}</Text>
+                <Text mb='.5vh'fontWeight={'medium'} fontSize='.9em' mt='2vh' >{t('user_id')}</Text>
                 <Skeleton isLoaded={ticketDataEdit !== null}>
                     <CustomSelect isDisabled={ticketDataEdit?.user_id === -1 || ticketDataEdit?.status === 'closed'}  containerRef={scrollRef1}  selectedItem={ticketDataEdit?.user_id} options={Object.keys(usersDict).map(key => parseInt(key))} labelsMap={usersDict} setSelectedItem={(value) => updateSelector('user_id',value)} hide={false} />
                 </Skeleton>
 
-                <Text mb='1vh' fontWeight={'medium'}fontSize='.9em'  mt='3vh'>{t('urgency_rating')}</Text>
+                <Text mb='.5vh' fontWeight={'medium'}fontSize='.9em'  mt='2vh'>{t('urgency_rating')}</Text>
                 <Skeleton isLoaded={ticketDataEdit !== null}>
                     <CustomSelect isDisabled={ticketDataEdit?.user_id === -1 || ticketDataEdit?.status === 'closed'}  containerRef={scrollRef1}  selectedItem={ticketDataEdit?.urgency_rating} options={ratingsList} labelsMap={ratingMapDic} setSelectedItem={(value) => updateSelector('urgency_rating',value)} hide={false} />
                 </Skeleton>
                 
-                <Text mb='1vh'fontWeight={'medium'} mt='3vh' fontSize='.9em'>{t('created_at')}</Text>
+                <Text mb='.5vh'fontWeight={'medium'} mt='2vh' fontSize='.9em'>{t('created_at')}</Text>
                 <Skeleton isLoaded={ticketDataEdit !== null}>
                     <Text fontSize={'.9em'}>{timeAgo(ticketDataEdit?.created_at, t_formats)}</Text>
                 </Skeleton>
      
-                <Text mb='1vh'fontWeight={'medium'} mt='3vh' fontSize='.9em'>{t('updated_at')}</Text>
+                <Text mb='.5vh'fontWeight={'medium'} mt='2vh' fontSize='.9em'>{t('updated_at')}</Text>
                 <Skeleton isLoaded={ticketDataEdit !== null}>
                     <Text fontSize={'.9em'}>{timeAgo(ticketDataEdit?.updated_at, t_formats)}</Text>
                 </Skeleton>
 
+                <Skeleton isLoaded={ticketDataEdit !== null}>
+                    <CustomAttributes customAttributes={ticketDataEdit?.custom_attributes || []} updateCustomAttributes={updateCustomAttributes}/>
+                </Skeleton>
             </Box>
 
-            <MotionBox bg='white' overflowX={'auto'} width={sendBoxWidth}  initial={{ width: sendBoxWidth  }} animate={{ width: sendBoxWidth}} exit={{ width: sendBoxWidth }} transition={{ duration: '.2' }} 
-                overflowY={'hidden'}  borderRightWidth={'1px'} borderRightColor='gray.200' >
-                <Flex height={'calc(100vh - 120px)'} flexDir={'column'}> 
-                 
-                    <Flex justifyContent={'space-between'} alignItems={'center'} height={'50px'} px='20px'>
+            <MotionBox   initial={{ width: sendBoxWidth  }} animate={{ width: sendBoxWidth}} exit={{ width: sendBoxWidth }} transition={{ duration: '.2' }}  
+              width={sendBoxWidth}    overflowY={'hidden'}  borderRightWidth={'1px'} borderRightColor='gray.200' >
+                <Flex height={'calc(100vh - 120px)'} position='relative' flexDir={'column'}> 
+                  
+                     <Flex justifyContent={'space-between'} alignItems={'center'} height={'50px'} px='20px'>
                         <Skeleton isLoaded={ticketDataEdit !== null}>
                             <Text fontWeight={'medium'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{ticketDataEdit?.title}</Text>
                         </Skeleton>
-                        <Flex alignItems={'center'}> 
-                            <IconButton ref={settingsButtonRef} aria-label='ticket  -settings' icon={<BsThreeDotsVertical/>} size='sm' isRound bg='transparent' onClick={() => {setShowSettings(!showSettings)}}/>
-                            {showSettings && 
-                            <Box mt='5px' top={settingsButtonRef.current?settingsButtonRef.current.getBoundingClientRect().bottom:0} right={window.innerWidth - (settingsButtonRef.current?settingsButtonRef.current.getBoundingClientRect().right:0)} overflow={'hidden'} ref={settingsBoxRef}  fontSize={'.9em'} boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.13)'} bg='white' zIndex={100}  position={'absolute'} borderRadius={'.5rem'} borderWidth={'1px'} borderColor={'gray.200'}>
-                                {!showExtractedData && <Flex  px='15px' py='10px' cursor={'pointer'} gap='10px' alignItems={'center'} _hover={{bg:'gray.100'}} onClick={() => {setShowExtractedData(true);setShowSettings(false)}}>
-                                    <Icon boxSize={'15px'} as={TbDatabase}/>
-                                    <Text>{t('SeeExtracted')}</Text>
-                                </Flex>}
-                                <Flex  px='15px' py='10px' cursor={'pointer'} gap='10px' alignItems={'center'} _hover={{bg:'gray.100'}} onClick={() => {setShowMerge(true);setShowSettings(false)}}>
-                                    <Icon boxSize={'15px'} as={TbArrowMerge}/>
-                                    <Text>{t('MergeTicket')}</Text>
-                                </Flex>
-                                <Flex  onClick={() => {setShowSettings(false) ;setShowConfirmDelete(true)}}  px='15px' py='10px' cursor={'pointer'} gap='10px' alignItems={'center'} _hover={{bg:'gray.100'}}>
-                                    <Icon boxSize={'15px'} as={TbTrash}/>
-                                    <Text>{t('Delete')}</Text>
-                                </Flex>
-                            </Box>}                    
-                        </Flex>                
-                    </Flex>
-                    <Box width={'100%'} mb='2vh' height={'1px'} bg='gray.200'/>
-                        {(showExtractedData && messagesList) ? 
-                            <Box p='15px'>
-                                <Flex gap='10px' mb='4vh' alignItems={'center'}> 
-                                    <Tooltip label={t('ReturnConversation')}  placement='top' hasArrow bg='black'  color='white'  borderRadius='.4rem' fontSize='.75em' p='5px'> 
-                                        <IconButton aria-label='go-back' size='xs' bg='transparent' border='none' onClick={() => setShowExtractedData(false)} icon={<IoIosArrowBack size={'15px'}/>}/>
-                                    </Tooltip>
-                                    <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('ExtractedData')}</Text>
-                                </Flex>       
-                                <ExtractedData t={t} extractedData={messagesList?.extracted_data} />
-                            </Box>
-                        :<> 
-                        <Box  ref={scrollRef} flex='1' paddingBottom='50px' width={'100%'} px='20px' css={{overflowX: 'hidden','&::-webkit-scrollbar': {width: '0.2em',},'&::-webkit-scrollbar-thumb': {backgroundColor: 'transparent'}}}  >
-                            
-                            {(messagesList === null ) ? <> {Array.from({ length: 8 }).map((_, index) => (<Skeleton key={`skeleton-${index}`} height="1em" mt='10px' />))}</>
-                            : 
-                            <>
-                                {messagesList.messages.map((con:any, index:number) => (               
-                                <Box  mt={index === 0?0:'5vh'} key={`message-${index}`} ref={index === (messagesList?.messages.length || 0) - 1 ? lastMessageRef : null}> 
-                                    <MessageComponent con={con} sender={(con.sender_type === -3?'':con.sender_type === -2?t('InternalNote'):con.sender_type === -1?'Matilda':con.sender_type === 0?clientDataEdit?.name:auth.authData?.users?.[parseInt(con.sender_type)].name) || ''} navigate={navigate}/>
-                                </Box>))}
+                        <Box  position={'relative'}> 
+                            <IconButton ref={settingsButtonRef} aria-label='ticket-settings' icon={<BsThreeDotsVertical/>} size='sm' isRound bg='transparent'  _hover={{bg:'brand.gray_1'}}  onClick={() => {setShowSettings(!showSettings)}}/>
+                            <AnimatePresence> 
+                                {showSettings && 
+                                <MotionBox initial={{ opacity: 0, marginTop: -5 }} animate={{ opacity: 1, marginTop: 5 }}  exit={{ opacity: 0,marginTop: -5}} transition={{ duration: '.2', ease: 'easeOut'}}
+                                maxH='40vh' right={0} overflow={'scroll'} top='100%' gap='10px' ref={settingsBoxRef} fontSize={'.9em'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000}   position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
+                                    {!showExtractedData && <Flex  px='15px' py='10px' cursor={'pointer'} gap='10px' alignItems={'center'} _hover={{bg:'brand.hover_gray'}} onClick={() => {setShowExtractedData(true);setShowSettings(false)}}>
+                                        <Icon boxSize={'15px'} as={TbDatabase}/>
+                                        <Text whiteSpace={'nowrap'}>{t('SeeExtracted')}</Text>
+                                    </Flex>}
+                                    <Flex  px='15px' py='10px' cursor={'pointer'} gap='10px' alignItems={'center'} _hover={{bg:'brand.hover_gray'}} onClick={() => {setShowMerge(true);setShowSettings(false)}}>
+                                        <Icon boxSize={'15px'} as={TbArrowMerge}/>
+                                        <Text whiteSpace={'nowrap'}>{t('MergeTicket')}</Text>
+                                    </Flex>
+                                    <Flex  px='15px' py='10px' cursor={'pointer'} gap='10px' alignItems={'center'} _hover={{bg:'brand.hover_gray'}} onClick={() => {exportConversation(messagesList);setShowSettings(false)}}>
+                                        <Icon boxSize={'15px'} as={TbFileDescription}/>
+                                        <Text whiteSpace={'nowrap'}>{t('ExportConversation')}</Text>
+                                    </Flex>
+                                    <Flex  onClick={() => {setShowSettings(false) ;setShowConfirmDelete(true)}}  px='15px' py='10px' cursor={'pointer'} gap='10px' alignItems={'center'} _hover={{bg:'brand.hover_gray'}}>
+                                        <Icon boxSize={'15px'} as={TbTrash}/>
+                                        <Text whiteSpace={'nowrap'}>{t('Delete')}</Text>
+                                    </Flex>
+                                </MotionBox>}   
+                            </AnimatePresence>                 
+                        </Box>                
+                    </Flex>  
+                    <Box position={'relative'} flex='1' overflow={'hidden'} width={'100%'} px='20px'  >
 
-                                {messagesList.scheduled_messages.map((con:any, index:number) => (
-                                    <Box  mt={'5vh'} gap='10px'  key={`scheduled-message-${index}`} ref={index === (messagesList?.messages.length || 0) - 1 ? lastMessageRef : null}> 
-                                        <MessageComponent con={con} isScheduled={true} navigate={navigate} sender={(con.sender_type === -3?'':con.sender_type === -2?t('InternalNote'):con.sender_type === -1?'Matilda':con.sender_type === 0?clientDataEdit?.name:auth.authData?.users?.[parseInt(con.sender_type)].name) || ''} />
-                                    </Box>
-                                ))}
-                            </>}
-                        </Box>
-                        {ticketDataEdit && <TextEditor ticketData={ticketDataEdit} updateData={updateData} takeConversationControl={takeConversationControl}  deleteHeaderSection={deleteHeaderSection} clientName={clientDataEdit?.name}/>}
-               
-                    </>}
+                    {ticketDataEdit?.user_id === -1 ? 
+                             <GradientBox scrollRef={scrollRef}> 
+                                <MessagesContent/>
+                            </GradientBox> 
+                     
+                        :
+                        <Box ref={scrollRef} position={'relative'} flex='1'  width={'100%'} px='20px' overflow={'scroll'}  height={'calc(100% - 20px)'}  >
+                            <MessagesContent/>
+                        </Box>}
+                    </Box>
+                    {(ticketDataEdit || (showExtractedData && messagesList)) && <TextEditor ticketData={ticketDataEdit as TicketData} updateData={updateData} takeConversationControl={takeConversationControl}  deleteHeaderSection={deleteHeaderSection} clientName={clientDataEdit?.name}/>}
+
                 </Flex>
             </MotionBox>
             
             <MotionBox width={clientBoxWidth + 'px'}  overflowY={'scroll'} initial={{ width: clientBoxWidth + 'px' }} animate={{ width: clientBoxWidth + 'px' }} exit={{ width: clientBoxWidth + 'px' }} transition={{ duration: '.2'}} 
-                bg='gray.50' py='2vw' px={clientBoxWidth === 360 ?'2vw':'8px'} ref={scrollRef2} overflowX={'hidden'}>
-
+                bg='brand.gray_2' py='2vw' px={clientBoxWidth === 360 ?'2vw':'8px'} ref={scrollRef2} overflowX={'hidden'}>
+ 
                 <AnimatePresence>
                     {clientBoxWidth === 360 ?<> 
                   
@@ -495,7 +604,7 @@ const ShowMessages = ({type, content}:{type:string, content:any}) => {
     //MAIL OR PLAIN
     if (type === 'plain' || type === 'email') {
         const lines = content.text.split('\n').map((line:string, index:number) => (<Fragment key={index}>{line}<br /></Fragment>))
-        return <Text >{lines}</Text>
+        return <Text whiteSpace={'break-word'}>{lines}</Text>
     }
 
     //CHAT OPTIONS
@@ -511,13 +620,42 @@ const ShowMessages = ({type, content}:{type:string, content:any}) => {
     else if (type === 'site') return <Link href={content.site_link} isExternal>{content.url}</Link>;
 
     //IMAGE LINK
-    else if (type === 'image') return <Image maxWidth='50%' src={content.url} />
+    else if (type === 'image') {
+        const { isOpen, onOpen, onClose } = useDisclosure()
+        const [selectedImage, setSelectedImage] = useState<string | null>(null)
+      
+        const handleImageClick = (url:string) => {
+          setSelectedImage(url)
+          onOpen()
+        }
+      
+        return (<>
+            <Image maxWidth="50%"  cursor="pointer"  src={content.url}  onClick={() => handleImageClick(content.url)}/>
+                <Modal isOpen={isOpen} onClose={onClose} size="full"   closeOnOverlayClick={true}>
+                <ModalOverlay />
+                <ModalContent bg="white" onClick={onClose} boxShadow="none">
+                    <ModalCloseButton />
+                    <ModalBody display="flex" justifyContent="center" alignItems="center">
+                    <Image   cursor="zoom-in" onClick={(e) => e.stopPropagation()} src={selectedImage as string} maxWidth="60vw" maxHeight="90vh" />
+                    </ModalBody>
+                </ModalContent>
+                <style>{`
+        .zoom-image {
+          transition: transform 0.3s ease; /* Animación suave */
+        }
+        .zoom-image:hover {
+          transform: scale(1.1); /* Ampliar imagen al hacer hover */
+        }
+      `}</style>
+            </Modal>
+        </>)
+    }
   
     //DOC LINK (PDF, FILE, VIDEO)
     else if (type === 'pdf' || type === 'file' || type === 'video') {
       return (
         <Flex alignItems={'center'} gap='20px' bg='gray.100' borderColor={'gray.300'} cursor='pointer' borderWidth={'1px'} display='inline-flex' p='10px' borderRadius={'.5em'} onClick={() => downloadFile(content.url)} className='components-container' flexDirection='row'>
-          <Icon as={MdFileDownload} viewBox="0 0 512 512" boxSize={5}  />
+          <Icon as={MdFileDownload} viewBox="0 0 512 512" boxSize={5}/>
           <Flex flexDirection='column' mt='-1'>
             <Text fontSize={'1.1em'}>{content.file_name}</Text>
             <Text fontWeight='300' fontSize='0.8em' >{formatFileSize(content.file_size)}</Text>
@@ -552,7 +690,8 @@ const MessageComponent = memo(({con, navigate, sender, isScheduled = false}:{con
     
     return(<>
     {isScheduled ?  <>  
-        {con.timestamp >= new Date().toISOString() && <>
+        {con.timestamp >= new Date().toISOString() && 
+            <Flex gap='10px'  mb='1vh'>
                 <Box width={'25px'} height={'25px'} className='hover-effect'  > 
                     <Image src="/images/matil.svg"  /> 
                 </Box>
@@ -563,22 +702,21 @@ const MessageComponent = memo(({con, navigate, sender, isScheduled = false}:{con
                             <Icon color='blue.400' as={FaClockRotateLeft}/>
                             <Countdown timestamp={con.timestamp}/>
                         </Flex>
-                        </Flex>
-    
+                    </Flex>
                     <Box mt='10px' borderColor={'blue.100'} borderWidth={'1px'}  borderRadius={'.3rem'} bg={'blue.50'} p={'10px'} width={'100%'}> 
                         <ShowMessages  content={con.content} type={con.type}/>
                     </Box>
                 </Box>
-            </>}</>
+            </Flex>
+            }</>
             :
-            <Flex   fontSize='.9em' gap='10px'  >
+            <Flex fontSize='.9em' gap='10px'  >
                 {con.sender_type === -3 ?
-    
-                <Flex width={'100%'} py='10px' px='5px' gap='15px' alignItems={'center'}>
-                    <Box height={'1px'} width={'100%'} bg='gray.300'/>
-                    <GetSystemMessage message={con.content} navigate={navigate}/>
-                    <Box height={'1px'} width={'100%'} bg='gray.300'/>
-                </Flex>
+                    <Flex width={'100%'} py='10px' px='5px' gap='15px' alignItems={'center'}>
+                        <Box height={'1px'} width={'100%'} bg='gray.300'/>
+                         <GetSystemMessage message={con.content} navigate={navigate}/>
+                        <Box height={'1px'} width={'100%'} bg='gray.300'/>
+                    </Flex>
                 :
                 <>
                     {con.sender_type === -1 ? 
@@ -588,8 +726,8 @@ const MessageComponent = memo(({con, navigate, sender, isScheduled = false}:{con
                         :
                         <Avatar width={'25px'} height={'25px'} size='xs' name={sender}/>
                     }
-                    <Box width={'100%'} > 
-                        <Flex mb='1vh' justifyContent={'space-between'}> 
+                    <Box  width={'calc(100% - 35px)'}> 
+                         <Flex mb='1vh' justifyContent={'space-between'}> 
                             <Flex gap='30px' alignItems={'center'}> 
                                 <Text fontWeight={'medium'}>{sender}</Text>
                                 {(con.content.attachments && con.content.attachments.length > 0)&& 
@@ -602,7 +740,7 @@ const MessageComponent = memo(({con, navigate, sender, isScheduled = false}:{con
                             </Flex>
                             <Text fontWeight={'medium'} color='gray.600' fontSize={'.85em'}>{timeAgo(con.timestamp, t_formats)}</Text>
                         </Flex>
-    
+ 
                         <Box borderColor={con.sender_type === -2?'yellow.200':''} mt={con.sender_type === -2?'10px':''} borderWidth={con.sender_type === -2?'1px':''}  borderRadius={'.3rem'} bg={con.sender_type === -2?'yellow.100':''} p={con.sender_type === -2?'10px':'0'} width={'100%'}>
                             {showAttachments && 
                                 <>
@@ -615,6 +753,7 @@ const MessageComponent = memo(({con, navigate, sender, isScheduled = false}:{con
                                 </>} 
                             <ShowMessages  content={con.content} type={con.type}/>
                         </Box>
+                     
                     </Box>
                 </>} 
             </Flex>
@@ -623,21 +762,23 @@ const MessageComponent = memo(({con, navigate, sender, isScheduled = false}:{con
     
 //COMPONENT FOR SHOWING A SYSTEM MESSAGE
 const GetSystemMessage = ({ message, navigate }: { message:  {event: string; description?: {is_primary_ticket?: boolean, ticket_id: number, local_ticket_id:number}}, navigate:any }): JSX.Element => {
+    
+    const { t } = useTranslation('tickets')
     switch (message.event) {
         case 'merge':
             if (message.description && typeof message.description.is_primary_ticket !== 'undefined' && typeof message.description.ticket_id !== 'undefined') {
-                if (message.description.is_primary_ticket) return <Text whiteSpace={'nowrap'}>El <span  onClick={() => navigate(`/tickets/ticket/${message?.description?.ticket_id}`)}style={{cursor:'pointer', fontWeight: '500', color:'blue' }}>Ticket #{message.description.local_ticket_id}</span> ha sido fusionado como ticket principal.</Text>
-                else return <Text  whiteSpace={'nowrap'}>Este ticket ha sido fusionado con el <span onClick={() => navigate(`/tickets/ticket/${message?.description?.ticket_id}`)} style={{cursor:'pointer', fontWeight: '500',  color:'blue'  }}>Ticket #{message.description.local_ticket_id}</span>.</Text>
+                if (message.description.is_primary_ticket) return <Text whiteSpace={'nowrap'}>{t('PrimaryTicket',{ticket_1:message.description.local_ticket_id})}</Text>
+                else return <Text  whiteSpace={'nowrap'}>{t('TicketMergedMessage')} <span onClick={() => navigate(`/tickets/ticket/${message?.description?.ticket_id}`)} style={{cursor:'pointer', fontWeight: '500',  color:'blue'  }}>Ticket #{message.description.local_ticket_id}</span>.</Text>
             }
-            return <Text  whiteSpace={'nowrap'}>Información de fusión no disponible.</Text>
+            return <Text  whiteSpace={'nowrap'}>{t('NoInfo')}</Text>
         case 'agent_transfer':
-            return <Text  whiteSpace={'nowrap'}>El ticket ha sido transferido a un agente.</Text>
+            return <Text  whiteSpace={'nowrap'}>{t('AgentTransfer')}</Text>
         case 'solved':
-            return <Text  whiteSpace={'nowrap'}>El ticket ha sido marcado como resuelto.</Text>
+            return <Text  whiteSpace={'nowrap'}>{t('SolvedTicket')}</Text>
         case 'closed':
-            return <Text  whiteSpace={'nowrap'}>El ticket ha sido cerrado y no se pueden enviar más mensajes.</Text>
+            return <Text  whiteSpace={'nowrap'}>{t('ClosedTicket')}</Text>
         default:
-            return <Text whiteSpace={'nowrap'}>Mensaje de sistema no reconocido.</Text>
+            return <Text whiteSpace={'nowrap'}>{t('NoSystemMessage')}</Text>
     }
 }
 //MERGING TICKETS COMPONENT
@@ -682,8 +823,8 @@ const MergeBox = ({t, ticketData, clientName, setShowMerge}:MergeBoxProps) => {
                     <Text>{t('ConfirmMergeQuestion_1')} <span style={{fontWeight:'500'}}>#{ticketData?.local_id}</span> {t('ConfirmMergeQuestion_2')} <span style={{fontWeight:'500'}}>#{selectedTicketId}?</span></Text>
                 </Box>
                 <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-                    <Button  size='sm' bg={'brand.gradient_blue'} _hover={{bg:'gradient_blue_hover'}} color={'white'} onClick={confirmMerge}>{waitingConfirmMerge?<LoadingIconButton/>:t('Merge')}</Button>
-                    <Button  size='sm' onClick={() => setShowConfirmMerge(false)}>{t('Cancel')}</Button>
+                    <Button  size='sm' bg={'blackAlpha.800'} _hover={{bg:'blackAlpha.900'}} color={'white'} onClick={confirmMerge}>{waitingConfirmMerge?<LoadingIconButton/>:t('Merge')}</Button>
+                    <Button  _hover={{color:'blue.400'}} size='sm' onClick={() => setShowConfirmMerge(false)}>{t('Cancel')}</Button>
                 </Flex>
                 </>
         )
@@ -694,34 +835,34 @@ const MergeBox = ({t, ticketData, clientName, setShowMerge}:MergeBoxProps) => {
     return(<>
         
         {showConfirmMerge &&
-            <ConfirmmBox setShowBox={setShowConfirmMerge}> 
+            <ConfirmBox setShowBox={setShowConfirmMerge}> 
                 <ConfirmComponent/>
-        </ConfirmmBox>}
+        </ConfirmBox>}
 
-            <Box p='15px'> 
+            <Box p='20px'> 
             <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('MergeTicket')}</Text>
             <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>  
             <Box p='10px' boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} borderRadius={'.5rem'} bg='gray.200' borderColor={'gray.300'} borderWidth={'1px'}> 
-                <Flex gap='30px'> 
-                    <Flex minW='60px' alignItems={'center'} justifyContent={'center'} px='15px' py='2px' display={'inline-flex'} bg='brand.gradient_blue' borderRadius={'.5em'} >
+                <Flex gap='30px' alignItems={'center'}> 
+                    <Flex minW='60px' alignItems={'center'} justifyContent={'center'} p='15px' display={'inline-flex'} bg='blackAlpha.800' borderRadius={'.5em'} >
                         <Text color={'gray.200'} fontWeight={'medium'} fontSize={'1.1em'}>#{ticketData?.local_id}</Text>
                     </Flex>
                     <Box> 
                         <Text color='gray.600'>{timeStampToDate((ticketData?.created_at || ''),t_formats)}, {clientName}</Text>
-                        <Text  fontWeight={'medium'}>{ticketData?.title || 'Sin título'}</Text>
+                        <Text  fontWeight={'medium'}>{ticketData?.title || t('NoTitle')}</Text>
                     </Box>
                 </Flex>
             </Box>
-            <Text mt='4vh' mb='1vh' fontWeight={'medium'}>{t('IDMerge')}</Text>
+            <Text mt='4vh' mb='.5vh' fontWeight={'medium'}>{t('IDMerge')}</Text>
             <NumberInput width={'150px'} defaultValue={0}  min={0} max={1000000} size='sm' value={selectedTicketId} onChange={(value) => setSelectedTicketId(value)} clampValueOnBlur={false}>
                 <NumberInputField  borderRadius='.7rem'  p='7px' _focus={{  p:'6px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px" }} />
             </NumberInput>
             {errorMessage && <Text mt='.5vh' color='red' fontSize={'.9em'}>{errorMessage}</Text>}
         </Box>
         
-        <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-            <Button  size='sm' bg='brand.gradient_blue' color='white' _hover={{bg:'brand.gradient_blue_hover'}}  isDisabled={selectedTicketId === null} onClick={()=>setShowConfirmMerge(true)}>{t('Merge')}</Button>
-            <Button  size='sm' onClick={() => setShowMerge(false)}>{t('Cancel')}</Button>
+        <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+            <Button  size='sm' bg='blackAlpha.800' color='white' _hover={{bg:'blackAlpha.900'}}  isDisabled={selectedTicketId === null} onClick={()=>setShowConfirmMerge(true)}>{t('Merge')}</Button>
+            <Button  size='sm' _hover={{color:'blue.400'}} onClick={() => setShowMerge(false)}>{t('Cancel')}</Button>
         </Flex>
     </>)
 

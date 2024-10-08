@@ -1,12 +1,13 @@
 // TRANSLATION
 import { useTranslation } from 'react-i18next'
+import { useAuth } from '../../../../AuthContext'
 //FRONT
 import { Flex, Text, Box, Skeleton } from "@chakra-ui/react"
 //CHARTS
 import ColumnChart from "../Charts/ColumnChart"
 import CompareChart from '../Charts/CompareChart'
 import GradientIconText from '../Charts/GradientIconText'
-
+ 
 //TYPING
 interface UsersProps {
     data:any
@@ -17,21 +18,23 @@ interface UsersProps {
 function Users ({data, waitingFilters}:UsersProps) {
 
     //TRANSLATION
+    const auth = useAuth()
     const { t } = useTranslation('stats')
+
+    console.log(data)
 
     return(<> 
         <Skeleton flex='1' isLoaded={data !== null && !waitingFilters}> 
             <Flex mt='2vw' width='100%' height={'40vh'} gap='1vw'>
 
-                <Flex  width={'5%'} overflow={'hidden'}  flex='1'  flexDir={'column'} gap='3vh' height={'40vh'} justifyContent={'space-between'}  bg='white' p='1vw' borderRadius={'1rem'}  boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.15)'} > 
-                    <Box> 
-                        <GradientIconText children={parseFloat(data?.total_tickets_participated_by_users || 0)} />
-                        <Text mb='1vh'  color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('ParticipatedTickets')}</Text>
+                
+                <GradientIconText children={parseFloat(data?.total_tickets_participated_by_users || 0)} />
+                <Text mb='1vh'  color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('ParticipatedTickets')}</Text>
                         <GradientIconText children={parseFloat(data?.total_tickets_solved_by_users || 0)} />
                         <Text color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('SolvedTickets')}</Text>
-                    </Box> 
+                
                     <CompareChart totalValue={data?.total_tickets_participated_by_users || 0} firstValue={data?.total_tickets_solved_by_users || 0} firstString="Cerrados"  secondString="Sin cerrar"/>
-                </Flex>
+         
             
                 <Box width={'5%'} overflow={'hidden'} height={'40vh'}  bg='white' p='1vw' borderRadius={'1rem'} flex='1' boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.15)'} >
                     <GradientIconText children={parseFloat(data?.average_users_rating_score || 0)} />

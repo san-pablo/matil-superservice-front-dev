@@ -10,6 +10,8 @@ import fetchData from "../../../API/fetchData"
 import { Flex, Text, Box, Icon, Skeleton } from "@chakra-ui/react"
 //ICONS
 import { FaDatabase, FaFileLines } from "react-icons/fa6"
+import { BsPeopleFill } from "react-icons/bs"
+import { FaTicket } from "react-icons/fa6"
 //FUNTIONS
 import formatFileSize from '../../../Functions/formatFileSize'
 import timeStampToDate from '../../../Functions/timeStampToString'
@@ -44,12 +46,11 @@ function Data () {
     //FETCH NEW DATA WHEN THE VIEEW CHANGE
     useEffect(() => {
         fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/organization`, setValue:setOrganizationData, setWaiting:setWaitingInfo,auth:auth})
-        document.title = `Cuenta - ${t('Data')} - ${auth.authData.organizationId} - Matil`
+        document.title = `${t('Settings')} - ${t('Data')} - ${auth.authData.organizationId} - Matil`
     }, [])
 
     return(
-    <>
- 
+    <Box>
         <Flex alignItems={'center'} justifyContent={'space-between'}> 
             <Flex alignItems={'center'} gap='15px'> 
 
@@ -57,7 +58,7 @@ function Data () {
                     <Text fontSize={'1.6em'} fontWeight={'medium'}>{organizationData?.name}</Text>
                 </Skeleton>
                 <Skeleton isLoaded={!waitingInfo}> 
-                    <Box mt='-10px' display="inline-flex" fontSize='.8em' borderColor={organizationData?.is_active?'green.500':'red.600'} borderWidth={'1px'} py='1px' px='5px' fontWeight={'medium'} color='white'  bg={organizationData?.is_active?'green.400':'red.500'} borderRadius={'.7rem'}> 
+                    <Box mt='-10px' display="inline-flex" fontSize='.8em'  py='1px' px='5px' fontWeight={'medium'} color={organizationData?.is_active?'green.600':'red.600'}  bg={organizationData?.is_active?'green.100':'red.100'} borderRadius={'.7rem'}> 
                         <Text>{organizationData?.is_active?t('Active'):t('Inactive')}</Text>
                     </Box>
                 </Skeleton>
@@ -74,9 +75,9 @@ function Data () {
         <Text fontSize={'1.4em'}  fontWeight={'medium'}>{t('PlanLimitations')}</Text>
         <Flex gap='30px' mt='2vh'  > 
         <Skeleton isLoaded={!waitingInfo}> 
-            <Box bg='gray.50' p='20px' minW={'20vw'} borderWidth={'1px'} borderColor={'gray.300'} borderRadius={'.5rem'}>
+            <Box   p='20px' minW={'20vw'} borderWidth={'1px'} bg='brand.gray_2' borderColor={'gray.200'} shadow={'md'} borderRadius={'.5rem'}>
                 <Flex alignItems={'center'} gap='10px' color='gray.600'>
-                    <Icon as={FaDatabase}/>
+                    <Icon as={BsPeopleFill}/>
                     <Text fontWeight={'medium'}>{t('Users')}</Text>
                 </Flex>
                 <Text mt='1vh' fontWeight={'medium'} fontSize={'1.4em'}>{t('ActiveUsers', {count:organizationData?.current_active_users})}</Text>
@@ -85,9 +86,9 @@ function Data () {
         </Skeleton>
 
         <Skeleton isLoaded={!waitingInfo}> 
-            <Box p='20px'  bg='gray.50' minW={'20vw'}  borderWidth={'1px'} borderColor={'gray.300'} borderRadius={'.5rem'}>
+            <Box p='20px'  minW={'20vw'}  borderWidth={'1px'} bg='brand.gray_2' borderColor={'gray.200'} shadow={'md'} borderRadius={'.5rem'}>
                 <Flex alignItems={'center'} gap='10px' color='gray.600'>
-                    <Icon as={FaFileLines}/>
+                    <Icon as={FaTicket}/>
                     <Text fontWeight={'medium'}>{t('MatildaTickets')}</Text>
                 </Flex>
                 <Text mt='1vh' fontWeight={'medium'} fontSize={'1.4em'}>{t('MatildaWork', {count:organizationData?.processed_tickets_this_month})}</Text>
@@ -100,7 +101,7 @@ function Data () {
         <Text fontSize={'1.4em'} mt='5vh' fontWeight={'medium'}>{t('StoreUse')}</Text>
         <Flex gap='30px' mt='2vh'  > 
             <Skeleton isLoaded={!waitingInfo}> 
-                <Box p='20px'  bg='gray.50' minW={'20vw'} borderWidth={'1px'} borderColor={'gray.300'} borderRadius={'.5rem'}>
+                <Box p='20px'  minW={'20vw'}borderWidth={'1px'} bg='brand.gray_2' borderColor={'gray.200'} shadow={'md'}  borderRadius={'.5rem'}>
                     <Flex alignItems={'center'} gap='10px' color='gray.600'>
                         <Icon as={FaDatabase}/>
                         <Text fontWeight={'medium'}>{t('DataStore')}</Text>
@@ -111,7 +112,7 @@ function Data () {
             </Skeleton>
 
             <Skeleton isLoaded={!waitingInfo}> 
-                <Box p='20px'   bg='gray.50'minW={'20vw'}  borderWidth={'1px'} borderColor={'gray.300'} borderRadius={'.5rem'}>
+                <Box p='20px' borderWidth={'1px'} bg='brand.gray_2' borderColor={'gray.200'} shadow={'md'} minW={'20vw'}  borderRadius={'.5rem'}>
                     <Flex alignItems={'center'} gap='10px' color='gray.600'>
                         <Icon as={FaFileLines}/>
                         <Text fontWeight={'medium'}>{t('FileStore')}</Text>
@@ -121,7 +122,7 @@ function Data () {
                 </Box>
             </Skeleton>
         </Flex>
-    </>
+    </Box>
  
     )
 }

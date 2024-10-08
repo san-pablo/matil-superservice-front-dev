@@ -18,7 +18,7 @@ import { TbTrash } from 'react-icons/tb'
 import useOutsideClick from '../../../Functions/clickOutside'
 //TYPING
 import { View, Views } from '../../../Constants/typing'
-import showToast from '../../../Components/ToastNotification'
+import showToast from '../../../Components/Reusable/ToastNotification'
   
 type boxPosition = {right:number, top:number, isFirst:boolean,isLast:boolean, box:{type:'private' | 'shared', index:number}} | null
 interface ViewItemProps {
@@ -142,7 +142,7 @@ function ViewsList () {
                 <Text color='gray.600' fontSize={'.9em'}>{t('ViewsDes')}</Text>
             </Box>
             <Flex gap='10px'> 
-                 <Button leftIcon={<FaPlus/>} onClick={() => navigate('edit')}>{t('CreateView')}</Button>
+                 <Button variant={'common'} size='sm' leftIcon={<FaPlus/>} onClick={() => navigate('edit')}>{t('CreateView')}</Button>
             </Flex>
        </Flex>
 

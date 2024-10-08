@@ -100,15 +100,15 @@ function EditView ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
         
             <Text mt='3vh' fontWeight={'medium'} fontSize={'1.1em'}>{t('ViewType')}</Text>
             <Flex mb='3vh' gap='20px' mt='1vh'>
-                <Button leftIcon={<FaLock/>} size='sm' bg={viewType === 'private'?'gray.300':'none'} color={'black'} _hover={{bg:viewType === 'private'?'gray.300':'gray.100'}}  onClick={() => setViewType('private')}>{t('Private')}</Button>
-                <Button leftIcon={<FaUnlock/>} isDisabled={!isAdmin} size='sm' bg={viewType !== 'private'?'gray.300':'none'} color={'black'} _hover={{bg:viewType !== 'private'?'gray.300':'gray.100'}}  onClick={() => setViewType('shared')}>{t('Shared')}</Button>
+                <Button leftIcon={<FaLock/>} size='sm' bg={viewType === 'private'?'brand.black_button':'none'} color={viewType === 'private'?'white':'black'} _hover={{bg:viewType === 'private'?'brand.black_button_hover':'brand.gray_1'}}  onClick={() => setViewType('private')}>{t('Private')}</Button>
+                <Button  leftIcon={<FaUnlock/>} isDisabled={!isAdmin} size='sm' bg={viewType !== 'private'?'brand.black_button':'none'} color={viewType !== 'private'?'white':'black'} _hover={{bg:viewType !== 'private'?'brand.black_button_hover':'brand.gray_1'}}  onClick={() => setViewType('shared')}>{t('Shared')}</Button>
             </Flex>
             <EditViewComponent scrollRef={scrollRef}  viewData={selectedView} editViewData={setSelectedView}/>
         </Box>
 
         <Box width={'100%'} mt='2vh' mb='2vh' height={'1px'} bg='gray.300'/>
         <Flex flexDir = 'row-reverse'>
-            <Button onClick={sendEditView} isDisabled={selectedView.name === '' || ((view !== null && JSON.stringify(selectedView) === JSON.stringify(viewsAuth[viewLocation][view.index]) && viewType === view.type) )}>{waitingSend?<LoadingIconButton/>:t('SaveChanges')}</Button>
+            <Button variant={'common'} onClick={sendEditView} isDisabled={selectedView.name === '' || ((view !== null && JSON.stringify(selectedView) === JSON.stringify(viewsAuth[viewLocation][view.index]) && viewType === view.type) )}>{waitingSend?<LoadingIconButton/>:t('SaveChanges')}</Button>
         </Flex>
     
     </Flex> 

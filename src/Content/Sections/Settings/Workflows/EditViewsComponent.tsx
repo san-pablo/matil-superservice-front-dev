@@ -173,7 +173,7 @@ function EditViewComponent ({scrollRef, viewData, editViewData}:{scrollRef:RefOb
                         <IconButton bg='transaprent' border='none' size='sm' _hover={{bg:'gray.200'}} icon={<RxCross2/>} aria-label='delete-all-condition' onClick={() => removeCondition(index, 'all_conditions')}/>
                     </Flex>
                 ))}
-                <Button size='sm' mt='2vh' leftIcon={<FaPlus/>}  isDisabled={selectedView.all_conditions.length === columns.length}   onClick={() => addCondition('all_conditions')}>{t('AddCondition')}</Button>
+                <Button variant={'common'} size='sm' mt='2vh' leftIcon={<FaPlus/>}  isDisabled={selectedView.all_conditions.length === columns.length}   onClick={() => addCondition('all_conditions')}>{t('AddCondition')}</Button>
 
                 <Text mt='3vh' mb='1vh'color='gray.600'>{t('AnyConditions')}</Text>
                 {selectedView.any_conditions &&selectedView.any_conditions.map((condition, index) => (
@@ -190,7 +190,7 @@ function EditViewComponent ({scrollRef, viewData, editViewData}:{scrollRef:RefOb
                         <IconButton bg='transparent' border='none' size='sm' _hover={{bg:'gray.200'}} icon={<RxCross2/>} aria-label='delete-all-condition' onClick={() => removeCondition(index, 'any_conditions')}/>
                     </Flex>
                 ))}
-                <Button mt='2vh'  leftIcon={<FaPlus/>} size='sm' isDisabled={(selectedView.any_conditions && selectedView.any_conditions.length === columns.length)} onClick={() => addCondition('any_conditions')}>{t('AddCondition')}</Button>
+                <Button variant={'common'} mt='2vh'  leftIcon={<FaPlus/>} size='sm' isDisabled={(selectedView.any_conditions && selectedView.any_conditions.length === columns.length)} onClick={() => addCondition('any_conditions')}>{t('AddCondition')}</Button>
 
                 <Text mt='3vh' mb='1vh' fontWeight={'medium'}>{t('VisibleColumns')}</Text>
                
@@ -201,7 +201,7 @@ function EditViewComponent ({scrollRef, viewData, editViewData}:{scrollRef:RefOb
                                 {selectedView.columns.map((column, index) => (
                                     <Draggable  key={`column-view-${index}`} draggableId={`column-view-${index}`} index={index}>
                                         {(provided, snapshot) => (
-                                            <Flex ref={provided.innerRef} alignItems="center" gap='20px' width='40%'  {...provided.draggableProps} {...provided.dragHandleProps}   boxShadow={snapshot.isDragging?'0 4px 8px rgba(0, 0, 0, 0.3)':'none'}  flex='1' minW='300px' justifyContent={'space-between'}  mt='.5vh' bg='gray.100' borderRadius={'.5rem'} borderColor='gray.300' borderWidth={'1px'} p='5px'>
+                                            <Flex ref={provided.innerRef} alignItems="center" gap='20px' width='40%'  {...provided.draggableProps} {...provided.dragHandleProps}   boxShadow={snapshot.isDragging?'0 4px 8px rgba(0, 0, 0, 0.3)':'none'}  flex='1' minW='300px' justifyContent={'space-between'}  mt='.5vh' bg='brand.gray_2' borderRadius={'.5rem'} borderColor='gray.00' borderWidth={'1px'} p='5px'>
                                                 <Flex gap='10px'> 
                                                     <Text fontWeight={'medium'} fontSize={'.9em'}>{columnsMap[column][0]}</Text>
                                                 </Flex>
@@ -215,7 +215,7 @@ function EditViewComponent ({scrollRef, viewData, editViewData}:{scrollRef:RefOb
                         
                     </Droppable>
                 </DragDropContext>
-                <Button ref={columnButtonRef} size='sm' mt='2vh' leftIcon={<FaPlus/>} isDisabled={columns.length === selectedView.columns.length} onClick={handleShowColumnBox}>{t('AddColumn')}</Button>
+                <Button variant={'common'} ref={columnButtonRef} size='sm' mt='2vh' leftIcon={<FaPlus/>} isDisabled={columns.length === selectedView.columns.length} onClick={handleShowColumnBox}>{t('AddColumn')}</Button>
 
                 <Text mt='3vh' mb='1vh' fontWeight={'medium'}>{t('SortBy')}</Text>
                 <Flex gap='40px' width={'60%'} minW={'600px'}> 
@@ -223,8 +223,8 @@ function EditViewComponent ({scrollRef, viewData, editViewData}:{scrollRef:RefOb
                         <CustomSelect containerRef={scrollRef} hide={false} selectedItem={columnsMap[selectedView.order_by.column][0] as TicketColumn} setSelectedItem={(value:TicketColumn) => handleOrderChange(value, 'column')} options={columns.filter(column => column !== 'local_id')} iconsMap={columnsMap}/>
                     </Box>
                     <Flex gap='5px'>
-                        <Button size='sm' bg={selectedView.order_by.order === 'asc'?'brand.gradient_blue':'none'} color={selectedView.order_by.order === 'asc'?'white':'none'} _hover={{bg:selectedView.order_by.order === 'asc'?'brand.gradient_blue_hover':'gray.300', color:selectedView.order_by.order === 'asc'?'white':'blue.500'}}  onClick={() => handleOrderChange('asc', 'order')}>{t('Up')}</Button>
-                        <Button size='sm'   bg={selectedView.order_by.order  !== 'asc'?'brand.gradient_blue':'none'} color={selectedView.order_by.order !== 'asc'?'white':'none'} _hover={{bg:selectedView.order_by.order !== 'asc'?'brand.gradient_blue_hover':'gray.300', color:selectedView.order_by.order !== 'asc'?'white':'blue.500'}}  onClick={() => handleOrderChange('desc', 'order')}>{t('Down')}</Button>
+                        <Button size='sm' bg={selectedView.order_by.order === 'asc'?'brand.black_button':'none'} color={selectedView.order_by.order === 'asc'?'white':'none'} _hover={{bg:selectedView.order_by.order === 'asc'?'brand.black_button_hover':'brand.gray_1', color:selectedView.order_by.order === 'asc'?'white':'blue.400'}}  onClick={() => handleOrderChange('asc', 'order')}>{t('Up')}</Button>
+                        <Button size='sm'   bg={selectedView.order_by.order  !== 'asc'?'brand.black_button':'none'} color={selectedView.order_by.order !== 'asc'?'white':'none'} _hover={{bg:selectedView.order_by.order !== 'asc'?'brand.black_button_hover':'brand.gray_1', color:selectedView.order_by.order !== 'asc'?'white':'blue.400'}}  onClick={() => handleOrderChange('desc', 'order')}>{t('Down')}</Button>
                     </Flex>
                 </Flex>
         </Box>

@@ -5,10 +5,23 @@
 
 //AXIOS
 import axios, { isAxiosError } from 'axios'
-import qs from 'qs'
 //TOAST NOTIFICATIONS
-import showToast from "../Components/ToastNotification"
+import showToast from "../Components/Reusable/ToastNotification"
 
+
+function paramsSerializer(params:string) {
+    const str = [];
+    for (const [key, value] of Object.entries(params)) {
+        if (Array.isArray(value)) {
+            value.forEach(v => {
+                str.push(encodeURIComponent(key) + '=' + encodeURIComponent(v));
+            });
+        } else {
+            str.push(encodeURIComponent(key) + '=' + encodeURIComponent(value));
+        }
+    }
+    return str.join('&');
+}
 //TYPING
 interface fetchDataProps {
     endpoint:string
@@ -48,7 +61,7 @@ const fetchData = async ({endpoint, setValue, setWaiting, auth, requestForm = {}
         },
         params: params,
         paramsSerializer: function(params) {
-            return qs.stringify(params, { arrayFormat: 'repeat' });
+            return paramsSerializer(params)
         }
     }
    

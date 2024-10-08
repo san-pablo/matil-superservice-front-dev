@@ -1,8 +1,9 @@
 //REACT
-import { useEffect, useRef, useState, useMemo } from "react"
+import { useEffect, useRef, useState, useMemo, Fragment } from "react"
 import { useAuth } from "../../../AuthContext"
 import { useTranslation } from "react-i18next"
 import { useSession } from "../../../SessionContext"
+import { useLocation, useNavigate } from "react-router-dom"
 //FETCH DATA
 import fetchData from "../../API/fetchData"
 //FRONT
@@ -32,8 +33,7 @@ import { BsTrash3Fill, BsClipboard2Check } from "react-icons/bs"
 import { RxCross2 } from "react-icons/rx"
 //TYPING
 import { FunctionsData } from "../../Constants/typing"
-import { useLocation, useNavigate } from "react-router-dom"
-
+ 
 //TYPING
 type variables = 'bool' | 'int' | 'float' | 'str' | 'timestamp'
 interface FunctionType { 
@@ -67,7 +67,7 @@ const Functions = () => {
     const auth = useAuth()
     const session = useSession()
     const location = useLocation().pathname
-    const functionsDataMap:{[key:string]:[string, number]} = {uuid:[t('Id'), 200], name:[t('name'), 200], description:[t('description'), 300], number_of_errors:[t('NumberErrors'), 140]} 
+    const functionsDataMap:{[key:string]:[string, number]} = {uuid:[t('Id'), 200], name:[t('name'), 200], description:[t('title'), 300], number_of_errors:[t('NumberErrors'), 140]} 
 
     //CREATE NEW FUNCTION OR EDITING ONE
     const [editFunctionUuid, setEditFunctionUuid] = useState<string | null>(location.split('/')[3]?location.split('/')[3] :null)
@@ -75,22 +75,22 @@ const Functions = () => {
     //TICKETS DATA
     const [functionsData, setFunctionsData] = useState<FunctionsData[] | null>(null)
 
-     //FILTER LOGIC
-     const [text, setText]  =useState<string>('')
-     const [filteredFunctions, setFilteredFunctions] = useState<FunctionsData[]>([])
-     useEffect(() => {
-       const filterUserData = () => {
-         if (functionsData) {
-             const filtered = functionsData.filter(flow =>
-                 flow.name.toLowerCase().includes(text.toLowerCase()) ||
-                 flow.description.toLowerCase().includes(text.toLowerCase()) || 
-                 flow.uuid.toLowerCase().includes(text.toLowerCase())
-             )
-             setFilteredFunctions(filtered)
-         }
-       }
-       filterUserData()
-     }, [text, functionsData])
+    //FILTER LOGIC
+    const [text, setText]  =useState<string>('')
+    const [filteredFunctions, setFilteredFunctions] = useState<FunctionsData[]>([])
+    useEffect(() => {
+    const filterUserData = () => {
+        if (functionsData) {
+            const filtered = functionsData.filter(flow =>
+                flow.name.toLowerCase().includes(text.toLowerCase()) ||
+                flow.description.toLowerCase().includes(text.toLowerCase()) || 
+                flow.uuid.toLowerCase().includes(text.toLowerCase())
+            )
+            setFilteredFunctions(filtered)
+        }
+    }
+    filterUserData()
+    }, [text, functionsData])
 
     //FETCH NEW DATA WHEN THE VIEW CHANGE
     useEffect(() => {        
@@ -105,21 +105,24 @@ const Functions = () => {
         fetchInitialData()
     }, [])
     
-    const onSaveFunction = async(action:'save' | 'go-back') => {
+    const onSaveFunction = async(action:'save' | 'go-back' | 'delete') => {
         if (action === 'go-back') setEditFunctionUuid(null)
-        else {const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/functions`, setValue:setFunctionsData, auth})}
+        else {
+            const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/functions`, setValue:setFunctionsData, auth})
+            if (action === 'delete') setEditFunctionUuid(null)
+        }
     }
 
    return(<>
     
     {editFunctionUuid ?<EditFunctionBox selectedUuid={editFunctionUuid} onSaveFunction={onSaveFunction}/>: 
-        <Box height={'100%'} width={'100%'} p='2vw'> 
+        <Box height={'100%'} width={'100%'} px='2vw'> 
 
             <Flex justifyContent={'space-between'} alignItems={'end'}> 
                 <Box> 
                     <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Functions')}</Text>
                 </Box>
-                <Button size='sm' leftIcon={<FaPlus/>} _hover={{color:'blue.400'}} onClick={() => setEditFunctionUuid('-1')}>{t('CreateFunction')}</Button>
+                <Button size='sm' variant={'common'} leftIcon={<FaPlus/>} _hover={{color:'blue.400'}} onClick={() => setEditFunctionUuid('-1')}>{t('CreateFunction')}</Button>
             </Flex>
 
             <Box mt='2vh' width={'350px'}> 
@@ -142,7 +145,7 @@ export default Functions
 
 
  //BOX FOR ADDING, EDITING AND DELETE A FUNCTION
-const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, onSaveFunction:(action:'save' | 'go-back') => void}) => {   
+const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, onSaveFunction:(action:'save' | 'go-back' | 'delete') => void}) => {   
 
     //CONSTATNS
     const { t } = useTranslation('settings')
@@ -150,14 +153,13 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
     const location = useLocation().pathname
     const navigate = useNavigate()
     const variablesMap:{[key in variables]:string} = {'bool':t('bool'), 'int':t('int'), 'float':t('float'), 'str':t('str'), 'timestamp':t('timestamp')}
-    const boolDict = {"True":t('true'), "False":t('false')}
+    const boolDict = {True:t('true'), False:t('false')}
     const datesMap = {'{today}':t('today'), '{yesterday}':t('yesterday'), '{start_of_week}':t('start_of_week'),'{start_of_month}':t('start_of_month')}
  
     //BUTTON REF
     const testButtonRef = useRef<HTMLButtonElement>(null)
     const errorButtonRef = useRef<HTMLButtonElement>(null)
     const errorBoxRef = useRef<HTMLDivElement>(null)
-
     const codeBoxRef = useRef<HTMLDivElement>(null) 
     const newFunction:FunctionType = {
         name:t('NewFunction'),
@@ -169,6 +171,8 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
         errors:[]
     }
 
+    //SHOW NOT SAVED DATA WARNING
+    const [showNoSaveWarning, setShowNoSaveWarning] = useState<boolean>(false)
     //SHOW TEST FUNCTION
     const [showTestFunction, setShowTestFunction] = useState<boolean>(false)
 
@@ -204,7 +208,8 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
     const handleEditFunctions = async() => {
         setWaitingEdit(true)
         const isNew = selectedUuid === '-1' 
-                let response
+        let response
+        console.log(functionData)
         if (isNew) response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/functions`, setWaiting:setWaitingEdit, method:'post', requestForm:functionData as FunctionType, auth, toastMessages:{'works':t('CorrectAddedFunction'), 'failed':t('FailedAddedFunction')}})  
         else response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/functions/${selectedUuid}`, setWaiting:setWaitingEdit, method:'put', requestForm:functionData as FunctionType, auth, toastMessages:{'works':t('CorrectEditedFunction'), 'failed':t('FailedEditedFunction')}})
 
@@ -215,11 +220,12 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
     const handleDeleteFunctions= async() => {
         setWaitingDelete(true)
         const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/functions/${selectedUuid}`, setWaiting:setWaitingDelete, method:'delete', auth, toastMessages:{'works':t('CorrectDeletedFunctions'), 'failed':t('FailedDeletedFunctions')}})
-        if (response?.status == 200) onSaveFunction('save')   
+        if (response?.status == 200) onSaveFunction('delete')   
     }
 
     //EDIT FUNCTION DATA
-    const editFunctionData = (keyToEdit:string ,value:string, type?:'add' | 'delete' | 'edit', index?:number, secondKey?:'name' | 'type' | 'default' ) => {
+    const editFunctionData = (keyToEdit:string ,value:any, type?:'add' | 'delete' | 'edit', index?:number, secondKey?:'name' | 'type' | 'default' ) => {
+        console.log(typeof(value))
         setFunctionData(prev => {
             if (!prev) return prev
             const updatedFunction = { ...prev }
@@ -228,7 +234,7 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
                 const listKey = keyToEdit as 'arguments' | 'outputs'
                 const list = updatedFunction[listKey]
                 if (index!== undefined && secondKey !== undefined && index >= 0 && index < list.length) list[index] = { ...list[index], [secondKey]: value }
-                else if (type === 'add') list.push({name: '', type: 'bool', default: 'True'})
+                else if (type === 'add') list.push({name: '', type: 'bool', default: true})
                 updatedFunction[listKey] = list
             } 
             else if (type === 'delete' && index !== undefined) {
@@ -241,7 +247,7 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
             } 
             else updatedFunction[keyToEdit as 'name' | 'description' | 'code'  ] = value
             
-            return { ...prev, updatedFunction }
+            return updatedFunction
           })
     }
 
@@ -255,8 +261,8 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
                 </Box>
                  
                 <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-                    <Button size='sm' color='red.600' bg='red.100' _hover={{bg:'red.200'}} onClick={handleDeleteFunctions}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
-                    <Button size='sm' _hover={{color:'blue.400'}} onClick={() => setShowConfirmDelete(false)}>{t('Cancel')}</Button>
+                    <Button size='sm' variant={'delete'}onClick={handleDeleteFunctions}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
+                    <Button  size='sm' variant={'common'} onClick={() => setShowConfirmDelete(false)}>{t('Cancel')}</Button>
                 </Flex>
             </ConfirmBox>
     ), [showConfirmDelete])
@@ -322,7 +328,7 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
                     </Box>
                  
                     <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-                        <Button size='sm' _hover={{color:'blue.400'}} onClick={() => setShowTestFunction(false)}>{t('Accept')}</Button>
+                        <Button size='sm' variant={'common'} onClick={() => setShowTestFunction(false)}>{t('Accept')}</Button>
                     </Flex>
                 </ConfirmBox>
                 }
@@ -336,7 +342,7 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
 
                 <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
 
-                {selectedArgs.map((arg, index) => (<>
+                {selectedArgs.map((arg, index) => (<Fragment key={`arg-${index}`}>
                     <Text fontWeight={'medium'} mt='1vh' mb='.5vh'>{arg.name}</Text>
                     <Box flex='2'>
                         {(() => {switch(arg.type) {
@@ -344,7 +350,7 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
                                 return <CustomSelect hide={false} selectedItem={arg.default} setSelectedItem={(value) => editSelectedArgs(value, index)}  options={Object.keys(boolDict)} labelsMap={boolDict}/>
                             case 'int':
                             case 'float': return (
-                                <NumberInput value={arg.default || undefined} onChange={(value) => editSelectedArgs(value, index)} min={1} max={1000000} clampValueOnBlur={false} >
+                                <NumberInput value={arg.default || undefined} onChange={(value) => editSelectedArgs(value, index)} clampValueOnBlur={false} >
                                     <NumberInputField borderRadius='.5rem'  fontSize={'.9em'} height={'37px'}  borderColor={'gray.300'} _hover={{ border:'1px solid #CBD5E0'}} _focus={{ px:'11px', borderColor: "rgb(77, 144, 254)", borderWidth: "2px" }} px='12px' />
                                 </NumberInput>)              
                             case 'str':
@@ -353,15 +359,38 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
                                 return <CustomSelect hide={false} selectedItem={arg.default}  setSelectedItem={(value) => editSelectedArgs(value, index)}  options={Object.keys(datesMap)} labelsMap={datesMap}/>
                         }})()}                                   
                         </Box>
-                </>))}
+                </Fragment>))}
             </Box>
             <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-                <Button  size='sm' color='white' _hover={{bg:'blackAlpha.900'}} bg='blackAlpha.800' onClick={testFunction}>{waitingTest?<LoadingIconButton/>:t('Test')}</Button>
-                <Button  size='sm' _hover={{color:'blue.400'}} onClick={() => setShowConfirmDelete(false)}>{t('Cancel')}</Button>
+                <Button  size='sm' variant={'main'} onClick={testFunction}>{waitingTest?<LoadingIconButton/>:t('Test')}</Button>
+                <Button size='sm'  variant={'common'} onClick={() => setShowConfirmDelete(false)}>{t('Cancel')}</Button>
             </Flex>
         </>)
     }
    
+    //ACTION ON EXIT
+    const onExitAction = () => {
+        if (JSON.stringify(functionData) !== JSON.stringify(functionDataRef.current)) setShowNoSaveWarning(true)
+        else {
+            if (location.split('/')[3]) navigate(`/flows-functions/flows/flow/${location.split('/')[4]}`)
+            else onSaveFunction('go-back')
+        }
+    }   
+    const memoizedNoSavedWarning = useMemo(() => (<> 
+        {showNoSaveWarning && 
+                <ConfirmBox setShowBox={setShowNoSaveWarning} isSectionWithoutHeader> 
+                    <Box p='15px' > 
+                        <Text fontWeight={'medium'}>{t('NoSavedChanges')}</Text>
+                        <Text mt={'.5vh'}>{t('NoSavedChangeAnswer')}</Text>
+                    </Box>
+                    <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+                        <Button  size='sm' variant={'main'} onClick={() => {handleEditFunctions();if (location.split('/')[3]) navigate(`/flows-functions/flows/flow/${location.split('/')[4]}`);else onSaveFunction('go-back')}}>{waitingEdit?<LoadingIconButton/>:t('SaveAndExit')}</Button>
+                        <Button  size='sm'variant={'delete'} onClick={() => navigate('/flows-functions/flows')}>{t('NoSave')}</Button>
+                    </Flex>
+                </ConfirmBox>
+            }
+        </>), [showNoSaveWarning])
+
     //MEMOIZED TEST BOX COMPONENT
     const memoizedTestFunction = useMemo(() => (<> 
         {showTestFunction && 
@@ -371,46 +400,48 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
             }
         </>), [showTestFunction])
 
+
     const codeBoxHeight =  (window.innerHeight - window.innerWidth * 0.02) - (testButtonRef.current?.getBoundingClientRect().bottom || 1000 )
     
     //FRONT
     return(<>
+        {memoizedNoSavedWarning}
         {showConfirmDelete && memoizedDeleteBox}
-        <Skeleton isLoaded={functionData !== null}> 
-            <Box height={'calc(100vh - 60px)'} bg='white' width={'100%'} p='2vw' position='relative'> 
+        <Skeleton width={'calc(100vw - 55px)'} position='fixed' height={'100vh'} top={0} left={0} zIndex={50} p='2vw' isLoaded={functionData !== null}> 
+            <Box  bg='white' width={'100%'} height={'100%'}> 
 
-                <Box minW={'500px'}  p='10px' left={'2vw'}  top='1vw' zIndex={100} position={'absolute'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} maxH={'calc(100vh - 10vw)'} overflow={'scroll'} bg='white' borderRadius={'.5rem'}  > 
+                <Box minW={'500px'}  p='10px' left={'2vw'}  top='2vw' zIndex={100} position={'absolute'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} maxH={'calc(100vh - 10vw)'} overflow={'scroll'} bg='white' borderRadius={'.5rem'}  > 
                     <Flex flex={1} gap='20px' alignItems={'center'}> 
                         <Tooltip label={'Atrás'}  placement='bottom' hasArrow bg='black'  color='white'  borderRadius='.4rem' fontSize='.75em' p='4px'> 
-                            <IconButton aria-label='go-back' size='sm' bg='transparent' border='none' onClick={() => {if (location.split('/')[3]) {navigate(`/flows-functions/flows/flow/${location.split('/')[4]}`)};onSaveFunction('go-back')}} icon={<IoIosArrowBack size='20px'/>}/>
+                            <IconButton aria-label='go-back' size='sm' bg='transparent' border='none' onClick={onExitAction} icon={<IoIosArrowBack size='20px'/>}/>
                         </Tooltip>
                         <Box flex={1}> 
                             <EditText nameInput={true} size='md' value={functionData?.name} setValue={(value) => setFunctionData(prev => ({...prev as FunctionType, name:value}))}/>
                         </Box>
-                        <Button leftIcon={<IoIosArrowDown className={!showMoreInfo ? "rotate-icon-up" : "rotate-icon-down"}/>} size='sm' bg='transparent' borderColor={'transparent'} borderWidth={'1px'} onClick={() => setShowMoreInfo(!showMoreInfo)}>{t('SeeMoreData')}</Button>
+                        <Button leftIcon={<IoIosArrowDown className={!showMoreInfo ? "rotate-icon-up" : "rotate-icon-down"}/>} _hover={{bg:'brand.gray_1', color:'blue.400'}} size='sm' bg='transparent' borderColor={'transparent'} borderWidth={'1px'} onClick={() => setShowMoreInfo(!showMoreInfo)}>{t('SeeMoreData')}</Button>
                     </Flex>
 
                     {showMoreInfo && 
                         <Box p='15px'>
                             <Text  mt='3vh' mb='.5vh' fontWeight={'medium'}>{t('Description')}</Text>
-                            <Textarea maxW={'1000px'} resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('DescriptionPlaceholder')}...`}  value={functionData?.description} onChange={(e) => setFunctionData(prev => ({...prev as FunctionType, name:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
+                            <Textarea maxW={'1000px'} resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('DescriptionPlaceholder')}...`}  value={functionData?.description} onChange={(e) => setFunctionData(prev => ({...prev as FunctionType, description:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
                         </Box>}
                 </Box>
 
                 <Box flex='1' > 
                     <Flex  gap='2vw' justifyContent={'space-between'} flexDir={'row-reverse'} alignItems={'center'}>     
                         <Flex gap='20px'> 
-                            {selectedUuid !== '-1' && <Button size='sm'  color='red' leftIcon={<BsTrash3Fill/>} onClick={() => setShowConfirmDelete(true)}>{t('DeleteFunction')}</Button>}
-                            <Button  size='sm' isDisabled={functionData?.name=== '' || functionData?.code === '' || (JSON.stringify(functionDataRef.current) === JSON.stringify(functionData))} onClick={handleEditFunctions}>{waitingEdit?<LoadingIconButton/>:t('SaveChanges')}</Button>
+                            {selectedUuid !== '-1' && <Button size='sm'  variant={'common'} color='red' _hover={{color:'red.600'}} leftIcon={<BsTrash3Fill/>} onClick={() => setShowConfirmDelete(true)}>{t('DeleteFunction')}</Button>}
+                            <Button  size='sm' variant={'common'} isDisabled={functionData?.name=== '' || functionData?.code === '' || (JSON.stringify(functionDataRef.current) === JSON.stringify(functionData))} onClick={handleEditFunctions}>{waitingEdit?<LoadingIconButton/>:t('SaveChanges')}</Button>
                          </Flex>
                     </Flex>
 
-                    <Flex gap='2vw' mt='4vh'>    
+                    <Flex gap='2vw' mt='6vh'>    
                         
                         <Box  width='60%'> 
                             <Flex justifyContent={'space-between'} alignItems={'center'}> 
                                 <Text  mb='.5vh' fontWeight={'medium'}>{t('Code')}</Text>
-                                <Button leftIcon={<FaPlay/>} ref={testButtonRef} size='sm' onClick={() => setShowTestFunction(true)} color='white' _hover={{bg:'blackAlpha.900'}} bg='blackAlpha.800'> {t('Test')}</Button>
+                                <Button leftIcon={<FaPlay/>} ref={testButtonRef} size='sm' onClick={() => setShowTestFunction(true)} variant={'main'}> {t('Test')}</Button>
                             </Flex>
                             <Box  mt='1vh' width='100%' height={'100%'} ref={codeBoxRef}> 
                                 <CodeMirror value={functionData?.code} maxHeight={`${codeBoxHeight}px`} extensions={[python()]} onChange={(value) => setFunctionData(prev => ({...prev as FunctionType, code:value}))} theme={oneDark}/>
@@ -421,36 +452,36 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
                             <Text  mb='.5vh' fontWeight={'medium'}>{t('Arguments')}</Text>
                             {functionData?.arguments.map((arg, index) => (
                                 <Flex mt='.5vh'  key={`argument-${index}`} alignItems='center' gap='10px'>
-                                <Box flex='2'> 
-                                    <EditText hideInput={false} value={arg.name} setValue={(value) => editFunctionData('arguments', value, 'edit', index, 'name')}/>
-                                </Box>
-                                <Box flex='1'>
+                                    <Box flex='2'> 
+                                        <EditText hideInput={false} value={arg.name} setValue={(value) => editFunctionData('arguments', value, 'edit', index, 'name')}/>
+                                    </Box>
+                                    <Box flex='1'>
                                         <CustomSelect hide={false} selectedItem={arg.type} setSelectedItem={(value) => editFunctionData('arguments', value, 'edit', index, 'type')} options={Object.keys(variablesMap)} labelsMap={variablesMap}/>
-                                </Box>
-                                <Box flex='2'>
-                                    {(() => {switch(arg.type) {
-                                        case 'bool':
-                                            return <CustomSelect hide={false} selectedItem={arg.default} setSelectedItem={(value) => editFunctionData('arguments', value, 'edit', index, 'default')}  options={Object.keys(boolDict)} labelsMap={boolDict}/>
-                                        case 'int':
-                                        case 'float': return (
-                                            <NumberInput value={arg.default || undefined} onChange={(value) => editFunctionData('arguments', value, 'edit', index, 'default')} min={1} max={1000000} clampValueOnBlur={false} >
-                                                <NumberInputField borderRadius='.5rem'  fontSize={'.9em'} height={'37px'}  borderColor={'gray.300'} _hover={{ border:'1px solid #CBD5E0'}} _focus={{ px:'11px', borderColor: "rgb(77, 144, 254)", borderWidth: "2px" }} px='12px' />
-                                            </NumberInput>)              
-                                        case 'str':
-                                                return <EditText value={arg.default || undefined} setValue={(value) => editFunctionData('arguments', value, 'edit', index, 'default')} hideInput={false} />
-                                        case 'timestamp':
-                                            return <CustomSelect hide={false} selectedItem={arg.default}  setSelectedItem={(value) => editFunctionData('arguments', value, 'edit', index, 'default')}  options={Object.keys(datesMap)} labelsMap={datesMap}/>
-                                    }})()}                                   
+                                    </Box>
+                                    <Box flex='2'>
+                                        {(() => {switch(arg.type) {
+                                            case 'bool':
+                                                return <CustomSelect hide={false} selectedItem={arg.default} setSelectedItem={(value) => editFunctionData('arguments', value === 'true'?true:false, 'edit', index, 'default')}  options={Object.keys(boolDict)} labelsMap={boolDict}/>
+                                            case 'int':
+                                            case 'float': return (
+                                                <NumberInput value={arg.default || undefined} onChange={(value) => editFunctionData('arguments', value, 'edit', index, 'default')}  clampValueOnBlur={false} >
+                                                    <NumberInputField borderRadius='.5rem'  fontSize={'.9em'} height={'37px'}  borderColor={'gray.300'} _hover={{ border:'1px solid #CBD5E0'}} _focus={{ px:'11px', borderColor: "rgb(77, 144, 254)", borderWidth: "2px" }} px='12px' />
+                                                </NumberInput>)              
+                                            case 'str':
+                                                    return <EditText value={arg.default || undefined} setValue={(value) => editFunctionData('arguments', value, 'edit', index, 'default')} hideInput={false} />
+                                            case 'timestamp':
+                                                return <CustomSelect hide={false} selectedItem={arg.default}  setSelectedItem={(value) => editFunctionData('arguments', value, 'edit', index, 'default')}  options={Object.keys(datesMap)} labelsMap={datesMap}/>
+                                        }})()}                                   
                                     </Box>
                                 <IconButton bg='transaprent' border='none' size='sm' _hover={{bg:'gray.200'}} icon={<RxCross2/>} aria-label='delete-all-condition' onClick={() => editFunctionData('arguments', '', 'delete', index)}/>
                             </Flex>
                             ))}
-                            <Button size='sm' mt='2vh' leftIcon={<FaPlus/>}  onClick={() => editFunctionData('arguments', '', 'add')}>{t('AddArgument')}</Button>
+                            <Button variant={'common'} size='xs' mt='2vh' leftIcon={<FaPlus/>}  onClick={() => editFunctionData('arguments', '', 'add')}>{t('AddArgument')}</Button>
                         
                             
                             <Text mt='3vh' mb='.5vh' fontWeight={'medium'}>{t('Outputs')}</Text>
                             {functionData?.outputs.map((arg, index) => (
-                                <Flex mt='.5vh'  key={`argument-${index}`} alignItems='center' gap='10px'>
+                                <Flex mt='.5vh'  key={`output-${index}`} alignItems='center' gap='10px'>
                                 <Box flex='2'> 
                                     <EditText hideInput={false} value={arg.name} setValue={(value) => editFunctionData('outputs', value, 'edit', index, 'name')}/>
                                 </Box>
@@ -463,7 +494,7 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
                                             return <CustomSelect hide={false} selectedItem={arg.default} setSelectedItem={(value) => editFunctionData('outputs', value, 'edit', index, 'default')}  options={Object.keys(boolDict)} labelsMap={boolDict}/>
                                         case 'int':
                                         case 'float': return (
-                                            <NumberInput value={arg.default || undefined} onChange={(value) => editFunctionData('outputs', value, 'edit', index, 'default')} min={1} max={1000000} clampValueOnBlur={false} >
+                                            <NumberInput value={arg.default || undefined} onChange={(value) => editFunctionData('outputs', value, 'edit', index, 'default')}  clampValueOnBlur={false} >
                                                 <NumberInputField borderRadius='.5rem'  fontSize={'.9em'} height={'37px'}  borderColor={'gray.300'} _hover={{ border:'1px solid #CBD5E0'}} _focus={{ px:'11px', borderColor: "rgb(77, 144, 254)", borderWidth: "2px" }} px='12px' />
                                             </NumberInput>)              
                                         case 'str':
@@ -475,7 +506,7 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
                                 <IconButton bg='transaprent' border='none' size='sm' _hover={{bg:'gray.200'}} icon={<RxCross2/>} aria-label='delete-all-condition' onClick={() => editFunctionData('outputs', '', 'delete', index)}/>
                             </Flex>
                             ))}
-                            <Button size='sm' mt='2vh' leftIcon={<FaPlus/>}  onClick={() => editFunctionData('outputs', '', 'add')}>{t('AddOutput')}</Button>
+                            <Button variant={'common'} size='xs' mt='2vh' leftIcon={<FaPlus/>}  onClick={() => editFunctionData('outputs', '', 'add')}>{t('AddOutput')}</Button>
 
                         </Box>
                         
@@ -505,7 +536,7 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
                                     <Box flex='1' gap='30px' >
                                         <Flex gap='10px'> 
                                             <Text textOverflow={'ellipsis'} fontSize={'.9em'} whiteSpace={'nowrap'} fontWeight={'medium'}>{error.timestamp}</Text>
-                                            <Box  fontSize={'.8em'}> 
+                                            <Box fontSize={'.8em'}> 
                                                 <Text>{error.message}</Text>
                                                 <Text color='red'>[{t('ErrorLine', {line:error.line})}] {Object.keys(error.arguments).map((arg, argIndex) => (<span>{t('ErrorArgument', {name:arg, value:error.arguments[arg as any]})}{argIndex === error.arguments.length - 1 ?'':', '}</span>))} </Text>
                                             </Box>

@@ -266,9 +266,17 @@
     box-shadow:0 0 10px 1px rgba(0, 0, 0, 0.15);
     border-radius: .5rem;
     z-index: 100;
-    background-color: white !important;
+    background-color: green !important;
 
+}/* Este estilo oculta el contenido de los botones de Quill */
+.ql-bold::before,
+.ql-italic::before,
+.ql-underline::before,
+.ql-code-block::before,
+.ql-link::before {
+    content: '' !important; /* Esto asegura que no haya texto o icono predeterminado */
 }
+
 
 .hidden-toolbar .ql-toolbar {
     display: none;
@@ -1551,8 +1559,74 @@ text-decoration: underline;
 
 
 /*CODE EDITOR*/
-
 .cm-theme {
   height: 100%;
   border-radius: .5rem;
+}
+
+
+/* Rotación del gradiente */
+@keyframes rotateGradient {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+
+ 
+/* ARTICLES EDITOR */
+.title-textarea {
+  padding: 0;
+  width: 100%;
+  outline: none;
+  font-size: 32px;
+  color: #2D3748;
+  font-weight: 500;
+  border-bottom: 1px solid transparent;
+  resize:none
+}
+.title-textarea::placeholder {
+  color: #2D3748; 
+  font-weight: 500; 
+}
+::-webkit-input-placeholder {
+  color: #2D3748;
+}
+:-moz-placeholder {
+  color: #2D3748;
+}
+::-moz-placeholder {
+  color: #2D3748;
+}
+
+.title-textarea:hover {
+  border-bottom: 1px dashed rgba(0, 0, 0, 0.2);
+}
+
+/* ARTICLES EDITOR */
+.description-textarea {
+  padding: 0;
+  margin-top: 10px;
+  width: 100%;
+  outline: none;
+  font-size: 18px;
+  color:#4A5568;
+  font-weight: 500;
+  border-bottom: 1px solid transparent;
+  resize:none
+}
+
+.description-textarea:hover {
+  border-bottom: 1px dashed rgba(0, 0, 0, 0.2);
+}
+
+.custom-divider {
+  height: 2px;
+  background-color: #CBD5E0;
+  margin-top: 20px;
+  margin-bottom: 20px;
+
 }

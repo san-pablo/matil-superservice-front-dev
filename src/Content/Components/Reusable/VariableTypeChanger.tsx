@@ -17,7 +17,7 @@ import useOutsideClick from '../../Functions/clickOutside.js'
 import { FaBuilding } from 'react-icons/fa'
 import { IoIosArrowDown } from 'react-icons/io'
 //TYPING
-import { languagesFlags, ContactBusinessesTable} from '../../Constants/typing.js'
+import { languagesFlags, ContactBusinessesTable } from '../../Constants/typing.js'
  
 //MOTION BOX
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
@@ -39,15 +39,14 @@ const FindBusinessComponent = ({value, setValue, auth}:{value:number, setValue:a
     useOutsideClick({ref1:buttonRef, ref2:boxRef, onOutsideClick:setShowSearch})
 
     useEffect(() => {
-        if (text === '') {setWaitingResults(false);setShowResults(false);return}
-        
+        if (text === '') {
+            setWaitingResults(false);setShowResults(false);return}
         else {
             setWaitingResults(true)
             const timeoutId = setTimeout(async () => {
-
-            const response = await fetchData({endpoint: `superservice/${auth.authData.organizationId}/contact_businesses`, setValue:setElementsList, auth, params: { page_index: 1, search: text }})
-            if (response?.status === 200) {setShowResults(true);setWaitingResults(false)}
-            else {setShowResults(false);setWaitingResults(false)}
+                const response = await fetchData({endpoint: `superservice/${auth.authData.organizationId}/contact_businesses`, setValue:setElementsList, auth, params: { page_index: 1, search: text }})
+                if (response?.status === 200) {setShowResults(true);setWaitingResults(false)}
+                else {setShowResults(false);setWaitingResults(false)}
             }, 500)
             return () => clearTimeout(timeoutId)
         }
@@ -92,6 +91,18 @@ const VariableTypeChanger = ({inputType, value, setValue, operation}:{inputType:
     const { t } = useTranslation('flows')
     const t_tickets = useTranslation('tickets').t
 
+    const [groups, setGroups] = useState<{[key:number]:string}>([])
+    useEffect(() => {        
+        const fetchInitialData = async() => {
+            const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/groups`, auth})
+            let currentGroupsDict: { [key: number]: string } = {}
+            response?.data?.forEach((group: any) => {currentGroupsDict[group.id as number] = group.name})
+            if (response?.status === 200 ) setGroups(currentGroupsDict)
+        }
+        fetchInitialData()
+    }, [])
+   
+
     const auth = useAuth()
 
     if (operation === 'exists') return null
@@ -105,15 +116,7 @@ const VariableTypeChanger = ({inputType, value, setValue, operation}:{inputType:
                 return (<CustomSelect hide={false} selectedItem={value} setSelectedItem={(value) => setValue(value) }  options={Object.keys(usersDict).map(key => parseInt(key))} labelsMap={usersDict} />)
             }
         case 'group_id':
-            {
-                //FALTA GROUPS
-                let usersDict:{[key:number]:string} = {}
-                if (auth.authData.users) Object.keys(auth.authData?.users).map((key:any) => {if (auth?.authData?.users) usersDict[key] = auth?.authData?.users[key].name})
-                usersDict[0] = t('NoAgent')
-                usersDict[-1] = 'Matilda'
-                return (<CustomSelect hide={false} selectedItem={value} setSelectedItem={(value) => setValue(value) }  options={Object.keys(usersDict).map(key => parseInt(key))} labelsMap={usersDict} />)
-            }
-
+            return (<CustomSelect hide={false} selectedItem={value} setSelectedItem={(value) => setValue(value) }  options={Object.keys(groups).map(key => parseInt(key))} labelsMap={groups} />)
         case 'channel_type':
             return (<CustomSelect hide={false} selectedItem={value} setSelectedItem={(value) => setValue(value) }  options={['email', 'whatsapp', 'instagram', 'webchat', 'google_business', 'phone']} labelsMap={{'email':t('email'), 'whatsapp':t('whatsapp'), 'instagram':t('instagram'), 'webchat':t('webchat'), 'google_business':t('google_business'), 'phone':t('phone')}} />)
         case 'title':
@@ -125,7 +128,7 @@ const VariableTypeChanger = ({inputType, value, setValue, operation}:{inputType:
             return <EditText value={value} setValue={(value) => setValue(value) } hideInput={false} />
         case 'subject':
             let subjectsDict:{[key:number]:string} = {}
-            if (auth.authData?.users) Object.keys(auth.authData?.users).map((key:any) => {if (auth?.authData?.users) subjectsDict[key] = auth?.authData?.users[key].name})
+            if (auth.authData?.ticket_subjects) Object.keys(auth.authData?.ticket_subjects).map((key:any) => {if (auth?.authData?.ticket_subjects) subjectsDict[key] = auth?.authData?.ticket_subjects[key]})
             return (<CustomSelect hide={false} selectedItem={value} setSelectedItem={(value) => setValue(value) }  options={Object.keys(subjectsDict).map(key => parseInt(key))} labelsMap={subjectsDict} />)
         case 'urgency_rating':
             const ratingMapDic = {0:`${t('Priority_0')} (0)`, 1:`${t('Priority_1')} (1)`, 2:`${t('Priority_2')} (2)`, 3:`${t('Priority_3')} (3)`, 4:`${t('Priority_4')} (4)`}

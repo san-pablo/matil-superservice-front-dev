@@ -71,7 +71,7 @@ const FilterButton = ({selectList, selectedElements, setSelectedElements, icon, 
     //FRONT
     return (
         <Box> 
-            <Flex whiteSpace={'normal'} height={'33px'} alignItems={'center'} cursor={'pointer'}  border='1px solid' borderColor='gray.300' bg='gray.200' fontWeight='medium' gap='10px' px='7px' borderRadius={'.5rem'} fontSize={'1em'} ref={buttonRef} onClick={() => {setShowList(!showList)}} _hover={{color:'blue.500'}}>
+            <Flex whiteSpace={'normal'} height={'33px'} alignItems={'center'} cursor={'pointer'} bg='brand.gray_2' fontWeight='medium' gap='10px' px='7px' borderRadius={'.5rem'} fontSize={'1em'} ref={buttonRef} onClick={() => {setShowList(!showList)}} _hover={{color:'blue.500'}}>
                 <Icon as={icon}/>
                 <Text fontSize={'.9em'} whiteSpace={'nowrap'}>
                 {mapDic[filter]} 
@@ -79,8 +79,8 @@ const FilterButton = ({selectList, selectedElements, setSelectedElements, icon, 
                     selectedElements.length > 0 ? (
                     selectedElements.length === 1 ?
                         t(selectedElements[0]):
-                        selectedElements.slice(0, -1).map(el => logosMap[el as Channels][0]).join(', ') + 
-                        ' y ' + logosMap[selectedElements[selectedElements.length - 1] as Channels][0]
+                        selectedElements.slice(0, -1).map(el => t(el)).join(', ') + 
+                        ' y ' + t(selectedElements[selectedElements.length - 1])
                     ) : 
                     'cualquiera'
                 }

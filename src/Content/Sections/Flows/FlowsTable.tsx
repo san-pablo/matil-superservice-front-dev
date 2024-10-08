@@ -92,13 +92,13 @@ function FlowsTable () {
 
     //FRONT
     return(
-        <Box bg='white' height={'calc(100vh - 60px)'} maxW={'calc(100vw - 60px)'} overflowX={'scroll'} overflowY={'hidden'}  p='2vw'>
+        <Box bg='white' height={'100%'} maxW={'calc(100vw - 55px)'} overflowX={'scroll'} overflowY={'hidden'}  px='2vw'>
 
             <Flex justifyContent={'space-between'} alignItems={'end'}> 
                 <Box> 
                     <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Flows')}</Text>
                 </Box>
-                <Button size='sm' leftIcon={<FaPlus/>} _hover={{color:'blue.400'}} onClick={() => navigate('/flows-functions/flows/flow/create')}>{t('CreateFlow')}</Button>
+                <Button size='sm' leftIcon={<FaPlus/>} variant={'common'} onClick={() => navigate('/flows-functions/flows/flow/create')}>{t('CreateFlow')}</Button>
             </Flex>
 
             <Box mt='2vh' width={'350px'}> 
@@ -110,7 +110,7 @@ function FlowsTable () {
             </Skeleton>
 
             <Skeleton isLoaded={flows !== null}> 
-                <Table data={filteredFlows as FlowsData[]} CellStyle={CellStyle} noDataMessage={t('NoFlows')} columnsMap={columnsFlowsMap} onClickRow={clickRow} currentIndex={selectedIndex}/>
+                <Table data={filteredFlows as FlowsData[]} CellStyle={CellStyle} excludedKeys={['uuid']} noDataMessage={t('NoFlows')} columnsMap={columnsFlowsMap} onClickRow={clickRow} currentIndex={selectedIndex}/>
             </Skeleton>
         </Box>
         )

@@ -34,7 +34,7 @@ const checkConditions = (ticket: TicketData, conditions: Array<{ column: string,
         let normalizedConditionValue = condition.value
 
         if (!isNaN(Number(ticketValue)) && !isNaN(Number(condition.value))) {
-            normalizedTicketValue = Number(ticketValue);
+            normalizedTicketValue = Number(ticketValue)
             normalizedConditionValue = Number(condition.value)
         }
 

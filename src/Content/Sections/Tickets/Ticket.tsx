@@ -71,7 +71,8 @@ function Ticket ({ addHeaderSection, deleteHeaderSection, socket }:TicketProps) 
     //REQUEST TICKET, CONVERSATIONS AND CLIENT INFO
     useEffect(() => { 
        const loadData = async () => {
-
+        
+        setTicketSection('ticket')
         localStorage.setItem('currentSection', location)
         
         //FIND IF TGHE TICKET IS OPENED
@@ -113,6 +114,7 @@ function Ticket ({ addHeaderSection, deleteHeaderSection, socket }:TicketProps) 
 
               if (messagesResponse?.status === 200) { 
                 setClientId(messagesResponse.data.client_id)
+                console.log(messagesResponse.data)
                 setMessagesList({messages: messagesResponse.data.messages, extracted_data:messagesResponse.data.extracted_data, scheduled_messages:messagesResponse.data.scheduled_messages})
       
                   const clientResponse = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/clients/${messagesResponse?.data?.client_id}`, setValue:setClientData, auth })

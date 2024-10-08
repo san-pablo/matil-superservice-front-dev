@@ -74,7 +74,7 @@
     "ConfirmMergeQuestion_2":"con el ticket",
     "CloseAction_1":"Cerrar pestaña",
     "CloseAction_2":"Próximo ticket en la vista",
-    "CloseAction_3":"Mantenr ticket abierto",
+    "CloseAction_3":"Mantener ticket abierto",
     "SendLike":"Enviar como",
     "Public":"Respuesta pública",
     "For":"Para",
@@ -94,6 +94,28 @@
     "TicketsDeleted":"Tickets eliminados correctamente",
     "TicketsDeletedFailed":"Hubo un problema al eliminar los tickets",
     "NoTrash":"No se puede acceder a un ticket de la papelera",
-    "DeleteWarning":"Estás a punto de eliminar permanentemente los elementos seleccionados. Esta acción /{no se puede deshacer}/. Una vez eliminados, no podrás recuperar los datos."
+    "DeleteWarning":"Estás a punto de eliminar permanentemente los elementos seleccionados. Esta acción /{no se puede deshacer}/. Una vez eliminados, no podrás recuperar los datos.",
+    "NoTitle":"Sin título",
+    "PrimaryTicket":"El/{ Ticket #{{ticket_1}} }/ha sido fusionado como ticket principal.",
+    "TicketMergedMessage":"Este ticket ha sido fusionado con el",
+    "NoInfo":"Información de fusión no disponible.",
+    "AgentTransfer":"El ticket ha sido transferido a un agente.",
+    "SolvedTicket":"El ticket ha sido marcado como resuelto.",
+    "ClosedTicket":"El ticket ha sido cerrado y no se pueden enviar más mensajes.",
+    "NoSystemMessage":"Mensaje del sistema no reconocido.",
+    "TicketByMatilda":"Matilda está gestionando el ticket",
+    "TicketClosed":"El ticket está cerrado",
+    "ExportConversation":"Exportar conversación",
+    "OptionsMessage":"[MOSTRAR OPCIONES]",
+    "ImageMessage":"[IMAGEN]",
+    "FileMessage":"[ARCHIVO]",
+    "MergedMessage":"[TICKET FUSIONADO]",
+    "AgentTransferMessage":"[TICKET TRANSFERIDO A UN AGENTE]",
+    "SolvedMessage":"[TICKET MARCADO COMO RESUELTO]",
+    "ClosedMessage":"[TICKET CERRADO]",
+    "true":"Verdadero",
+    "false":"Falso"
+
+
 
 }

@@ -17,7 +17,6 @@ import Table from "../../Components/Reusable/Table"
 import timeStampToDate from "../../Functions/timeStampToString"
 import timeAgo from "../../Functions/timeAgo"
 //ICONS
-import { FaMagnifyingGlass } from "react-icons/fa6" 
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io"
 import { PiDesktopTowerFill } from "react-icons/pi"
 import { FaFilter } from "react-icons/fa"
@@ -79,7 +78,7 @@ function ClientsTable ({addHeaderSection}:{addHeaderSection:HeaderSectionType}) 
     const session = useSession()
     const navigate = useNavigate()
     const { t } = useTranslation('clients')
-    const columnsClientsMap:{[key:string]:[string, number]} = {name: [t('name'), 200], contact: [t('contact'), 150], labels: [t('labels'), 350], last_interaction_at: [t('last_interaction_at'), 150], created_at: [t('created_at'), 150], rating: [t('rating'), 60], language: [t('language'), 150], notes: [t('notes'), 350], is_blocked: [t('is_blocked'), 150]}
+    const columnsClientsMap:{[key:string]:[string, number]} = {name: [t('name'), 200], contact: [t('contact'), 150], labels: [t('labels'), 350], last_interaction_at: [t('last_interaction_at'), 180], created_at: [t('created_at'), 150], rating: [t('rating'), 60], language: [t('language'), 150], notes: [t('notes'), 350],  is_blocked: [t('is_blocked'), 150]}
 
     //CONTAINER REF
     const containerRef = useRef<HTMLDivElement>(null)
@@ -113,11 +112,19 @@ function ClientsTable ({addHeaderSection}:{addHeaderSection:HeaderSectionType}) 
     }, [])
 
 
-     //SORT LOGIC
+    //SORT LOGIC
     const requestSort = (key: string) => {
         const direction = (filters.sort_by === key && filters.order === 'asc') ? 'desc' : 'asc';
         fetchClientDataWithFilter({...filters, sort_by: key as ClientColumn, order: direction as 'asc' | 'desc'})
     }
+    const getSortIcon = (key: string) => {
+        if (filters.sort_by === key) { 
+            if (filters.order === 'asc') return true
+            else return false
+        }
+        else return null    
+    }
+
     const clickRow = (client:any, index:number) => {
         session.dispatch({type:'UPDATE_CLIENTS_TABLE_SELECTED_ITEM', payload:{index}})
         navigate(`/clients/client/${client.id}`)
@@ -156,7 +163,7 @@ function ClientsTable ({addHeaderSection}:{addHeaderSection:HeaderSectionType}) 
                     <EditText value={filters.search} setValue={(value) => setFilters(prev => ({...prev, search:value}))} searchInput={true}/>
                 </Box>
                 <FilterButton selectList={Object.keys(logosMap)} selectedElements={filters.channel_types} setSelectedElements={(element) => toggleChannelsList(element as Channels)} icon={PiDesktopTowerFill} filter='channels'/>
-                <Button _hover={{color:'blue.500'}} leftIcon={<FaFilter/>} size='sm'  onClick={() => fetchClientDataWithFilter({...filters, page_index:1})}>{t('ApplyFilters')}</Button>
+                <Button leftIcon={<FaFilter/>} size='sm' variant={'common'}  onClick={() => fetchClientDataWithFilter({...filters, page_index:1})}>{t('ApplyFilters')}</Button>
             </Flex>
 
             <Flex mt='2vh'  justifyContent={'space-between'} alignItems={'center'}> 
@@ -171,7 +178,7 @@ function ClientsTable ({addHeaderSection}:{addHeaderSection:HeaderSectionType}) 
             </Flex>
 
             <Skeleton isLoaded={!waitingInfo}> 
-                <Table data={clients?.page_data || []} CellStyle={CellStyle} noDataMessage={t('NoClients')} columnsMap={columnsClientsMap} requestSort={requestSort} onClickRow={clickRow} excludedKeys={['id', 'contact_business_id', 'phone_number', 'email_address', 'instagram_username', 'webchat_uuid', 'google_business_review_id']}  currentIndex={selectedIndex} />
+                <Table data={clients?.page_data || []} CellStyle={CellStyle} noDataMessage={t('NoClients')} columnsMap={columnsClientsMap} requestSort={requestSort} getSortIcon={getSortIcon} onClickRow={clickRow} excludedKeys={['id', 'contact_business_id', 'phone_number', 'email_address', 'instagram_username', 'webchat_uuid', 'google_business_review_id']}  currentIndex={selectedIndex} />
             </Skeleton>
         </Box>
         )

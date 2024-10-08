@@ -8,8 +8,8 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../AuthContext'
 import { useTranslation } from 'react-i18next'
 //FRONT
-import { Button, Flex, Text, Icon } from '@chakra-ui/react'
-import { motion } from 'framer-motion'
+import { Button, Flex, Text, Icon, chakra, shouldForwardProp } from '@chakra-ui/react'
+import { motion, isValidMotionProp, AnimatePresence } from 'framer-motion'
 import '../../Components/styles.css'
 //FUNCTIONS
 import useOutsideClick from '../../Functions/clickOutside'
@@ -60,6 +60,9 @@ function downloadCSV({items, view, section}:downloadCSVProps) {
     document.body.removeChild(link)
 }
 
+//MOTION BOX
+const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
+
 //MAIN FUNCTION
 const ActionsButton = ({items, view, section}:ButtonProps) =>{
     
@@ -92,29 +95,31 @@ const ActionsButton = ({items, view, section}:ButtonProps) =>{
     //FRONT
     return (
         <Flex position={'relative'} flexDir='column' alignItems={'end'}>  
-            <Button  ref={buttonRef} leftIcon={<IoIosArrowDown className={showList ? "rotate-icon-up" : "rotate-icon-down"}/>} fontSize={'1em'} size='sm'  onClick={() => {setShowList(!showList)}} _hover={{color:'blue.500'}}>
+            <Button size='sm'  ref={buttonRef} leftIcon={<IoIosArrowDown className={showList ? "rotate-icon-up" : "rotate-icon-down"}/>}variant='common' onClick={() => {setShowList(!showList)}} >
                 {t('Actions')}
             </Button>
-            {showList && 
- 
-                <motion.div initial={{marginTop:20, opacity:0}} animate={{marginTop:40, opacity:1}} exit={{marginTop:20, opacity:0}}   transition={{ duration: 0.2,  ease: [0.0, 0.9, 0.9, 1.0],   opacity: {duration: 0.2 }, marginTop: {duration: 0.2,  ease: [0.0, 0.9, 0.9, 1.0]}}}
-                style={{ boxShadow:'0px 0px 10px rgba(0, 0, 0, 0.2)', fontSize:'.9em',background:'white', borderRadius:'.3rem', borderWidth:'1px', borderColor:'#CBD5E0', zIndex:5, position:'absolute', overflow:'hidden'}} ref={boxRef}   >
-                    <Flex onClick={handleDownloadCSV}  cursor={'pointer'}  px='15px' py='10px' gap='10px' alignItems={'center'} _hover={{bg:'gray.100'}}>
-                        <Icon as={BsFiletypeCsv}/>
-                        <Text whiteSpace={'nowrap'}>{t('CSV')}</Text>
-                    </Flex>
-               
-                    {(section === 'tickets' && view?.type !== 'deleted' && !(!isAdmin && view?.type === 'shared')) &&<>
-                    <Flex onClick={handleEditView} px='15px' py='10px' cursor={'pointer'} gap='10px' alignItems={'center'} _hover={{bg:'gray.100'}}>
-                        <Icon as={FaRegEdit}/>
-                        <Text whiteSpace={'nowrap'}>{t('EditView')}</Text>
-                    </Flex>
-                    <Flex  onClick={handleCloneView} px='15px' py='10px'cursor={'pointer'} gap='10px' alignItems={'center'} _hover={{bg:'gray.100'}}>
-                        <Icon as={FaRegClone}/>
-                        <Text whiteSpace={'nowrap'}>{t('CloneView')}</Text>
-                    </Flex></> }
-                </motion.div >
-            }
+            <AnimatePresence> 
+                {showList && 
+                    <MotionBox initial={{ opacity: 0, marginTop: -5 }} animate={{ opacity: 1, marginTop: 5 }}  exit={{ opacity: 0,marginTop: -5}} transition={{ duration: '.2', ease: 'easeOut'}}
+                    maxH='40vh' overflow={'scroll'} top='100%' gap='10px' ref={boxRef} fontSize={'.9em'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000}   position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
+
+                        <Flex onClick={handleDownloadCSV}  cursor={'pointer'}  px='15px' py='10px' gap='10px' alignItems={'center'} _hover={{bg:'gray.100'}}>
+                            <Icon as={BsFiletypeCsv}/>
+                            <Text whiteSpace={'nowrap'}>{t('CSV')}</Text>
+                        </Flex>
+                
+                        {(section === 'tickets' && view?.type !== 'deleted' && !(!isAdmin && view?.type === 'shared')) &&<>
+                        <Flex onClick={handleEditView} px='15px' py='10px' cursor={'pointer'} gap='10px' alignItems={'center'} _hover={{bg:'gray.100'}}>
+                            <Icon as={FaRegEdit}/>
+                            <Text whiteSpace={'nowrap'}>{t('EditView')}</Text>
+                        </Flex>
+                        <Flex  onClick={handleCloneView} px='15px' py='10px'cursor={'pointer'} gap='10px' alignItems={'center'} _hover={{bg:'gray.100'}}>
+                            <Icon as={FaRegClone}/>
+                            <Text whiteSpace={'nowrap'}>{t('CloneView')}</Text>
+                        </Flex></> }
+                    </MotionBox >
+                }
+            </AnimatePresence>
         </Flex>
     )
 }

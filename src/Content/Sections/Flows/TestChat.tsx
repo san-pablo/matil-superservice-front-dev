@@ -99,10 +99,10 @@ const TestChat = ({flowId, channelIds, flowName, channelsList, currentChannelId,
 
    <Flex height='90vh'  width='100%'  flexDir='column' >  
         {selectedChannelId ?<> 
-        <Flex borderBottomWidth={'1px'} width={'100%'}  height={'80px'}  justifyContent={'space-between'} alignItems={'center'} borderBottomColor={'gray.300'} bg='gray.100' p='10px'> 
+        <Flex borderBottomWidth={'1px'} width={'100%'}  height={'80px'}  justifyContent={'space-between'} alignItems={'center'} borderBottomColor={'gray.300'} bg='brand.gray_2' p='10px 20px 10px 10px'> 
           <Flex fontSize={'.9em'} alignItems={'center'}  gap='10px'>
-            <Tooltip label={t('GoBack')}  placement='bottom' hasArrow bg='black'  color='white'  borderRadius='.4rem' fontSize='.75em' p='4px'> 
-                <IconButton aria-label='go-back' size='sm' bg='transparent' border='none' onClick={() => setShowTest(false)} icon={<IoIosArrowBack size='20px'/>}/>
+            <Tooltip label={t('GoBack')}  placement='bottom' hasArrow bg='white'  color='black'  borderRadius='.4rem' fontSize='.75em' p='4px'> 
+                <IconButton aria-label='go-back' size='sm' bg='transparent' _hover={{bg:'brand.gray_1'}} border='none' onClick={() => setShowTest(false)} icon={<IoIosArrowBack size='20px'/>}/>
             </Tooltip>
             <Box> 
               <Text><span style={{fontWeight:500}}>{flowName}</span> {currentFlowIndex.current === -1 ?'':<span style={{fontSize:'.9em'}}> ({t('Node')} {currentFlowIndex.current})</span>}</Text>

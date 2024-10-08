@@ -28,10 +28,11 @@
         nameInput?:boolean
         waitingResult?:boolean
         focusOnOpen?:boolean
+        borderRadius?:string
      }
 
     //MAIN FUNCTION
-    const EditText  = ({ value, setValue, hideInput = true, maxLength, regex, type='text', placeholder='', size='sm', searchInput=false, updateData=() => {}, isDisabled = false, nameInput=false, waitingResult = false, focusOnOpen = false, fontSize = null}: EditTextProps) => {
+    const EditText  = ({ value, setValue, hideInput = true, maxLength, regex, type='text', placeholder='', size='sm', searchInput=false, updateData=() => {}, isDisabled = false, nameInput=false, waitingResult = false, focusOnOpen = false, fontSize = null, borderRadius = '.5rem'}: EditTextProps) => {
         
         //INPUT REF
         const inputRef = useRef<HTMLInputElement>(null)
@@ -49,20 +50,18 @@
         }
 
         //BLUR ON ENTER KEY PRESS
-        const handleKeyPress = (event:KeyboardEvent<HTMLInputElement>) => {
-            if (event.key === 'Enter' && inputRef.current) inputRef.current.blur()
-        }
+        const handleKeyPress = (event:KeyboardEvent<HTMLInputElement>) => {if (event.key === 'Enter' && inputRef.current) inputRef.current.blur()}
 
         //FRONT
         return (
         <>        
             {searchInput ?    
             <Box  position="relative" width={'100%'} alignItems={'center'} >
-                <Box left="0" top="0" bottom="0" px='8px' borderLeftRadius={'.5rem'} color='gray.500'  position='absolute'  bg='gray.200'>
-                    {waitingResult ?<Spinner mt='10px' size='xs'/> :<Icon  as={FaMagnifyingGlass} height='13px' mt='9px' color='gray.500' cursor={'pointer'} />}
+                <Box left="0" top="0" bottom="0" px='8px' borderLeftRadius={'.5rem'} color='gray.600'  position='absolute' bg='brand.gray_2'>
+                    {waitingResult ?<Spinner mt='10px' size='xs'/> :<Icon  as={FaMagnifyingGlass} height='13px' mt='9px' color='gray.600' cursor={'pointer'} />}
                 </Box> 
                 <Input pl='40px' placeholder='Buscar...' size='sm' _focus={{ borderColor: "rgb(77, 144, 254)", borderWidth: "2px" }} borderRadius={'.5rem'} borderColor={'gray.300'} value={value} onChange={(e) => setValue(e.target.value)}/>
-                {(value && value !== '') && <Icon mt='8px' ml='-22px' zIndex={100} as={RxCross2} position='absolute' color='gray.500' cursor={'pointer'} onClick={() => setValue('')} />}
+                {(value && value !== '') && <Icon mt='8px' ml='-22px' zIndex={100} as={RxCross2} position='absolute' color='gray.600' cursor={'pointer'} onClick={() => setValue('')} />}
             </Box> :
             <Box width={'100%'}>
                 
@@ -79,13 +78,12 @@
                     borderWidth={(regex && value !== undefined)  && !regex.test(value) && value !== '' ? '2px':'none'}
                     value={value}
                     onBlur={() => {if ((regex && value) ? regex.test(value) : true) updateData()}}
-                    borderRadius='.5rem'
+                    borderRadius={borderRadius}
                     fontSize={fontSize?fontSize:size}
                     bg={isDisabled?'gray.200':'transparent'}
                     onChange={handleInputChange}
                     isDisabled={isDisabled}
-                    onKeyDown={handleKeyPress}
-                    />
+                    onKeyDown={handleKeyPress}/>
             </Box>}
             </>)
     }

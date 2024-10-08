@@ -201,17 +201,6 @@
     "clients":"Clientes",
     "contact_businesses":"Empresas de contacto",
     "set":"Establecer",
-    "set_2":"como ",
-    "add":"Sumar a",
-    "add_2":"",
-    "substract":"Restar a",
-    "substract_2":"",
-    "concatenate":"Concatenar",
-    "concatenate_2":"con ",
-    "append":"Añadir",
-    "append_2":"a ",
-    "remove":"Eliminar",
-    "remove_2":"de ",
 
     "status":"Estado",
     "NoSavedChanges":"Hay cambios sin guardar",
@@ -245,7 +234,7 @@
     "IsCustomizable":"¿Se trata de un campo personalizado?",
     "SelectVariable":"Selecciona la variable:",
     "SelectField":"Selecciona el campo:",
-    "SelectHardcodedArg":"Escribe el argumento:",
+    "SelectHardcodedArg":"Define el argumento:",
     "Tickets":"Tickets",
     "Clients":"Clientes",
     "Businesses":"Empresas de contacto",
@@ -257,6 +246,6 @@
     "ActionDefinitionDes":"Dependiendo del tipo de campo seleccionado se permitirán difrentes acciones sobre el mismo.",
     "EditConditions":"Editar rama",
     "EditConditionsDes":"Define el nombre de la rama y las condiciones que tendrán que cumplir las variables del flujo para pasar a tarvés de ésta.",
-    "FailedFirstNode":"Sólo se puede eliminar el primer nodo cuando es el único"
-
+    "FailedFirstNode":"Sólo se puede eliminar el primer nodo cuando es el único",
+    "Status":"Estado"
 }

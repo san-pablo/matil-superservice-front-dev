@@ -22,6 +22,69 @@
     "Businesses":"Empresas de Contacto",
     "Flows":"Flujos",
     "Stats":"Estadísticas",
+    "Knowledge":"Conocimiento",
     "Settings":"Ajustes",
-    "FlowsFunctions":"Flujos y Funciones"
+    "FlowsFunctions":"Flujos y Funciones",
+    "NewTicketCreated":"Se ha creado un nuevo ticket con ID /{#{{id}} }/",
+    "SendedMessage":"Se ha enviado un mensaje al ticket/{ {{#id}}}/",
+    "NotFoundError":"Oops! No se ha encontrado la página que estás buscando.",
+    "GoBack":"Volver a la aplicación",
+    "UsersFeedback":"Feedback de usuarios",
+    "UsersFeedbackDes":"Queremos ofrecerte la mejor experiencia posible. Si encuentras algún fallo, tienes sugerencias para mejorar, quejas sobre el servicio o cualquier otra recomendación, no dudes en hacérnoslo saber.",
+    "FeedbackPlaceholder":"Deja aquí tu mensaje...",
+    "Send":"Enviar",
+    "KeyboardShortcutsTitle":"Atajos del teclado",
+    "ActivateShortcuts":"Activar atajos",
+    "DownloadAsPdf":"Descargar como PDF",
+    "navigation": {
+        "title": "Navegación",
+        "description": "Se usan en cualquier lugar",
+        "shortcuts": {
+          "tickets": "Acceder a tickets",
+          "clients": "Acceder a clientes",
+          "contactCompanies": "Acceder a empresas de contacto",
+          "statistics": "Acceder a estadísticas",
+          "settings": "Acceder a ajustes",
+          "closeTab": "Cerrar pestaña actual",
+          "prevTab": "Ir a la anterior pestaña",
+          "nextTab": "Ir a la próxima pestaña"
+        },
+        "lists": {
+          "description": "Se usan en las listas (vistas, resultados, etc.)",
+          "upDown": "Subir o bajar",
+          "leftRight": "Desplazarse a la izquierda o a la derecha",
+          "click": "Clicar en el elemento seleccionado",
+          "mark": "Marcar el elemento actual"
+        }
+      },
+      "tickets": {
+        "title": "Tickets",
+        "description": "Se usan al estar dentro de un ticket",
+        "shortcuts": {
+          "publicReply": "Abrir respuesta pública",
+          "internalNote": "Abrir nota interna",
+          "toggleClientTab": "Ocultar o mostrar pestaña de cliente",
+          "takeControl": "Tomar control de la conversación"
+        },
+        "saveUpdate": {
+          "description": "Se usan al guardar o actualizar un ticket",
+          "saveCurrentState": "Guardar con el estado actual",
+          "saveAsOpen": "Guardar como abierto",
+          "saveAsPending": "Guardar como pendiente",
+          "saveAsResolved": "Guardar como resuelto"
+        },
+        "writing": {
+          "description": "Se usan al escribir",
+          "insertLineBreak": "Insertar salto de línea",
+          "insertImage": "Insertar imagen",
+          "insertLink": "Insertar link",
+          "bold": "Insertar negrita",
+          "italic": "Insertar cursiva",
+          "underline": "Insertar subrayado",
+          "codeBlock": "Insertar bloque de código",
+          "numberedList": "Insertar lista numerada",
+          "bulletList": "Insertar lista de viñetas"
+        }
+      }
+
 }

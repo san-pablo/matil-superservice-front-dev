@@ -19,6 +19,7 @@ function Matilda ({data, waitingFilters}:MatildaProps) {
     //TRANSLATION
     const { t } = useTranslation('stats')
 
+    console.log(data)
     return(<> 
         <Skeleton flex='1' isLoaded={data !== null && !waitingFilters}> 
             <Flex mt='2vw' width='100%' height={'40vh'} gap='1vw'>

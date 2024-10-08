@@ -86,7 +86,9 @@ function Business ({comesFromTicket, socket, addHeaderSection, businessData, set
     const navigate = useNavigate()
     const { t } = useTranslation('business')
     const t_formats = useTranslation('formats').t
-    const columnsClientsMap:{[key:string]:[string, number]} = {name: [t('name'), 200], contact: [t('contact'), 150], labels: [t('labels'), 350], last_interaction_at: [t('last_interaction_at'), 150], created_at: [t('created_at'), 150], rating: [t('rating'), 60], language: [t('language'), 150], notes: [t('notes'), 350], is_blocked: [t('is_blocked'), 150]}
+    const t_clients = useTranslation('clients').t
+
+    const columnsClientsMap:{[key:string]:[string, number]} = {name: [t_clients('name'), 200], contact: [t_clients('contact'), 150], labels: [t_clients('labels'), 350], last_interaction_at: [t_clients('last_interaction_at'), 150], created_at: [t_clients('created_at'), 150], rating: [t_clients('rating'), 60], language: [t_clients('language'), 150], notes: [t_clients('notes'), 350], is_blocked: [t_clients('is_blocked'), 150]}
 
     //SCROLL REFS
     const scrollRef1 = useRef<HTMLDivElement>(null)
@@ -329,7 +331,7 @@ function Business ({comesFromTicket, socket, addHeaderSection, businessData, set
                     <IconButton isRound size='xs' aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={clientsFilters.page_index === 1} onClick={() => updateTable({...clientsFilters,page_index:clientsFilters.page_index - 1})}/>
                 </Flex>
             <Skeleton isLoaded={businessClientsEdit !== null}> 
-                <Table data={businessClientsEdit?.page_data || []} CellStyle={CellStyle} noDataMessage={t('NoClients')} columnsMap={columnsClientsMap} onClickRow={clickRow} />
+                <Table data={businessClientsEdit?.page_data || []} CellStyle={CellStyle} noDataMessage={t('NoClients')}   excludedKeys={['id', 'contact_business_id', 'phone_number', 'email_address', 'instagram_username', 'webchat_uuid', 'google_business_review_id']}columnsMap={columnsClientsMap} onClickRow={clickRow} />
             </Skeleton>
         </Box>
         </Flex>

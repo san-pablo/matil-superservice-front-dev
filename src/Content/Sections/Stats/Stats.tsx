@@ -1,18 +1,18 @@
 //REACT
-import { useEffect, lazy, Suspense, useState, createElement } from 'react'
+import { useEffect, lazy, Suspense, useState, createElement, ReactElement } from 'react'
 import { Routes, Route, useNavigate } from "react-router-dom"
 import { useAuth } from '../../../AuthContext'
 import { useTranslation } from 'react-i18next'
 //FETCH DATA
 import fetchData from '../../API/fetchData'
 //FRONT
-import { Flex, Text, Box, IconButton, Button } from "@chakra-ui/react"
-import { motion } from 'framer-motion'
+import { Flex, Text, Box, IconButton } from "@chakra-ui/react"
 import '../../Components/styles.css'
+//COMPONENTS
+import SectionSelector from '../../Components/Reusable/SectionSelector'
 //FUNCTIONS
 import obtainDates from '../../Functions/obtainDates'
 //ICONS
-import { IconType } from "react-icons"
 import { FaRobot, FaTicket } from "react-icons/fa6"
 import { IoPeople} from "react-icons/io5"
 import { IoIosArrowForward, IoIosArrowBack } from "react-icons/io"
@@ -36,7 +36,7 @@ function Stats () {
     //CONSTANTS
     const { t } = useTranslation('stats')
     const auth = useAuth()
-    const sectionsMap: Record<IconKey, [string, IconType]> = {tickets: [t('Tickets'),FaTicket], matilda: ['Matilda',FaRobot], users: [t('Users'),IoPeople], csat:[t('CSAT'),FaClipboardList ]}
+    const sectionsMap: Record<IconKey, [string, ReactElement]> = {tickets: [t('Tickets'),<FaTicket/>], matilda: ['Matilda',<FaRobot/>], users: [t('Users'),<IoPeople/>], csat:[t('CSAT'),<FaClipboardList/> ]}
     const sectionsList: IconKey[] = ['tickets', 'matilda', 'users', 'csat']
     const curentSectionTickets = localStorage.getItem('curentSectionTickets') || 'tickets'
 
@@ -138,17 +138,9 @@ function Stats () {
     <Box overflowY={'scroll'} height={'100vh'}> 
         <Box p='2vw' bg='white'  width={'calc(100vw - 55px)'}   >
             
-            <Box > 
+            <Box> 
                 <Flex justifyContent={'space-between'} alignItems={'end'}> 
-                    <Flex  mt='2vh' bg='gray.100' display={'inline-flex'} p='3px' borderRadius={'.7rem'} fontWeight={'medium'}> 
-                        {sectionsList.map((section, index)=>{
-                            const isSelected = selectedSection === section
-                            return(
-                            <Flex  alignItems={'center'} color={'black'} key={`secciones-${index}`}   onClick={() => {setSelectedSection(section)}} >
-                                <Button size='sm' border='none' bg={isSelected?'white':'transparent'}  color={isSelected?'black':'gray.600'}  _hover={{bg:isSelected?'white':'transparent', color:'black'}} leftIcon={createElement(sectionsMap[section][1])}> {sectionsMap[section][0]}</Button>
-                            </Flex>)
-                            })}
-                    </Flex> 
+                    <SectionSelector selectedSection={selectedSection} sections={sectionsList} sectionsMap={sectionsMap}  onChange={(section:string) => {setSelectedSection(section as IconKey)}} /> 
                     <Flex gap='20px'> 
                         
                         <Flex alignItems={'end'} gap='5px'> 
@@ -163,9 +155,9 @@ function Stats () {
                     </Flex>
                 </Flex>
             </Box> 
-            <Box height={'1px'} width={'100%'} bg='gray.300' mt='3vh' mb='3vh'/>
+            <Box height={'1px'} width={'100%'} bg='gray.300' mt='2vh' mb='2vh'/>
 
-            <Box height={'100vh'} width={'calc(96vw - 55px)'} bg='white'> 
+            <Box height={'100vh'} width={'calc(96vw - 55px)'}> 
                 <Suspense fallback={<></>}>    
                     <Routes >
                         <Route path="/users" element={<Users waitingFilters={waitingFilters} data={sectionsData.users} />} />

@@ -16,7 +16,7 @@ import { FaInstagram } from "react-icons/fa"
         localStorage.setItem('currentSettingsSection', 'channels/instagram/success_auth')
         navigate('/settings/channels/instagram/success_auth')
       } catch (error) {
-        console.error('Error initiating Shopify auth', error)
+        console.error('Error initiating Instagram auth', error)
       }
     }
 

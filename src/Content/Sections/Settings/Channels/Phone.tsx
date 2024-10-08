@@ -77,7 +77,7 @@ function Phone () {
 
         <Flex justifyContent={'space-between'}> 
             <Text fontSize={'1.4em'} fontWeight={'medium'}>Google Business</Text>
-            {!(data?.display_id === '') && <Button size='sm'  isDisabled={(JSON.stringify(dataRef.current) === JSON.stringify(data)) && (JSON.stringify(matildaConfigRef.current) === JSON.stringify(matildaConfig))} onClick={saveChanges}>{waitingSend?<LoadingIconButton/>:t('SaveChanges')}</Button>}
+            {!(data?.display_id === '') && <Button size='sm'  variant={'common'} isDisabled={(JSON.stringify(dataRef.current) === JSON.stringify(data)) && (JSON.stringify(matildaConfigRef.current) === JSON.stringify(matildaConfig))} onClick={saveChanges}>{waitingSend?<LoadingIconButton/>:t('SaveChanges')}</Button>}
         </Flex>            
         <Box height={'1px'} width={'100%'} bg='gray.300' mt='1vh' mb='5vh'/>
     

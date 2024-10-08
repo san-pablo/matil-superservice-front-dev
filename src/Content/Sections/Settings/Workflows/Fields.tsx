@@ -52,7 +52,7 @@ const CellStyle = ({column, element}:{column:string, element:any}) => {
              <Icon color='gray.600' as={structuresMap[element][1]}/>
         </Flex>)
     }
-    else return <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element}</Text>
+    else return <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{t(element)}</Text>
 }
 
 const Fields = () => {
@@ -145,9 +145,9 @@ const Fields = () => {
             <Text mt='3vh' mb='.5vh' fontWeight={'medium'}>{t('Structure')}</Text>
 
             <Flex gap='20px' mt='.5vh' >
-                <Button leftIcon={<FaTicket/>} bg={newFieldData.motherstructure === 'ticket'?'blackAlpha.800':'gray.200'} color={newFieldData.motherstructure === 'ticket'?'white':'black'} size='xs' _hover={{bg:newFieldData.motherstructure === 'ticket'?'blackAlpha.800':'gray.300'}}  onClick={() => setNewFieldData((prev) => ({...prev, motherstructure:'ticket'}))}>{t('Tickets')}</Button>
-                <Button leftIcon={<IoPeopleSharp/>} bg={newFieldData.motherstructure === 'client'?'blackAlpha.800':'gray.200'} color={newFieldData.motherstructure === 'client'?'white':'black'} size='xs' _hover={{bg:newFieldData.motherstructure === 'client'?'blackAlpha.800':'gray.300'}} onClick={() => setNewFieldData((prev) => ({...prev, motherstructure:'client'}))}>{t('Clients')}</Button>
-                <Button leftIcon={<FaBuilding/>} bg={newFieldData.motherstructure === 'contact_business'?'blackAlpha.800':'gray.200'} color={newFieldData.motherstructure === 'contact_business'?'white':'black'} size='xs' _hover={{bg:newFieldData.motherstructure === 'contact_business'?'blackAlpha.800':'gray.300'}} onClick={() => setNewFieldData((prev) => ({...prev, motherstructure:'contact_business'}))} >{t('Businesses')}</Button>           
+                <Button leftIcon={<FaTicket/>} bg={newFieldData.motherstructure === 'ticket'?'brand.black_button':'brand.gray_2'} color={newFieldData.motherstructure === 'ticket'?'white':'black'} size='xs' _hover={{bg:newFieldData.motherstructure === 'ticket'?'brand.black_button_hover':'brand.gray_1'}}  onClick={() => setNewFieldData((prev) => ({...prev, motherstructure:'ticket'}))}>{t('Tickets')}</Button>
+                <Button leftIcon={<IoPeopleSharp/>} bg={newFieldData.motherstructure === 'client'?'brand.black_button':'brand.gray_2'} color={newFieldData.motherstructure === 'client'?'white':'black'} size='xs' _hover={{bg:newFieldData.motherstructure === 'client'?'brand.black_button_hover':'brand.gray_1'}} onClick={() => setNewFieldData((prev) => ({...prev, motherstructure:'client'}))}>{t('Clients')}</Button>
+                <Button leftIcon={<FaBuilding/>} bg={newFieldData.motherstructure === 'contact_business'?'brand.black_button':'brand.gray_2'} color={newFieldData.motherstructure === 'contact_business'?'white':'black'} size='xs' _hover={{bg:newFieldData.motherstructure === 'contact_business'?'brand.black_button_hover':'brand.gray_1'}} onClick={() => setNewFieldData((prev) => ({...prev, motherstructure:'contact_business'}))} >{t('Businesses')}</Button>           
             </Flex> 
 
             <Text mt='3vh' mb='.5vh' fontWeight={'medium'}>{t('Type')}</Text>
@@ -170,8 +170,8 @@ const Fields = () => {
 
          </Box>
         <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-            <Button isDisabled={newFieldData.name === '' || (fieldData.index !== -1 && (JSON.stringify(fieldData.data) === JSON.stringify(newFieldData)) )} size='sm' color='white' bg='blackAlpha.800' _hover={{bg:'blackAlpha.900'}} onClick={() => handleEditFields({data:newFieldData, index: fieldData.index})}>{waitingEdit?<LoadingIconButton/>:fieldData.index === -1 ?t('CreateField'):t('SaveChanges')}</Button>
-            <Button  size='sm' _hover={{color:'blue.400'}} onClick={() => setEditFieldData(null)}>{t('Cancel')}</Button>
+            <Button isDisabled={newFieldData.name === '' || (fieldData.index !== -1 && (JSON.stringify(fieldData.data) === JSON.stringify(newFieldData)) )} size='sm' variant={'main'} onClick={() => handleEditFields({data:newFieldData, index: fieldData.index})}>{waitingEdit?<LoadingIconButton/>:fieldData.index === -1 ?t('CreateField'):t('SaveChanges')}</Button>
+            <Button  size='sm'variant={'common'} onClick={() => setEditFieldData(null)}>{t('Cancel')}</Button>
         </Flex>
       </>)
     }   
@@ -183,8 +183,8 @@ const Fields = () => {
             </Box>
             
             <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-                <Button  size='sm' color='red.600' bg='red.100' _hover={{bg:'red.200'}} onClick={handleDeleteFields}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
-                <Button  size='sm' _hover={{color:'blue.400'}}  onClick={()=> setFieldToDelete(null)}>{t('Cancel')}</Button>
+                <Button  size='sm' variant={'delete'} onClick={handleDeleteFields}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
+                <Button  size='sm' variant={'common'} onClick={()=> setFieldToDelete(null)}>{t('Cancel')}</Button>
             </Flex>
             </ConfirmBox>
     ), [fieldToDelete])

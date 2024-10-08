@@ -21,10 +21,12 @@ import EditText from "../../Components/Reusable/EditText"
 import ConfirmmBox from "../../Components/Reusable/ConfirmBox"
 import CreateBusiness from "../Businesses/CreateBusiness" 
 import StateMap from "../../Components/Reusable/StateMap"
+import CustomAttributes from "../../Components/Reusable/CustomAttributes"
 //FUNCTIONS
 import useOutsideClick from "../../Functions/clickOutside"
 import timeAgo from "../../Functions/timeAgo"
 import timeStampToDate from "../../Functions/timeStampToString"
+import parseMessageToBold from "../../Functions/parseToBold"
 //ICONS
 import { FaPlus, FaArrowRight, FaBuilding } from "react-icons/fa6"
 import { RxCross2 } from "react-icons/rx"
@@ -35,7 +37,7 @@ import { FaExclamationCircle, FaExclamationTriangle, FaInfoCircle, FaCheckCircle
 import { IoIosArrowForward, IoIosArrowBack, IoIosArrowDown } from "react-icons/io"
 //TYPING
 import { ClientData, Tickets, contactDicRegex, ContactChannel, Channels, logosMap, HeaderSectionType, DeleteHeaderSectionType, languagesFlags, ContactBusinessesTable, TicketColumn, Clients } from "../../Constants/typing"
-import showToast from "../../Components/ToastNotification"
+import showToast from "../../Components/Reusable/ToastNotification"
  
 //COMPONENTS    
 const Business = lazy(() => import('../Businesses/Business'))
@@ -276,9 +278,6 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
         loadData()
     }, [location])
 
-
-  
-
     //UPDATE CLIENT TICKETS TABLE
     const updateTable = async(applied_filters:{page_index:number, sort_by?:TicketColumn | 'not_selected', search?:string, order?:'asc' | 'desc'} | null) => {
 
@@ -392,6 +391,18 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
         updateData({...clientDataEdit as ClientData, contact_business_id:new_data.id})
         session.dispatch({type:'EDIT_CONTACT_BUSINESS',payload:{data:new_data, id:clientDataEdit?.id}})
     }
+
+    //UPDATE CUSTOMATRIBUTES
+    const updateCustomAttributes = (newValue:any, index:number) => {
+        const newClientData = { ...clientDataEdit } as ClientData;
+        if (newClientData.custom_attributes && Array.isArray(newClientData.custom_attributes)) {
+            const updatedCustomAttributes = [...newClientData.custom_attributes]
+            updatedCustomAttributes[index] = {... updatedCustomAttributes[index], value:newValue}
+            newClientData.custom_attributes = updatedCustomAttributes
+        }
+        updateData(newClientData)
+        if (clientDataEdit) setClientDataEdit(newClientData)
+    }
     
     //COMPONENT FOR SEARCH A CONTACT BUSONESS
     const SearchBusiness = () => {
@@ -427,7 +438,7 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
  
      return (
          <Box position={'relative'}>
-            <Flex bg={'transaprent'} cursor={'pointer'} alignItems={'center'} onClick={() => setShowSearch(!showSearch)} ref={buttonRef} height={'37px'} fontSize={'.9em'}  border={showSearch ? "3px solid rgb(77, 144, 254)":"1px solid transparent"} justifyContent={'space-between'} px={showSearch?'5px':'7px'} py={showSearch ? "5px" : "7px"} borderRadius='.5rem' _hover={{border:showSearch?'3px solid rgb(77, 144, 254)':'1px solid #CBD5E0'}}>
+            <Flex bg={'transaprent'} cursor={'pointer'} alignItems={'center'} onClick={() => setShowSearch(!showSearch)} ref={buttonRef} height={'37px'} fontSize={'.9em'}  border={showSearch ? "3px solid rgb(77, 144, 254)":"1px solid #CBD5E0"} justifyContent={'space-between'} px={showSearch?'5px':'7px'} py={showSearch ? "5px" : "7px"} borderRadius='.5rem' _hover={{border:showSearch?'3px solid rgb(77, 144, 254)':'1px solid #CBD5E0'}}>
                 <Text>{businessDataEdit?.name}</Text>
                  <IoIosArrowDown className={showSearch ? "rotate-icon-up" : "rotate-icon-down"}/>
             </Flex>
@@ -435,7 +446,7 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
             <AnimatePresence> 
                 {showSearch && 
                 <MotionBox initial={{ opacity: 5, marginTop: -5 }} animate={{ opacity: 1, marginTop: 5 }}  exit={{ opacity: 0,marginTop:-5}} transition={{ duration: '0.2',  ease: 'easeOut'}}
-                 maxH='30vh' overflow={'scroll'} width='140%' gap='10px' ref={boxRef} fontSize={'.9em'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000} position={'absolute'} right={0} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
+                 maxH='30vh' overflow={'scroll'} width='100%' gap='10px' ref={boxRef} fontSize={'.9em'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000} position={'absolute'} right={0} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
                     <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Buscar..." style={{border:'none', outline:'none', background:'transparent', padding:'10px'}}/>
                     <Box height={'1px'} width={'100%'} bg='gray.200'/>
                    
@@ -470,7 +481,6 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
     //COMPONENT FOR BLOCKING A CLIENT
     const BlockComponent = () => {
 
-        
         const [waitingConfirmBlock, setWaitingConfirmBlock] = useState<boolean>(false)
 
         const blockClient = async() => {
@@ -480,14 +490,14 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
         }
 
         return(<> 
-            <Box p='15px'> 
+            <Box p='20px'> 
             <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('ConfirmBlock')}</Text>
             <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
-            <Text>{t('BlockClient', {name_id:`#${clientDataEdit?.id} ${clientDataEdit?.name}`})}</Text>
+            <Text>{parseMessageToBold(t('BlockClient', {name_id:`#${clientDataEdit?.id} ${clientDataEdit?.name}`}))}</Text>
         </Box>
-        <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-            <Button  size='sm' bg={'red'} _hover={{bg:'red.600'}} color={'white'} onClick={blockClient}>{waitingConfirmBlock?<LoadingIconButton/>:t('Block')}</Button>
-            <Button  size='sm' onClick={() => setShowBlock(false)}>{t('Cancel')}</Button>
+        <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+            <Button  size='sm'variant={'delete'} onClick={blockClient}>{waitingConfirmBlock?<LoadingIconButton/>:t('Block')}</Button>
+            <Button  size='sm' variant={'common'} onClick={() => setShowBlock(false)}>{t('Cancel')}</Button>
         </Flex>
         </>)
     }
@@ -510,7 +520,7 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
             <BlockComponent/>
         </ConfirmmBox>
     ), [showBlock])
- 
+
     return(
      
     <Suspense fallback={<></>} >    
@@ -538,17 +548,17 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
         {clientSection === 'client'?
          <>
             <Flex height={'calc(100vh - 120px)'}  width={'100%'}>
-                <Box ref={scrollRef1} py='2vw'  px='1vw'   width={'280px'} bg='#f1f1f1' borderRightWidth={'1px'} borderRightColor='gray.200' overflow={'scroll'}  >
+                <Box ref={scrollRef1} p='2vw' width={'280px'} bg='#f1f1f1' borderRightWidth={'1px'} borderRightColor='gray.200' overflow={'scroll'}  >
                     <Skeleton isLoaded={clientData !== null}> 
                         {Object.keys(clientDataEdit || {}).map((con, index) => (
                         <Fragment key={`channel-${index}`}> 
                             {(Object.keys(contactDicRegex).includes(con)) && clientDataEdit?.[con as ContactChannel] && clientDataEdit?.[con as ContactChannel] !== '' &&
                                 <Flex mt='1vh' alignItems={'center'} gap='10px' key={`contact_type-2-${index}`}> 
                                     <Box width={'70px'}> 
-                                        <Text fontSize='.8em' fontWeight={'medium'} color='gray' >{contactDicRegex[con as ContactChannel][0]}</Text>
+                                        <Text fontSize='.8em' fontWeight={'medium'} >{contactDicRegex[con as ContactChannel][0]}</Text>
                                     </Box>
                                     <Box flex='1'> 
-                                        <EditText updateData={updateData} focusOnOpen={clientDataEdit?.[con as ContactChannel] === '-'} maxLength={contactDicRegex[con as ContactChannel][2]} regex={contactDicRegex[con as ContactChannel][1]} value={clientDataEdit?.[con as ContactChannel]} setValue={(value:string) => handleChangeChannel(value, con as ContactChannel)} />
+                                        <EditText fontSize={'.8em'} updateData={updateData} focusOnOpen={clientDataEdit?.[con as ContactChannel] === '-'} maxLength={contactDicRegex[con as ContactChannel][2]} regex={contactDicRegex[con as ContactChannel][1]} value={clientDataEdit?.[con as ContactChannel]} setValue={(value:string) => handleChangeChannel(value, con as ContactChannel)} />
                                     </Box>
                                 </Flex>}
                         </Fragment>))}
@@ -574,80 +584,57 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
                         }
                     </Box>
                     <Box width={'100%'} mt='2vh' mb='2vh' height={'1px'} bg='gray.300'/>
-
                    
-                    <Flex mt='1vh' alignItems={'center'} gap='10px'> 
-                        <Box width={'70px'}> 
-                            <Text fontSize='.8em' fontWeight={'medium'} color='gray'>{t('contact_business_id')}</Text>
-                        </Box>
-                        <Skeleton   flex='1'isLoaded={clientDataEdit !== null}> 
-                            <SearchBusiness/>
-                        </Skeleton>
-                    </Flex>
+                    <Text mb='.5vh'fontWeight={'medium'} mt='2vh' fontSize='.9em'>{t('contact_business_id')}</Text>
+                    <Skeleton isLoaded={clientDataEdit !== null}>
+                        <SearchBusiness/>
+                    </Skeleton>
 
-                    <Flex mt='1vh' alignItems={'center'} gap='10px'> 
-                        <Box width={'70px'}> 
-                            <Text fontSize='.8em' fontWeight={'medium'} color='gray' >{t('language')}</Text>
-                        </Box>
-                        <Skeleton   flex='1'isLoaded={clientDataEdit !== null}> 
-                            <Box flex='1'> 
-                                <CustomSelect labelsMap={languagesMap} containerRef={scrollRef1} selectedItem={clientDataEdit?.language}  setSelectedItem={updateLanguage} options={Object.keys(languagesMap)} hide={true} />
+                    <Text mb='.5vh'fontWeight={'medium'} mt='2vh' fontSize='.9em'>{t('language')}</Text>
+                    <Skeleton isLoaded={clientDataEdit !== null}>
+                        <CustomSelect labelsMap={languagesMap} containerRef={scrollRef1} selectedItem={clientDataEdit?.language}  setSelectedItem={updateLanguage} options={Object.keys(languagesMap)} hide={false} />
+                    </Skeleton>
+
+                    <Text mb='.5vh'fontWeight={'medium'} mt='2vh' fontSize='.9em'>{t('labels')}</Text>
+                    <Skeleton isLoaded={clientDataEdit !== null}>
+                        <Box flex='1'> 
+                            <Box   minHeight="30px" maxH="300px" border="1px solid #CBD5E0"   p="5px" _focusWithin={{ borderColor:'transparent', boxShadow:'0 0 0 2px rgb(77, 144, 254)'}} borderRadius=".5rem" overflow="auto" display="flex" flexWrap="wrap" alignItems="center" onKeyDown={handleKeyDown}  tabIndex={0}>
+                                {clientDataEdit?.labels === '' ? <></>:
+                                <> 
+                                    {((clientDataEdit?.labels || '').split(',')).map((label, index) => (
+                                        <Flex key={`label-${index}`} borderRadius=".4rem" p='4px' fontSize={'.75em'} alignItems={'center'} m="1"bg='gray.200' gap='5px'>
+                                            <Text>{label}</Text>
+                                            <Icon as={RxCross2} onClick={() => removeTag(index)} cursor={'pointer'} />
+                                        </Flex>
+                                    ))}
+                                </>
+                                }
+                                <Textarea  maxLength={20} p='5px'  resize={'none'} borderRadius='.5rem' rows={1} fontSize={'.9em'}  borderColor='transparent' borderWidth='0px' _hover={{borderColor:'transparent',borderWidth:'0px'}} focusBorderColor={'transparent'}  value={inputValue}  onChange={(event) => {setInputValue(event.target.value)}}/>
                             </Box>
-                        </Skeleton>
-                    </Flex>
+                        </Box>                    
+                    </Skeleton>
                    
-                    <Flex mt='3vh' gap='10px'> 
-                        <Box width={'70px'} mt='11px'> 
-                            <Text fontSize='.8em' fontWeight={'medium'} color='gray' >{t('labels')}</Text>
-                        </Box>
-                        <Skeleton isLoaded={clientDataEdit !== null}> 
-                            <Box flex='1'> 
-                                <Box   minHeight="30px" maxH="300px" border="1px solid transparent"   p="5px" _hover={{ border: "1px solid #CBD5E0" }} _focusWithin={{ borderColor:'transparent', boxShadow:'0 0 0 2px rgb(77, 144, 254)'}} borderRadius=".5rem" overflow="auto" display="flex" flexWrap="wrap" alignItems="center" onKeyDown={handleKeyDown}  tabIndex={0}>
-                                    {clientDataEdit?.labels === '' ? <></>:
-                                    <> 
-                                        {((clientDataEdit?.labels || '').split(',')).map((label, index) => (
-                                            <Flex key={`label-${index}`} borderRadius=".4rem" p='4px' fontSize={'.75em'} alignItems={'center'} m="1"bg='gray.200' gap='5px'>
-                                                <Text>{label}</Text>
-                                                <Icon as={RxCross2} onClick={() => removeTag(index)} cursor={'pointer'} />
-                                            </Flex>
-                                        ))}
-                                    </>
-                                    }
-                                    <Textarea  maxLength={20} p='5px'  resize={'none'} borderRadius='.5rem' rows={1} fontSize={'.9em'}  borderColor='transparent' borderWidth='0px' _hover={{borderColor:'transparent',borderWidth:'0px'}} focusBorderColor={'transparent'}  value={inputValue}  onChange={(event) => {setInputValue(event.target.value)}}/>
-                                </Box>
-                            </Box>
-                        </Skeleton>
-                    </Flex>
-                    <Flex mt='1vh' gap='10px'> 
-                        <Box width={'70px'}> 
-                            <Text fontSize='.8em'  mt='10px' fontWeight={'medium'} color='gray' >{t('notes')}</Text>
-                        </Box>
-                        <Skeleton isLoaded={clientDataEdit !== null}> 
-                            <Box flex='1'> 
-                                <Textarea  maxLength={1000} onBlur={() => updateData()} minHeight={'37px'} placeholder="Notas..." maxH='300px' value={clientDataEdit?.notes} ref={textareaNotasRef} onChange={handleInputNotasChange} size='sm' p='10px'  resize={'none'} borderRadius='.5rem' rows={1} fontSize={'.9em'}  borderColor='transparent' _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'9px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
-                            </Box>
-                        </Skeleton>
-                    </Flex>
-                    
-                    <Flex mt='3vh' alignItems={'center'} gap='10px'> 
-                        <Box width={'70px'}> 
-                            <Text fontSize='.8em' fontWeight={'medium'} color='gray' >{t('created_at')}</Text>
-                        </Box>
-                        <Skeleton   flex='1'isLoaded={clientDataEdit !== null}> 
+                    <Text mb='.5vh'fontWeight={'medium'} mt='2vh' fontSize='.9em'>{t('notes')}</Text>
+                    <Skeleton isLoaded={clientDataEdit !== null}>
+                        <Textarea  maxLength={1000} onBlur={() => updateData()} minHeight={'37px'} placeholder="Notas..." maxH='300px' value={clientDataEdit?.notes} ref={textareaNotasRef} onChange={handleInputNotasChange} size='sm' p='10px'  resize={'none'} borderRadius='.5rem' rows={1} fontSize={'.9em'}  borderColor='#CBD5E0'_focus={{p:'9px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
+                    </Skeleton>
+
+                    <Text mb='.5vh'fontWeight={'medium'} mt='2vh' fontSize='.9em'>{t('created_at')}</Text>
+                    <Skeleton isLoaded={clientDataEdit !== null}>
                            <Text fontSize={'.9em'}>{timeAgo(clientDataEdit?.created_at, t_formats)}</Text>
-                        </Skeleton>
-                    </Flex>
-
-                    <Flex mt='3vh' alignItems={'center'} gap='10px'> 
-                        <Box width={'70px'}> 
-                            <Text fontSize='.8em' fontWeight={'medium'} color='gray' >{t('last_interaction_at')}</Text>
-                        </Box>
-                        <Skeleton   flex='1'isLoaded={clientDataEdit !== null}> 
+                    </Skeleton>
+                   
+                    <Text mb='.5vh'fontWeight={'medium'} mt='2vh' fontSize='.9em'>{t('last_interaction_at')}</Text>
+                    <Skeleton isLoaded={clientDataEdit !== null}>
                            <Text fontSize={'.9em'}>{timeAgo(clientDataEdit?.last_interaction_at, t_formats)}</Text>
-                        </Skeleton>
-                    </Flex>
+                    </Skeleton>
+
+                    <Skeleton isLoaded={clientDataEdit !== null}>
+                        <CustomAttributes customAttributes={clientDataEdit?.custom_attributes || []} updateCustomAttributes={updateCustomAttributes}/>
+                    </Skeleton>
 
                 </Box>
+
                 <Box bg='white' p='2vw' width="calc(100vw - 335px)" overflow={'scroll'}>
                 <Flex gap='3vw' justifyContent={'space-between'}> 
                     <Flex  flex='1' gap='20px'  alignItems={'center'}>
@@ -657,22 +644,26 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
                         </Skeleton>
                     </Flex>
                     <Flex alignItems={'center'} gap='10px'>
-                        <Button leftIcon={clientDataEdit?.is_blocked?<TbKey/>:<MdBlock/>} onClick={() => {if (!clientDataEdit?.is_blocked) setShowBlock(true); else updateData({...clientDataEditRef.current as ClientData, is_blocked:false})}} color={clientDataEdit?.is_blocked?'black':'red'} fontSize={'1em'} size='sm' fontWeight={'medium'}  _hover={{color:clientDataEdit?.is_blocked?'blue.500':'red.600'}}>{clientDataEdit?.is_blocked?'Desbloquear':'Bloquear'}</Button>
-                        <Button leftIcon={<TbArrowMerge/>} onClick={() => setShowMerge(true)} fontSize={'1em'} size='sm' fontWeight={'medium'}  _hover={{color:'blue.500'}}>{t('Merge')}</Button>
+                        <Button variant={'common'}  leftIcon={clientDataEdit?.is_blocked?<TbKey/>:<MdBlock/>} onClick={() => {if (!clientDataEdit?.is_blocked) setShowBlock(true); else updateData({...clientDataEditRef.current as ClientData, is_blocked:false})}} color={clientDataEdit?.is_blocked?'black':'red'} fontSize={'1em'} size='sm' fontWeight={'medium'}  _hover={{color:clientDataEdit?.is_blocked?'blue.500':'red.600'}}>{clientDataEdit?.is_blocked?'Desbloquear':'Bloquear'}</Button>
+                        <Button leftIcon={<TbArrowMerge/>}  size='sm' variant={'common'} onClick={() => setShowMerge(true)} _hover={{color:'blue.500'}}>{t('Merge')}</Button>
                     </Flex>
                 </Flex>
                 <Box width={'100%'} mt='3vh' mb='3vh' height={'1px'} bg='gray.300'/>
-                <Skeleton isLoaded={clientDataEdit !== null}> 
-                    <Text fontWeight={'medium'}>{t('Conversations', {count:clientTicketsEdit?.page_data.length})}</Text>
-                </Skeleton>
+         
 
-                <Flex p='10px' alignItems={'center'} justifyContent={'end'} gap='10px' flexDir={'row-reverse'}>
-                    <IconButton isRound size='xs' aria-label='next-page' icon={<IoIosArrowForward />} isDisabled={ticketsFilters.page_index > Math.floor((clientTickets?.total_tickets || 0)/ 25)} onClick={() => updateTable({...ticketsFilters,page_index:ticketsFilters.page_index + 1})}/>
-                    <Text fontWeight={'medium'} fontSize={'.9em'} color='gray.600'>{t('Page')} {ticketsFilters.page_index}</Text>
-                    <IconButton isRound size='xs' aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={ticketsFilters.page_index === 1} onClick={() => updateTable({...ticketsFilters,page_index:ticketsFilters.page_index - 1})}/>
+                <Flex alignItems={'end'} justifyContent={'space-between'} >
+                    <Skeleton isLoaded={clientDataEdit !== null}> 
+                        <Text fontWeight={'medium'} color='gray.600'>{t('Conversations', {count:clientTicketsEdit?.page_data.length})}</Text>
+                    </Skeleton>
+                    <Flex alignItems={'center'}  gap='10px' flexDir={'row-reverse'}>
+                        <IconButton isRound size='xs' aria-label='next-page' icon={<IoIosArrowForward />} isDisabled={ticketsFilters.page_index > Math.floor((clientTickets?.total_tickets || 0)/ 25)} onClick={() => updateTable({...ticketsFilters,page_index:ticketsFilters.page_index + 1})}/>
+                        <Text fontWeight={'medium'} fontSize={'.9em'} color='gray.600'>{t('Page')} {ticketsFilters.page_index}</Text>
+                        <IconButton isRound size='xs' aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={ticketsFilters.page_index === 1} onClick={() => updateTable({...ticketsFilters,page_index:ticketsFilters.page_index - 1})}/>
+                    </Flex>
                 </Flex>
+
                 <Skeleton isLoaded={clientTicketsEdit !== null}> 
-                    <Table data={clientTicketsEdit?.page_data || []} CellStyle={CellStyle} noDataMessage={t('NoClients')} columnsMap={columnsTicketsMap} excludedKeys={['id', 'conversation_id', 'end_client_id',  'is_matilda_engaged']} onClickRow={(row:any, index:number) => {navigate(`/tickets/ticket/${row.id}`)}}/>
+                    <Table data={clientTicketsEdit?.page_data || []} CellStyle={CellStyle} noDataMessage={t('NoTickets')} columnsMap={columnsTicketsMap} excludedKeys={['id', 'conversation_id', 'end_client_id',  'is_matilda_engaged']} onClickRow={(row:any, index:number) => {navigate(`/tickets/ticket/${row.id}`)}}/>
                 </Skeleton>
                 </Box>
             </Flex>
@@ -740,8 +731,8 @@ const MergeBox = ({clientData, setShowMerge, deleteHeaderSection}:MergeBoxProps)
         }
     }
 
-    return(<>
-            <Box p='15px'> 
+     return(<>
+            <Box p='20px'> 
                 <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('MergeUser')}</Text>
                 <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>  
                 
@@ -753,8 +744,8 @@ const MergeBox = ({clientData, setShowMerge, deleteHeaderSection}:MergeBoxProps)
                         <Text>{t('MergeUsersConfirm', {user_1:clientData?.name,user_2:selectedClient?.name})}</Text>
                     </Box>
                     <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-                        <Button  size='sm' bg={'brand.gradient_blue'} _hover={{bg:'gradient_blue_hover'}} color={'white'} onClick={confirmMerge}>{waitingConfirmMerge?<LoadingIconButton/>:'Fusionar'}</Button>
-                        <Button  size='sm' onClick={()=>setShowConfirmMerge(false)}>{t('Cancel')}</Button>
+                        <Button  size='sm' variant='main' onClick={confirmMerge}>{waitingConfirmMerge?<LoadingIconButton/>:'Fusionar'}</Button>
+                        <Button  size='sm' variant={'common'} onClick={()=>setShowConfirmMerge(false)}>{t('Cancel')}</Button>
                     </Flex>
                 </ConfirmmBox>
                 :
@@ -798,9 +789,9 @@ const MergeBox = ({clientData, setShowMerge, deleteHeaderSection}:MergeBoxProps)
                 </>}
             </Box>
           
-            <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-                <Button  size='sm' bg='brand.gradient_blue' color='white' _hover={{bg:'brand.gradient_blue_hover'}}  isDisabled={selectedClient === null} onClick={()=>setShowConfirmMerge(true)}>{showConfirmMerge?t('ConfirmAndMerge'):t('Merge')}</Button>
-                <Button  size='sm' onClick={()=>setShowMerge(false)}>{t('Cancel')}</Button>
+            <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+                <Button  size='sm'variant='main' isDisabled={selectedClient === null} onClick={()=>setShowConfirmMerge(true)}>{showConfirmMerge?t('ConfirmAndMerge'):t('Merge')}</Button>
+                <Button  size='sm'   variant={'common'} onClick={()=>setShowMerge(false)}>{t('Cancel')}</Button>
             </Flex>
         </>
     )

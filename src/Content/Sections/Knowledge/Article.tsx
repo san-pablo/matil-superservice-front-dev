@@ -1,0 +1,574 @@
+//REACT
+import { useState, useEffect, useRef, Dispatch, SetStateAction, ReactNode, KeyboardEvent } from "react"
+import { useTranslation } from "react-i18next"
+import { useAuth } from "../../../AuthContext"
+import { useLocation } from "react-router-dom"
+//FETCH DATA
+import fetchData from "../../API/fetchData"
+//FRONT
+import { Flex, Skeleton, Box, Text, Icon, chakra, shouldForwardProp, Tooltip, Button, IconButton, Input, Switch, Textarea } from "@chakra-ui/react"
+import { motion, AnimatePresence, isValidMotionProp } from 'framer-motion'
+import "../../Components/styles.css"
+import ReactQuill, { Quill } from 'react-quill'
+import 'react-quill/dist/quill.snow.css'
+import 'quill-divider'
+//import QuillTable from 'quill-table'
+//FUNCTIONS
+import timeStampToDate from "../../Functions/timeStampToString"
+import timeAgo from "../../Functions/timeAgo"
+//ICONS
+import { FaFolder,FaLink, FaCode, FaLock, FaFilePdf, FaFileLines, FaAlignCenter, FaAlignJustify, FaAlignLeft, FaAlignRight, FaImage, FaTable, FaListOl, FaListUl } from "react-icons/fa6"
+import { IoBook } from "react-icons/io5"
+import { IoIosArrowDown } from "react-icons/io"
+
+import { RxCross2, RxCheck } from "react-icons/rx"
+import { BiWorld } from "react-icons/bi"
+import { BsTypeH1, BsTypeH2, BsTypeH3, BsTypeH4, BsTypeBold, BsTypeItalic,  BsTypeUnderline } from "react-icons/bs";
+import { MdVideoLibrary } from "react-icons/md"
+import { TbLayoutDistributeVerticalFilled } from "react-icons/tb"
+import { PiCursorClickFill, PiSidebarSimpleBold } from "react-icons/pi"
+
+//TYPING
+import { ContentData, languagesFlags } from "../../Constants/typing" 
+import { BsTrash3Fill } from "react-icons/bs"
+ 
+
+//MOTION BOX
+const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
+
+const TypesComponent = ({t,  type }:{t:any, type:'internal_article' | 'public_article' | 'folder' | 'pdf' | 'text' | 'web'}) => {
+    const getAlertDetails = (type:'internal_article' | 'public_article' | 'folder' | 'pdf' | 'text' | 'web') => {
+        switch (type) {
+            case 'internal_article':
+                return { color1: 'yellow.100', color2:'yellow.200', icon: FaLock, label: t('InternalArticle') }
+            case 'public_article':
+                return { color1: 'blue.100', color2:'blue.200', icon: IoBook, label: t('PublicArticle')  }
+            case 'folder':
+                return { color1: 'brand.gray_1', color2:'gray.300', icon: FaFolder, label: t('Folder')  }
+            case 'pdf':
+                return { color1: 'brand.gray_1', color2:'gray.300', icon: FaFilePdf, label: t('Pdf')  }
+            case 'text':
+                return { color1: 'brand.gray_1', color2:'gray.300', icon: FaFileLines, label: t('Text')  }
+            case 'web':
+                return { color1: 'brand.gray_1', color2:'gray.300', icon: BiWorld, label: t('Web')  }
+        }
+    }
+    const { color1, color2, icon, label } = getAlertDetails(type)
+    return (
+        <Flex  display={'inline-flex'} gap='10px' alignItems="center" borderRadius={'1rem'} borderColor={color2} borderWidth={'1px'} py='2px' px='5px' bg={color1}>
+            <Icon as={icon} />
+            <Text >
+                {label}
+            </Text>
+        </Flex>
+    )
+} 
+const GetKeyStyle = ({column, element}:{column:string, element:any}) => {
+      
+    //TRANSLATION
+    const { t } = useTranslation('knowledge')
+    const t_formats = useTranslation('formats').t
+    const auth = useAuth()
+
+    if (column === 'created_at' ||  column === 'updated_at' )  
+    return(
+        <Tooltip label={timeStampToDate(element as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
+            <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(element as string, t_formats)}</Text>
+        </Tooltip>)
+ 
+    else if (column === 'language') {
+        return(
+        <Flex gap='5px' alignItems={'center'}>
+            <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{typeof element === 'string' && element in languagesFlags ?languagesFlags[element][0]:'No detectado'}</Text>
+            <Text fontSize={'.8em'}>{typeof element === 'string' && element in languagesFlags ?languagesFlags[element][1]:'🏴󠁥󠁳󠁣󠁴󠁿'}</Text>
+        </Flex>)
+    }   
+    else if (column === 'public_article_status') return(
+        <Box boxShadow={`1px 1px 1px rgba(0, 0, 0, 0.15)`} display="inline-flex" fontSize='.9em' py='2px' px='8px' fontWeight={'medium'} color='white'  bg={element === 'draft'?'red.100':'green.100'} borderRadius={'.7rem'}> 
+            <Text color={element === 'draft'?'red.600':'green.600'}>{t(element)}</Text>
+        </Box>
+    )
+    else if (column === 'type') return <TypesComponent t={t} type={element}/>
+    else if (column === 'created_by' || column === 'updated_by') return <Text fontWeight={'medium'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element === -1 ?'Matilda':element === 0 ? t('NoAgent'):(auth?.authData?.users?.[element as string | number].name || '')}</Text>
+    else return ( <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'}  fontWeight={column === 'title'?'medium':'normal'}  overflow={'hidden'} >{element === ''?'-':element}</Text>)
+} 
+const dataKeys = [ 'type', 'language', 'created_at', 'updated_at', 'created_by', 'updated_by']
+
+const Article = () => {
+
+    //CONSTANTS
+    const { t } = useTranslation('knowledge')
+    const auth = useAuth()
+    const location = useLocation().pathname
+
+    const newArticle:ContentData = {
+        uuid: '',
+        type: 'internal_article',
+        title: '',
+        folder:[],
+        description: '',
+        language: 'ES',
+        is_available_to_tilda: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        created_by: auth.authData.userId || -1,
+        updated_by: auth.authData.userId || -1,
+        tags: [],
+        public_article_help_center_collections:[],
+        public_article_uuid: '',
+        public_article_status: 'draft'
+    }
+
+    //SECTIONS EXPANDED
+    const [sectionsExpanded, setSectionsExpanded] = useState<string[]>(['Data', 'Tilda', 'HelpCenter', 'tags', 'Folder' ])
+    const onSectionExpand = (section: string) => {
+        setSectionsExpanded((prevSections) => {
+          if (prevSections.includes(section))return prevSections.filter((s) => s !== section)
+          else return [...prevSections, section]
+        })
+      }
+
+    //ARTICLE DATA 
+    const [articleData, setArticleData] = useState<ContentData | null>(null)
+    const [articleText, setArticleText] = useState<string>('')
+
+
+    useEffect(() => {        
+        document.title = `${t('Knowledge')} - ${auth.authData.organizationName} - Matil`
+        localStorage.setItem('currentSection', 'knowledge')
+        const articleId = location.split('/')[3]
+        
+        const fetchInitialData = async() => {
+            const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/knowledge/sources/${articleId}`, auth})
+            if (response?.status === 200 ) {
+                const articlesData = response.data
+                const cleanedArticles = articlesData.map((article: ContentData) => {
+                  const { public_article_content, internal_article_content, pdf_content, website_content, ...cleanedArticle } = article
+                  return cleanedArticle
+                })
+                setArticleData(cleanedArticles)
+                setArticleText((response.data.type === 'internal_article'?response.data.internal_article_content:response.data.public_article_content).text)
+            }
+        }
+
+        if (articleId.startsWith('create')) {  
+            if (location.split('/')[3].split('-')[1] === 'public') newArticle.type = 'public_article'
+            setArticleData(newArticle)
+        }
+        else fetchInitialData()
+    }, [])
+
+
+
+    //TAGS LOGIC
+    const [inputValue, setInputValue] = useState<string>('')
+    const handleKeyDown = (event:KeyboardEvent<HTMLDivElement>) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          const newTag = inputValue.trim()
+          if (newTag) {
+            let newArticleData:ContentData | null = null
+            const labelsArray = articleData?.tags || []
+            labelsArray.push(newTag)
+            newArticleData = { ...articleData as ContentData, tags: labelsArray }
+            setArticleData(newArticleData)
+            setInputValue('')
+          }
+        }
+      } 
+    const removeTag = (index: number) => {
+        let newArticleData:ContentData | null = null
+        const labelsArray = articleData?.tags || []
+        labelsArray.splice(index, 1)
+        newArticleData = { ...articleData as ContentData, tags: labelsArray}
+        setArticleData(newArticleData)
+    }
+
+    const [clientBoxWidth, setClientBoxWidth] = useState(400)
+    const sendBoxWidth = `calc(100vw - 335px - ${clientBoxWidth}px)`
+    
+
+    return (
+    <Flex flex='1' position='absolute' width={'calc(100vw - 335px)'} height={'100vh'} top={0} left={0} bg='white'>
+        <MotionBox   initial={{ width: sendBoxWidth  }} animate={{ width: sendBoxWidth}} exit={{ width: sendBoxWidth }} transition={{ duration: '.2' }}  
+        width={sendBoxWidth} overflowY={'hidden'}  borderRightWidth={'1px'} borderRightColor='gray.200' >
+            <Flex px='2vw' height={'70px'} alignItems={'center'} justifyContent={'space-between'}  borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
+                <Skeleton isLoaded={articleData !== null}> 
+                    <Text fontSize={'1.5em'} fontWeight={'medium'}>{articleData?.type === 'public_article'?t('PublicArticle'):t('InternalArticle')}</Text>
+                </Skeleton>
+                <Flex gap='15px'>
+                    <Button leftIcon={<BsTrash3Fill/>} variant={'delete'} size='sm'>{t('Delete')}</Button>
+                    <Button variant={'common'} size='sm'>{t('Publish')}</Button>
+                    <Button variant={'main'} size='sm'>{t('SaveChanges')}</Button>
+                    {clientBoxWidth === 0 && <IconButton aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'20px'}/>} onClick={() =>setClientBoxWidth(400)}/>}
+                </Flex>
+            </Flex>
+            <Flex width={'100%'} height={'100%'} justifyContent={'center'}  >
+                <Box  maxW={'750px'} width={'100%'} height={'100%'} py='5vh'>
+                    <EditorComponent text={(articleData?.type === 'public_article'?articleData?.public_article_content?.text:articleData?.internal_article_content?.text) || ''} articleData={articleData as ContentData}  setArticleData={setArticleData}/>
+                 </Box>
+            </Flex>
+        </MotionBox>
+        <MotionBox width={clientBoxWidth + 'px'}  whiteSpace={'nowrap'} initial={{ width: clientBoxWidth + 'px' }} animate={{ width: clientBoxWidth + 'px' }} exit={{ width: clientBoxWidth + 'px' }} transition={{ duration: '.2'}}> 
+            <Flex p='2vh' height={'70px'} justifyContent={'space-between'} alignItems={'center'} borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
+                <Text fontSize={'1.5em'} fontWeight={'medium'}>{t('Information')}</Text>
+                <IconButton aria-label="close-tab" variant={'common'} bg='transparent' size='sm' icon={<RxCross2 size={'20px'}/>} onClick={() =>setClientBoxWidth(0)}/>
+            </Flex>
+            <Box p='2vh' height={'100%'} > 
+
+                <CollapsableSection section={'Data'} isExpanded={sectionsExpanded.includes('Data')} onSectionExpand={onSectionExpand}> 
+                        {dataKeys.map((showKey, index) => (
+                            <Skeleton isLoaded={articleData !== null}> 
+                                <Flex mt='2vh' key={`article-data-${index}`}>
+                                    <Text flex='1' fontWeight={'medium'} color='gray.600'>{t(showKey)}</Text>
+                                    <Box flex='1' maxW={'50%'}> 
+                                        {articleData !== null && <GetKeyStyle column={showKey} element={articleData?.[showKey as keyof ContentData] || ''} />}
+                                    </Box>
+                                </Flex>
+                            </Skeleton>
+                        ))}
+                </CollapsableSection>
+
+                <CollapsableSection section={'Tilda'} isExpanded={sectionsExpanded.includes('Tilda')} onSectionExpand={onSectionExpand}> 
+                    <Flex gap='8px' mt='1vh'  alignItems={'center'}>
+                        <Switch isChecked={articleData?.is_available_to_tilda}  onChange={(e) => setArticleData(prev => ({...prev as ContentData, is_available_to_tilda:e.target.checked}))} />
+                        <Text fontWeight={'medium'} fontSize={'.9em'}>{t('IsAvailableTilda')}</Text>
+                    </Flex>
+                    <Text mt='.5vh' whiteSpace={'normal'} color={'gray.600'} fontSize={'.8em'}>{t('IsAvailableTildaDes')}</Text>
+
+                </CollapsableSection>
+                <CollapsableSection section={'HelpCenter'} isExpanded={sectionsExpanded.includes('HelpCenter')} onSectionExpand={onSectionExpand}> 
+                    <Text fontWeight={'semibold'} fontSize={'.9em'}>{t('HelpCenter').toLocaleUpperCase()}</Text>
+                </CollapsableSection>
+                <CollapsableSection section={'tags'} isExpanded={sectionsExpanded.includes('tags')} onSectionExpand={onSectionExpand}> 
+                    <Box mt='2vh'  minHeight="30px" maxH="300px" border="1px solid #CBD5E0"   p="5px" _focusWithin={{ borderColor:'transparent', boxShadow:'0 0 0 2px rgb(77, 144, 254)'}} borderRadius=".5rem" overflow="auto" display="flex" flexWrap="wrap" alignItems="center" onKeyDown={handleKeyDown}  tabIndex={0}>
+                        {((articleData?.tags || [])).map((label, index) => (
+                            <Flex key={`label-${index}`} borderRadius=".4rem" p='4px' fontSize={'.75em'} alignItems={'center'} m="1"bg='gray.200' gap='5px'>
+                                <Text>{label}</Text>
+                                <Icon as={RxCross2} onClick={() => removeTag(index)} cursor={'pointer'} />
+                            </Flex>
+                        ))}
+                        <Textarea  maxLength={20} p='5px'  resize={'none'} borderRadius='.5rem' rows={1} fontSize={'.9em'}  borderColor='transparent' borderWidth='0px' _hover={{borderColor:'transparent',borderWidth:'0px'}} focusBorderColor={'transparent'}  value={inputValue}  onChange={(event) => {setInputValue(event.target.value)}}/>
+                    </Box>  
+                </CollapsableSection>
+                <CollapsableSection section={'Folder'} isExpanded={sectionsExpanded.includes('Folder')} onSectionExpand={onSectionExpand}> 
+                    <Flex mt='2vh' bg='brand.gray_2' alignItems={'center'} cursor={'pointer'} borderRadius={'.5rem'} p='10px' gap='10px'>
+                        <Icon as={FaFolder}/>
+                        <Text>{articleData?.folder?.length === 0?t('NoFolder'):articleData?.folder?.[articleData?.folder?.length - 1]}</Text>
+                    </Flex>
+                </CollapsableSection>
+
+            </Box>
+        </MotionBox>
+
+    </Flex>
+    )
+}
+
+export default Article
+
+const CollapsableSection = ({ section, isExpanded, onSectionExpand, children}:{section:string, isExpanded:boolean, onSectionExpand:(key:string) => void ,children:ReactNode}) => {
+
+    const { t } = useTranslation('knowledge')
+ 
+    return (
+        <Box py='3vh' borderBottomColor={'gray.200'} borderBottomWidth={'1px'}> 
+            <Flex cursor={'pointer'} alignItems={'center'} justifyContent={'space-between'} onClick={() => onSectionExpand(section)}>
+                <Text fontWeight={'semibold'}  fontSize={'.9em'}>{t(section).toLocaleUpperCase()}</Text>
+                <IoIosArrowDown color={'gray.600'} className={isExpanded ? "rotate-icon-up" : "rotate-icon-down"}/>
+            </Flex>
+            <motion.div initial={{height:isExpanded?0:'auto', opacity:isExpanded?0:1}} animate={{height:isExpanded?'auto':0, opacity:isExpanded?1:0 }} exit={{height:isExpanded?0:'auto',  opacity:isExpanded?0:1 }} transition={{duration:.2}} style={{overflow:isExpanded?'visible':'hidden'}}>           
+                {children}
+            </motion.div>
+        </Box>
+    )
+}
+
+//CUSTOM TOOLBAR
+const CustomToolbar = ({ quillRef, toolbarPosition }:{quillRef:any, toolbarPosition:{top:number, left:number} | null}) => {
+    
+    const [activeFormats, setActiveFormats] = useState<any>({});
+    
+    useEffect(() => {
+        const editor = quillRef.current.getEditor()
+        const handleSelectionChange = () => {
+            const selection = editor.getSelection()
+            if (selection) {
+                const formats = editor.getFormat(selection)
+                setActiveFormats(formats)
+            }
+        }
+        editor.on('selection-change', handleSelectionChange);
+
+        return () => {editor.off('selection-change', handleSelectionChange)}
+    }, [quillRef])
+
+
+    const formatText = (format:string, value:any) => {
+        const editor = quillRef.current.getEditor()
+        editor.format(format, value)
+        const formats = editor.getFormat(editor.getSelection())
+        setActiveFormats(formats)
+    }
+
+    return (
+     <Flex id="toolbar" gap='10px' zIndex={1000} bg='white' alignItems={'center'} borderRadius={'.3rem'} p='5px' boxShadow='0 2px 5px rgba(0, 0, 0, 0.2)' display={toolbarPosition ? 'block' : 'none'} position='fixed' top={toolbarPosition?.top} left={toolbarPosition?.left} >
+        
+        <IconButton onClick={() => formatText('header', 1)} _hover={{bg:activeFormats.header === 1 ?'rgba(59, 90, 246, 0.25)':'brand.gray_2'}} bg={activeFormats.header === 1 ? 'rgba(59, 90, 246, 0.15)' : 'transparent'} color={activeFormats.header === 1 ? 'rgba(59, 90, 246)' : 'black'} 
+        className="ql-header"  variant={'common'} icon={<BsTypeH1/>} size='sm' aria-label="h1" value="1" />
+        <IconButton  onClick={() => formatText('header', 2)}bg={activeFormats.header === 2 ? 'rgba(59, 90, 246, 0.15)' : 'transparent'}  _hover={{bg:activeFormats.header === 2 ?'rgba(59, 90, 246, 0.25)':'brand.gray_2'}} color={activeFormats.header === 2 ? 'rgba(59, 90, 246)' : 'black'} 
+        className="ql-header" ml='5px' variant={'common'} icon={<BsTypeH2/>} size='sm' aria-label="h2" value="2" />
+        <IconButton  onClick={() => formatText('header', 3)} bg={activeFormats.header === 3 ? 'rgba(59, 90, 246, 0.15)' : 'transparent'}  _hover={{bg:activeFormats.header === 3 ?'rgba(59, 90, 246, 0.25)':'brand.gray_2'}} color={activeFormats.header === 3 ? 'rgba(59, 90, 246)' : 'black'} 
+        className="ql-header" ml='5px' variant={'common'}   icon={<BsTypeH3/>} size='sm' aria-label="h3" value="3" />
+        <IconButton  onClick={() => formatText('header', 4)} bg={activeFormats.header === 4 ? 'rgba(59, 90, 246, 0.15)' : 'transparent'} _hover={{bg:activeFormats.header === 4 ?'rgba(59, 90, 246, 0.25)':'brand.gray_2'}} color={activeFormats.header === 4 ? 'rgba(59, 90, 246)' : 'black'} 
+        className="ql-header" ml='5px' variant={'common'}  icon={<BsTypeH4/>} size='sm' aria-label="h4" value="4" />
+
+        <IconButton onClick={() => formatText('bold', !activeFormats.bold)}  bg={activeFormats.bold ? 'rgba(59, 90, 246, 0.15)' : 'transparent'}  _hover={{bg:activeFormats.bold?'rgba(59, 90, 246, 0.25)':'brand.gray_2'}} color={activeFormats.bold? 'rgba(59, 90, 246)' : 'black'}  
+        className="ql-bold"  ml='15px' variant={'common'}  icon={<BsTypeBold/>} size='sm' aria-label="bold" />
+        <IconButton onClick={() => formatText('italic', !activeFormats.italic)} bg={activeFormats.italic? 'rgba(59, 90, 246, 0.15)' : 'transparent'} _hover={{bg:activeFormats.italic?'rgba(59, 90, 246, 0.25)':'brand.gray_2'}} color={activeFormats.italic ? 'rgba(59, 90, 246)' : 'black'} 
+        className="ql-italic" ml='5px' variant={'common'} icon={<BsTypeItalic/>} size='sm' aria-label="italic" />
+        <IconButton onClick={() => formatText('underline', !activeFormats.underline)}  bg={activeFormats.underline? 'rgba(59, 90, 246, 0.15)' : 'transparent'} _hover={{bg:activeFormats.underline?'rgba(59, 90, 246, 0.25)':'brand.gray_2'}} color={activeFormats.underline ? 'rgba(59, 90, 246)' : 'black'} 
+        className="ql-underline" ml='5px' variant={'common'}   icon={<BsTypeUnderline/>} size='sm' aria-label="underline" />
+        <IconButton onClick={() => formatText('code-block', !activeFormats['code-block'])} bg={activeFormats['code-block']? 'rgba(59, 90, 246, 0.15)' : 'transparent'} _hover={{bg:activeFormats['code-block']?'rgba(59, 90, 246, 0.25)':'brand.gray_2'}} color={activeFormats['code-block']? 'rgba(59, 90, 246)' : 'black'} 
+        className="ql-code-block" ml='5px' variant={'common'}  icon={<FaCode/>} size='sm' aria-label="code-block" />
+        <IconButton  onClick={() => formatText('link', !activeFormats.link)}  bg={activeFormats.link? 'rgba(59, 90, 246, 0.15)' : 'transparent'} _hover={{bg:activeFormats.link?'rgba(59, 90, 246, 0.25)':'brand.gray_2'}} color={activeFormats.link? 'rgba(59, 90, 246)' : 'black'} 
+        className="ql-link" ml='5px' variant={'common'}  icon={<FaLink/>} size='sm' aria-label="link" />
+
+        <IconButton onClick={() => formatText('align', '')} bg={activeFormats.align === undefined? 'rgba(59, 90, 246, 0.15)' : 'transparent'} _hover={{bg:activeFormats.align === undefined?'rgba(59, 90, 246, 0.25)':'brand.gray_2'}} color={activeFormats.align === undefined? 'rgba(59, 90, 246)' : 'black'} 
+        className="ql-align"  ml='15px' variant={'common'}   icon={<FaAlignLeft/>} size='sm' aria-label="normal" value=""/>
+        <IconButton   onClick={() => formatText('align', 'center')} bg={activeFormats.align === 'center'? 'rgba(59, 90, 246, 0.15)' : 'transparent'} _hover={{bg:activeFormats.align === 'center'?'rgba(59, 90, 246, 0.25)':'brand.gray_2'}} color={activeFormats.align === 'center'? 'rgba(59, 90, 246)' : 'black'} 
+        className="ql-align" ml='5px'variant={'common'}  icon={<FaAlignCenter/>} size='sm' aria-label="center" value="center"/>
+        <IconButton    onClick={() => formatText('align', 'right')} bg={activeFormats.align === 'right'? 'rgba(59, 90, 246, 0.15)' : 'transparent'} _hover={{bg:activeFormats.align === 'right'?'rgba(59, 90, 246, 0.25)':'brand.gray_2'}} color={activeFormats.align === 'right'? 'rgba(59, 90, 246)' : 'black'} 
+        className="ql-align" ml='5px' variant={'common'}  icon={<FaAlignRight/>} size='sm' aria-label="right" value="right"/>
+        <IconButton    onClick={() => formatText('align', 'justify')} bg={activeFormats.align === 'justify'? 'rgba(59, 90, 246, 0.15)' : 'transparent'} _hover={{bg:activeFormats.align === 'justify'?'rgba(59, 90, 246, 0.25)':'brand.gray_2'}} color={activeFormats.align === 'justify'? 'rgba(59, 90, 246)' : 'black'} 
+        className="ql-align"ml='5px' variant={'common'}  icon={<FaAlignJustify/>} size='sm' aria-label="justify" value="justify" />
+
+    </Flex>
+  
+    )}
+
+
+
+const EditorComponent = ({text, articleData, setArticleData}:{text:string, articleData:ContentData | null, setArticleData:Dispatch<SetStateAction<ContentData | null>>}) => {
+
+    
+    //CONSTANTS
+    const  { t } = useTranslation('knowledge')
+
+    //QUILL THINGS
+    const quillRef = useRef<any>(null)
+    const icons = Quill.import('ui/icons') as any
+    icons.bold = null
+    icons.italic = null
+    icons.underline = null
+    icons['code-block'] = null
+    icons.align = null
+    icons.header = null
+    icons.link = null
+    
+    {/*Quill.register({
+        'modules/table': QuillTable.TableModule,
+        'modules/table-cell': QuillTable.TableCell,
+        'modules/table-row': QuillTable.TableRow,
+      }, true);
+    */}
+
+    const modules = {
+        //table: true,
+        toolbar: {
+          container: "#toolbar"  // Usa el toolbar personalizado
+        },
+        divider: { cssText: 'border: none; border-bottom: 2px solid green' }
+      };
+    
+
+    //HTML TEXT
+    const [htmlValue, setHtmlValue] = useState<string>(text)
+    const handleChange = (value:string) => {setHtmlValue(value)}
+
+    //TOOLBAR POSITION
+    const [toolbarPosition, setToolbarPosition] = useState<{top:number, left:number} | null>(null)
+
+    //TEXT SELECTION LOGIC
+    const handleTextSelection = () => {
+        const selection = window.getSelection()
+        if (selection && selection.toString().length > 0) {
+          const range = selection.getRangeAt(0)
+          const rect = range.getBoundingClientRect()
+          setToolbarPosition({top:rect.top - 60, left:rect.left - 55})
+        } 
+        else setToolbarPosition(null)
+      }
+    const handleMouseUp = () => {handleTextSelection()}
+    useEffect(() => {
+        const editor = quillRef.current.getEditor()
+        const editorElement = editor.root
+        if (editorElement) {
+            editorElement.addEventListener('mouseup', handleMouseUp)
+            editorElement.addEventListener('keyup', handleTextSelection)
+        }
+        return () => {
+            if (editorElement) {
+            editorElement.removeEventListener('mouseup', handleTextSelection)
+            editorElement.removeEventListener('keyup', handleTextSelection)
+            }
+        }
+    }, [])
+
+    //IS FOCUSING DESCRIPTION
+    const [isFocusing, setIsFocusing] = useState<boolean>()
+
+    //TEXTAREAS LOGIC
+    const textAreaTitleRef = useRef<HTMLTextAreaElement>(null)
+    const textAreaDescriptionRef = useRef<HTMLTextAreaElement>(null)
+    const adjustTextareaHeight = (textarea:any) => {
+        if (!textarea) return
+        textarea.style.height = 'auto'
+        textarea.style.height = textarea.scrollHeight + 'px'
+    }
+    useEffect(() =>{adjustTextareaHeight(textAreaTitleRef.current)}, [articleData?.title])
+
+    //INSERT FUNCTIONS LOGIC
+    const [showInsertVideo, setShowInsertVideo] = useState<boolean>(false)
+    const [videoUrl, setVideoUrl] = useState<string>('')
+
+    //INSERT IMAGE
+    const insertImage = (event:any) => {
+        const file = event.target.files[0]
+        if (file && file.type.startsWith('image/')) {
+            const editor = quillRef.current.getEditor()
+            const reader = new FileReader()
+            reader.onloadend = () => {
+                const url = reader.result
+                const selection = editor.getSelection()
+                const index = selection ? selection.index : editor.getLength()
+                editor.insertEmbed(index, 'image', url)
+            }
+            if (file) reader.readAsDataURL(file)
+        }
+    }
+
+    //INSERT VIDEO
+    const handleKeyDown = (event:any) => {
+        if (event.key === 'Enter') {
+            setShowInsertVideo(false)
+          if (videoUrl) {
+            console.log(videoUrl)
+            const videoId = videoUrl.split('si=')[1]?.split('&')[0]
+            let embedUrl:string = ''
+            if (videoId) embedUrl = `https://www.youtube.com/embed/${videoId}`;
+            const editor = quillRef.current.getEditor()
+            const selection = editor.getSelection();
+            const index = selection ? selection.index : editor.getLength()
+            editor.insertEmbed(index, 'video', embedUrl)
+            setVideoUrl('')
+          }
+        }
+    }
+
+    //INSERT TABLE
+    const insertTable = () => {
+        const quillEditor = quillRef.current.getEditor()
+        console.log(quillEditor)
+        const tableModule = quillEditor.getModule('table')
+        console.log(tableModule)
+
+        tableModule.insertTable(3, 3)
+    }
+
+    //INSERT DIVIDER
+    const insertDivider = () => {
+    const editor = quillRef.current.getEditor()
+    const range = editor.getSelection();
+    editor.insertEmbed(range.index, 'divider', true)
+    const lastDivider = editor.container.querySelector('hr:last-child')
+    if (lastDivider) {
+        lastDivider.style.border = 'none'
+        lastDivider.style.borderBottom = '2px solid #E2E8F0'
+        lastDivider.style.height = '2px'
+        lastDivider.style.margin = '10px 0'
+    }
+    }
+
+    const insertButton = () => {
+        const editor = quillRef.current.getEditor()
+        const button = document.createElement('button')
+        button.innerHTML = 'Nuevo botón'
+        button.style.backgroundColor = '#4CAF50'
+        button.style.color = 'white'
+        button.style.border = 'none'
+        button.style.padding = '10px 20px'
+        button.style.cursor = 'pointer'
+        editor.root.appendChild(button)
+    }
+
+    //INSERT LISTS
+    const handleBulletList = () => {
+        const editor = quillRef.current.getEditor()
+        editor.format('list', 'bullet')
+    }
+    const handleNumberedList = () => {
+        const editor = quillRef.current.getEditor()
+        editor.format('list', 'ordered')
+    }
+
+    //AVAILABLE CHARACTERS
+    const avaiableCharacters = 140 -  (articleData?.description || '').length 
+
+    return (<>
+        <input type="file" accept="image/*" id={'uploadIcon'}    style={{ display: 'none' }} onChange={insertImage}/>
+         <Box  px='20px' position={'relative'}> 
+            <textarea ref={textAreaTitleRef} value={articleData?.title} className="title-textarea"  onChange={(e) => {setArticleData(prev => ({...prev as ContentData, title:e.target.value}))}}  placeholder={t('NoTitle')} rows={1}  />
+
+            <textarea onFocus={() => setIsFocusing(true)} onBlur={() => setIsFocusing(false)} ref={textAreaDescriptionRef} value={articleData?.description} className="description-textarea"  onChange={(e) => {setArticleData(prev => ({...prev as ContentData, description:e.target.value}))}}  placeholder={t('AddDescription')} rows={1}  />
+            <Flex  position='absolute' width={'100%'} flexDir={'row'}>
+                {isFocusing && <Text fontSize={'1.1em'} fontWeight={500} color='gray.600'>{avaiableCharacters}</Text>}
+            </Flex>
+        </Box>
+        <Flex height={'100%'} px='20px' flexDir={'column'} position='relative' alignItems={'center'}> 
+            <CustomToolbar quillRef={quillRef} toolbarPosition={toolbarPosition} />
+            <ReactQuill
+                ref={quillRef}
+                className={toolbarPosition ? '' : 'hidden-toolbar'}
+                theme="snow"
+                value={htmlValue}
+                onChange={handleChange}
+                modules={modules}
+                style={{ height: '100%', width:'100%',  display: 'flex', padding:'0px', flexDirection: 'column-reverse' }}
+             />
+      
+            {showInsertVideo ?
+            <Flex gap='20px' width={'700px'} zIndex={1000} bg='white' alignItems={'center'} borderRadius={'.3rem'} p='5px' boxShadow='0 2px 5px rgba(0, 0, 0, 0.2)' position='fixed' bottom={'2vw'}  >
+                <Input onKeyDown={handleKeyDown}  onChange={(e) => setVideoUrl(e.target.value)} outline={'none'}  placeholder={t('InsertVideoUrl')}/>
+                <IconButton  onClick={() => setShowInsertVideo(false)} color='red'  bg='transparent' _hover={{bg:'red.100'}} size='sm' aria-label="cancel-video" icon={<RxCross2 size={'20px'}/>}/>
+            </Flex>
+            
+            :<Flex gap='10px' zIndex={1000} bg='brand.black_button' alignItems={'center'} borderRadius={'.3rem'} p='5px' boxShadow='0 2px 5px rgba(0, 0, 0, 0.2)' position='fixed' bottom={'2vw'}  >
+                
+                <Tooltip label={t('InsertImage')}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
+                    <IconButton color='white' bg='transparent' variant={'common'} icon={<FaImage size={'18px'}/>}  aria-label="image" onClick={() => document.getElementById('uploadIcon')?.click()} />
+                </Tooltip>
+                <Tooltip label={t('InsertVideo')}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
+                    <IconButton color='white' bg='transparent' variant={'common'} icon={<MdVideoLibrary size={'18px'} />} aria-label="video" onClick={() => setShowInsertVideo(true)} />
+                </Tooltip>
+                <Tooltip label={t('InsertTable')}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
+                    <IconButton color='white' bg='transparent' variant={'common'} icon={<FaTable size={'18px'}/>} aria-label="table" onClick={insertTable} />
+                </Tooltip>
+                <Tooltip label={t('InsertDivider')}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
+                    <IconButton color='white' bg='transparent' variant={'common'} icon={<TbLayoutDistributeVerticalFilled size={'20px'}  style={{transform:"rotate(90deg)"}}/>} aria-label="divider" onClick={insertDivider} />
+                </Tooltip>
+                <Tooltip label={t('InsertButton')}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
+                    <IconButton color='white' bg='transparent' variant={'common'} icon={<PiCursorClickFill size={'18px'} />} aria-label="button" onClick={insertButton} />
+                </Tooltip>
+                
+                <Tooltip label={t('InsertBullet')}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
+                    <IconButton color='white' bg='transparent' variant={'common'} icon={<FaListUl size={'18px'}/>}  aria-label="Bullet List" onClick={handleBulletList} />
+                </Tooltip>
+                <Tooltip label={t('InsertNumber')}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
+                    <IconButton color='white' variant='common' bg='transparent' icon={<FaListOl size={'18px'}/>} aria-label="Numbered List" onClick={handleNumberedList} />
+                </Tooltip>
+
+            </Flex>}
+        </Flex>
+    </>)
+}

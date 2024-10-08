@@ -24,10 +24,10 @@ import parseMessageToBold from '../../../Functions/parseToBold'
 import { IoIosArrowForward } from "react-icons/io"
 import { FaPlus } from 'react-icons/fa6'
 import { RxCross2 } from 'react-icons/rx'
+import { BsTrash3Fill } from 'react-icons/bs'
 //TYPING 
 import { ActionDataType, ActionsType, FieldAction } from '../../../Constants/typing'
-import { BsTrash3Fill } from 'react-icons/bs'
- 
+  
  
 const CellStyle = ({column, element}:{column:string, element:any}) => {return <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element}</Text>}
 
@@ -88,10 +88,9 @@ function Automations ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
 
         //FUNCTION FOR DELETING AN AUTOMATION
         const deleteTrigger= async () => {
-
             setWaitingDelete(true)
             const newTriggers = automationData?.filter((_, index) => index !== automationToDeleteIndex)
-            const response = await fetchData({endpoint: `superservice/${auth.authData.organizationId}/admin/settings/triggers`, requestForm: newTriggers, method: 'put', setWaiting: setWaitingDelete, auth, toastMessages: {works: t('CorrectDeletedAutomation'), failed: t('FailedDeletedAutomation')}})
+            const response = await fetchData({endpoint: `superservice/${auth.authData.organizationId}/admin/settings/automations`, requestForm: newTriggers, method: 'put', setWaiting: setWaitingDelete, auth, toastMessages: {works: t('CorrectDeletedAutomation'), failed: t('FailedDeletedAutomation')}})
             if (response?.status === 200) {
                 setAutomationData(newTriggers as ActionDataType[])
                 setAutomationToDeleteIndex(null)
@@ -105,10 +104,9 @@ function Automations ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
                 <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
                 <Text >{parseMessageToBold(t('ConfirmDeleteTrigger', {name:automationData?.[automationToDeleteIndex as number].name}))}</Text>
             </Box>
-            <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-                <Button  size='sm' color='red.600' bg='red.100' _hover={{bg:'red.200'}} onClick={deleteTrigger}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
-                <Button  size='sm' _hover={{color:'blue.500'}} onClick={() => setAutomationToDeleteIndex(null)}>{t('Cancel')}</Button>
-            </Flex>
+            <Box bg='brand.gray_1'>
+
+            </Box>
         </>)
     }
 
@@ -124,29 +122,32 @@ function Automations ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
     return(<>
         {automationToDeleteIndex !== null && memoizedDeleteBox}
         {(selectedIndex >= -1 && automationData !==  null) ? <EditAutomation triggerData={selectedIndex === -1 ?newAutomation:automationData?.[selectedIndex] as ActionDataType} selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex}  allTriggers={automationData} setAllTriggers={setAutomationData} scrollRef={scrollRef}/>:<>
-        <Flex justifyContent={'space-between'} alignItems={'end'}> 
-            <Box> 
-                <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Automations')}</Text>
-                <Text color='gray.600' fontSize={'.9em'}>{t('AutomationsDes')}</Text>
-            </Box>
-        </Flex>
-        <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/>
         
-        <Box width={'350px'}> 
-            <EditText value={text} setValue={setText} searchInput={true}/>
-        </Box>
+        <Box> 
+            <Flex justifyContent={'space-between'} alignItems={'end'}> 
+                <Box> 
+                    <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Automations')}</Text>
+                    <Text color='gray.600' fontSize={'.9em'}>{t('AutomationsDes')}</Text>
+                </Box>
+            </Flex>
+            <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/>
+            
+            <Box width={'350px'}> 
+                <EditText value={text} setValue={setText} searchInput={true}/>
+            </Box>
 
-        <Flex  mt='2vh' justifyContent={'space-between'} alignItems={'end'}>
+            <Flex  mt='2vh' justifyContent={'space-between'} alignItems={'end'}>
+                <Skeleton isLoaded={automationData !== null}> 
+                    <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('AutomationsCount', {count:automationData?.length})}</Text>
+                </Skeleton>
+                <Flex gap='10px'> 
+                    <Button size='sm' variant={'common'} leftIcon={<FaPlus/>} onClick={() => {setSelectedIndex(-1)}}>{t('CreateAutomation')}</Button>
+                </Flex> 
+            </Flex>
             <Skeleton isLoaded={automationData !== null}> 
-                <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('AutomationsCount', {count:automationData?.length})}</Text>
+                <Table data={filteredAutomationData} CellStyle={CellStyle} columnsMap={{'name':[t('Name'), 150], 'description':[t('Description'), 350]}}  excludedKeys={['all_conditions', 'any_conditions', 'actions']} noDataMessage={t('NoAutomations')} onClickRow={(row, index) => setSelectedIndex(index)} deletableFunction={(row:any, index:number) => setAutomationToDeleteIndex(index)}/>  
             </Skeleton>
-            <Flex gap='10px'> 
-                <Button size='sm' leftIcon={<FaPlus/>} onClick={() => {setSelectedIndex(-1)}}>{t('CreateAutomation')}</Button>
-            </Flex> 
-        </Flex>
-        <Skeleton isLoaded={automationData !== null}> 
-            <Table data={filteredAutomationData} CellStyle={CellStyle} columnsMap={{'name':[t('Name'), 150], 'description':[t('Description'), 350]}} noDataMessage={t('NoAutomations')} onClickRow={(row, index) => setSelectedIndex(index)} deletableFunction={(row:any, index:number) => setAutomationToDeleteIndex(index)}/>  
-        </Skeleton>
+        </Box>
         </>}
     </>)
 }
@@ -184,7 +185,7 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
  
     //ADD A CONDITION OR AN ACTION
     const addElement = (type: 'all_conditions' | 'any_conditions' | 'actions') => {
-        const newElement = type === 'actions' ? {type:'email_csat', arguments:{content:''}}:{motherstructure:'ticket', is_customizable:false, name:'user_id', op:'eq', value:-1}
+        const newElement = type === 'actions' ? {type:'email_csat', arguments:{content:'',  probability:50}}:{motherstructure:'ticket', is_customizable:false, name:'user_id', op:'eq', value:-1}
         setCurrentAutomationData((prev) => ({ ...prev, [type]: [...prev[type],newElement]}))
     }
     //DELETE A CONDITION OR AN ACTION
@@ -241,19 +242,20 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
     'contact_business_id':['eq', 'neq',  'exists'], 'name':['eq', 'neq', 'contains', 'ncontains', 'exists'], 'language':['eq', 'neq',  'exists'], 'rating':['eq','neq', 'leq', 'geq', 'exists'], 'notes':['eq', 'neq', 'contains', 'ncontains', 'exists'], 'labels':['contains', 'ncontains', 'exists'],
     'domain':['eq', 'neq', 'contains', 'ncontains', 'exists'], 'hours_since_created':['eq', 'neq', 'leq', 'geq',  'exists'], 'hours_since_updated':['eq', 'neq', 'leq', 'geq',   'exists']
     }
- 
+    const typesMap = {'bool':['eq', 'exists'], 'int':['eq','neq', 'leq', 'geq', 'exists'], 'float':['eq','neq', 'leq', 'geq', 'exists'],'str': ['eq', 'neq', 'contains', 'ncontains', 'exists'], 'timestamp':['eq', 'neq', 'leq', 'geq',  'exists']}
 
     //FRONT
     return (<>
-    <Flex height={'100%'} minH='90vh' width={'100%'} flexDir={'column'}> 
-        <Box flex='1'> 
+        <Box> 
             <Flex fontWeight={'medium'} fontSize={'1.4em'} gap='10px' alignItems={'center'}> 
                 <Text onClick={() => setSelectedIndex(-2)} color='blue.500' cursor={'pointer'}>{t('Automations')}</Text>
                 <Icon as={IoIosArrowForward}/>
                 <Text>{triggerData.name}</Text>
             </Flex>
-            <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/>
+            <Box width='100%' bg='gray.300' height='1px' mt='2vh'/>
+        </Box>
 
+        <Box flex='1' overflow={'scroll'} pt='3vh'> 
             <Text mb='.5vh' fontSize={'1.1em'}  fontWeight={'medium'}>{t('Name')}</Text>
             <Box maxW='500px'> 
                  <EditText  value={currentAutomationData.name} setValue={(value) => {setCurrentAutomationData((prev) => ({...prev, name:value}))}} hideInput={false}/>
@@ -273,12 +275,12 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
                     {currentAutomationData.all_conditions.map((condition, index) => (
                         <Flex  key={`all-automation-${index}`} mt='2vh' gap='10px'>
                             <Box flex={'1'}> 
-                                <EditStructure   data={condition} setData={(newCondition) => {editElement('all_conditions', index, newCondition)}} scrollRef={scrollRef} operationTypesDict={operationTypesDict}/>
+                                <EditStructure data={condition} setData={(newCondition) => {editElement('all_conditions', index, newCondition)}} scrollRef={scrollRef} operationTypesDict={operationTypesDict} typesMap={typesMap}/>
                             </Box>
                             <IconButton bg='transaprent' border='none' color='red' size='sm' _hover={{bg:'gray.200'}} icon={<RxCross2/>} aria-label='delete-all-condition' onClick={() => removeElement('all_conditions', index)}/>
                          </Flex>
                     ))}
-                    <Button mt='2vh'  leftIcon={<FaPlus/>} size='xs'  onClick={() => addElement('all_conditions')}>{t('AddCondition')}</Button>
+                    <Button mt='2vh' variant={'common'}  leftIcon={<FaPlus/>} size='xs'  onClick={() => addElement('all_conditions')}>{t('AddCondition')}</Button>
                 </Box>
 
                 <Box flex='1'> 
@@ -288,12 +290,12 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
                     {currentAutomationData.any_conditions.map((condition, index) => (
                         <Flex key={`any-automation-${index}`} mt='2vh' gap='10px'>
                             <Box flex={'1'}> 
-                                <EditStructure data={condition} setData={(newCondition) => {editElement('any_conditions', index, newCondition)}} scrollRef={scrollRef} operationTypesDict={operationTypesDict}/>
+                                <EditStructure data={condition} setData={(newCondition) => {editElement('any_conditions', index, newCondition)}} scrollRef={scrollRef} operationTypesDict={operationTypesDict} typesMap={typesMap}/>
                             </Box>
                             <IconButton bg='transparent' border='none' color='red' size='sm' _hover={{bg:'gray.200'}} icon={<RxCross2/>} aria-label='delete-any-condition' onClick={() => removeElement('any_conditions', index)}/>
                         </Flex>
                     ))}
-                    <Button mt='2vh' display={'inline-flex'} leftIcon={<FaPlus/>} size='xs' onClick={() => addElement('any_conditions')}>{t('AddCondition')}</Button>
+                    <Button variant={'common'} mt='2vh' display={'inline-flex'} leftIcon={<FaPlus/>} size='xs' onClick={() => addElement('any_conditions')}>{t('AddCondition')}</Button>
                 </Box>
             </Flex>
 
@@ -319,10 +321,10 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
                                     <Text mt='3vh' mb='.5vh' fontSize={'.9em'} fontWeight={'medium'}>{t('CSATProbability')}</Text>
                                     <Text fontSize={'.8em'} color='gray.600'>{t('CSATProbabilityDes')}</Text>
                                     <Slider defaultValue={action.arguments.probability} mb='1vh' mt='5vh' aria-label='slider-ex' onChange={(value) => editActions(index, 'email_csat', 'probability', value)}>
-                                        <SliderMark value={25} mt='1vh' fontWeight={'medium'}>25%</SliderMark>
-                                        <SliderMark value={50} mt='1vh'  fontWeight={'medium'}>50%</SliderMark>
-                                        <SliderMark value={75}mt='1vh'  fontWeight={'medium'}>75%</SliderMark>
-                                        <SliderMark borderRadius={'.3em'} value={action.arguments.probability} textAlign='center' bg='blackAlpha.800' color='white' mt='-10' ml='-5' w='12'>
+                                        <SliderMark ml='-4' value={25} mt='1vh' fontWeight={'medium'}>25%</SliderMark>
+                                        <SliderMark ml='-4'value={50}  mt='1vh'  fontWeight={'medium'}>50%</SliderMark>
+                                        <SliderMark ml='-4' value={75 }mt='1vh'  fontWeight={'medium'}>75%</SliderMark>
+                                        <SliderMark ml='-6' borderRadius={'.3em'} value={action.arguments.probability} textAlign='center' bg='blackAlpha.800' color='white' mt='-10'  w='12'>
                                             {action.arguments.probability} %
                                         </SliderMark>
                                         <SliderTrack>
@@ -344,10 +346,10 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
                                 
                                     <Text fontSize={'.8em'} color='gray.600'>{t('CSATProbabilityDes')}</Text>
                                     <Slider  defaultValue={action.arguments.probability} mb='1vh' mt='5vh' aria-label='slider-ex-1' onChange={(value) => editActions(index, 'whatsapp_csat', 'probability', value)}>
-                                        <SliderMark value={25} mt='1vh' fontWeight={'medium'}>25%</SliderMark>
-                                        <SliderMark value={50} mt='1vh'  fontWeight={'medium'}>50%</SliderMark>
-                                        <SliderMark value={75}mt='1vh'  fontWeight={'medium'}>75%</SliderMark>
-                                        <SliderMark borderRadius={'.3em'} value={action.arguments.probability} textAlign='center' bg='blackAlpha.800' color='white' mt='-10' ml='-5' w='12'>
+                                        <SliderMark ml='-4' value={25} mt='1vh' fontWeight={'medium'}>25%</SliderMark>
+                                        <SliderMark ml='-4'value={50} mt='1vh'  fontWeight={'medium'}>50%</SliderMark>
+                                        <SliderMark ml='-4'value={75}mt='1vh'  fontWeight={'medium'}>75%</SliderMark>
+                                        <SliderMark ml='-6'  borderRadius={'.3em'} value={action.arguments.probability} textAlign='center' bg='blackAlpha.800' color='white' mt='-10' w='12'>
                                             {action.arguments.probability} %
                                         </SliderMark>
                                         <SliderTrack>
@@ -360,10 +362,10 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
                                 return <>
                                     <Text fontSize={'.8em'} color='gray.600'>{t('CSATProbabilityDes')}</Text>
                                     <Slider  defaultValue={action.arguments.probability} mb='1vh' mt='5vh' aria-label='slider-ex-2' onChange={(value) => editActions(index, 'webchat_csat', 'probability', value)}>
-                                        <SliderMark value={25} mt='1vh' fontWeight={'medium'}>25%</SliderMark>
-                                        <SliderMark value={50} mt='1vh'  fontWeight={'medium'}>50%</SliderMark>
-                                        <SliderMark value={75}mt='1vh'  fontWeight={'medium'}>75%</SliderMark>
-                                        <SliderMark borderRadius={'.3em'} value={action.arguments.probability} textAlign='center' bg='blackAlpha.800' color='white' mt='-10' ml='-5' w='12'>
+                                        <SliderMark ml='-4'value={25} mt='1vh' fontWeight={'medium'}>25%</SliderMark>
+                                        <SliderMark ml='-4'value={50} mt='1vh'  fontWeight={'medium'}>50%</SliderMark>
+                                        <SliderMark ml='-4'value={75}mt='1vh'  fontWeight={'medium'}>75%</SliderMark>
+                                        <SliderMark ml='-6' borderRadius={'.3em'} value={action.arguments.probability} textAlign='center' bg='blackAlpha.800' color='white' mt='-10'  w='12'>
                                             {action.arguments.probability} %
                                         </SliderMark>
                                         <SliderTrack>
@@ -387,20 +389,24 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
                                     'contact_business_id':['set'], 'name':['set', 'concatenate'], 'language':['set'], 'rating':['set', 'add', 'substract'], 'notes':['set', 'concatenate'], 'labels':['append', 'remove'],
                                     'domain':['set', 'concatenate']
                                     }
-                                    return (<EditStructure data={action.arguments} setData={(newCondition) => {editActions(index, 'motherstructure_update', 'new', newCondition)}} scrollRef={scrollRef} operationTypesDict={operationTypesDict}/>)
+                                    const typesMap2 = {'bool':['set'], 'int':['set', 'add', 'substract'], 'float':['set', 'add', 'substract'],'str': ['set', 'concatenate'], 'timestamp':['set', 'add', 'substract']}
+
+                                    return (<EditStructure data={action.arguments} setData={(newCondition) => {editActions(index, 'motherstructure_update', 'new', newCondition)}} scrollRef={scrollRef} operationTypesDict={operationTypesDict} typesMap={typesMap2}/>)
                                 }
                         }
                     })()}
                 </Box>
             ))}
  
-            <Button mt='2vh' display={'inline-flex'} leftIcon={<FaPlus/>} size='sm' onClick={() => addElement('actions')}>{t('AddAction')}</Button>
+            <Button variant={'common'} mt='2vh' display={'inline-flex'} leftIcon={<FaPlus/>} size='sm' onClick={() => addElement('actions')}>{t('AddAction')}</Button>
         </Box>
-        <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/>
-        <Flex flexDir={'row-reverse'}> 
-            <Button onClick={sendTrigger} isDisabled={currentAutomationData.name === ''  || currentAutomationData.actions.length === 0 || ((JSON.stringify(currentAutomationData) === JSON.stringify(automationDataRef.current)))}>{waitingSend?<LoadingIconButton/>:t('SaveChanges')}</Button> 
-        </Flex>
-    </Flex>
+
+        <Box> 
+            <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='2vh'/>
+            <Flex flexDir={'row-reverse'}> 
+                <Button variant={'common'} onClick={sendTrigger} isDisabled={currentAutomationData.name === ''  || currentAutomationData.actions.length === 0 || ((JSON.stringify(currentAutomationData) === JSON.stringify(automationDataRef.current)))}>{waitingSend?<LoadingIconButton/>:t('SaveChanges')}</Button> 
+            </Flex>
+        </Box>
     </>)
 }
 

@@ -9,18 +9,18 @@ import { Views } from './Content/Constants/typing'
  
 //AUTH DATA TYPE
 type AuthData = {
-  email: string
-  accessToken: string
-  refreshToken:string
-  organizationId: number | null
-  userId: number | null
-  organizationName: string
-  views: Views | null
-  users:{[key:string | number]:{name:string, surname:string, email_address:string, last_login:string, is_admin:boolean}} | null
-  ticket_subjects:string[]
-  shortcuts:string[]
-  userData:{name: string, surname: string, email_address: string, password: string, language:string, shortcuts_activated:boolean, 
-            organizationData:{calls_status:'connected' | 'out' | 'disconnected', avatar_image_url:string, is_admin:boolean, alias:boolean, groups:{id:number, name:string}[]}} | null
+    email: string
+    accessToken: string
+    refreshToken:string
+    organizationId: number | null
+    userId: number | null
+    organizationName: string
+    views: Views | null
+    users:{[key:string | number]:{name:string, surname:string, email_address:string, last_login:string, is_admin:boolean}} | null
+    ticket_subjects:string[]
+    shortcuts:string[]
+    userData:{name: string, surname: string, email_address: string, password: string, language:string, shortcuts_activated:boolean} | null
+    organizationData:{calls_status:'connected' | 'out' | 'disconnected', avatar_image_url:string, is_admin:boolean, alias:string, groups:{id:number, name:string}[]} | null
 }
  
 //AUTH CONTEXT TYPE DEFINITION
@@ -34,7 +34,7 @@ type AuthContextType = {
 
 //CONTEXT TOOLS
 const AuthContext = createContext<AuthContextType>({
-    authData: { email: '', accessToken: '',refreshToken:'', organizationId: null, userId:null, organizationName:'', views:{"private_views": [], "shared_views": []}, users:null, ticket_subjects:[], shortcuts:[], userData:null},
+    authData: { email: '', accessToken: '',refreshToken:'', organizationId: null, userId:null, organizationName:'', views:{"private_views": [], "shared_views": []}, users:null, ticket_subjects:[], shortcuts:[], userData:null, organizationData:null},
     isSignedIn: false, 
     signIn: () => {},
     signOut: () => {},
@@ -55,7 +55,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         users:null, 
         ticket_subjects:[], 
         shortcuts:[],
-        userData:null
+        userData:null,
+        organizationData:null
     })
 
     //AUTHENTICATION FUNCTIONALITIES
@@ -66,7 +67,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     //SIGN OUT
     const signOut = () => {
-        setAuthData({ email: '', accessToken: '', refreshToken: '',organizationId: null, userId:null, organizationName:'', views:{"private_views": [], "shared_views": []}, users:null, ticket_subjects:[], shortcuts:[], userData:null })
+        setAuthData({ email: '', accessToken: '', refreshToken: '',organizationId: null, userId:null, organizationName:'', views:{"private_views": [], "shared_views": []}, users:null, ticket_subjects:[], shortcuts:[], userData:null,         organizationData:null
+    })
         setIsSignedIn(false)
         localStorage.clear()
     }

@@ -5,10 +5,11 @@ import { useTranslation } from 'react-i18next'
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom"
 //FRONT
 import { Flex, Box, Button } from '@chakra-ui/react'
+//COMPONENTS
+import SectionSelector from "../../Components/Reusable/SectionSelector"
 //ICONS
-import { TiFlowMerge } from "react-icons/ti"
 import { FaCodeBranch } from "react-icons/fa6"
-import { TbMathFunction } from "react-icons/tb";
+import { TbMathFunction } from "react-icons/tb"
 
 //COMPONENTS
 const FlowsTable = lazy(() => import('./FlowsTable'))
@@ -23,8 +24,8 @@ function FlowsFunctions () {
     const location = useLocation().pathname
     const auth = useAuth()
     const { t } = useTranslation('flows')
-    const sectionsList:['flows' | 'functions', ReactElement][] = [['flows', <FaCodeBranch style={{ transform: 'rotate(90deg)' }}/>], ['functions',<TbMathFunction/>]]
-
+    const sectionsList:('flows' | 'functions')[] = ['flows', 'functions']
+    const sectionsMap:{[key:string]:[string, ReactElement]} = {'flows':[t('Flows'), <FaCodeBranch style={{ transform: 'rotate(90deg)' }}/>], 'functions':[t('functions'), <TbMathFunction/>]}
 
     //SEECTED SECTION AND NAVIGATION
     const [selectedSection, setSelectedSection] = useState<'flows' | 'functions'>(localStorage.getItem('currentSectionFunctionsFlows') as 'flows' | 'functions' || 'flows')
@@ -40,19 +41,16 @@ function FlowsFunctions () {
 
     //FRONT
     return(
-        <Box> 
-            {!location.startsWith('/flows-functions/flows/flow/') && 
-            <Flex gap='20px' height={'60px'} px='2vw' borderBottomWidth={'1px'} borderBottomColor={'gray.300'} bg='gray.50'>
-                {sectionsList.map((section, index)=>{
-                    const isSelected = location.split('/')[2] === section[0]
-                    return(
-                    <Flex alignItems={'center'} color={'black'} key={`secciones-${index}`}   onClick={() => {console.log(section[0]);setSelectedSection(section[0])}} >
-                        <Button size='sm' border='none' bg={isSelected?'blue.100':'transparent'}  color={isSelected?'black':'gray.600'}  _hover={{bg:isSelected?'blue.100':'transparent', color:'black'}} leftIcon={section[1]}> {t(section[0])}</Button>
-                    </Flex>)
-                    })}
-            </Flex>}
+        <Flex height={'100vh'} flexDir={'column'}> 
+            {!location.startsWith('/flows-functions/flows/flow/') && <> 
+                <Box bg='white' p='2vw'>
+                    <SectionSelector selectedSection={location.split('/')[2]} sections={sectionsList} sectionsMap={sectionsMap}  onChange={(section:string) => {setSelectedSection(section as 'flows' | 'functions')}} />
+                    <Box height={'1px'} width={'100%'} bg='gray.300' mt='2vh' />
 
-            <Box bg='white' height={'calc(100vh - 60px)'} width={'calc(100vw - 55px)'}> 
+                </Box>
+             </>}
+
+            <Box bg='white' flex={1} width={'calc(100vw - 55px)'}> 
                 <Suspense fallback={<></>}>    
                     <Routes >
                         <Route path="/flows" element={<FlowsTable/>}  />
@@ -61,7 +59,7 @@ function FlowsFunctions () {
                     </Routes>
                 </Suspense>
             </Box>
-        </Box>)
+        </Flex>)
 }
 
 export default FlowsFunctions

@@ -41,15 +41,19 @@ const FormInput  = ({ value, setValue, maxLength, leftIcon,  regex = null, isPas
 
 
     //CHANGE TEXTSTYLES ON WRONG REGEX
-    const textStyles = (isFocused || value !== '')? {top:'-55%', scale:'0.8', left:'-5px', color:(regex ===null || value ==='' || regex?.test(value))?'rgba(0, 102, 204, 1)':'red'}:{scale:'0.9', top:'20%', left:'25px', color:'#A0AEC0'}
+    const textStyles = (isFocused || value !== '')? {top:'-55%', scale:'0.8', left:'0', color:(regex ===null || value ==='' || regex?.test(value))?'rgba(0, 102, 204, 1)':'red'}:{scale:'0.9', top:'20%', left:'25px', color:'#A0AEC0'}
     
     //FRONT
     return (       
         <Box width={'100%'} position={'relative'}>
             <Icon  position={'absolute'} left={0} bottom={'4px'} boxSize={'18px'} color={(isFocused || value !== '')?(regex ===null || value ==='' || regex?.test(value))?'rgba(0, 102, 204, 1)':'red':'gray.400'} as={leftIcon}/>
+            
             <input type={(showPassword && isPassword)?'password':'text'} value={value} onChange={handleInputChange} style={{border:'none',outline: 'none', padding:'5px 0px 5px 30px', fontSize:'.9em', background:'transparent', width:'100%'}} onBlur={() => setIsFocused(false)} onFocus={() => setIsFocused(true)}/>
-            <Text pointerEvents={'none'} fontWeight={'medium'} transition='0.2s cubic-bezier(0.0, 0.9, 0.9, 1.0)' position={'absolute'} style={textStyles}>{placeholder}</Text>
+            <Box  pointerEvents={'none'} width={'20px'} fontWeight={'medium'} transition='0.2s cubic-bezier(0.0, 0.9, 0.9, 1.0)' position={'absolute'} style={textStyles}> 
+            <Text whiteSpace={'nowrap'} >{placeholder}</Text>
+            </Box>
             <Box width={'100%'}   boxShadow={(isFocused || value !== '') ? (regex ===null || value ===''|| regex?.test(value))?'0 0 0 1px rgba(0, 102, 204, 1)':'0 0 0 1px red': '0 0 0 1px #CBD5E0'}/>
+            
             {isPassword && <Icon  position={'absolute'}  boxSize={'18px'} color={(isFocused || value !== '')?(regex ===null || value ===''|| regex?.test(value))?'rgba(0, 102, 204, 1)':'red':'gray.400'} right={0} bottom={'4px'} as={showPassword? AiOutlineEye:AiOutlineEyeInvisible}  onClick={() => setShowPassword(!showPassword)} />}
         </Box>
         )

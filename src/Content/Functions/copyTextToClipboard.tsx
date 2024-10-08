@@ -3,7 +3,7 @@
 */
 
 import { useTranslation } from "react-i18next"
-import showToast from "../Components/ToastNotification"
+import showToast from "../Components/Reusable/ToastNotification"
 
 const copyToClipboard = (text:string) => {
     const { t } = useTranslation('settings')

@@ -34,7 +34,7 @@ const CreateBusiness = ({setShowBox, actionTrigger}:{setShowBox:(key:boolean) =>
     }
 
     return(<> 
-        <Box p='15px' maxW='450px'> 
+        <Box p='20px' maxW='450px'> 
             <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('CreateBusiness')}</Text>
             <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
             <Text fontWeight={'medium'} mb='.5vh'>{t('Name')}</Text>
@@ -43,9 +43,9 @@ const CreateBusiness = ({setShowBox, actionTrigger}:{setShowBox:(key:boolean) =>
             <EditText value={businessDomain} setValue={setBusinessDomain} hideInput={false} placeholder='ejemplo.com'/>
                         
         </Box>
-        <Flex  maxW='450px' p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-            <Button  size='sm' color='white' isDisabled={businessName === '' || businessDomain === ''} bg='brand.gradient_blue' _hover={{bg:'brand.gradient_blue_hover'}} onClick={createBusiness}>{waitingCreate?<LoadingIconButton/>:t('CreateBusiness')}</Button>
-            <Button  size='sm' onClick={()=>setShowBox(false)}>{t('Cancel')}</Button>
+        <Flex  maxW='450px' p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+            <Button  size='sm' variant={'main'} isDisabled={businessName === '' || businessDomain === ''} onClick={createBusiness}>{waitingCreate?<LoadingIconButton/>:t('CreateBusiness')}</Button>
+            <Button  size='sm' variant={'common'} onClick={()=>setShowBox(false)}>{t('Cancel')}</Button>
         </Flex>
     </>)
 }

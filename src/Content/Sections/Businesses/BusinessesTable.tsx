@@ -19,7 +19,7 @@ import { FaMagnifyingGlass, FaPlus, FaFilter } from "react-icons/fa6"
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io"
 
 //TYPING
-import { ContactBusinessesProps, columnsBusinessesMap,  HeaderSectionType } from "../../Constants/typing"
+import { ContactBusinessesProps,  HeaderSectionType } from "../../Constants/typing"
 import { useSession } from "../../../SessionContext"
 import ConfirmBox from "../../Components/Reusable/ConfirmBox"
 import CreateBusiness from "./CreateBusiness"
@@ -116,12 +116,20 @@ function ContactBusinessesTable ({addHeaderSection}:{addHeaderSection:HeaderSect
         const direction = (filters.sort_by === key && filters.order === 'asc') ? 'desc' : 'asc';
         fetchBusinessDataWithFilter({...filters, sort_by: key, order: direction as 'asc' | 'desc'})
      }
+    const getSortIcon = (key: string) => {
+        if (filters.sort_by === key) { 
+            if (filters.order === 'asc') return true
+            else return false
+        }
+        else return null    
+    }
 
     const rowClick = (row:any, index:number) => {
         session.dispatch({type:'UPDATE_BUSINESSES_TABLE_SELECTED_ITEM', payload:{index}})
         navigate(`/contact-businesses/business/${row.id}`)
     }
 
+    
     const memoizedCreateBusiness = useMemo(() => (
         <ConfirmBox setShowBox={setShowCreateBusiness}>
             <CreateBusiness setShowBox={setShowCreateBusiness} actionTrigger={(data:any) => fetchBusinessDataWithFilter(null)}/>
@@ -138,7 +146,7 @@ function ContactBusinessesTable ({addHeaderSection}:{addHeaderSection:HeaderSect
             <Flex justifyContent={'space-between'}> 
                 <Text fontWeight={'medium'} fontSize={'1.5em'}>{t('ContactBusinesses')}</Text>
                 <Flex gap='15px'> 
-                    <Button  whiteSpace='nowrap'  minWidth='auto'leftIcon={<FaPlus/>} size='sm' onClick={() =>setShowCreateBusiness(true)}>{t('CreateBusiness')}</Button>
+                    <Button variant={'common'} whiteSpace='nowrap'  leftIcon={<FaPlus/>} size='sm' onClick={() =>setShowCreateBusiness(true)}>{t('CreateBusiness')}</Button>
                     <ActionsButton items={businesses ? businesses.page_data:[]} view={null} section={'clients'}/>
                  </Flex>
              </Flex>
@@ -147,7 +155,7 @@ function ContactBusinessesTable ({addHeaderSection}:{addHeaderSection:HeaderSect
                 <Box width={'350px'}> 
                     <EditText value={filters.search} setValue={(value) => setFilters(prev => ({...prev, search:value}))} searchInput={true}/>
                 </Box>
-                <Button _hover={{color:'blue.500'}} leftIcon={<FaFilter/>} size='sm'  onClick={() => fetchBusinessDataWithFilter({...filters,page_index:1})}>{t('ApplyFilters')}</Button>
+                <Button  variant={'common'} leftIcon={<FaFilter/>} size='sm'  onClick={() => fetchBusinessDataWithFilter({...filters,page_index:1})}>{t('ApplyFilters')}</Button>
             </Flex>
         
             <Flex  mt='2vh' justifyContent={'space-between'} alignItems={'center'}> 
@@ -164,7 +172,7 @@ function ContactBusinessesTable ({addHeaderSection}:{addHeaderSection:HeaderSect
             {/*TABLA*/}
             <Box>             
                 <Skeleton isLoaded={!waitingInfo}> 
-                    <Table data={businesses?.page_data || []} CellStyle={CellStyle} noDataMessage={t('NoBusinesses')} excludedKeys={['id']} columnsMap={columnsBusinessesMap} onClickRow={rowClick} requestSort={requestSort} currentIndex={selectedIndex}/>
+                    <Table data={businesses?.page_data || []} CellStyle={CellStyle} noDataMessage={t('NoBusinesses')} excludedKeys={['id']} columnsMap={columnsBusinessesMap} onClickRow={rowClick} requestSort={requestSort} getSortIcon={getSortIcon} currentIndex={selectedIndex}/>
                 </Skeleton>
             </Box>
     

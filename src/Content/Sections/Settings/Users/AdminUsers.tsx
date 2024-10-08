@@ -74,14 +74,14 @@ const NewUserBox = ({userData, setUserData, setShowCreateNewUser}:NewUserBoxProp
             <EditText  regex={emailRegex} maxLength={100} placeholder={`${t('User').toLocaleLowerCase()}@${t('Company')}.com`} hideInput={false} value={newUserInfo.email} setValue={(value) => setNewUserInfo({...newUserInfo, email:value})}/>
             <Text mt='2vh' mb='.5vh' fontWeight={'medium'}>{t('Rol')}</Text>
             <Flex gap='10px'>
-                <Button size='xs' bg={newUserInfo.is_admin?'blackAlpha.800':'gray.200'} color={newUserInfo.is_admin?'white':'none'} _hover={{bg:newUserInfo.is_admin?'blackAlpha.900':'gray.300'}}  onClick={() => setNewUserInfo({...newUserInfo, is_admin: true})}>{t('Admin')}</Button>
-                <Button size='xs' bg={!newUserInfo.is_admin?'blackAlpha.800':'gray.200'} color={!newUserInfo.is_admin?'white':'none'} _hover={{bg:!newUserInfo.is_admin?'blackAlpha.900':'gray.300'}}  onClick={() => setNewUserInfo({...newUserInfo, is_admin:false})}>{t('Basic')}</Button>
+                <Button size='xs' bg={newUserInfo.is_admin?'brand.black_button':'gray.200'} color={newUserInfo.is_admin?'white':'none'} _hover={{bg:newUserInfo.is_admin?'brand.black_button_hover':'gray.300'}}  onClick={() => setNewUserInfo({...newUserInfo, is_admin: true})}>{t('Admin')}</Button>
+                <Button size='xs' bg={!newUserInfo.is_admin?'brand.black_button':'gray.200'} color={!newUserInfo.is_admin?'white':'none'} _hover={{bg:!newUserInfo.is_admin?'brand.black_button_hover':'gray.300'}}  onClick={() => setNewUserInfo({...newUserInfo, is_admin:false})}>{t('Basic')}</Button>
             </Flex>
             {showError !== '' && <Text mt='2vh' fontSize={'.85em'} color='red'>{showError}</Text>}
          </Box>
         <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-            <Button  size='sm' color='white' bg='blackAlpha.800' _hover={{bg:'blackAlpha.900'}} onClick={createNewUser}>{waitingCreate?<LoadingIconButton/>:t('CreateUser')}</Button>
-            <Button  size='sm' bg='gray.200' _hover={{color:'blue.400'}} onClick={()=>setShowCreateNewUser(false)}>{t('Cancel')}</Button>
+            <Button  size='sm' variant='main'onClick={createNewUser}>{waitingCreate?<LoadingIconButton/>:t('CreateUser')}</Button>
+            <Button  size='sm'variant='common'onClick={()=>setShowCreateNewUser(false)}>{t('Cancel')}</Button>
         </Flex>
       </>
     )
@@ -106,12 +106,12 @@ const UserCellStyles = ({column, element}:{column:string, element:any}) => {
                 <Text whiteSpace={'nowrap'}  textOverflow={'ellipsis'} overflow={'hidden'}>{element?t('ActiveM'):t('InactiveM')}</Text>
             </Box>)
         case 'invitation_key':
-            return (<> 
-                <Text whiteSpace={'nowrap'}  textOverflow={'ellipsis'} overflow={'hidden'}>{element}</Text>
-                <Tooltip label={t('CopyCode')}  placement='top' hasArrow bg='black' color='white'  borderRadius='.4rem' fontSize='sm' p='6px'> 
-                    <IconButton size='xs' onClick={() => copyToClipboard(element)}  aria-label={'copy-invitation-code'} icon={<BsClipboard2Check/>}/>
-                </Tooltip>
-            </>)
+            return (<Flex alignItems={'center'} gap='10px' maxW={'100%'}> 
+                    <Text width={'300px'} whiteSpace={'nowrap'}  textOverflow={'ellipsis'} overflow={'hidden'}>{element}</Text>
+                    <Tooltip label={t('CopyCode')}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
+                        <IconButton size='xs' onClick={() => copyToClipboard(element)}  aria-label={'copy-invitation-code'} icon={<BsClipboard2Check/>}/>
+                    </Tooltip>
+                </Flex>)
         default:
             return <></>
     }
@@ -180,14 +180,14 @@ function AdminUsers () {
                 <Text>{parseMessageToBold(t('DeleteUserMessage', {user:(userData && userToDelete) ? userToDelete.name +  ' ' + userToDelete.surname:''}))}</Text>
             </Box>
             <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-                <Button  size='sm' bg='red.100' color='red.600' _hover={{bg:'red.200'}} onClick={handleDeleteUsers}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
-                <Button  size='sm' _hover={{color:'blue.400'}} onClick={()=> setUserToDelete(null)}>{t('Cancel')}</Button>
+                <Button  size='sm' variant='delete'onClick={handleDeleteUsers}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
+                <Button  size='sm' variant='common'onClick={()=> setUserToDelete(null)}>{t('Cancel')}</Button>
             </Flex>
         </ConfirmBox>
     ), [userToDelete])
 
-    return(<>
-    <>        
+    return(
+    <Box>        
         {userToDelete && memoizedDeleteBox}
         {showCreateNewUser && memoizedNewUserBox}
 
@@ -205,15 +205,14 @@ function AdminUsers () {
                 <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('UsersCount', {count:userData.length})}</Text>
             </Skeleton>
         
-            <Button leftIcon={<FaPlus/>} size='sm' onClick={() => {setShowCreateNewUser(!showCreateNewUser)}}>{t('CreateUser')}</Button>
+            <Button leftIcon={<FaPlus/>} size='sm' variant={'common'} onClick={() => {setShowCreateNewUser(!showCreateNewUser)}}>{t('CreateUser')}</Button>
         
         </Flex>
 
          <Skeleton  isLoaded={!waitingInfo}> 
-            <Table data={filteredUserData} CellStyle={UserCellStyles} noDataMessage={t('NoUsers')} columnsMap={usersColumnsMap} onlyOneSelect deletableFunction={(row, index) => setUserToDelete(row)}/>
+            <Table data={filteredUserData} CellStyle={UserCellStyles} excludedKeys={['avatar_image_url', 'alias', 'call_status']} noDataMessage={t('NoUsers')} columnsMap={usersColumnsMap}  deletableFunction={(row, index) => setUserToDelete(row)} />
         </Skeleton>
-        </> 
-    </>)
+    </Box>)
 }
 
 export default AdminUsers

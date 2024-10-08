@@ -5,7 +5,7 @@
 //REACT
 import { createContext, useContext, useReducer, ReactNode, Dispatch } from 'react'
 //TYPING
-import { Clients, TicketColumn,  Channels , Tickets, TicketData, ClientColumn, ClientData, ContactBusinessesProps, ContactBusinessesTable, FlowsData ,FunctionsData, MessagesData, MessagesProps } from './Content/Constants/typing'
+import { Clients, TicketColumn,  Channels , Tickets, TicketData, ClientColumn, ClientData, ContactBusinessesProps, ContactBusinessesTable, FlowsData ,FunctionsData, MessagesData, MessagesProps, ContentData } from './Content/Constants/typing'
 
 //TICKETS TABLE DATA TYPE
 type TicketsTable = {
@@ -55,6 +55,7 @@ type SessionData = {
     clientsTable:ClientsTable | null
     contactBusinessesTable:ContactBusinessesSection | null
     flowsFunctions:{flows:FlowsData[] | null, functions:FunctionsData[] | null},
+    contentData:ContentData[] | null
     headerSectionsData:HeaderSections[]
     statsSectionData:StatsSectionData
 }
@@ -73,6 +74,7 @@ const initialState: SessionData = {
     clientsTable: null,
     contactBusinessesTable:null,
     flowsFunctions:{flows:null, functions:null},
+    contentData: null,
     headerSectionsData: [],
     statsSectionData: {
         tickets: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } },
@@ -121,6 +123,10 @@ const sessionReducer = (state: SessionData, action: { type: string; payload: any
         case 'UPDATE_BUSINESSES_TABLE_SELECTED_ITEM':
             if (state.contactBusinessesTable) return { ...state, contactBusinessesTable: { ...state.contactBusinessesTable, selectedIndex:action.payload.index }}
             else return state
+
+        //SAVE CONTENT DATA TABLE
+        case 'UPDATE_CONTENT_TABLE':
+            return { ...state, contentData: action.payload.data }
 
         //SAVE FLOWS AND FUNCTIONS INFORMATION
         case 'UPDATE_FLOWS':
@@ -251,6 +257,7 @@ const sessionReducer = (state: SessionData, action: { type: string; payload: any
                 contactBusinessesTable:null,
                 flowsFunctions:{flows:null, functions:null},
                 headerSectionsData: [],
+                contentData: null,
                 statsSectionData: {
                     tickets: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } },
                     matilda: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } },
@@ -264,18 +271,21 @@ const sessionReducer = (state: SessionData, action: { type: string; payload: any
 
             let updatedTicketsTables = state.ticketsTable.map((section) => {
                 let updatedSection = { ...section }
-                let updatedData = section.data.page_data.map((ticket) => {
-                    if (ticket.id === action.payload && ticket.hasOwnProperty('unseen_changes')) {
-                        let updatedTicket = { ...ticket }
-                        updatedTicket.unseen_changes = false
-                        return updatedTicket
-                    }
-                    return ticket
-                })
-                updatedSection.data.page_data = updatedData
+                if (updatedSection?.data?.page_data) {
+                    let updatedData = section.data.page_data.map((ticket) => {
+                        if (ticket.id === action.payload && ticket.hasOwnProperty('unseen_changes')) {
+                            let updatedTicket = { ...ticket }
+                            updatedTicket.unseen_changes = false
+                            return updatedTicket
+                        }
+                        return ticket
+                    })
+                    updatedSection.data.page_data = updatedData
+                }
                 return updatedSection
             })
             return { ...state, ticketsTable: updatedTicketsTables }
+            
             
         default:
             return state

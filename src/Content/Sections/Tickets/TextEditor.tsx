@@ -29,7 +29,9 @@ import { IoArrowUndoSharp } from "react-icons/io5"
 import { IoIosArrowDown } from 'react-icons/io'
 import { PiTextTBold } from "react-icons/pi"
 import { FaRegEdit } from "react-icons/fa"
+import { FaLockOpen } from "react-icons/fa6"
 import { RxCross2 } from "react-icons/rx"
+import { BsStars } from "react-icons/bs"
 //TYPING
 import { DeleteHeaderSectionType, TicketsTableProps, statesMap,  TicketData } from '../../Constants/typing'
    
@@ -266,12 +268,10 @@ function TextEditor({clientName, ticketData, updateData, deleteHeaderSection, ta
             setHtmlValue('')
             setAttachmentsFiles([])
         }
-        
         else {
             const fileContent = await getPreSignedUrl(content, true)
             messageContent = {type, content:fileContent}
         }
-
         setTextValue('')
         const response = await fetchData({endpoint:`conversations/${ticketData?.conversation_id}`, setWaiting:setWaitingSend, requestForm:{is_internal_note:isInternalNote,...messageContent}, method:'post', auth, toastMessages:{'failed':t('MessageSentFailed'), 'works':t('MessageSent')}})
         
@@ -377,12 +377,13 @@ function TextEditor({clientName, ticketData, updateData, deleteHeaderSection, ta
 
     //HANDLE SEND A TEXT MESSAGE
     const handleButtonClick = (state:'new' | 'open' | 'pending' |  'solved' | 'closed') => {
+        
         setShowSendLike(false)
         updateData('ticket', {...ticketData as TicketData, 'status':state})
 
-        if (totalSize < 10 * 1024 * 1024 && (textValueRef.current !== '' || htmlValueRef.current !== '')) {
+        if (totalSize < 10 * 1024 * 1024 && (textValueRef.current.trim() !== '')) {
             if (ticketData?.channel_type !== 'email') sendMessage('plain', textValueRef.current)
-            else sendMessage('email', htmlValueRef.current)
+            else  sendMessage('email', htmlValueRef.current)
         }
     }
 
@@ -397,7 +398,7 @@ function TextEditor({clientName, ticketData, updateData, deleteHeaderSection, ta
                     event.preventDefault()
                     event.stopPropagation()
                 } 
-                else if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+                else if (event.shiftKey  && event.key === 'Enter') {
                  
                     event.preventDefault()
                     event.stopPropagation()
@@ -478,14 +479,20 @@ function TextEditor({clientName, ticketData, updateData, deleteHeaderSection, ta
     
     //FRONT
     return (<> 
-    {showShortcuts && (<ShortCutsBox shortcuts={filteredShortcuts} onSelect={handleSelectShortcut} position={cursorPosition} />)}
+    {showShortcuts && (
+    <ShortCutsBox shortcuts={filteredShortcuts} onSelect={handleSelectShortcut} position={cursorPosition} />)}
         <input id='selectFile' type="file" multiple={ticketData?.channel_type === 'email'} style={{display:'none'}}   onChange={(e)=>{handleFileSelect(e)}} accept=".pdf, .doc, .docx, image/*" />
 
-            {(ticketData?.user_id === -1 || ticketData?.status === 'closed' ) ?
-                <Flex gap='20px' zIndex={10} justifyContent={'center'} alignItems={'center'} py='20px' bg='gray.50' borderTopColor={'gray.200'} borderTopWidth={'1px'}>
-                    <Text >{ticketData?.status === 'closed' ?'El ticket está cerrado, no se pueden enviar más mensajes'  :'El ticket está siendo gestionado por Matilda'}</Text>
-                    {(ticketData?.user_id === -1 && ticketData?.status !== 'closed' ) && <Button fontSize={'1em'} borderRadius={'2em'} onClick={takeConversationControl} bg={'brand.gradient_blue'} _hover={{bg:'brand.gradient_blue_hover'}} color='white' size='sm'>{t('TakeControl')}</Button>}
-                </Flex>:
+             {(ticketData?.user_id === -1 || ticketData?.status === 'closed' ) ?
+            
+            <Flex flexDir={'column'} alignItems={'center'} py='3vh'> 
+                <Flex mb='1vh' gap='10px' alignItems={'end'}> 
+                    <Icon fill="url(#gradient2)" as={BsStars} boxSize={'22px'}/>
+                    <Text   bgGradient="linear(to-r, rgba(0, 102, 204, 0.8), rgba(102, 51, 255, 0.7))" bgClip="text"  color="transparent" fontWeight={'medium'} fontSize={'1.2em'} >{ticketData?.status === 'closed' ?t('TicketClosed')  :t('TicketByMatilda')}</Text>
+                </Flex>
+                {(ticketData?.user_id === -1 && ticketData?.status !== 'closed' ) && <Button  leftIcon={<FaLockOpen/>} onClick={takeConversationControl} variant={'main'} size='sm'>{t('TakeControl')}</Button>}
+            </Flex>
+:
             <Box position={'relative'} bg={isInternalNote?'yellow.100':''} minH={'150px'} maxH={'600px'} height={`${height}px`} borderTopColor={'gray.200'} borderTopWidth={'1px'}> 
                 <Box height={'10px'}  onMouseDown={handleMouseDown} cursor='ns-resize'/>
                     <Flex pt='5px' gap='10px' pb='15px' px='15px' alignItems={'center'} justifyContent={'space-between'}> 
@@ -584,13 +591,13 @@ function TextEditor({clientName, ticketData, updateData, deleteHeaderSection, ta
                                     </Portal > }
 
                                 <Flex cursor={'pointer'} gap='1px' >
-                                    <Flex  onClick={() => handleButtonClick('pending')} bg={'brand.gradient_blue'} px='10px' py='5px' borderRadius={'.5em 0 0 .5em'} color='white' _hover={{bg:'brand.gradient_blue_hover'}}>
+                                    <Flex  onClick={() => handleButtonClick('pending')} bg={'#222'} px='10px' py='5px' borderRadius={'.5em 0 0 .5em'} color='white' _hover={{bg:'blackAlpha.800'}}>
                                         {waitingSend?<LoadingIconButton/> :
                                         <Flex alignItems={'center'} gap='10px'>
                                             <Text whiteSpace={'nowrap'}  fontWeight={'medium'} fontSize={'.9em'} color='gray.200'>{t('SendLike')} <span style={{fontWeight:'500', color:'white'}}>{t(ticketData.status)}</span></Text>
                                         </Flex>}
                                     </Flex>
-                                    <Flex ref={sendLikeButtonRef} onClick={() => {setShowSendLike(!showSendLike)}} bg={'linear-gradient(to right, rgba(51, 153, 255, 1), rgba(0, 102, 204, 1))'} justifyContent={'center'} px='7px'  borderRadius={'0 .5rem .5rem 0'} alignItems={'center'} color='white' _hover={{bg:'linear-gradient(to right, rgba(51, 133, 255, 1),rgba(0, 72, 204, 1))'}}>
+                                    <Flex ref={sendLikeButtonRef} onClick={() => {setShowSendLike(!showSendLike)}}bg={'#222'} justifyContent={'center'} px='7px'  borderRadius={'0 .5rem .5rem 0'} alignItems={'center'} color='white' _hover={{bg:'blackAlpha.800'}}>
                                         <Icon className={ showSendLike? "rotate-icon-up" : "rotate-icon-down"} as={IoIosArrowDown} boxSize={'13px'}/>
                                     </Flex>         
                                 </Flex>
@@ -599,7 +606,6 @@ function TextEditor({clientName, ticketData, updateData, deleteHeaderSection, ta
                          </Flex>
                     </Flex>
             </Box>}
-             
  
             {emojiVisible &&<Box position={'fixed'} bottom={window.innerHeight - (emojiButtonRef?.current?.getBoundingClientRect().top || 0) + 2} left={emojiButtonRef?.current?.getBoundingClientRect().left} zIndex={1000} ref={emojiBoxRef}> <EmojiPicker onEmojiClick={handleEmojiClick}  allowExpandReactions={false}/></Box>}
             </>)

@@ -85,7 +85,7 @@ interface FunctionNodeData {
   motherstructure_args:{ motherstructure:'ticket' | 'client' | 'contact_business', is_customizable:boolean, name:string}
   hardcoded_args:{[key:string]:any}
   error_nodes_ids:{[key:number]:number | null}
-  output_to_variables:{[key:string]:number}
+  outputs_to_variables:{[key:string]:number}
   next_node_index:number | undefined 
   functions: {
     index:number
@@ -195,7 +195,7 @@ export const FirstNode = ({id, data}:{id:string, data:TriggerNodeData}) => {
 
   return (<> 
     <Box width={'250px'} cursor={'default'} bg="gray.50" borderRadius={'.5rem'} borderColor='blue.100' borderWidth={'2px'} p='15px' >
-        <Flex gap='20px' alignItems={'center'}> 
+        <Flex gap='10px' alignItems={'center'}> 
           <Flex justifyContent={'center'} bg='blue.400' alignItems={'center'} p='10px' borderRadius={'full'}> 
             <Icon color='white' boxSize={'20px'} as={IoMdChatbubbles}/>
           </Flex>
@@ -204,18 +204,19 @@ export const FirstNode = ({id, data}:{id:string, data:TriggerNodeData}) => {
         <Box width={'100%'} height={'1px'} mt='20px' mb='20px' bg='gray.300'/>
         <Text fontSize={'.8em'} fontWeight={'medium'} color='gray.600'>{t('Channels')}</Text>
 
-        {data.functions.channelIds.map((channel, index) => (
-          <Flex gap='10px' mt='12px' key={`channel-${index}`} alignItems={'start'}> 
+        {data.functions.channelIds.map((channel, index) => (<> 
+          {channel.channel_type && 
+          <Flex maxW={'220px'}   gap='10px' mt='12px' key={`channel-${index}`} alignItems={'start'}> 
             <Radio isChecked={data.channels.includes(channel.id)} onClick={() => handleToggle(channel.id)}/>
-            <Box mt='-2px'> 
-              <Flex gap='10px' alignItems={'center'}> 
-                <Text fontWeight={'medium'} key={`variable-${index}`} fontSize={'.8em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{channel.name}</Text>
-                <Icon boxSize={'12px'} as={logosMap[channel.channel_type as Channels][0]}/>
-              </Flex>
-              <Text width={'190px'} color='gray.600' key={`variable-${index}`} fontSize={'.7em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{channel.id}</Text>
+            <Box mt='-2px' flex='1' > 
+              <Flex gap='10px' alignItems='center'> 
+                <Text   minWidth={0} maxW={'calc(100% - 37px)'} fontWeight={'medium'} fontSize={'.8em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{channel.name}</Text>
+                <Icon boxSize={'12px'} as={logosMap[channel.channel_type as Channels][0] || ''}/>
+              </Flex> 
+              <Text width={'190px'} color='gray.600'fontSize={'.7em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{channel.id}</Text>
             </Box>
-          </Flex>
-        ))}
+          </Flex>}
+        </>))}
     </Box>
     <Handle position={Position.Right} type='source'style={{visibility:'hidden'}} />
   </>)
@@ -330,7 +331,7 @@ export const ExtactorNode = ({id, data}:{id:string, data:ExtractorNodeData}) => 
           ))}
           
           <Flex flexDir={'row-reverse'}> 
-            <Button mt='15px' leftIcon={<FaPlus/>} size='xs'  onClick={() => data.functions.editExtractor(id, -1, 'add')}>{t('AddData')}</Button>
+            <Button mt='15px' variant={'common'} leftIcon={<FaPlus/>} size='xs'  onClick={() => data.functions.editExtractor(id, -1, 'add')}>{t('AddData')}</Button>
           </Flex>
 
           <Box mt='30px'> 
@@ -600,7 +601,7 @@ export const FunctionNode = ({id, data}:{id:string, data:FunctionNodeData}) => {
       </Flex>}
       <Box height={'28px'} zIndex={0} top={0}  width={'calc(100% + 15px)'}  bg='transparent' position={'absolute'} />
 
-      {(data.error_nodes_ids[keyToEdit] !== null) && <Box height={'2px'} zIndex={0} top='47%'  width={'calc(100% + 20px)'} bg='gray.400' position={'absolute'} />}
+      {(data.error_nodes_ids[keyToEdit] !== null) && <Box height={'2px'} zIndex={0} top='47%'  width={'calc(100% + 16px)'} bg='gray.400' position={'absolute'} />}
       {isExpanded && <Handle id={`handle-${index}`} position={Position.Right} type='source' style={{position:'absolute', right:'-21px', visibility:'hidden'}} />}
 
     </Box>
@@ -620,7 +621,7 @@ export const FunctionNode = ({id, data}:{id:string, data:FunctionNodeData}) => {
               </Flex>
               <Text mt='20px' fontSize='.7em' color='gray.600' fontWeight={'medium'} >{t('FunctionToRun')}:</Text>
               <Text fontSize={data.uuid === ''?'.8em':'.9em'} fontWeight={data.uuid === ''?'normal':'medium'}>{data.uuid === ''?t('NoFunction'):data.functions.functionsDict[data.uuid]}</Text>
-              <Button leftIcon={<FaRegEdit/>} width={'100%'} size='xs' mt='10px' onClick={() => {if (data.uuid !== '') navigate(`/flows-functions/functions/${data.uuid}/${data.functions.flowId}`); else data.functions.setShowNodesAction({nodeId:id, actionType:'function', actionData:{}})}}>{data.uuid === ''?t('SelectFunction'):t('EditFunction')}</Button>
+              <Button leftIcon={<FaRegEdit/>} width={'100%'} size='xs' variant={'common'} mt='10px' onClick={() => {if (data.uuid !== '') navigate(`/flows-functions/functions/${data.uuid}/${data.functions.flowId}`); else data.functions.setShowNodesAction({nodeId:id, actionType:'function', actionData:{}})}}>{data.uuid === ''?t('SelectFunction'):t('EditFunction')}</Button>
               
               {data.uuid !== '' && <>
    
@@ -648,16 +649,16 @@ export const FunctionNode = ({id, data}:{id:string, data:FunctionNodeData}) => {
                       </Fragment>
                   ))}  
                 </>}
-                {(data.output_to_variables && Object.keys(data.output_to_variables).length > 0) && <>
+                {(data.outputs_to_variables && Object.keys(data.outputs_to_variables).length > 0) && <>
                     <Text  mt='10px'  color='gray.600' fontSize={'.7em'} fontWeight={'medium'}>{t('OutputArgs')}</Text>
-                      {Object.keys(data.output_to_variables).map((keyToEdit, index) => (
+                      {Object.keys(data.outputs_to_variables).map((keyToEdit, index) => (
                       <Fragment key={`output-arg-${index}`}> 
                           <Text fontSize={'.7em'}  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'} flex='1' fontWeight={'medium'} >{keyToEdit}</Text>
                       </Fragment>
                   ))} 
                 </>}
                 </>}
-                {data.uuid !== '' && <Button leftIcon={<FaRegEdit/>} width={'100%'} size='xs' mt='10px' onClick={() => data.functions.setShowNodesAction({nodeId:id, actionType:'function', actionData:{}})}>{t('EditOuputVariables')}</Button>}
+                {data.uuid !== '' && <Button  variant={'common'}leftIcon={<FaRegEdit/>} width={'100%'} size='xs' mt='10px' onClick={() => data.functions.setShowNodesAction({nodeId:id, actionType:'function', actionData:{}})}>{t('EditOuputVariables')}</Button>}
 
                 <Text  mt='10px' color='gray.600' fontSize={'.7em'} fontWeight={'medium'}>{t('ErrorNodes')}</Text>
                 {(data.error_nodes_ids) && Object.keys(data.error_nodes_ids).map((keyToEdit, index) => (
@@ -668,7 +669,7 @@ export const FunctionNode = ({id, data}:{id:string, data:FunctionNodeData}) => {
                   <NumberInput flex='1'  mt='5px' width='50%' size={'xs'} value={codeToAdd} onChange={(value) => setCodeToAdd(parseInt(value)) } min={1} max={1000000} clampValueOnBlur={false} >
                     <NumberInputField borderRadius='.5rem'  fontSize={'.7em'} borderColor={'gray.300'} _hover={{ border:'1px solid #CBD5E0'}} _focus={{ px:'11px', borderColor: "rgb(77, 144, 254)", borderWidth: "2px" }} px='12px' />
                   </NumberInput>  
-                  <Button isDisabled={Object.keys(data?.error_nodes_ids || []).includes(String(codeToAdd))} leftIcon={<FaPlus/>}  size='xs' mt='10px' onClick={() => data.functions.editFunctionError(id, 'add', codeToAdd )}>{t('AddError')}</Button>
+                  <Button variant={'common'} isDisabled={Object.keys(data?.error_nodes_ids || []).includes(String(codeToAdd))} leftIcon={<FaPlus/>}  size='xs' mt='10px' onClick={() => data.functions.editFunctionError(id, 'add', codeToAdd )}>{t('AddError')}</Button>
                 </Flex>
           </Box>}
       </Box>
@@ -749,7 +750,7 @@ export const MotherStructureUpdateNode = ({id, data}:{id:string, data:MotherStru
       <Box position='relative' onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}> 
         <Box cursor={'pointer'}  mt='15px' boxShadow={'0 0 5px 1px rgba(0, 0, 0, 0.15)'}p='10px' borderRadius={'.3rem'} borderTopColor={'black'} borderTopWidth='3px' key={`variable-${index}`} onClick={() => data.functions.setShowNodesAction({nodeId:id, actionType:'edit_fields', actionData:{index}})}>
           <Text fontSize='.7em' ><span style={{fontWeight:500}}>{t('Structure')}:</span> {t(action.motherstructure)}</Text>
-          <Text fontSize='.8em'> {t(action.operation) + ' ' + t(action.name).toLocaleLowerCase() + ' ' + t(`${action.operation}_2`) + getActionValue(action.name, action.value)}</Text>
+          <Text fontSize='.8em'> {t(action?.operation || '') + ' ' + t(action.name).toLocaleLowerCase() + ' ' + t(`${action.operation}_2`) + getActionValue(action.name, action.value)}</Text>
         </Box>
         {(isHovering) && 
           <Flex alignItems={'center'} position={'absolute'} borderRadius={'full'} p='3px' top={'-7px'} zIndex={100} bg='white' boxShadow={'0 0 5px 1px rgba(0, 0, 0, 0.15)'} right={'-7px'} justifyContent={'center'} cursor={'pointer'} onClick={() => data.functions.editFieldAction(id, index, 'remove')}>
@@ -758,8 +759,6 @@ export const MotherStructureUpdateNode = ({id, data}:{id:string, data:MotherStru
       </Box>
     )
   }
-
-  console.log(data)
 
   //FRONT
   return (<> 
@@ -776,7 +775,7 @@ export const MotherStructureUpdateNode = ({id, data}:{id:string, data:MotherStru
                {data.updates.map((action, index) => (
                 <ActionComponent action={action} key={`action-${index}`} index={index}/>
               ))}
-              <Button mt='15px' leftIcon={<FaPlus/>} size='sm' width={'100%'} onClick={() => data.functions.editFieldAction(id, -1, 'add')}>{t('AddAction')}</Button>
+              <Button variant={'common'} mt='15px' leftIcon={<FaPlus/>} size='sm' width={'100%'} onClick={() => data.functions.editFieldAction(id, -1, 'add')}>{t('AddAction')}</Button>
             </Box>}
       </Box>
       <Handle position={Position.Left} type='target' style={{position:'absolute', top:'30px', visibility:'hidden'}} />
@@ -960,7 +959,7 @@ const BranchesComponent = ({id, branches, isExpanded, setShowNodesAction, editBr
       </Flex>}
       <Box height={'28px'} zIndex={0} top={0}  width={'calc(100% + 15px)'}  bg='transparent' position={'absolute'} />
 
-      {(branch.next_node_index !== null) && <Box height={'2px'} zIndex={0} top='47%'  width={'calc(100% + 20px)'} bg='gray.400' position={'absolute'} />}
+      {(branch.next_node_index !== null) && <Box height={'2px'} zIndex={0} top='47%'  width={'calc(100% + 16px)'} bg='gray.400' position={'absolute'} />}
       {isExpanded && <Handle id={`handle-${index}`} position={Position.Right} type='source' style={{position:'absolute', right:'-21px', visibility:'hidden'}} />}
     </Box>)
   }
@@ -978,7 +977,7 @@ const BranchesComponent = ({id, branches, isExpanded, setShowNodesAction, editBr
           {branches.map((branch, index) => (
               <BranchComponent branch={branch} index={index} key={`branch-${index}}`}/>
           ))}
-          <Button mt='10px' size='xs' onClick={() => editBranch(id, -1, 'add')}>{t('AddBranch')}</Button> 
+          <Button variant={'common'} mt='10px' size='xs' onClick={() => editBranch(id, -1, 'add')}>{t('AddBranch')}</Button> 
         </Box>
      </Box>
     
@@ -1027,7 +1026,7 @@ const MessagesComponent = ({id, messages, setShowNodesAction, editMessage }:{id:
         {messages.map((message, index) => (
           <EditorComponent message={message} key={`message-${index}`} index={index}/>
         ))}
-        <Button onClick={() => editMessage(id, -1, 'add')} mt='10px' width={'100%'} leftIcon={<FaPlus/>} size='sm' >{t('AddMessage')}</Button>
+        <Button variant={'common'} onClick={() => editMessage(id, -1, 'add')} mt='10px' width={'100%'} leftIcon={<FaPlus/>} size='sm' >{t('AddMessage')}</Button>
     </Box>
   )
 }
@@ -1035,11 +1034,14 @@ const MessagesComponent = ({id, messages, setShowNodesAction, editMessage }:{id:
 //CUSTOM EDGE
 export const CustomEdge = ({id, sourceX, sourceY, targetX, targetY}: any) => {
   
+  //IS HOVERING VARIABLE
+  const [isHovered, setIsHovered] = useState(false)
+
   //STYLE
-  const style = { stroke: '#A0AEC0', strokeWidth: 2 }
+  const style = { stroke: isHovered ? 'rgba(59, 90, 246)' : '#A0AEC0', strokeWidth: 2 }
 
   //X POSITION OF THE MIDDLE
-  const midX = sourceX  - 5 + Math.abs(targetX - sourceX - 5) / 2
+  const midX = sourceX  - 3 + Math.abs(targetX - sourceX - 5) / 2
 
   //RADIUS OF THE CURVE
   const curveOffset = 10
@@ -1052,9 +1054,13 @@ export const CustomEdge = ({id, sourceX, sourceY, targetX, targetY}: any) => {
   const edgesSeparator = 20
   const edgesTopMargin = -100
 
-  const path = isNextNodeBefore ? 
+  const path = 
+  (Math.abs(sourceY - targetY) < 20) ?
+  `M${sourceX - 5},${sourceY + 0.4} H${targetX}`
+  :
+  isNextNodeBefore ? 
   `
-    M${sourceX - 5},${sourceY} 
+    M${sourceX - 5},${sourceY + 0.4} 
     H${(sourceX + edgesSeparator) - curveOffset} 
     Q${sourceX + edgesSeparator},${sourceY} ${sourceX + edgesSeparator},${sourceY -  curveOffset} 
     V${edgesTopMargin + curveOffset} 
@@ -1066,11 +1072,8 @@ export const CustomEdge = ({id, sourceX, sourceY, targetX, targetY}: any) => {
     H${targetX}
   `
   :
-  (Math.abs(sourceY - targetY) < 10) ?
-  `M${sourceX},${sourceY} H${targetX}`
-  :
   `
-    M${sourceX - 5},${sourceY} 
+    M${sourceX - 5},${sourceY + 0.4} 
     H${midX - curveOffset} 
     Q${midX},${sourceY} ${midX},${sourceY + (isNextNodeDown?-1:1) *  curveOffset} 
     V${targetY + (isNextNodeDown?1:-1) * curveOffset} 
@@ -1081,10 +1084,10 @@ export const CustomEdge = ({id, sourceX, sourceY, targetX, targetY}: any) => {
   <>
     <defs>
       <marker id={'custom-arrow'} markerWidth="8"  markerHeight="8" refX="3" refY="3" orient="auto" markerUnits="strokeWidth">
-        <path d="M0,0 L0,6 L4,3 z" fill="#A0AEC0" />
+        <path d="M0,0 L0,6 L4,3 z" fill={isHovered ? 'rgba(59, 90, 246)' : '#A0AEC0'} />
       </marker>
     </defs>
-    <path id={id} style={style} className="react-flow__edge-path" d={path}  markerEnd={`url(#${'custom-arrow'})`}/>
+    <path id={id} style={style} className="react-flow__edge-path" d={path}  markerEnd={`url(#${'custom-arrow'})`} onMouseEnter={() => setIsHovered(true)}onMouseLeave={() => setIsHovered(false)}/>
   </>)
 }
 

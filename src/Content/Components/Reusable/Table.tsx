@@ -5,14 +5,13 @@
 //REACT
 import { useState, useMemo, useRef, useEffect, Fragment, Dispatch, SetStateAction } from "react"
 //FRONT
-import { Flex, Box, Text, IconButton,} from '@chakra-ui/react'
+import { Flex, Box, Text, IconButton, Checkbox } from '@chakra-ui/react'
 import '../styles.css'
 //COMPONENTS
 import CustomCheckbox from "./CheckBox"
 //ICONS
 import { IoMdArrowDropdown, IoMdArrowDropup } from 'react-icons/io'
 //TYPING
-import { columnsTicketsMap, TicketColumn } from "../../Constants/typing" 
 import { BsTrash3Fill } from "react-icons/bs"
 
 //TYPING
@@ -22,19 +21,21 @@ interface TableProps{
     noDataMessage:string 
     columnsMap:{[key:string]:[string, number]}
     requestSort?:(column: string) => void
+    getSortIcon?:(column: string) => boolean | null
     excludedKeys?:string[]
     onClickRow?:(value:any, index:number) => void
     onlyOneSelect?:boolean
     selectedElements?:number[]
     setSelectedElements?:Dispatch<SetStateAction<number[]>>
-    onSelectAllElements?:(isSeleceted:boolean) =>void
+    onSelectAllElements?:() =>void
     currentIndex?:number
     deletableFunction?:(value:any, index:number) => void
     height?:number 
 }
     
 //MAIN FUNCTION
-const Table = ({ data, CellStyle, noDataMessage, requestSort,  columnsMap, excludedKeys = [], onClickRow, selectedElements, onlyOneSelect = false, setSelectedElements, onSelectAllElements, currentIndex = -1, deletableFunction, height }:TableProps ) =>{
+const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  columnsMap, excludedKeys = [], onClickRow, selectedElements, onlyOneSelect = false, setSelectedElements, onSelectAllElements, currentIndex = -1, deletableFunction, height }:TableProps ) =>{
+
 
     //CALCULATE DYNAMIC HEIGHT OF TABLE
     const tableBoxRef = useRef<HTMLDivElement>(null)
@@ -51,7 +52,7 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort,  columnsMap, exclu
         updateHeight()
         window.addEventListener('resize', updateHeight)
         return () => {window.removeEventListener('resize', updateHeight)}
-    }, [selectedElements])
+    }, [selectedElements, headerRef.current])
 
     //CALCULATE INTERNAL SORTING
     const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' | null }>({key: '', direction: null})
@@ -76,18 +77,21 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort,  columnsMap, exclu
     useEffect(() => {
         const handleKeyDown = (event:KeyboardEvent) => {
             if (event.code === 'ArrowUp') {
+                event.preventDefault()
                 setSelectedIndex(prev => {
                     const newIndex = Math.max(prev - 1, 0)
                     scrollIntoView(newIndex)
                     return newIndex
                   })
             }
-            else if (event.code === 'ArrowDown') 
-             setSelectedIndex(prev => {
-                const newIndex = Math.min(prev + 1, (data?.length || 0) - 1);
-                scrollIntoView(newIndex)
-                return newIndex
-              })
+            else if (event.code === 'ArrowDown') {
+                event.preventDefault()
+                setSelectedIndex(prev => {
+                    const newIndex = Math.min(prev + 1, (data?.length || 0) - 1);
+                    scrollIntoView(newIndex)
+                    return newIndex
+                })
+            }
             else if (event.code === 'Space' && data && 0 <= selectedIndex && selectedIndex   <= data.length - 1 && selectedElements) {
                 handleCheckboxChange(selectedIndex, !selectedElements.includes(selectedIndex))
             }
@@ -95,27 +99,28 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort,  columnsMap, exclu
         }
         window.addEventListener('keydown', handleKeyDown)
         return () => {window.removeEventListener('keydown', handleKeyDown)}
-    }, [selectedElements, selectedIndex, data])
+    }, [selectedIndex, data])
 
 
     //OBTAIN COLUMNS
     const columns = useMemo(() => {
-        return data?.length
-          ? Object.keys(data[0]).filter((key) => ![...excludedKeys].includes(key))
-          : []
+        if (!data?.length) return []
+        const keys = Object.keys(data[0]).filter((key) => ![...excludedKeys].includes(key))
+        const orderedColumns = keys
+          .filter(key => key in columnsMap)
+          .sort((a, b) => Object.keys(columnsMap).indexOf(a) - Object.keys(columnsMap).indexOf(b))
+        const otherColumns = keys.filter(key => !(key in columnsMap))
+        return [...orderedColumns, ...otherColumns]
       }, [data])
-    const totalWidth = useMemo(() => {return columns.reduce((acc, value) => acc + columnsTicketsMap[value as TicketColumn] + 20, 0) + 20}, [columns])
 
-    //SELECT ROWS
-    const onInternalSelectAllElements = (isSelected:boolean) => {
-        if (onSelectAllElements) onSelectAllElements(isSelected)
-        else {
-            if (setSelectedElements &&  (!isSelected || onlyOneSelect)) setSelectedElements([])
-            else if (isSelected && setSelectedElements) setSelectedElements(Array.from(Array(data.length).keys()))
-        }
-    }
+    const totalWidth = useMemo(() => {
+        return columns.reduce((acc, value) => {
+            const columnWidth = columnsMap?.[value]?.[1] || 180
+          return acc + columnWidth + 20
+        }, 0) + 20 + (selectedElements ? 58 : 0) + (deletableFunction ? 100 : 0)
+      }, [columns])
+      
     const handleCheckboxChange = (element:number, isChecked:boolean) => {
-
         if (selectedElements && setSelectedElements) {
             if (isChecked) {
                 if (onlyOneSelect) setSelectedElements([element])
@@ -124,16 +129,16 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort,  columnsMap, exclu
             else setSelectedElements(prevElements => prevElements.filter(el => el !== element))
         }
     }
-
     //SORT LOGIC FOR TABLES THAT HAVE ALL THE AVAILABLE DATA
     const requestInternalSort = (column: string) => {
         let direction: 'asc' | 'desc' = 'asc'
         if (sortConfig.key === column && sortConfig.direction === 'asc') direction = 'desc'
-        setSortConfig({ key: column, direction })
-
         if (requestSort) requestSort(column)
+        else setSortConfig({ key: column, direction })
+
      }
-    const getSortIcon = (column: string) => {
+    const getInternalSortIcon = (column: string) => {
+        if (getSortIcon) return getSortIcon(column)
         if (sortConfig.key === column) {
             if (sortConfig.direction === 'asc') return true
             else if (sortConfig.direction === 'desc') return false
@@ -154,50 +159,57 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort,  columnsMap, exclu
     }, [data, sortConfig])
 
     const dataToWork = (requestSort)? data : sortedData
-
-    console.log(height)
+ 
     //FRONT
     return(
-        <> 
+        <>  
        
         <Box  width={'100%'} mt='15px' overflowX={'scroll'}>    
         {(!data || dataToWork.length === 0) ? 
-            <Box borderRadius={'.5rem'} width='100%' bg='gray.50' borderColor={'gray.200'} borderWidth={'1px'} p='15px'>    
+            <Box bg='#f1f1f1' borderRadius={'.5rem'} width='100%' borderColor={'gray.200'} borderWidth={'1px'} p='15px'>    
                 <Text fontWeight={'medium'} fontSize={'1.1em'}>{noDataMessage}</Text>
             </Box>: 
-            <Box borderRadius={'.5em'} bg='gray.50'  minWidth={`${totalWidth}px`}   >    
-                <Flex position={'sticky'}  borderTopRadius={'.5rem'} minWidth={`${totalWidth}px`}  borderColor={'gray.200'} borderWidth={'1px'} gap='20px' ref={headerRef} alignItems={'center'}  color='gray.600' p='10px' fontSize={'1em'} bg='gray.100' > 
+            <Box borderRadius={'.5em'}  minWidth={`${totalWidth}px`}   >    
+                <Flex position={'sticky'}  borderTopRadius={'.5rem'} minWidth={`${totalWidth}px`}  borderColor={'gray.200'} borderWidth={'1px'} gap='20px' ref={headerRef} alignItems={'center'}  color='gray.600' p='10px' fontSize={'1em'} bg='brand.gray_2' > 
                     
-                    {selectedElements && <CustomCheckbox isChecked={selectedElements.length >= data.length} onChange={() => onInternalSelectAllElements(selectedElements.length >= data.length)}/>}
-                    {Object.keys(columnsMap).filter(column => column !== 'id').map((column) => (
+                    {selectedElements && 
+                    <Box onClick={(e) => e.stopPropagation()}> 
+                     <CustomCheckbox  id={`checkbox-${-1}`} isChecked={selectedElements.length >= dataToWork.length} onChange={() =>  {if (onSelectAllElements) (onSelectAllElements)()}}/>
+                    </Box>}
+                    {columns.filter(column => column !== 'id').map((column) => (
+    
                         <Fragment key={`header-${column}`}>
                             {column in data[0] &&
-                                <Flex alignItems={'center'} flex={`${columnsMap[column][1]/10} 0 ${columnsMap[column][1]}px`}> 
-                                <Text cursor='pointer' onClick={() => requestInternalSort(column)}>{columnsMap[column][0]}</Text>
-                                {getSortIcon(column) === null ? null : getSortIcon(column) ? <IoMdArrowDropup size='20px' /> : <IoMdArrowDropdown size='20px' />}
+                            <Flex minW={0}  alignItems={'center'} flex={`${(columnsMap?.[column]?.[1] || 180)/10} 0 ${(columnsMap?.[column]?.[1] || 180)}px`}> 
+                                <Text color='gray.600' cursor='pointer' onClick={() => requestInternalSort(column)}>{columnsMap?.[column]?.[0] || column}</Text>
+                                {getInternalSortIcon(column) === null ? null : getInternalSortIcon(column) ? <IoMdArrowDropup size='20px' /> : <IoMdArrowDropdown size='20px' />}
                             </Flex>}
-                        </Fragment>))
-                    }
+                        </Fragment>
+                    ))}
                     {deletableFunction && <Flex width={'60px'}/>}
                 </Flex>
                  <Box minWidth={`${totalWidth}px`} overflowX={'hidden'} ref={tableBoxRef} overflowY={'scroll'} maxH={height?height:boxHeight}> 
                     {dataToWork.map((row:any, index:number) => {  
                         
                         return (
-                            <Flex height={'50px'} data-index={index}  position={'relative'} overflow={'hidden'} gap='20px' minWidth={`${totalWidth}px`} borderRadius={index === data.length - 1?'0 0 .5rem .5rem':'0'} borderWidth={'0 1px 1px 1px'}  cursor={onClickRow?'pointer':'not-allowed'} onClick={() => {if (onClickRow) onClickRow(row, index)}} key={`row-${index}`}  bg={selectedIndex === index ? 'blue.50':(selectedElements || []).includes(index)?'blue.100':index%2 === 1?'#FCFCFC':'white'} alignItems={'center'}  fontSize={'.9em'} color='black' p='10px' borderColor={'gray.200'} _hover={{bg:(selectedElements || [] ).includes(index)?'blue.100':'blue.50'}}  > 
+                            <Flex height={'50px'} data-index={index}  position={'relative'} overflow={'hidden'} gap='20px' minWidth={`${totalWidth}px`} borderRadius={index === data.length - 1?'0 0 .5rem .5rem':'0'} borderWidth={'0 1px 1px 1px'}  cursor={onClickRow?'pointer':'normal'} onClick={() => {if (onClickRow) onClickRow(row, index)}} key={`row-${index}`}  bg={selectedIndex === index ? 'blue.50':(selectedElements || []).includes(index)?'blue.100':index%2 === 1?'#FCFCFC':'white'} alignItems={'center'}  fontSize={'.9em'} color='black' p='10px' borderColor={'gray.200'} _hover={{bg:(selectedElements || [] ).includes(index)?'blue.100':'blue.50'}}  > 
                                 {selectedIndex === index && <Box position='absolute' left={0} top={0} height={'100%'} width={'2px'} bg='blue.400'/>}
                                 {selectedElements &&
-                                <Flex onClick={(e) => e.stopPropagation()}> 
-                                    <CustomCheckbox onChange={() => handleCheckboxChange(index, !selectedElements.includes(index))} isChecked={selectedElements.includes(index)} />
-                                 </Flex>}
-                                {Object.keys(columnsMap).map((column:string, index:number) => (
-                                    <Fragment key={`header-${index}`}>
-                                        {(!(excludedKeys.includes(column)) && column in row) && 
-                                        <Flex minW={0} alignItems={'center'} flex={`${(columnsMap?.[column][1] || 0)/10} 0 ${(columnsMap?.[column][1] || 0)}px`}> 
-                                            <CellStyle column={column} element={row[column]}/>
-                                        </Flex>}
-                                    </Fragment>))}
-                                {(deletableFunction) && 
+                                    <Flex onClick={(e) => e.stopPropagation()}> 
+                                        <CustomCheckbox id={`checkbox-${index}`}  onChange={() => handleCheckboxChange(index, !selectedElements.includes(index))} isChecked={selectedElements.includes(index)} />
+                                    </Flex>}
+                                    {columns.map((column:string, index:number) => (
+                                        <Fragment key={`header-${index}`}>
+                                            {(!(excludedKeys.includes(column)) && column in row) && 
+                                                <Flex minW={0}  alignItems={'center'}  flex={`${(columnsMap?.[column]?.[1] || 180)/10} 0 ${(columnsMap?.[column]?.[1] || 180)}px`}> 
+                                                    {(columnsMap?.[column] !== undefined) ?
+                                                    <CellStyle column={column} element={row[column]}/>
+                                                    :
+                                                    <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{String(row[column])}</Text>
+                                                    }
+                                             </Flex>}
+                                        </Fragment>))}
+                                {deletableFunction && 
                                     <Flex width={'60px'}  onClick={(e) => e.stopPropagation()}>
                                         <IconButton size={'sm'} color={'red.600'} bg='transparent' _hover={{bg:'red.100'}} icon={<BsTrash3Fill/>} aria-label="delete-row" onClick={() => deletableFunction(row, index)}/>
                                     </Flex>

@@ -11,7 +11,11 @@ export interface Organization {
     name: string
     platform_type: string
     is_admin: boolean
-  }
+    calls_status:'connected' | 'out' | 'disconnected',
+    avatar_image_url:string
+    alias:string
+    groups:{id:number, name:string}[]  
+}
 export interface userInfo {
     name: string
     surname: string
@@ -108,19 +112,20 @@ export interface ClientTicketsProps{
 
 //TICKET SECTION
 export interface TicketData {
-    'id': number
-    'local_id': number
-    'user_id':number
-    'conversation_id': number
-    'title': string
-    'channel_type': string
-    'created_at': string
-    'updated_at': string
-    'solved_at': string
-    'subject': string
-    'urgency_rating': number
-    'status': 'new' | 'open' |'solved' | 'pending' | 'closed'
-    'unseen_changes': boolean
+    id: number
+    local_id: number
+    user_id:number
+    conversation_id: number
+    title: string
+    channel_type: string
+    created_at: string
+    updated_at: string
+    solved_at: string
+    subject: string
+    urgency_rating: number
+    status: 'new' | 'open' |'solved' | 'pending' | 'closed'
+    unseen_changes: boolean
+    custom_attributes:any[]
 }
 
 
@@ -204,6 +209,8 @@ export interface ClientData {
     notes: string
     labels: string
     is_blocked:boolean
+    custom_attributes:any[]
+
   }
 export interface Clients {
     'total_clients':number
@@ -235,11 +242,12 @@ export interface ContactBusinessesProps {
     'page_data':ContactBusinessesTable[]
 }
 export interface ContactBusiness {
-    'name': string
-    'notes': string
-    'labels': string
-    'created_at':string
-    'last_interaction_at': string
+    name: string
+    notes: string
+    labels: string
+    created_at:string
+    last_interaction_at: string
+    custom_attributes:any[]
 }
 
 //FLOWS
@@ -296,8 +304,8 @@ export type FieldAction = {
     motherstructure:'ticket' | 'client' | 'contact_business'
     is_customizable:boolean
     name:string
-    operation:string
-    value:any
+    operation?:string
+    value?:string
 }
 export type FunctionType = {
     uuid:string
@@ -306,9 +314,8 @@ export type FunctionType = {
     hardcoded_args:{[key:string]:string}
     error_nodes_ids:{[key:number]:number | null}
     next_node_index:string | null
-    output_to_variables:{[key:string]:number}
+    outputs_to_variables:{[key:string]:number}
 }
-
 
 //MESSAGES
 export type MessagesProps = {
@@ -356,7 +363,7 @@ export const contactDicRegex:{[key in ContactChannel]:[string, RegExp, number, C
   }
 
 //SETTINGS
-export type IconKey = 'organization' | 'rules' | 'user' | 'actions' | 'channels' | 'integrations' | 'main'
+export type IconKey = 'organization' | 'users' | 'support' | 'workflows' | 'actions' | 'channels' | 'integrations' | 'main'
 export type SubSectionProps = string[][]
 export type SectionsListProps = {[key in IconKey]: string}
 
@@ -390,3 +397,28 @@ export interface configProps {
 
 //CONDITIONS TYPES
 export type DataTypes = 'bool' | 'int' | 'float' | 'str' | 'timestamp' | 'list'
+
+//CONTENT TYPES
+export interface ContentData {
+    uuid: string 
+    type: 'internal_article' | 'public_article' | 'folder' | 'pdf' | 'text' | 'web'
+    title: string
+    folder?:string[]
+    description?: string
+    language: string
+    is_available_to_tilda: boolean
+    created_at: string
+    updated_at: string
+    created_by: number
+    updated_by: number
+    tags: string[]
+    public_article_help_center_collections:string[]
+    public_article_uuid: string
+    public_article_status: 'active' | 'draft'
+
+    public_article_content?: {text: string}
+    internal_article_content?: {text: string},
+    pdf_content?: {url: string, text: string},
+    website_content?: {pages: {url: string, text: string}}
+}
+

@@ -8,15 +8,19 @@ import { useState, useEffect } from 'react'
 import { Flex, Text, Box, Image, IconButton } from '@chakra-ui/react'
 //ICONS
 import { RxCross2 } from 'react-icons/rx'
+import { useTranslation } from 'react-i18next'
 
 
 interface ImageUploadProps {
-  id: number
+  id: number | string
   initialImage: string | undefined
-  onImageUpdate: (file: File | null) => void;
+  onImageUpdate: (file: File | null) => void
+  maxImageSize?:number
 }
 //MAIN FUNCTION
-const ImageUpload = ({ id, initialImage, onImageUpdate }:ImageUploadProps) => {
+const ImageUpload = ({ id, initialImage, onImageUpdate, maxImageSize = 100}:ImageUploadProps) => {
+
+  const { t } = useTranslation('settings')
 
   //IMAGES VARIABLES
   const [image, setImage] = useState<File | undefined | string>(initialImage)
@@ -36,14 +40,14 @@ const ImageUpload = ({ id, initialImage, onImageUpdate }:ImageUploadProps) => {
         if (file) {
         const validTypes = ['image/jpeg', 'image/png', 'image/gif']
         if (!validTypes.includes(file.type)) {
-            setError('Solo se permiten archivos JPEG, PNG o GIF.')
+            setError(t('FormatError'))
             setImage(undefined)
             setImagePreview(undefined)
             return
         }
-        const maxSize = 100 * 1024
+        const maxSize = maxImageSize * 1024
         if (file.size > maxSize) {
-            setError('El archivo debe de pesar menos de 100 KB.')
+            setError(t('SizeError', {maxSize:`${maxImageSize}KB`}))
             setImage(undefined)
             setImagePreview(undefined)
             return
@@ -75,8 +79,8 @@ const ImageUpload = ({ id, initialImage, onImageUpdate }:ImageUploadProps) => {
     //FRONT
     return (<> 
     <input type="file" accept="image/jpeg, image/png, image/gif" onChange={handleImageChange} style={{display:'none'}} id={`image-upload-${id}`} />
-        <Flex onClick={handleContainerClick} width="100%" alignItems="center" justifyContent="space-between" height="100px" borderRadius=".5em" borderColor="gray.300" borderWidth="1px" bg="gray.50" cursor="pointer" position="relative" p='20px'>
-          {!image && <Text textAlign={'center'} fontSize={'.9em'} color='blue.500'>Arrastre los archivos aquí o haga click para cargarlos</Text>}
+        <Flex onClick={handleContainerClick} width="100%" alignItems="center" justifyContent="space-between" height="100px" borderRadius=".5em" borderColor="gray.300" borderWidth="1px" bg="brand.gray_2" cursor="pointer" position="relative" p='20px'>
+          {!image && <Text textAlign={'center'} fontSize={'.9em'} color='brand.text_blue'>{t('DragImage')}</Text>}
           {image && (
             <>
               <Flex gap={'20px'}>

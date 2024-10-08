@@ -1,12 +1,14 @@
 import { Flex } from '@chakra-ui/react'
 import '../styles.css'
 
-const CustomCheckbox = ({onChange, isChecked}:{onChange:() => void, isChecked:boolean}) => {
+const CustomCheckbox = ({id,  onChange, isChecked}:{id:string, onChange:() => void, isChecked:boolean}) => {
+    
+    
     return (
-        <Flex mt='4px' onClick={onChange} > 
+        <Flex  mt='4px'  > 
             <div className="checkbox-wrapper-4">
-                <input className="inp-cbx" id="morning" type="checkbox"  checked={isChecked} readOnly />
-                <label className="cbx" htmlFor="morning"><span>
+                <input onChange={onChange} onFocus={(e) => e.stopPropagation()} className="inp-cbx" id={id} type="checkbox"  checked={isChecked} readOnly />
+                <label className="cbx" htmlFor={id}><span>
                 <svg width="12px" height="10px">
                     <use xlinkHref="#check-4"></use>
                 </svg></span></label>

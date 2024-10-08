@@ -10,8 +10,9 @@ import { Text, Box, Skeleton, Flex, Button } from "@chakra-ui/react"
 import ChannelInfo from "./Components/Channelnfo"
 import GoogleLoginButton from "./SignUp-Buttons/GoogleLoginButton"
 import GetMatildaConfig from "./GetMatildaConfig"
-import EditText from "../../../Components/Reusable/EditText"
 import LoadingIconButton from "../../../Components/Reusable/LoadingIconButton" 
+//ICONS
+import { BsTrash3Fill } from "react-icons/bs"
 //TYPING
 import { configProps } from "../../../Constants/typing"
 
@@ -72,47 +73,48 @@ function Google () {
             matildaConfigRef.current = matildaConfig
             }
         }
-    return(<>
+    return(
+    <Skeleton isLoaded={ data !== null}>
+        <Box> 
+            <Flex justifyContent={'space-between'}> 
+                <Text fontSize={'1.4em'} fontWeight={'medium'}>Google Business</Text>
+                {!(data?.display_id === '') && <Button variant={'delete_section'} leftIcon={<BsTrash3Fill/>} size='sm'>{t('DeleteAccount')}</Button>}
+            </Flex>            
+            <Box height={'1px'} width={'100%'} bg='gray.300' mt='1vh'/>
+        </Box>
 
-        <Flex justifyContent={'space-between'}> 
-            <Text fontSize={'1.4em'} fontWeight={'medium'}>Google Business</Text>
-            {!(data?.display_id === '') && <Button size='sm'  isDisabled={(JSON.stringify(dataRef.current) === JSON.stringify(data)) && (JSON.stringify(matildaConfigRef.current) === JSON.stringify(matildaConfig))} onClick={saveChanges}>{waitingSend?<LoadingIconButton/>:t('SaveChanges')}</Button>}
-        </Flex>            
-        <Box height={'1px'} width={'100%'} bg='gray.300' mt='1vh' mb='5vh'/>
-    
-
-        <Skeleton isLoaded={ data !== null}> 
-
+ 
         {data?.display_id === '' ?
-        <Flex height={'100%'} top={0} left={0} width={'100%'} position={'absolute'} alignItems={'center'} justifyContent={'center'}> 
-            <Box maxW={'580px'} textAlign={'center'}> 
-                <Text fontWeight={'medium'} fontSize={'2em'} mb='2vh'>{t('IntegrateGoogle')}</Text>               
-                <Text fontSize={'1em'} color={'gray.600'} mb='2vh'>{t('IntegrateGoogleDes')}</Text>               
-                <GoogleLoginButton/>
-            </Box>
-        </Flex>
+            <Flex height={'100%'} top={0} left={0} width={'100%'} position={'absolute'} alignItems={'center'} justifyContent={'center'}> 
+                <Box maxW={'580px'} textAlign={'center'}> 
+                    <Text fontWeight={'medium'} fontSize={'2em'} mb='2vh'>{t('IntegrateGoogle')}</Text>               
+                    <Text fontSize={'1em'} color={'gray.600'} mb='2vh'>{t('IntegrateGoogleDes')}</Text>               
+                    <GoogleLoginButton/>
+                </Box>
+            </Flex>
         :
         <>
-            <Box bg='white' p='1vw' borderRadius={'.7rem'}  boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.1)'} > 
-                <Flex justifyContent={'space-between'} > 
-                    <Box width={'100%'} maxWidth={'600px'}> 
-                        <EditText value={data?.display_id} maxLength={100} nameInput={true} size='md'fontSize='1.5em'  setValue={(value:string) => setData(prev => ({...prev as WhatsappProps, display_id:value}))}/>
-                    </Box>
-                </Flex>
-                <Box height={'1px'} mt='2vh'mb='2vh' width={'100%'} bg='gray.300'/>
-                <Flex px='7px'  width={'100%'} gap='5vw'> 
-                    <Box flex='1'> 
+            <Flex flex='1' overflow={'hidden'} width={'100%'} gap='5vw'> 
+                <Box flex='1' pt='4vh' overflow={'scroll'}> 
+                    <Skeleton isLoaded={ data !== null}> 
                         <ChannelInfo value={data?.credentials.google_business_account_id || ''} title={t('AccountId')} description={t('AccountIdDes')}/>
                         <ChannelInfo hide={true}  value={data?.credentials.access_token || ''} title={t('AccessToken')} description={t('AccessTokenDes')}/>
-                    </Box>
-                    <Box flex='1'> 
-                        <GetMatildaConfig configDict={matildaConfig} updateData={setMatildaConfig} />
-                    </Box>                        
-                </Flex>
+                    </Skeleton>
                 </Box>
-        </>}
-    </Skeleton>
-    </>)
-}
-
+                <Box flex='1'> 
+                    <Skeleton isLoaded={ matildaConfig !== null}> 
+                        <GetMatildaConfig configDict={matildaConfig} updateData={setMatildaConfig} />
+                    </Skeleton> 
+                </Box>                        
+            </Flex>
+            <Box> 
+                <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='2vh'/>
+                <Flex flexDir={'row-reverse'}> 
+                    <Button  variant={'common'}size='sm'  isDisabled={(JSON.stringify(dataRef.current) === JSON.stringify(data)) && (JSON.stringify(matildaConfigRef.current) === JSON.stringify(matildaConfig))} onClick={saveChanges}>{waitingSend?<LoadingIconButton/>:t('SaveChanges')}</Button>
+                </Flex>
+            </Box>
+        </>} 
+    </Skeleton>)
+    }
+ 
 export default Google

@@ -71,7 +71,7 @@ function Shortcuts () {
         <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='5vh'/>
         <Box width={'60%'} mt='2vh' minW={'500px'}> 
             {currentShorcuts?.map((option, index) => (
-                <Flex key={`option-${index}`} mt={index === 0?'0':'1vh'} justifyContent={'space-between'} alignItems={'center'} shadow='sm' p='5px' borderRadius='.5rem' borderColor="gray.200" borderWidth="1px" bg="gray.50">
+                <Flex key={`option-${index}`} mt={index === 0?'0':'1vh'} justifyContent={'space-between'} alignItems={'center'} shadow='sm' p='5px' borderRadius='.5rem' borderColor="gray.200" borderWidth="1px"  bg='brand.gray_2'>
                     <Text fontSize={'.9em'}>{option}</Text>
                     <IconButton color={'red'} onClick={() => removeOption(index)} aria-label="remove-option" icon={<RxCross2  size='15px'/>} size="xs" border='none' bg='transparent'  />
                 </Flex>

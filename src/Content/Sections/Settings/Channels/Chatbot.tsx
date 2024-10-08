@@ -105,8 +105,9 @@ function Chatbot () {
         const [newOption, setNewOption] = useState<string>('')
 
         return(<Box mt='1vh'>
-            {!showAddOption && <Flex   flexDir={'row-reverse'}>
-                <Button leftIcon={<FaPlus/>} size='xs' onClick={() => setShowAddOption(!showAddOption)}>{t('AddShortcutWeb')}</Button>
+            {!showAddOption && 
+            <Flex flexDir={'row-reverse'}>
+                <Button variant={'common'} leftIcon={<FaPlus/>} size='xs' onClick={() => setShowAddOption(!showAddOption)}>{t('AddShortcutWeb')}</Button>
             </Flex>}
             {showAddOption && 
             <Flex> 
@@ -124,6 +125,8 @@ function Chatbot () {
              if (response?.status === 200){
               let chatChannel:any 
               response.data.map((cha:any) => {if (cha.channel_type === 'webchat')  chatChannel = cha})
+              console.log(response.data)
+
               if (chatChannel) {
                 channelDict.current = chatChannel
                 const responseChat = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/${chatChannel?.id}`, auth})
@@ -153,138 +156,140 @@ function Chatbot () {
         chatbotDataRef.current = chatBotData
         matildaConfigRef.current = matildaConfig
     }
+
     return(<>
+        <Box> 
+            <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('WebConfig')}</Text>    
+            <Box height={'1px'} width={'100%'} bg='gray.300' mt='1vh'  />
+        </Box>
 
-    
-        <Flex justifyContent={'space-between'}> 
-            <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('WebConfig')}</Text>
-            <Button size='sm'  isDisabled={(JSON.stringify(chatbotDataRef.current) === JSON.stringify(chatBotData)) && (JSON.stringify(matildaConfigRef.current) === JSON.stringify(matildaConfig))} onClick={sendChatBotCofig}>{waitingSend?<LoadingIconButton/>:t('SaveChanges')}</Button>
-        </Flex>            
-        <Box height={'1px'} width={'100%'} bg='gray.300' mt='1vh' mb='2vh'/>
-    
-        <Skeleton isLoaded={!waitingInfo}> 
-            <Flex flexDir={'column'} > 
-                <Flex gap='80px' flex='1' overflow={'scroll'} ref={containerRef} px='2px' > 
-                    <Box flex='1' > 
+        
+ 
+            <Flex flex='1' overflow={'hidden'} gap='80px' px='2px' > 
+                    <Box flex='1' pt='4vh'ref={containerRef} overflow={'scroll'}> 
+                        <Skeleton isLoaded={chatBotData !== null}> 
 
-                    <Text fontWeight={'medium'}>{t('CompanyName')}</Text>
-                    <Text fontSize={'.8em'} color='gray.500'>{t('CompanyNameDes')}</Text>
-                    <Box width='300px' mt='1vh'> 
-                        <EditText hideInput={false} value={chatBotData?.company_name} setValue={(value) => setChatBotData({...chatBotData as ChatBotData, company_name:value})}/>
-                    </Box>
+                            <Text fontWeight={'medium'}>{t('CompanyName')}</Text>
+                            <Text fontSize={'.8em'} color='gray.600'>{t('CompanyNameDes')}</Text>
+                            <Box width='300px' mt='1vh'> 
+                                <EditText hideInput={false} value={chatBotData?.company_name} setValue={(value) => setChatBotData({...chatBotData as ChatBotData, company_name:value})}/>
+                            </Box>
 
-                    <Text fontWeight={'medium'} mt='2vh'>{t('CompanyLogo')}</Text>
-                    <Text fontSize={'.8em'} color='gray.500'>{t('CompanyLogoDes')}</Text>
-                    <Box width='300px' mt='1vh'> 
-                        <ImageUpload id={0} initialImage={chatBotData?.company_logo} onImageUpdate={(file) => handleImageUpdate('company_logo', file as File)}/>
-                    </Box>
+                            <Text fontWeight={'medium'} mt='2vh'>{t('CompanyLogo')}</Text>
+                            <Text fontSize={'.8em'} color='gray.600'>{t('CompanyLogoDes')}</Text>
+                            <Box width='300px' mt='1vh'> 
+                                <ImageUpload id={0} initialImage={chatBotData?.company_logo} onImageUpdate={(file) => handleImageUpdate('company_logo', file as File)}/>
+                            </Box>
 
-                    <Text fontWeight={'medium'} mt='2vh'>{t('ChatPosition')}</Text>
-                    <Text fontSize={'.8em'} color='gray.500'>{t('ChatPositionDes')}</Text>
-                    <Flex gap='30px' mt='1vh'>
-                        <Flex   bg={chatBotData?.chat_position === 'left' ? 'blue.50':'gray.50'}cursor={'pointer'} alignItems={'end'} borderColor={'gray.200'} borderWidth={'1px'} borderRadius={'.7em'} p='10px' height={'150px'} flex='1' onClick={(e) => setChatBotData({...chatBotData as ChatBotData, 'chat_position':'left'})} >
-                            <Flex flexDir={'column'} >
-                                <Box height={'80px'} borderRadius={'.5em'} width={'50px'}  bg='gray.200' alignItems={'end'}  borderColor={'gray.300'} borderWidth={'1px'} />
-                                <Box mt='5px' height={'20px'} borderRadius={'50%'} width={'20px'}  bg='gray.200' alignItems={'end'}  borderColor={'gray.300'} borderWidth={'1px'} />
-                             </Flex>
-                        </Flex>
-                        <Flex bg={chatBotData?.chat_position === 'right' ? 'blue.50':'gray.50'} cursor={'pointer'} alignItems={'end'} justifyContent={'end'}  borderColor={'gray.200'} borderWidth={'1px'} borderRadius={'.7em'} p='10px' height={'150px'} flex='1' onClick={(e) => setChatBotData({...chatBotData as ChatBotData, 'chat_position':'right'})} >
-                            <Flex alignItems={'end'} flexDir={'column'}>
-                                <Flex alignItems={'end'} flexDir={'column'} >
-                                    <Box height={'80px'} borderRadius={'.5em'} width={'50px'}  bg='gray.200' alignItems={'end'}  borderColor={'gray.300'} borderWidth={'1px'} />
-                                    <Box mt='5px' height={'20px'} borderRadius={'50%'} width={'20px'}  bg='gray.200' alignItems={'end'}  borderColor={'gray.300'} borderWidth={'1px'} />
+                            <Text fontWeight={'medium'} mt='2vh'>{t('ChatPosition')}</Text>
+                            <Text fontSize={'.8em'} color='gray.600'>{t('ChatPositionDes')}</Text>
+                            <Flex gap='30px' mt='1vh'>
+                                <Flex   bg={chatBotData?.chat_position === 'left' ? 'blue.50':'gray.50'}cursor={'pointer'} alignItems={'end'} borderColor={'gray.200'} borderWidth={'1px'} borderRadius={'.7em'} p='10px' height={'150px'} flex='1' onClick={(e) => setChatBotData({...chatBotData as ChatBotData, 'chat_position':'left'})} >
+                                    <Flex flexDir={'column'} >
+                                        <Box height={'80px'} borderRadius={'.5em'} width={'50px'}  bg='gray.200' alignItems={'end'}  borderColor={'gray.300'} borderWidth={'1px'} />
+                                        <Box mt='5px' height={'20px'} borderRadius={'50%'} width={'20px'}  bg='gray.200' alignItems={'end'}  borderColor={'gray.300'} borderWidth={'1px'} />
+                                        </Flex>
                                 </Flex>
-                            </Flex>                     
-                        </Flex>
-                    </Flex>
-
-                    <Text fontWeight={'medium'}  mt='2vh'>{t('WelcomeMessage')}</Text>
-                    <Text fontSize={'.8em'} color='gray.500'>{t('WelcomeMessageDes')}</Text>
-                    <Box width='100%' mt='1vh'> 
-                        <EditText hideInput={false} value={chatBotData?.welcome_message} setValue={(value) => setChatBotData({...chatBotData as ChatBotData, welcome_message:value})}/>
-                    </Box>
-
-                    <Text fontWeight={'medium'} mt='2vh'>{t('BackgroundColor')}</Text>
-                    <Text fontSize={'.8em'} color='gray.500'>{t('BackgroundColor')}</Text>
-                    <Flex mt='1vh' alignItems={'center'} gap='10px'> 
-                        <Box flex='1' > 
-                            <ColorPicker containerRef={containerRef} color={chatBotData?.header_background[0]} 
-                            setColor={(value) => {
-                                const newHeaderBackground = [...(chatBotData as ChatBotData)?.header_background]
-                                newHeaderBackground[0] = value
-                                setChatBotData({ ...chatBotData as ChatBotData, header_background: newHeaderBackground as [string, string]  })
-                            }}/>
-                        </Box>
-                        <Icon boxSize={'25px'} color='gray.400'  as={IoMdArrowRoundForward}/>
-                        <Box flex='1' > 
-                            <ColorPicker containerRef={containerRef} color={chatBotData?.header_background[1]} 
-                            setColor={(value) => {
-                                const newHeaderBackground = [...(chatBotData as ChatBotData)?.header_background]
-                                newHeaderBackground[1] = value
-                                setChatBotData({ ...chatBotData as ChatBotData, header_background: newHeaderBackground as [string, string]})
-                            }}/>
-                        </Box>
-                    </Flex>
-
-                    <Text fontWeight={'medium'} mt='2vh'>{t('TextColor')}</Text>
-                    <Text fontSize={'.8em'} color='gray.500'>{t('TextColorDes')}</Text>
-                    <Box width='300px' mt='1vh'> 
-                        <ColorPicker containerRef={containerRef} color={chatBotData?.header_color} setColor={(value) => setChatBotData({...chatBotData as ChatBotData, header_color:value})}/>
-                    </Box>
-
-                    <Text fontWeight={'medium'} mt='2vh'>{t('Avatar')}</Text>
-                    <Text fontSize={'.8em'} color='gray.500'>{t('AvatarDes')}</Text>
-                    <Box width='300px' mt='1vh'> 
-                        <ImageUpload id={1} initialImage={chatBotData?.chat_avatar} onImageUpdate={(file) => handleImageUpdate('chat_avatar', file as File)}/>
-                    </Box>
-
-                    <Text fontWeight={'medium'} mt='2vh'>{t('BackgroundColorMessages')}</Text>
-                    <Text fontSize={'.8em'} color='gray.500'>{t('BackgroundColorMessagesDes')}</Text>
-                    <Flex mt='1vh' alignItems={'center'} gap='10px'> 
-                        <Box flex='1' > 
-                            <ColorPicker containerRef={containerRef} color={chatBotData?.client_background[0]} 
-                            setColor={(value) => {
-                                const newHeaderBackground = [...(chatBotData as ChatBotData)?.header_background]
-                                newHeaderBackground[0] = value
-                                setChatBotData({ ...chatBotData as ChatBotData, client_background: newHeaderBackground as [string, string]})
-                            }}/>
-                        </Box>
-                        <Icon boxSize={'25px'} color='gray.400'  as={IoMdArrowRoundForward}/>
-                        <Box flex='1' > 
-                            <ColorPicker containerRef={containerRef} color={chatBotData?.client_background[1]} 
-                            setColor={(value) => {
-                                const newHeaderBackground = [...(chatBotData as ChatBotData)?.header_background]
-                                newHeaderBackground[1] = value
-                                setChatBotData({ ...chatBotData as ChatBotData, client_background: newHeaderBackground as [string, string]  })
-                            }}/>
-                        </Box>
-                    </Flex>
-
-                    <Text fontWeight={'medium'} mt='2vh'>{t('TextColorMessages')}</Text>
-                    <Text fontSize={'.8em'} color='gray.500'>{t('TextColorMessagesDes')}</Text>
-                    <Box width='300px' mt='1vh'> 
-                        <ColorPicker containerRef={containerRef} color={chatBotData?.client_color} setColor={(value) => setChatBotData({...chatBotData as ChatBotData, client_color:value})}/>
-                    </Box>
-
-                    <Text fontWeight={'medium'} mt='2vh'>{t('Shortcuts')}</Text>
-                    <Text fontSize={'.8em'} color='gray.500'>{t('ShortcutWebsDes')}</Text>
-                    <Box width={'100%'} mt='2vh'> 
-                        {chatBotData?.options.map((option, index) => (
-                            <Flex key={`option-${index}`} mt={index === 0?'0':'1vh'} justifyContent={'space-between'} alignItems={'center'} p='5px' borderRadius=".5em" borderColor="gray.300" borderWidth="1px" bg="gray.50">
-                                <Text fontSize={'.9em'}>{option}</Text>
-                                <IconButton onClick={() => removeOption(index)} aria-label="remove-option" icon={<RxCross2  size='15px'/>} size="xs" border='none' bg='transparent'  />
+                                <Flex bg={chatBotData?.chat_position === 'right' ? 'blue.50':'gray.50'} cursor={'pointer'} alignItems={'end'} justifyContent={'end'}  borderColor={'gray.200'} borderWidth={'1px'} borderRadius={'.7em'} p='10px' height={'150px'} flex='1' onClick={(e) => setChatBotData({...chatBotData as ChatBotData, 'chat_position':'right'})} >
+                                    <Flex alignItems={'end'} flexDir={'column'}>
+                                        <Flex alignItems={'end'} flexDir={'column'} >
+                                            <Box height={'80px'} borderRadius={'.5em'} width={'50px'}  bg='gray.200' alignItems={'end'}  borderColor={'gray.300'} borderWidth={'1px'} />
+                                            <Box mt='5px' height={'20px'} borderRadius={'50%'} width={'20px'}  bg='gray.200' alignItems={'end'}  borderColor={'gray.300'} borderWidth={'1px'} />
+                                        </Flex>
+                                    </Flex>                     
+                                </Flex>
                             </Flex>
-                        ))}
-                    </Box> 
-                    <AddOptionComponent/>
-                    <Box height={'5vh'}/>
+
+                            <Text fontWeight={'medium'}  mt='2vh'>{t('WelcomeMessage')}</Text>
+                            <Text fontSize={'.8em'} color='gray.600'>{t('WelcomeMessageDes')}</Text>
+                            <Box width='100%' mt='1vh'> 
+                                <EditText hideInput={false} value={chatBotData?.welcome_message} setValue={(value) => setChatBotData({...chatBotData as ChatBotData, welcome_message:value})}/>
+                            </Box>
+
+                            <Text fontWeight={'medium'} mt='2vh'>{t('BackgroundColor')}</Text>
+                            <Text fontSize={'.8em'} color='gray.600'>{t('BackgroundColor')}</Text>
+                            <Flex mt='1vh' alignItems={'center'} gap='10px'> 
+                                <Box flex='1' > 
+                                    <ColorPicker containerRef={containerRef} color={chatBotData?.header_background[0]} 
+                                    setColor={(value) => {
+                                        setChatBotData({ ...chatBotData as ChatBotData, header_background: [ value, chatBotData?.header_background[1] || '']  })
+                                    }}/>
+                                </Box>
+                                <Icon boxSize={'25px'} color='gray.400'  as={IoMdArrowRoundForward}/>
+                                <Box flex='1' > 
+                                    <ColorPicker containerRef={containerRef} color={chatBotData?.header_background[1]} 
+                                    setColor={(value) => {
+                                        setChatBotData({ ...chatBotData as ChatBotData, header_background: [ chatBotData?.header_background[0] || '', value]  })
+                                    }}/>
+                                </Box>
+                            </Flex>
+
+                            <Text fontWeight={'medium'} mt='2vh'>{t('TextColor')}</Text>
+                            <Text fontSize={'.8em'} color='gray.600'>{t('TextColorDes')}</Text>
+                            <Box width='300px' mt='1vh'> 
+                                <ColorPicker containerRef={containerRef} color={chatBotData?.header_color} setColor={(value) => setChatBotData({...chatBotData as ChatBotData, header_color:value})}/>
+                            </Box>
+
+                            <Text fontWeight={'medium'} mt='2vh'>{t('Avatar')}</Text>
+                            <Text fontSize={'.8em'} color='gray.600'>{t('AvatarDes')}</Text>
+                            <Box width='300px' mt='1vh'> 
+                                <ImageUpload id={1} initialImage={chatBotData?.chat_avatar} onImageUpdate={(file) => handleImageUpdate('chat_avatar', file as File)}/>
+                            </Box>
+
+                            <Text fontWeight={'medium'} mt='2vh'>{t('BackgroundColorMessages')}</Text>
+                            <Text fontSize={'.8em'} color='gray.600'>{t('BackgroundColorMessagesDes')}</Text>
+                            <Flex mt='1vh' alignItems={'center'} gap='10px'> 
+                                <Box flex='1' > 
+                                    <ColorPicker containerRef={containerRef} color={chatBotData?.client_background[0]} 
+                                    setColor={(value) => {
+                                   
+                                        setChatBotData({ ...chatBotData as ChatBotData, client_background: [value, chatBotData?.client_background[1] || '']})
+                                    }}/>
+                                </Box>
+                                <Icon boxSize={'25px'} color='gray.400'  as={IoMdArrowRoundForward}/>
+                                <Box flex='1' > 
+                                    <ColorPicker containerRef={containerRef} color={chatBotData?.client_background[1]} 
+                                    setColor={(value) => {
+                                        setChatBotData({ ...chatBotData as ChatBotData, client_background: [ chatBotData?.client_background[0] || '', value]  })
+                                    }}/>
+                                </Box>
+                            </Flex>
+
+                            <Text fontWeight={'medium'} mt='2vh'>{t('TextColorMessages')}</Text>
+                            <Text fontSize={'.8em'} color='gray.600'>{t('TextColorMessagesDes')}</Text>
+                            <Box width='300px' mt='1vh'> 
+                                <ColorPicker containerRef={containerRef} color={chatBotData?.client_color} setColor={(value) => setChatBotData({...chatBotData as ChatBotData, client_color:value})}/>
+                            </Box>
+
+                            <Text fontWeight={'medium'} mt='2vh'>{t('Shortcuts')}</Text>
+                            <Text fontSize={'.8em'} color='gray.600'>{t('ShortcutWebsDes')}</Text>
+                            <Box width={'100%'} mt='2vh'> 
+                                {chatBotData?.options.map((option, index) => (
+                                    <Flex key={`option-${index}`} mt={index === 0?'0':'1vh'} justifyContent={'space-between'} alignItems={'center'} p='5px' borderRadius=".5em" borderColor="gray.200" borderWidth="1px" bg="brand.gray_2">
+                                        <Text fontSize={'.9em'}>{option}</Text>
+                                        <IconButton onClick={() => removeOption(index)} aria-label="remove-option" icon={<RxCross2  size='15px'/>} color={'red'} size="xs" border='none' bg='transparent'  />
+                                    </Flex>
+                                ))}
+                            </Box> 
+                            <AddOptionComponent/>
+                            <Box height={'5vh'}/>
+                        </Skeleton>
                     </Box>
-                    <Box flex='1' bg='white'> 
-                        <GetMatildaConfig configDict={matildaConfig} setConfigDict={setMatildaConfig}/>
+                    <Box flex='1' pt='4vh'  overflow={'scroll'}> 
+                        <Skeleton isLoaded={matildaConfig !== null}> 
+                            <GetMatildaConfig configDict={matildaConfig} setConfigDict={setMatildaConfig}/>
+                        </Skeleton>
                     </Box>
-                </Flex>        
+                
+            </Flex>        
+
+    
+        <Box> 
+            <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='2vh'/>
+            <Flex flexDir={'row-reverse'}> 
+                <Button variant={'common'}   isDisabled={(JSON.stringify(chatbotDataRef.current) === JSON.stringify(chatBotData)) && (JSON.stringify(matildaConfigRef.current) === JSON.stringify(matildaConfig))} onClick={sendChatBotCofig}>{waitingSend?<LoadingIconButton/>:t('SaveChanges')}</Button>
             </Flex>
-        </Skeleton>
+        </Box>
 
 
         {!waitingInfo &&<>
@@ -326,7 +331,7 @@ const ChatbotComponent = ({customInfo}:{customInfo:ChatBotData}) => {
           onMouseOut={() => {const btn = document.getElementById('fileButton');if (btn) btn.style.background = 'white'}}>
             <svg viewBox="0 0 24 24"   width="16" height="16" style={{fill: 'black'}}><path d="M19.187 3.588a2.75 2.75 0 0 0-3.889 0L5.575 13.31a4.5 4.5 0 0 0 6.364 6.364l8.662-8.662a.75.75 0 0 1 1.061 1.06L13 20.735a6 6 0 0 1-8.485-8.485l9.723-9.723a4.247 4.247 0 0 1 4.124-1.139 4.247 4.247 0 0 1 3.025 3.025 4.247 4.247 0 0 1-1.139 4.124l-9.193 9.193a2.64 2.64 0 0 1-1.858.779 2.626 2.626 0 0 1-1.854-.779c-.196-.196-.338-.47-.43-.726a2.822 2.822 0 0 1-.168-.946c0-.7.284-1.373.775-1.864l8.132-8.131a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734l-8.131 8.132a1.148 1.148 0 0 0-.336.803c.003.204.053.405.146.587.01.018.018.028.02.032.22.215.501.332.786.332.29 0 .58-.121.798-.34l9.192-9.192a2.75 2.75 0 0 0 0-3.89Z"></path></svg>
           </button> 
-            <textarea disabled className="text-area"  id="autoresizingTextarea" placeholder="Escribe un mensaje..."   rows={1} />
+            <textarea disabled className="text-area"  id="autoresizingTextarea"   rows={1} />
             <button className="send-btn"  style={{padding:'4px', alignItems:'center', justifyContent:'center', position: 'absolute', right: '6px', top:'10px' }} disabled  >
                 <svg viewBox="0 0 350 480" width="13" height="13" style={{fill: 'white'}}>
                     <path d="M214.6 41.4c-12.5-12.5-32.8-12.5-45.3 0l-160 160c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L160 141.2V448c0 17.7 14.3 32 32 32s32-14.3 32-32V141.2L329.4 246.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-160-160z"/>
@@ -410,7 +415,7 @@ const ChatbotComponent = ({customInfo}:{customInfo:ChatBotData}) => {
         <TextAreaContainer/>
     
       <div style={{height:'4%', fontSize:'.75em',color:'#718096',gap:'5px', fontWeight:300, justifyContent:'center', display:'flex', alignItems:'center'}}  >
-            <Image src={'/images/Isotipo.svg'} alt='MATIL'  boxSize="10px" objectFit="cover"  />
+            <Image src={'/images/matil-simple.svg'} alt='MATIL'  boxSize="10px" objectFit="cover"  />
           
           <span className={'matil-text'} onClick={() => window.open('https://www.matil.es', '_blank')}>MATIL</span>
       </div>

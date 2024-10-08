@@ -1,5 +1,5 @@
 //REACT
-import { useEffect, useState, KeyboardEvent } from 'react'
+import { useEffect, useState, KeyboardEvent, useRef } from 'react'
 import { useAuth } from './AuthContext'
 import { BrowserRouter as Router } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -10,7 +10,8 @@ import axios, { AxiosError, isAxiosError } from 'axios'
 import { Flex, Box, Stack, Button, ChakraProvider, extendTheme, Text,cssVar, defineStyleConfig, Icon } from '@chakra-ui/react'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import showToast from './Content/Components/ToastNotification'
+import showToast from './Content/Components/Reusable/ToastNotification'
+import Waves from './Content/Components/Once/Waves'
 //CONTENT
 import Content from './Content/Content'
 //COMPONENTS
@@ -20,10 +21,9 @@ import FloatingLabelInput from './Content/Components/Once/FormInputs'
 import { IoPersonCircleOutline } from "react-icons/io5"
 import { MdOutlineMailOutline, MdLockOutline } from "react-icons/md"
 import { TbArrowBack } from 'react-icons/tb'
-import { TiFlowMerge } from "react-icons/ti"
 //TYPING
 import { userInfo, Organization } from './Content/Constants/typing'
-
+ 
 //ENVIORMENT VARIABLES
 const URL = import.meta.env.VITE_PUBLIC_API_URL
 const TOKENS_KEY = import.meta.env.VITE_ENCRIPTION_KEY || 'DEFAULT-KEY'
@@ -46,25 +46,29 @@ const theme = extendTheme({
     },
     colors: {
       brand: {
-        gray: '#4A5568',
+        black_button:'#222',
+        black_button_hover:'RGBA(0, 0, 0, 0.80)',
+        text_blue:'rgb(59, 90, 246)',
+        gray_1:"#e8e8e8",
+        gray_2:"#f1f1f1",
         hover_gray:'#F2F5F9',
         gradient_blue:'linear-gradient(to right, rgba(0, 102, 204, 1),rgba(51, 153, 255, 1))',
         gradient_blue_hover:'linear-gradient(to right, rgba(0, 72, 204, 1),rgba(51, 133, 255, 1))'
        }
      },
     styles: {
-      global: {
-        body: {
-          bg: 'gray.50',
-          fontFamily: 'Poppins, sans-serif'
-        }
-      }
+      global: {body: {bg: 'white', fontFamily: 'Poppins, sans-serif'}}
     },
-    fontWeight: {
-      normal:400, medium:500, semibold:600
-    },
+    fontWeights: { normal: 400, medium: 500, semibold: 600,bold: 700},
     components: {
-      Button: { baseStyle: {fontWeight:'medium' },
+      Button: { 
+        baseStyle: {fontWeight:600, bg:'#f1f1f1', _hover:{bg:'#e8e8e8'}},
+        variants:{
+          main:{bg:'#222', _hover:{bg:'blackAlpha.800'}, color:'white',   _disabled: {bg: '#222', color: 'white', pointerEvents: 'none', cursor: 'not-allowed',opacity: 0.6}},
+          delete:{fontWeight:500, bg:'red.100', color:'red.600', _hover:{bg:'red.200'}},
+          delete_section:{fontWeight:500, color:'red'},
+          common:{fontWeight:500, _hover:{color:'rgb(59, 90, 246)'}}
+        }
     },
       Skeleton: skeletonTheme,
       Radio: {
@@ -153,12 +157,12 @@ const App: React.FC = () => {
           if (currentOrganizationName) {superserviceOrganization = user.organizations.find((org: Organization) => org.platform_type === 'superservice' && org.id === parseInt(currentOrganizationName))}
           if (!superserviceOrganization) {superserviceOrganization = user.organizations.find((org: Organization) => org.platform_type === 'superservice')}
           if (superserviceOrganization) {
-            setAuthData({ organizationId: superserviceOrganization.id, userId:user.id, organizationName:superserviceOrganization.name ,email:email, accessToken:accessToken, refreshToken:refreshToken })
+            setAuthData({ organizationData:{calls_status:superserviceOrganization.calls_status || 'out', avatar_image_url:superserviceOrganization.avatar_image_url || '', is_admin:superserviceOrganization.is_admin, alias:superserviceOrganization.alias || '', groups:superserviceOrganization.groups},
+            organizationId: superserviceOrganization.id, userId:user.id, organizationName:superserviceOrganization.name ,email:email, accessToken:accessToken, refreshToken:refreshToken })
             localStorage.setItem('currentOrganization', String(superserviceOrganization.id))
             try{
               const responseOrg = await axios.get(URL + `superservice/${superserviceOrganization.id}/user`, {headers: {'Authorization': `Bearer ${accessToken}`}})
-
-              const viewsToAdd = {
+               const viewsToAdd = {
                 number_of_tickets_in_bin:responseOrg.data.number_of_tickets_in_bin, 
                 private_views:responseOrg.data.private_views, 
                 number_of_tickets_per_private_view:responseOrg.data.number_of_tickets_per_private_view,
@@ -181,7 +185,9 @@ const App: React.FC = () => {
 
         try {
           const response = await axios.get(URL + `user`, {headers: {'Authorization': `Bearer ${accessToken}`}})
+          setAuthData({userData:{name: response.data.name, surname: response.data.surname, email_address: response.data.email_address, password: '', language:response.data.language, shortcuts_activated:true}})
           fetchInitialOrgData(response.data, accessToken)
+          
         } 
         catch (error) {
           if (isAxiosError(error) && error.response && error.response.status === 403){
@@ -192,6 +198,7 @@ const App: React.FC = () => {
                 const encryptedAccessToken = CryptoJS.AES.encrypt(accessResponse.data.access_token, TOKENS_KEY).toString()
                 localStorage.setItem('accessToken', encryptedAccessToken)
                 const new_response = await axios.get(URL + `user`, {headers: {'Authorization': `Bearer ${accessResponse.data.access_token}`}})
+                setAuthData({userData:{name: new_response.data.name, surname: new_response.data.surname, email_address: new_response.data.email_address, password: '', language:new_response.data.language, shortcuts_activated:true}})
                 fetchInitialOrgData(new_response.data, accessResponse.data.access_token)
             }
             catch (error) {
@@ -274,7 +281,7 @@ const App: React.FC = () => {
                               {passwordErrorLogin}
                             </Text>
                               )}
-                            <Button px='25px' width='fit-content'fontWeight={'medium'} isDisabled={showCode ?(registerName === '' || registerSurname === '' || registerMail === '' || registerPassword === '' || (registerPassword !== registerPassword2) || !mailRegex.test(registerMail) || !passwordRegex.test(registerPassword)) : (usernameLogin === '' || passwordLogin === '')} display={'inline-flex'} fontStyle={'jost'} borderRadius={'2rem'} color='white'   onClick={handleSignIn} bg='brand.gradient_blue' _hover={{bg:'brand.gradient_blue_hover'}}>
+                            <Button px='25px' width='fit-content'fontWeight={'medium'} isDisabled={showCode ?(registerName === '' || registerSurname === '' || registerMail === '' || registerPassword === '' || (registerPassword !== registerPassword2) || !mailRegex.test(registerMail) || !passwordRegex.test(registerPassword)) : (usernameLogin === '' || passwordLogin === '')} display={'inline-flex'} borderRadius={'2rem'} color='white'   onClick={handleSignIn} variant={'main'}>
                               {showCode?t('SignUp'):t('SignIn')}
                             </Button>
                      

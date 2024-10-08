@@ -1,19 +1,51 @@
 //REACT
-import { Dispatch, SetStateAction } from "react"
+import { Dispatch, SetStateAction, useRef, useState, CSSProperties } from "react"
 import { useTranslation } from "react-i18next"
 //FRONT
-import { Text, Box, Flex, Button, NumberInput, NumberInputField, Switch } from "@chakra-ui/react"
-//ICONS
+import { Text, Box, Flex, Button, NumberInput, NumberInputField, Switch, Icon, chakra, shouldForwardProp } from "@chakra-ui/react"
+import EmojiPicker, { EmojiClickData } from 'emoji-picker-react'
+import { motion, isValidMotionProp } from 'framer-motion'
+//COMPONENTS
 import EditText from "../../../Components/Reusable/EditText"
+//FUNCTIONS
+import useOutsideClick from "../../../Functions/clickOutside"
+import determineBoxStyle from "../../../Functions/determineBoxStyle"
+//ICONS
+import { RxCross2 } from "react-icons/rx"
 //TYPING
 import { configProps } from "../../../Constants/typing"
+import { FaPlus } from "react-icons/fa6"
   
+//MOTION BOX
+const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
 
 const GetMatildaConfig = ({configDict, setConfigDict, updateData, configIndex, isPhone = false}:{configDict:configProps | null, setConfigDict?:Dispatch<SetStateAction<configProps | null>>, updateData?: (configDict: configProps, index:number) => void, configIndex?:number, isPhone?:boolean}) => {
 
     //TRANSLATION CONSTANT
     const { t } = useTranslation('settings')
+  
+    //SELECT EMOJIS
+    const emojiBoxRef = useRef<HTMLDivElement>(null)
+    const emojiButtonRef = useRef<HTMLButtonElement>(null)
+    const [emojiVisible, setEmojiVisible] = useState<boolean>(false)
+    useOutsideClick({ref1:emojiBoxRef, ref2:emojiButtonRef, onOutsideClick:setEmojiVisible})
 
+    //BOX POSITION LOGIC, TO SHOW IT UP OR DOWN OF THE INPUT, DEPENDING ON THE POSITION
+    const [boxPosition, setBoxPosition] = useState<'top' | 'bottom'>('bottom')
+    const [boxStyle, setBoxStyle] = useState<CSSProperties>({})
+    determineBoxStyle({buttonRef:emojiButtonRef, setBoxStyle, setBoxPosition, changeVariable:emojiVisible})
+
+     const handleEmojiClick = (emojiObject: EmojiClickData, event: any) => {
+        if (!configDict?.allowed_emojis.includes(emojiObject.emoji)) {
+            if (setConfigDict) setConfigDict(prev => ({...prev as configProps, allowed_emojis: [...prev?.allowed_emojis as string[], emojiObject.emoji]}))
+            else if (updateData) updateData({ ...configDict as configProps, allowed_emojis: [...configDict?.allowed_emojis as string[], emojiObject.emoji]}, configIndex as number)
+        }
+    }
+    const deleteEmoji = (index: number) => {
+        if (setConfigDict) setConfigDict(prev => ({...prev as configProps, allowed_emojis: (prev?.allowed_emojis || []).filter((_, i) => i !== index)}))
+        else if (updateData) updateData({...configDict as configProps, allowed_emojis: (configDict?.allowed_emojis || []).filter((_, i) => i !== index)}, configIndex as number)
+    }
+    
     //LABELS DICT
     const weekDaysList = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
  
@@ -61,18 +93,30 @@ const GetMatildaConfig = ({configDict, setConfigDict, updateData, configIndex, i
         }
     }
  
+    //EMOJI COMPONENT
+    const EmojiComponent = ({emoji, index}:{emoji:string, index:number}) => {
+        const [isHovering, setIsHovering] = useState<boolean>(false)
+        return (
+        <Flex key={`emoji-${index}`}  onClick={() => deleteEmoji(index)} borderRadius=".4rem" cursor={'pointer'} width={'35px'} height={'35px'} boxShadow={'0 0 3px 1px rgba(0, 0, 0, 0.15)'} fontSize={'.75em'} alignItems={'center'} justifyContent={'center'} borderColor={'gray.100'} borderWidth={'1px'} gap='5px' onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
+            {isHovering ?
+            <Icon boxSize={'20px'} color='red' as={RxCross2} cursor={'pointer'} />:
+            <Text fontSize={'1.5em'}>{emoji}</Text>
+            }
+        </Flex>)
+    }
+
 return(   
    <Box >
         <Flex gap='10px' alignItems={'center'}>
             <Switch isChecked={configDict?.is_matilda_enabled} onChange={(e) => handleCheckboxChange('is_matilda_enabled', e.target.checked)}/>
-            <Text fontSize={'1.1em'} fontWeight={'medium'}>{t('IAUse')}</Text>  
+            <Text fontWeight={'medium'}>{t('IAUse')}</Text>  
         </Flex>
         <Text fontSize={'.8em'} color='gray.600'>{t('IAUseDes')}</Text>
 
     
         {configDict?.is_matilda_enabled && <>
 
-     
+      
             <Text fontSize={'.9em'} mt='2vh' fontWeight={'medium'}>{t('Tone')}</Text>
             <Text fontSize={'.8em'} mb='.5vh' color='gray.600'>{t('ToneDes')}</Text>
             <EditText placeholder={`${t('Tone')}...`} hideInput={false} value={configDict.tone}  setValue={(value) => handleTextChange('tone', value)}/>
@@ -82,11 +126,25 @@ return(
                 <Text fontSize={'.9em'} fontWeight={'medium'}>{t('AskIfIntention')}</Text>
             </Flex>
             <Text mt='2vh' fontSize={'.9em'} fontWeight={'medium'}>{t('AvailableEmojis')}</Text>
+            <Text fontSize={'.8em'} color='gray.600'>{t('AddEmojiDes')}</Text>
 
+            <Flex maxH='20vh' overflow={'scroll'} wrap={'wrap'} py='5px' gap='7px' mt='.5vh'>
+                {configDict.allowed_emojis.map((emoji, index) => (
+                  <EmojiComponent key={`emoji-${index}`} emoji={emoji} index={index}/>
+                ))}
+             </Flex>
+             <Button ref={emojiButtonRef} onClick={() => setEmojiVisible(!emojiVisible)} variant={'common'} size='xs' mt='1vh' leftIcon={<FaPlus/>}>{t('AddEmoji')}</Button>
+
+            {emojiVisible && 
+                <MotionBox initial={{ opacity: 0, marginTop: boxPosition === 'bottom'?-10:10 }} animate={{ opacity: 1, marginTop: 0 }}  exit={{ opacity: 0,marginTop: boxPosition === 'bottom'?-10:10}} transition={{ duration: '.2', ease: 'easeOut'}}
+                top={boxStyle.top} bottom={boxStyle.bottom}right={boxStyle.right}  overflow={'scroll'} gap='10px' ref={emojiBoxRef} fontSize={'.9em'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000}   position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
+                    <EmojiPicker onEmojiClick={handleEmojiClick}  allowExpandReactions={false}/>
+            </MotionBox>}
+             
             {!isPhone && <> 
                 <Flex gap='10px' mt='4vh' alignItems={'center'}>
                     <Switch isChecked={configDict?.answer_inmediately} onChange={(e) => handleCheckboxChange('answer_inmediately', e.target.checked)}/>
-                    <Text fontSize={'1.1em'} fontWeight={'medium'}>{t('AnswerInmediatly')}</Text>
+                    <Text fontWeight={'medium'}>{t('AnswerInmediatly')}</Text>
                 </Flex>
                 <Text fontSize={'.8em'} color='gray.600'>{t('AnswerInmediatlyDes')}</Text>
  
@@ -94,7 +152,7 @@ return(
                     <Flex gap='20px' mt='1vh'> 
                         <Box> 
                             <Text fontWeight={'medium'} fontSize={'.9em'}>{t('minimum_seconds_to_respond')}</Text>
-                            <NumberInput size='sm' mt='.5vh' value={configDict?.['minimum_seconds_to_respond'] || 0} onChange={(valueString) => handleNumberChange('minimum_seconds_to_respond', valueString)} min={1} max={configDict.maximum_seconds_to_respond}>
+                            <NumberInput size='sm' mt='.5vh' value={configDict?.['minimum_seconds_to_respond'] || 0} onChange={(valueString) => handleNumberChange('minimum_seconds_to_respond', valueString)} min={0} max={configDict.maximum_seconds_to_respond}>
                                 <NumberInputField  fontSize={'.9em'} borderRadius='.5rem'   borderColor={'gray.300'} _hover={{ border: '1px solid #CBD5E0' }} _focus={{ borderColor: 'rgb(77, 144, 254)', borderWidth: '2px', px:'6px' }} px='7px' />
                             </NumberInput>
                         </Box>
@@ -109,7 +167,7 @@ return(
   
             <Flex gap='10px' mt='4vh' alignItems={'center'}>
                 <Switch isChecked={configDict?.is_restricted_to_business_days} onChange={(e) => handleCheckboxChange('is_restricted_to_business_days', e.target.checked)}/>
-                <Text fontSize={'1.1em'} fontWeight={'medium'}>{t('OnlyAnswerWorkDays')}</Text>
+                <Text fontWeight={'medium'}>{t('OnlyAnswerWorkDays')}</Text>
             </Flex>
             <Text fontSize={'.8em'} color='gray.600'>{t('OnlyAnswerWorkDaysDes')}</Text>
 
@@ -142,7 +200,7 @@ return(
         {!isPhone && <> 
             <Flex gap='10px' mt='4vh' alignItems={'center'}>
                 <Switch isChecked={configDict?.notify_about_agent_transfer} onChange={(e) => handleCheckboxChange('notify_about_agent_transfer', e.target.checked)}/>
-                <Text fontSize={'1.1em'} fontWeight={'medium'}>{t('AgentTransfer')}</Text>
+                <Text  fontWeight={'medium'}>{t('AgentTransfer')}</Text>
             </Flex>
             <Text fontSize={'.8em'} color='gray.600'>{t('AgentTransferDes')}</Text>
             
@@ -162,7 +220,7 @@ return(
 
             <Flex gap='10px' mt='4vh' alignItems={'center'}>
                 <Switch isChecked={configDict?.allow_variable_confirmation} onChange={(e) => handleCheckboxChange('allow_variable_confirmation', e.target.checked)}/>
-                <Text fontSize={'1.1em'} fontWeight={'medium'}>{t('ConfirmInfo')}</Text>
+                <Text  fontWeight={'medium'}>{t('ConfirmInfo')}</Text>
             </Flex>
             <Text fontSize={'.8em'} color='gray.600'>{t('ConfirmInfoDes')}</Text>
         

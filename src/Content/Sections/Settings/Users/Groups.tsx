@@ -13,7 +13,7 @@ import EditText from '../../../Components/Reusable/EditText'
 import LoadingIconButton from '../../../Components/Reusable/LoadingIconButton'
 import useOutsideClick from '../../../Functions/clickOutside'
 import ConfirmBox from '../../../Components/Reusable/ConfirmBox'
-import showToast from '../../../Components/ToastNotification'
+import showToast from '../../../Components/Reusable/ToastNotification'
 import Table from '../../../Components/Reusable/Table'
 //FUCNTIONS
 import parseMessageToBold from '../../../Functions/parseToBold'
@@ -112,8 +112,8 @@ function Groups () {
                 <Text >{t('ConfirmDeleteGroup')}</Text>
             </Box>
             <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-                <Button  size='sm' color='red.600' bg='red.100' _hover={{bg:'red.200'}} onClick={deleteGroup}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
-                <Button  size='sm'_hover={{color:'blue.400'}}  onClick={() => setGroupToDelete(null)}>{t('Cancel')}</Button>
+                <Button  size='sm'variant={'delete'} onClick={deleteGroup}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
+                <Button  size='sm'variant={'common'} onClick={() => setGroupToDelete(null)}>{t('Cancel')}</Button>
             </Flex>
         </>)
     }
@@ -132,8 +132,7 @@ function Groups () {
         </ConfirmBox>
     ), [selectedGroup])
     
-    return(<>
-
+    return(<Box>
         {groupToDelete !== null && memoizedDeleteBox}
         {selectedGroup !== null  && memoizedGroupBox}
         <Flex justifyContent={'space-between'} alignItems={'end'}> 
@@ -153,13 +152,13 @@ function Groups () {
             <Skeleton isLoaded={groupsData !== null}> 
                 <Text  fontWeight={'medium'} fontSize={'1.2em'}>{t('GroupsCount', {count:groupsData?.length})}</Text>
             </Skeleton>
-            <Button size='sm' leftIcon={<FaPlus/>} onClick={() => setSelectedGroup(newGroup)}>{t('CreateGroup')}</Button>
+            <Button  variant={'common'}size='sm' leftIcon={<FaPlus/>} onClick={() => setSelectedGroup(newGroup)}>{t('CreateGroup')}</Button>
         </Flex>
 
         <Skeleton isLoaded={groupsData !== null}> 
             <Table data={filteredGroupsData || []} CellStyle={CellStyle} noDataMessage={t('NoGroups')} columnsMap={groupsMapDict} onClickRow={(row:any, index:number) => setSelectedGroup(row)} deletableFunction={(row:any, index) => setGroupToDelete(row)}/>
         </Skeleton>
-    </>)
+    </Box>)
 }
 
 const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData, setGroupData:Dispatch<SetStateAction<GroupData | null>>, setGroupsData:Dispatch<SetStateAction<GroupData[] | null>> }) => {
@@ -343,42 +342,42 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
     }
 
     //FRONT
-    return (  <>
- 
-    <Box p='20px'> 
-        
-        <Box minW='500px'> 
-            <EditText nameInput={true} size='md' value={currentGroupData.name} setValue={(value) => {setCurrentGroupData((prev) => ({...prev, name:value}))}}/>
-        </Box>
-        
-        <Text  mt='2vh' mb='.5vh'  fontWeight={'medium'}>{t('Description')}</Text>
-        <Textarea resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('Description')}...`} maxH='300px' value={currentGroupData.description} onChange={(e) => setCurrentGroupData((prev) => ({...prev, description:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
+    return (
+    <Box>    
+        <Box p='20px'> 
+            
+            <Box minW='500px'> 
+                <EditText nameInput={true} size='md' value={currentGroupData.name} setValue={(value) => {setCurrentGroupData((prev) => ({...prev, name:value}))}}/>
+            </Box>
+            
+            <Text  mt='2vh' mb='.5vh'  fontWeight={'medium'}>{t('Description')}</Text>
+            <Textarea resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('Description')}...`} maxH='300px' value={currentGroupData.description} onChange={(e) => setCurrentGroupData((prev) => ({...prev, description:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
 
-        <Box mt='3vh' flex={1} >
-            <Text mb='1vh' fontWeight={'medium'}>{t('AddUsersGroup')}</Text>
-            <FindUser/>
-            <Box maxW={'600px'} mt='2vh'> 
-                {currentGroupData.users.length === 0 ?<Text mt='2vh'>{t('NoUsers')}</Text>:<>
-                {currentGroupData.users.map((user, index) => (
-                <Flex justifyContent={'space-between'} borderBottomColor={'gray.300'} borderBottomWidth={'1px'} _hover={{bg:'gray.50'}} cursor={'pointer'} alignItems={'center'}  key={`user-selected-${index}`} p='10px' gap='10px' >
-                    <Flex  gap='10px'> 
-                        <Avatar size='sm'/>
-                        <Box>
-                            <Text fontWeight={'medium'} fontSize={'.9em'}>{user.name} {user.surname}</Text>
-                            <Text fontSize={'.9em'}>{user.email}</Text>
-                        </Box>
+            <Box mt='3vh' flex={1} >
+                <Text mb='1vh' fontWeight={'medium'}>{t('AddUsersGroup')}</Text>
+                <FindUser/>
+                <Box maxW={'600px'} mt='2vh'> 
+                    {currentGroupData.users.length === 0 ?<Text mt='2vh'>{t('NoUsers')}</Text>:<>
+                    {currentGroupData.users.map((user, index) => (
+                    <Flex justifyContent={'space-between'} borderBottomColor={'gray.300'} borderBottomWidth={'1px'} _hover={{bg:'gray.50'}} cursor={'pointer'} alignItems={'center'}  key={`user-selected-${index}`} p='10px' gap='10px' >
+                        <Flex  gap='10px'> 
+                            <Avatar size='sm'/>
+                            <Box>
+                                <Text fontWeight={'medium'} fontSize={'.9em'}>{user.name} {user.surname}</Text>
+                                <Text fontSize={'.9em'}>{user.email}</Text>
+                            </Box>
+                        </Flex>
+                        <IconButton aria-label='delete-user' icon={<BsTrash3Fill/>} size='sm' bg='transparent' color='red' onClick={() => deleteUser(index, user.id)}/>
                     </Flex>
-                    <IconButton aria-label='delete-user' icon={<BsTrash3Fill/>} size='sm' bg='transparent' color='red' onClick={() => deleteUser(index, user.id)}/>
-                </Flex>
-                ))}</>}
+                    ))}</>}
+                </Box>
             </Box>
         </Box>
-    </Box>
-    <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-        <Button size='sm' bg={'blackAlpha.800'} color='white' _hover={{bg:'blackAlpha.900'}} onClick={sendEditGroup} isDisabled={currentGroupData.name === ''  || currentGroupData.users.length === 0 || ((JSON.stringify(currentGroupData) === JSON.stringify(groupDataRef.current)))}>{waitingSend?<LoadingIconButton/>:groupData.id === -1?t('CreateGroup'):t('SaveChanges')}</Button>
-        <Button  size='sm'_hover={{color:'blue.400'}}  onClick={() => setGroupData(null)}>{t('Cancel')}</Button>
-    </Flex>
-    </>)
+        <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+            <Button size='sm' bg={'blackAlpha.800'} color='white' _hover={{bg:'blackAlpha.900'}} onClick={sendEditGroup} isDisabled={currentGroupData.name === ''  || currentGroupData.users.length === 0 || ((JSON.stringify(currentGroupData) === JSON.stringify(groupDataRef.current)))}>{waitingSend?<LoadingIconButton/>:groupData.id === -1?t('CreateGroup'):t('SaveChanges')}</Button>
+            <Button  size='sm'_hover={{color:'blue.400'}}  onClick={() => setGroupData(null)}>{t('Cancel')}</Button>
+        </Flex>
+    </Box>)
 }
 
 export default Groups

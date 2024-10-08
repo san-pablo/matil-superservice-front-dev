@@ -3,7 +3,7 @@
 */
 
 //REACT
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef,useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../../../AuthContext" 
 import { useSession } from "../../../SessionContext"
@@ -24,7 +24,8 @@ import ConfirmBox from "../../Components/Reusable/ConfirmBox"
 import DetermineTicketViews from "../../MangeData/DetermineTicketViews"
 import timeStampToDate from "../../Functions/timeStampToString"
 import timeAgo from "../../Functions/timeAgo"
-import showToast from "../../Components/ToastNotification"
+import showToast from "../../Components/Reusable/ToastNotification"
+import parseMessageToBold from "../../Functions/parseToBold"
 //ICONS
 import { IoIosArrowForward, IoIosArrowBack } from "react-icons/io"
 import { BsTrash3Fill } from "react-icons/bs"
@@ -115,7 +116,6 @@ const CellStyle = ({column, element}:{column:string, element:any}) => {
     else return ( <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element}</Text>)
 }
 
- 
 //MAIN FUNCTION
 function TicketsTable({socket}:{socket:any}) {
 
@@ -129,7 +129,7 @@ function TicketsTable({socket}:{socket:any}) {
     const tableRef = useRef<HTMLDivElement>(null)
     
     //TABLE MAPPING
-    const columnsTicketsMap:{[key in TicketColumn]:[string, number]} = {id: [t('id'), 50], local_id: [t('local_id'), 50], status:  [t('status'), 100], channel_type: [t('channel_type'), 150], subject:  [t('subject'), 200], user_id: [t('user_id'), 200], created_at: [t('created_at'), 150],updated_at: [t('updated_at'), 150], solved_at: [t('solved_at'), 150],closed_at: [t('closed_at'), 150],title: [t('title'), 300], urgency_rating: [t('urgency_rating'), 130], deletion_date: [t('deletion_date'), 180], unseen_changes: [t('unseen_changes'), 200]}
+    const columnsTicketsMap:{[key in TicketColumn]:[string, number]} = {id: [t('id'), 50], local_id: [t('local_id'), 50], status:  [t('status'), 100], channel_type: [t('channel_type'), 150], subject:  [t('subject'), 200], user_id: [t('user_id'), 200], created_at: [t('created_at'), 150],updated_at: [t('updated_at'), 180], solved_at: [t('solved_at'), 150],closed_at: [t('closed_at'), 150],title: [t('title'), 300], urgency_rating: [t('urgency_rating'), 130], deletion_date: [t('deletion_date'), 180], unseen_changes: [t('unseen_changes'), 200]}
     
     //WAIT INFO AND FORCE TH REUPDATE OF THE TABLE ON DELETE
     const [waitingInfo, setWaitingInfo] = useState<boolean>(true)
@@ -138,8 +138,16 @@ function TicketsTable({socket}:{socket:any}) {
     //TICKET DATA AND SELECTED VIEW
     const [tickets, setTickets] = useState<Tickets | null>(null)
     const [selectedView, setSelectedView] = useState<ViewType>((localStorage.getItem('currentView') && JSON.parse(localStorage.getItem('currentView') as string)) || getFirstView(auth.authData.views as Views))
+    const [allTicketsIds, setAllTicketsIds] = useState<number[]>([])
     const [selectedIndex, setSelectedIndex] = useState<number>(-1)
  
+    //SHOW FILTERS AND FILTERS INFO
+    const isRetrievingData = useRef<boolean>(false)
+    const [filters, setFilters ] = useState<TicketFilters>({page_index:1, search:''}) 
+    const filtersRef = useRef<TicketFilters>({page_index:1, search:''}) 
+    useEffect(() => {filtersRef.current = filters}, [filters])
+
+
     //SOCKET FOR RELOADING VIEWS ON A NEW TICKET
     useEffect(() => {
 
@@ -149,18 +157,22 @@ function TicketsTable({socket}:{socket:any}) {
         setSelectedView(localStorage.getItem('currentView') && JSON.parse(localStorage.getItem('currentView') as string) || getFirstView(auth.authData.views as Views))
 
         socket?.current.on('ticket', (data:any) => {
-            
-                const previousViews = DetermineTicketViews(data?.previous_data, auth.authData.views as Views, auth.authData?.userId || -1)
-                const newViews = DetermineTicketViews(data?.new_data, auth.authData.views as Views, auth.authData?.userId || -1)
-                
-                const combinedViews = previousViews.concat(newViews)
+            const editTable = async () => {
+                    const previousViews = DetermineTicketViews(data?.previous_data, auth.authData.views as Views, auth.authData?.userId || -1)
+                    const newViews = DetermineTicketViews(data?.new_data, auth.authData.views as Views, auth.authData?.userId || -1)
 
-                for (const view of combinedViews) {
-                  if (view.view_type === selectedView.type && view.view_index === selectedView.index) {
-                    fetchTicketDataWithFilter(null)
-                    break
-                  }
+                    const combinedViews = previousViews.concat(newViews)
+
+                    for (const view of combinedViews) {
+                        if (view.view_type === selectedView.type && view.view_index === selectedView.index) {
+                            isRetrievingData.current = true
+                            await fetchTicketDataWithFilter(null)
+                            isRetrievingData.current = false
+                            break
+                        }
+                    }
             }
+            editTable()
         })
     },[JSON.stringify(auth.authData.organizationId)])
 
@@ -175,7 +187,7 @@ function TicketsTable({socket}:{socket:any}) {
             //SECTION FOUND
             if (foundTicket){
                 setTickets(foundTicket.data)
-                setFilters(foundTicket.filters)
+                setFilters(foundTicket?.filters || {page_index:1})
                 setSelectedIndex(foundTicket.selectedIndex || -1)
                 setWaitingInfo(false)
             } 
@@ -211,9 +223,7 @@ function TicketsTable({socket}:{socket:any}) {
         fetchTicketData()
     }, [selectedView])
 
-    //SHOW FILTERS AND FILTERS INFO
-    const [filters, setFilters ] = useState<TicketFilters>({page_index:1}) 
-
+   
      //NAVIGATE TO THE CLICKED TICKET AND SHOW IT IN THE HEADER
     const [selectedElements, setSelectedElements] = useState<number[]>([])
     const handleClickRow  = (row:TicketsTableProps, index:number) => {
@@ -227,6 +237,32 @@ function TicketsTable({socket}:{socket:any}) {
         const direction = (filters.sort_by === key && filters.order === 'asc') ? 'desc' : 'asc';
         fetchTicketDataWithFilter({...filters, sort_by: key as TicketColumn, order: direction as 'asc' | 'desc'})
      }
+    const getSortIcon = (key: string) => {
+        if (filters.sort_by === key) { 
+            if (filters.order === 'asc') return true
+            else return false
+        }
+        else return null    
+    }
+
+    //GET ALL TICKETS IDS
+    const getAllTicketIds = async () => {
+        if (selectedElements.length >= (tickets?.page_data?.length || 0)) setSelectedElements([])
+        else {
+            const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/all_ticket_ids`, setValue:setAllTicketsIds, params:{page_index:filters.page_index, view_type:selectedView.type === 'deleted'?'bin':selectedView.type, view_index:selectedView.index}, auth})
+            console.log(response?.data)
+            if (response?.status === 200) {
+                setSelectedElements( Array.from({ length: response.data.total_tickets }, (v, i) => i ))
+            }
+        }
+    }
+
+    //GET ALL TICKETS IDS
+    useEffect(() => {
+        const idsList = selectedElements.map(index => (tickets?.page_data?.[index]?.id || 0))
+        setAllTicketsIds(idsList)
+    },[selectedElements])
+
 
     //DELETE AND RECOVER TICKETS LOGIC
     const [showConfirmDelete, setShowConfirmDelete] = useState<boolean>(false)
@@ -237,7 +273,7 @@ function TicketsTable({socket}:{socket:any}) {
         
         //APPLY FILTERS
         let selectedFilters:TicketFilters
-        if (applied_filters === null) selectedFilters = filters
+        if (applied_filters === null) selectedFilters = filtersRef.current
         else {
             selectedFilters = {...filters, ...applied_filters}
             setFilters(filters)
@@ -259,9 +295,9 @@ function TicketsTable({socket}:{socket:any}) {
     }
     
     //RECOVER TICKETS FUNCTION
-    const recoverTickets = async() => {
+    const recoverTickets = async() => { 
         session.dispatch({type:'DELETE_VIEW_FROM_TICKET_LIST'})
-        await fetchData({endpoint:`superservice/${auth.authData.organizationId}/tickets/bin/restore`,  auth, method:'post', requestForm:{ticket_ids:selectedElements},toastMessages:{'works':t('TicketsRecovered'),'failed':('TicketsRecoveredFailed')}})
+        await fetchData({endpoint:`superservice/${auth.authData.organizationId}/tickets/bin/restore`,  auth, method:'post', requestForm:{ticket_ids:allTicketsIds},toastMessages:{'works':t('TicketsRecovered'),'failed':('TicketsRecoveredFailed')}})
         const responseOrg = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/user`, auth})
         auth.setAuthData({views: responseOrg?.data})
         fetchTicketDataWithFilter(null)
@@ -271,7 +307,7 @@ function TicketsTable({socket}:{socket:any}) {
     //DELETE A TICKET FUNCTION
     const deleteTickets = async() => {
         session.dispatch({type:'DELETE_VIEW_FROM_TICKET_LIST'})
-        const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/tickets/bin`, setWaiting:setWaitingDelete, auth, method:'post', requestForm:{ticket_ids:selectedElements, days_until_deletion:30},toastMessages:{'works':t('TicketsTrash'),'failed':t('TicketsTrashFailed')}})
+        const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/tickets/bin`, setWaiting:setWaitingDelete, auth, method:'post', requestForm:{ticket_ids:allTicketsIds, days_until_deletion:30},toastMessages:{'works':t('TicketsTrash'),'failed':t('TicketsTrashFailed')}})
         if (response?.status === 200) {
             const responseOrg = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/user`, auth})
             auth.setAuthData({views: responseOrg?.data})
@@ -288,28 +324,32 @@ function TicketsTable({socket}:{socket:any}) {
         const [showWaitingDeletePermanently, setShowWaitingDeletePermanently] = useState<boolean>(false)
         const deleteTicketsPermanently = async() => {
             if (selectedView.type === 'deleted') {
-                const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/tickets/bin/delete`,  setWaiting:setShowWaitingDeletePermanently, auth:auth, method:'post', requestForm:{ticket_ids:selectedElements},toastMessages:{'works':t('TicketsDeleted'),'failed':t('TicketsDeletedFailed')}})
+                const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/tickets/bin/delete`,  setWaiting:setShowWaitingDeletePermanently, auth:auth, method:'post', requestForm:{ticket_ids:allTicketsIds},toastMessages:{'works':t('TicketsDeleted'),'failed':t('TicketsDeletedFailed')}})
                 const responseOrg = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/user`, auth})
                 auth.setAuthData({views: responseOrg?.data})
                 fetchTicketDataWithFilter(null)
                 setSelectedElements([])
+                setShowConfirmDelete(false)
             }
         }
         return(<>
-        <Box p='15px'> 
+        <Box p='20px'> 
             <Text fontWeight={'medium'} fontSize={'1.2em'}>{'Confirmar eliminación'}</Text>
             <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
-            <Text >{t('DeleteWarning')}</Text>
+            <Text >{parseMessageToBold(t('DeleteWarning'))}</Text>
         </Box>
-        <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+        <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
             <Button  size='sm' color='red' _hover={{color:'red.600', bg:'gray.200'}} onClick={deleteTicketsPermanently}>{showWaitingDeletePermanently?<LoadingIconButton/>:t('Delete')}</Button>
             <Button  size='sm' onClick={() => setShowConfirmDelete(false)}>{t('Cancel')}</Button>
         </Flex>
     </>)
     }
 
-
-    console.log(tableRef.current?.getBoundingClientRect().top)
+    const memoizedConfirmDeleteBox = useMemo(() => (
+        <ConfirmBox setShowBox={setShowConfirmDelete}> 
+            <ConfirmDeleteBox />
+        </ConfirmBox>
+    ), [showConfirmDelete])
 
     //FRONT
     return(<> 
@@ -329,7 +369,7 @@ function TicketsTable({socket}:{socket:any}) {
                                 {auth.authData.views.private_views.map((view, index) => {
                                     const isSelected = selectedView.index === index && selectedView.type === 'private'
                                     return(
-                                        <Flex justifyContent='space-between' key={`private-view-${index}`} onClick={() => {setSelectedView({index:index, type:'private', name:(view?.name || '')});localStorage.setItem('currentView', JSON.stringify({index:index, type:'private', name:view.name}))}}   _hover={{bg:isSelected?'blue.100':'gray.200'}} bg={isSelected? 'blue.100':'transparent'} fontWeight={isSelected? 'medium':'normal'} fontSize={'1em'} cursor={'pointer'} borderRadius={'.5rem'} p='10px'>
+                                        <Flex justifyContent='space-between' key={`private-view-${index}`} onClick={() => {if (!isRetrievingData.current) setSelectedView({index:index, type:'private', name:(view?.name || '')});localStorage.setItem('currentView', JSON.stringify({index:index, type:'private', name:view.name}))}}   _hover={{bg:isSelected?'blue.100':'gray.200'}} bg={isSelected? 'blue.100':'transparent'} fontWeight={isSelected? 'medium':'normal'} fontSize={'1em'} cursor={'pointer'} borderRadius={'.5rem'} p='10px'>
                                             <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{view.name}</Text>
                                             <Text>{auth.authData.views?.number_of_tickets_per_private_view?.[index] || 0}</Text>
                                         </Flex>
@@ -343,7 +383,7 @@ function TicketsTable({socket}:{socket:any}) {
                                 {auth.authData.views.shared_views.map((view, index) => {
                                 const isSelected = selectedView.index === index && selectedView.type === 'shared'
                                 return(
-                                    <Flex justifyContent='space-between' key={`shared-view-${index}`} onClick={() => {setSelectedView({index:index, type:'shared', name:(view?.name || '')}); localStorage.setItem('currentView', JSON.stringify({index:index, type:'shared', name:view.name}))}} _hover={{bg:isSelected?'blue.100':'gray.200'}} bg={isSelected? 'blue.100':'transparent'} fontWeight={isSelected? 'medium':'normal'}fontSize={'1em'} cursor={'pointer'} borderRadius={'.5rem'} p='10px'>
+                                    <Flex justifyContent='space-between' key={`shared-view-${index}`} onClick={() => {if (!isRetrievingData.current) setSelectedView({index:index, type:'shared', name:(view?.name || '')}); localStorage.setItem('currentView', JSON.stringify({index:index, type:'shared', name:view.name}))}} _hover={{bg:isSelected?'blue.100':'gray.200'}} bg={isSelected? 'blue.100':'transparent'} fontWeight={isSelected? 'medium':'normal'}fontSize={'1em'} cursor={'pointer'} borderRadius={'.5rem'} p='10px'>
                                         <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{view.name}</Text>
                                         <Text>{auth.authData.views?.number_of_tickets_per_shared_view?.[index] || 0}</Text>
                                     </Flex>
@@ -355,7 +395,7 @@ function TicketsTable({socket}:{socket:any}) {
                 </Flex>
 
                 <Box>
-                    <Flex  color='red' onClick={() => {setSelectedView({index:0, type:'deleted', name:'Papelera'}); localStorage.setItem('currentView', JSON.stringify({index:0, type:'deleted', name:'Papelera'}))}} justifyContent={'space-between'} _hover={{bg:selectedView.type === 'deleted'?'blue.100':'gray.200'}} bg={selectedView.type === 'deleted'? 'blue.100':'transparent'} fontWeight={selectedView.type === 'deleted'? 'medium':'normal'}fontSize={'1em'} cursor={'pointer'} borderRadius={'.5rem'} p='8px'>
+                    <Flex  color='red' onClick={() => {if (!isRetrievingData.current) setSelectedView({index:0, type:'deleted', name:'Papelera'}); localStorage.setItem('currentView', JSON.stringify({index:0, type:'deleted', name:'Papelera'}))}} justifyContent={'space-between'} _hover={{bg:selectedView.type === 'deleted'?'blue.100':'gray.200'}} bg={selectedView.type === 'deleted'? 'blue.100':'transparent'} fontWeight={selectedView.type === 'deleted'? 'medium':'normal'}fontSize={'1em'} cursor={'pointer'} borderRadius={'.5rem'} p='8px'>
                         <Flex gap='10px' alignItems={'center'}> 
                             <Icon boxSize={'12px'} as={BsTrash3Fill}/>
                             <Text mt='2px' >{t('Trash')}</Text>
@@ -364,7 +404,7 @@ function TicketsTable({socket}:{socket:any}) {
                     </Flex>
 
                     <Box width={'100%'} mt='2vh' mb='2vh' height={'1px'} bg='gray.300' />
-                    <Flex mb='1vh' height={'25px'} onClick={() => navigate('/settings/people/edit-views')} color='blue.600' alignItems={'center'} mt='2vh' gap='7px' cursor={'pointer'} _hover={{color:'blue.700', textDecor:'underline'}}> 
+                    <Flex mb='1vh' height={'25px'} onClick={() => navigate('/settings/user/edit-views')} color='blue.600' alignItems={'center'} mt='2vh' gap='7px' cursor={'pointer'} _hover={{color:'blue.700', textDecor:'underline'}}> 
                         <Text fontSize={'.9em'} ml='7px'>{t('EditViews')}</Text>
                         <Icon as={FaRegEdit} boxSize={'13px'}/>
                     </Flex>
@@ -380,26 +420,25 @@ function TicketsTable({socket}:{socket:any}) {
                                
                 <Flex gap='15px' mt='2vh'> 
                         <Box width={'350px'}> 
-                            <EditText value={filters.search} setValue={(value) => setFilters(prev => ({...prev, search:value}))} searchInput={true}/>
+                            <EditText value={filters?.search || ''} setValue={(value) => setFilters(prev => ({...prev, search:value}))} searchInput={true}/>
                         </Box>
-                        <Button _hover={{color:'blue.500'}} leftIcon={<FaFilter/>} size='sm' onClick={() => fetchTicketDataWithFilter(filters)}>{t('ApplyFilters')}</Button>
+                        <Button variant='common' size='sm' leftIcon={<FaFilter/>}  onClick={() => fetchTicketDataWithFilter(filters)}>{t('ApplyFilters')}</Button>
                     </Flex>
                     
-                <Flex mt='2vh'  justifyContent={'space-between'} alignItems={'center'}> 
+                <Flex mt='2vh'  justifyContent={'space-between'} alignItems={'end'} > 
                     <Skeleton isLoaded={!waitingInfo} >
                         <Text fontWeight={'medium'} color='gray.600' fontSize={'1.2em'}> {t('TicketsCount', {count:tickets?.total_tickets})}</Text> 
                     </Skeleton>
                     <Flex alignItems={'center'} justifyContent={'end'} gap='10px' flexDir={'row-reverse'}>
-                        <IconButton isRound size='xs' aria-label='next-page' icon={<IoIosArrowForward />} isDisabled={filters.page_index > Math.floor((tickets?.total_tickets || 0)/ 25)} onClick={() => fetchTicketDataWithFilter({...filters,page_index:filters.page_index + 1})}/>
+                        <IconButton isRound size='xs'  variant='common'  aria-label='next-page' icon={<IoIosArrowForward />} isDisabled={filters.page_index > Math.floor((tickets?.total_tickets || 0)/ 25)} onClick={() => fetchTicketDataWithFilter({...filters,page_index:filters.page_index + 1})}/>
                         <Text fontWeight={'medium'} fontSize={'.9em'} color='gray.600'>{t('Page')} {filters.page_index}</Text>
-                        <IconButton isRound size='xs' aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={filters.page_index === 1} onClick={() => fetchTicketDataWithFilter({...filters,page_index:filters.page_index - 1})}/>
+                        <IconButton isRound size='xs' variant='common' aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={filters.page_index === 1} onClick={() => fetchTicketDataWithFilter({...filters,page_index:filters.page_index - 1})}/>
                     </Flex>
                 </Flex>
                 
                 <Skeleton ref={tableRef} isLoaded={!waitingInfo}>
-                    <Table height={selectedElements.length > 0 ?window.innerHeight - (tableRef.current?.getBoundingClientRect().top || 0) - 150:undefined } data={(tickets?.page_data || [])} CellStyle={CellStyle} noDataMessage={t('NoTickets')} requestSort={requestSort} columnsMap={columnsTicketsMap} excludedKeys={['id', 'conversation_id', 'end_client_id',  'is_matilda_engaged']} onClickRow={handleClickRow} selectedElements={selectedElements} setSelectedElements={setSelectedElements} onSelectAllElements={() => {}} currentIndex={selectedIndex}/> 
+                    <Table height={selectedElements.length > 0 ?window.innerHeight - (tableRef.current?.getBoundingClientRect().top || 0) - 150:undefined } data={(tickets?.page_data || [])} CellStyle={CellStyle} noDataMessage={t('NoTickets')} requestSort={requestSort} getSortIcon={getSortIcon} columnsMap={columnsTicketsMap} excludedKeys={['id', 'conversation_id', 'end_client_id',  'is_matilda_engaged']} onClickRow={handleClickRow} selectedElements={selectedElements} setSelectedElements={setSelectedElements} onSelectAllElements={getAllTicketIds} currentIndex={selectedIndex}/> 
                 </Skeleton >             
-              
             </Box>
 
             <AnimatePresence> 
@@ -422,10 +461,7 @@ function TicketsTable({socket}:{socket:any}) {
         
  
 
-        {showConfirmDelete && 
-        <ConfirmBox setShowBox={setShowConfirmDelete}> 
-            <ConfirmDeleteBox/>
-        </ConfirmBox>}
+        {showConfirmDelete && memoizedConfirmDeleteBox}
         
         </>)
 }

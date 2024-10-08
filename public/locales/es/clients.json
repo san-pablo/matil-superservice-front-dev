@@ -4,7 +4,7 @@
     "ClientsCount_other":"{{count}} clientes",
     "Cancel":"Cancelar",
     "Business":"Empresa",
-    "NoClients":"No hay clientes disponibles",
+    "NoTickets":"No hay clientes disponibles",
 
     "Conversations_one":"{{count}} conversación",
     "Conversations_other":"{{count}} conversaciones",
@@ -32,7 +32,7 @@
     "NoCoincidence":"No hay ninguna coincidencia",
     "ConfirmBlock":"Confirmar bloqueo",
     "Block":"Bloquear",
-    "BlockClient":"¿Desea bloquear el cliente {{name_id}}?",
+    "BlockClient":"¿Desea bloquear el cliente/{ {{name_id}}}/?",
     "NoBusiness":"Sin empresa",
     "WebClient":"Cliente de la Web",
     "AddContact":"Añadir contacto",
@@ -42,5 +42,12 @@
     "MergeUsersConfirm":"¿Desea fusionar a  {{user_1}} y a {{user_2}}?</span>",
     "SearchToMerge":"Busca un cliente para fusionar",
     "SelectMergeClient":"Seleccione un cliente para fusionar",
-    "ConfirmAndMerge":"Confirmar y fusionar"
+    "ConfirmAndMerge":"Confirmar y fusionar",
+
+    "email":"Mail",
+    "webchat":"Web",
+    "whatsapp":"Whatsapp",
+    "instagram": "Instagram",
+    "google_business":"Google Business",
+    "phone":"Teléfono"
 }

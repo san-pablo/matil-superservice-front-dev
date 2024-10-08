@@ -14,19 +14,17 @@ import ChannelInfo from "./Components/Channelnfo"
 import ConfirmBox from "../../../Components/Reusable/ConfirmBox"
 import InstagramButton from "./SignUp-Buttons/InstagramButton"
 import GetMatildaConfig from "./GetMatildaConfig"
-import EditText from "../../../Components/Reusable/EditText"
 import LoadingIconButton from "../../../Components/Reusable/LoadingIconButton"
 //TYPING
 import { configProps } from "../../../Constants/typing"
+import { BsTrash3Fill } from "react-icons/bs"
 
 interface WhatsappProps { 
-    id:string
+    id:string 
     uuid:string
     display_id:string
     credentials:{instagram_username:string,   page_id:string, instagram_business_account_id:string, access_token:string }
 }
-
-   
 
 //MAIN FUNCTION
 function Instagram () {
@@ -60,8 +58,8 @@ function Instagram () {
           if (instaChannel) {
             const responseMail = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/${instaChannel}`,  setValue: setData, auth})
             if (responseMail?.status === 200) {
-              setMatildaConfig(responseMail.data.matilda_configuraion)
-              matildaConfigRef.current = responseMail.data.matilda_configuraion
+              setMatildaConfig(responseMail.data.matilda_configuration)
+              matildaConfigRef.current = responseMail.data.matilda_configuration
               dataRef.current = responseMail.data
             }
           }
@@ -101,49 +99,48 @@ function Instagram () {
 
     return(<>
         {(location.pathname.split('/')[4] === 'success_auth') && memoizedCreateBox}
-
-        <Flex justifyContent={'space-between'}> 
-            <Text fontSize={'1.4em'} fontWeight={'medium'}>Instagram</Text>
-            {!(data?.display_id === '') && <Button size='sm'  isDisabled={(JSON.stringify(dataRef.current) === JSON.stringify(data)) && (JSON.stringify(matildaConfigRef.current) === JSON.stringify(matildaConfig))} onClick={saveChanges}>{waitingSend?<LoadingIconButton/>:t('SaveChanges')}</Button>}
-        </Flex>            
-        <Box height={'1px'} width={'100%'} bg='gray.300' mt='1vh' mb='5vh'/>
-    
-
-        <Skeleton isLoaded={ data !== null}> 
-
-        {data?.display_id === '' ?
-
-
-        <Flex height={'100%'} top={0} left={0} width={'100%'} position={'absolute'} alignItems={'center'} justifyContent={'center'}> 
-            <Box maxW={'580px'} textAlign={'center'}> 
-                <Text fontWeight={'medium'} fontSize={'2em'} mb='2vh'>{t('IntegrateInstagram')}</Text>               
-                <Text fontSize={'1em'} color={'gray.600'} mb='2vh'>{t('IntegrateInstagramDes')}</Text>               
-                <InstagramButton />
+            <Box> 
+                <Flex justifyContent={'space-between'}> 
+                    <Text fontSize={'1.4em'} fontWeight={'medium'}>Instagram</Text>
+                    {!(data?.display_id === '') && <Button variant={'delete_section'} leftIcon={<BsTrash3Fill/>} size='sm'>{t('DeleteAccount')}</Button>}
+                </Flex>            
+                <Box height={'1px'} width={'100%'} bg='gray.300' mt='1vh' />
             </Box>
-        </Flex>
-        :
-        <>
-            <Box bg='white' p='1vw' borderRadius={'.7rem'}  boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.1)'} > 
-                <Flex justifyContent={'space-between'} > 
-                    <Box width={'100%'} maxWidth={'600px'}> 
-                        <EditText value={data?.display_id} maxLength={100} nameInput={true} size='md'fontSize='1.5em'  setValue={(value:string) => setData(prev => ({...prev as WhatsappProps, display_id:value}))}/>
+
+            {(data === null || data?.display_id === '') ?
+                <Skeleton isLoaded={ data !== null}>
+                    <Flex height={'100%'} top={0} left={0} width={'100%'} position={'absolute'} alignItems={'center'} justifyContent={'center'}> 
+                        <Box maxW={'580px'} textAlign={'center'}> 
+                            <Text fontWeight={'medium'} fontSize={'2em'} mb='2vh'>{t('IntegrateInstagram')}</Text>               
+                            <Text fontSize={'1em'} color={'gray.600'} mb='2vh'>{t('IntegrateInstagramDes')}</Text>               
+                            <InstagramButton />
+                        </Box>
+                    </Flex>
+                </Skeleton>
+            :
+            <>
+                <Flex flex='1' overflow={'hidden'} width={'100%'} gap='5vw'> 
+                    <Box flex='1' pt='4vh' overflow={'scroll'}> 
+                        <Skeleton isLoaded={ data !== null}> 
+                            <ChannelInfo value={data?.credentials.instagram_username || ''} title={t('User')} description={t('UserDes')}/>
+                            <ChannelInfo value={data?.credentials.page_id || ''} title={t('PageId')} description="Identificador único de la página de Facebook"/>
+                            <ChannelInfo value={data?.credentials.instagram_business_account_id || ''} title={t('AccountId')} description={t('AccountIdDes')}/>
+                            <ChannelInfo hide={true} value={data?.credentials.access_token || ''} title={t('AccessToken')} description={t('AccessTokenDes')}/>
+                        </Skeleton>
                     </Box>
-                </Flex>
-                <Box height={'1px'} mt='2vh'mb='2vh' width={'100%'} bg='gray.300'/>
-                <Flex px='7px'  width={'100%'} gap='5vw'> 
-                    <Box flex='1'> 
-                        <ChannelInfo value={data?.credentials.instagram_username || ''} title={t('User')} description={t('UserDes')}/>
-                        <ChannelInfo value={data?.credentials.page_id || ''} title={t('PageId')} description="Identificador único de la página de Facebook"/>
-                        <ChannelInfo value={data?.credentials.instagram_business_account_id || ''} title={t('AccountId')} description={t('AccountIdDes')}/>
-                        <ChannelInfo hide={true} value={data?.credentials.access_token || ''} title={t('AccessToken')} description={t('AccessTokenDes')}/>
-                    </Box>
-                    <Box flex='1'> 
-                        <GetMatildaConfig configDict={matildaConfig} updateData={setMatildaConfig} />
+                    <Box flex='1' pt='4vh' overflow={'scroll'}> 
+                        <Skeleton isLoaded={ matildaConfig !== null}> 
+                            <GetMatildaConfig configDict={matildaConfig} updateData={setMatildaConfig} />
+                        </Skeleton>
                     </Box>                        
                 </Flex>
-            </Box>
-        </>}
-    </Skeleton>
+                <Box> 
+                    <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='2vh'/>
+                    <Flex flexDir={'row-reverse'}> 
+                        <Button  variant={'common'} isDisabled={(JSON.stringify(dataRef.current) === JSON.stringify(data)) && (JSON.stringify(matildaConfigRef.current) === JSON.stringify(matildaConfig))} onClick={saveChanges}>{waitingSend?<LoadingIconButton/>:t('SaveChanges')}</Button>
+                    </Flex>
+                </Box>
+            </>} 
     </>)
 }
 
@@ -173,7 +170,6 @@ const SuccessPage = ({name, callNewData}:{name:string, callNewData:() => void}) 
 
             const hash = location.hash
             const accessToken = hash.split('#access_token=')[1]?.split('&')[0]
-        
             try {
                 const response = await axios.get('https://graph.facebook.com/v20.0/me/accounts', {params: {fields: 'id,name,access_token,instagram_business_account', access_token: accessToken}})
             setPages(response.data.data)
@@ -209,10 +205,10 @@ const SuccessPage = ({name, callNewData}:{name:string, callNewData:() => void}) 
                 ))}
               </>}
           </Box>
-          <Box height={'1px'} mt='2vh'mb='2vh' width={'100%'} bg='gray.300'/>
-          <Flex flexDir={'row-reverse'}> 
-              <Button onClick={sendData} size='sm' bg='brand.gradient_blue' _hover={{bg:'brand.gradient_blue_hover'}} color='white'>{waitingSend?<LoadingIconButton/>:t('Confirm')}</Button>
-          </Flex>
-      </Box>
+            <Box height={'1px'} mt='2vh'mb='2vh' width={'100%'} bg='gray.300'/>
+            <Flex flexDir={'row-reverse'}> 
+                <Button onClick={sendData} size='sm' variant={'main'} color='white'>{waitingSend?<LoadingIconButton/>:t('Confirm')}</Button>
+            </Flex>
+        </Box>
   )
 }
