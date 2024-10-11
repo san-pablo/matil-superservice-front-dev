@@ -60,7 +60,7 @@
                 <Box left="0" top="0" bottom="0" px='8px' borderLeftRadius={'.5rem'} color='gray.600'  position='absolute' bg='brand.gray_2'>
                     {waitingResult ?<Spinner mt='10px' size='xs'/> :<Icon  as={FaMagnifyingGlass} height='13px' mt='9px' color='gray.600' cursor={'pointer'} />}
                 </Box> 
-                <Input pl='40px' placeholder='Buscar...' size='sm' _focus={{ borderColor: "rgb(77, 144, 254)", borderWidth: "2px" }} borderRadius={'.5rem'} borderColor={'gray.300'} value={value} onChange={(e) => setValue(e.target.value)}/>
+                <Input pl='40px' placeholder='Buscar...' size='sm' _focus={{ borderColor: "brand.text_blue", borderWidth: "2px" }} borderRadius={'.5rem'} borderColor={'gray.300'} value={value} onChange={(e) => setValue(e.target.value)}/>
                 {(value && value !== '') && <Icon mt='8px' ml='-22px' zIndex={100} as={RxCross2} position='absolute' color='gray.600' cursor={'pointer'} onClick={() => setValue('')} />}
             </Box> :
             <Box width={'100%'}>
@@ -72,7 +72,7 @@
                     size={size}
                     borderColor={(regex && value !== undefined) && !regex.test(value) && value !== '' ? 'red':hideInput?'transparent':'gray.300'}
                     _hover={{ border: ((regex && value) ? regex.test(value) : true)?'1px solid #CBD5E0':'2px solid red' }}
-                    _focus={{ px:'6px', borderColor: "rgb(77, 144, 254)", borderWidth: "2px" }}
+                    _focus={{ px:'6px', borderColor: "brand.text_blue", borderWidth: "2px" }}
                     px='7px'
                     fontWeight={nameInput?'medium':'normal'}
                     borderWidth={(regex && value !== undefined)  && !regex.test(value) && value !== '' ? '2px':'none'}

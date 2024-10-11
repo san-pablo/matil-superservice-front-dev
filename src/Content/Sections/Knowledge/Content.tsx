@@ -24,11 +24,11 @@ import { IoBook } from "react-icons/io5"
 import { RxCross2, RxCheck } from "react-icons/rx"
 import { BiWorld } from "react-icons/bi"
 //TYPING
-import { ContentData, languagesFlags } from "../../Constants/typing"
+import { ContentData, languagesFlags, Folder } from "../../Constants/typing"
   
 
-const TypesComponent = ({t,  type }:{t:any, type:'internal_article' | 'public_article' | 'folder' | 'pdf' | 'text' | 'web'}) => {
-    const getAlertDetails = (type:'internal_article' | 'public_article' | 'folder' | 'pdf' | 'text' | 'web') => {
+const TypesComponent = ({t,  type }:{t:any, type:'internal_article' | 'public_article' | 'folder' | 'pdf' | 'text' | 'website'}) => {
+    const getAlertDetails = (type:'internal_article' | 'public_article' | 'folder' | 'pdf' | 'text' | 'website') => {
         switch (type) {
             case 'internal_article':
                 return { color1: 'yellow.100', color2:'yellow.200', icon: FaLock, label: t('InternalArticle') }
@@ -40,7 +40,7 @@ const TypesComponent = ({t,  type }:{t:any, type:'internal_article' | 'public_ar
                 return { color1: 'brand.gray_1', color2:'gray.300', icon: FaFilePdf, label: t('Pdf')  }
             case 'text':
                 return { color1: 'brand.gray_1', color2:'gray.300', icon: FaFileLines, label: t('Text')  }
-            case 'web':
+            case 'website':
                 return { color1: 'brand.gray_1', color2:'gray.300', icon: BiWorld, label: t('Web')  }
         }
     }
@@ -84,7 +84,7 @@ const CellStyle = ({ column, element }:{column:string, element:any}) => {
         </Flex>
     </>)
     }
-    else if (column === 'is_available_to_tilda') return <Icon boxSize={'25px'} color={element?'red.600':'green.600'} as={element?RxCheck:RxCross2}/>
+    else if (column === 'is_available_to_tilda') return <Icon boxSize={'25px'} color={element?'green.600':'red.600'} as={element?RxCheck:RxCross2}/>
     else if (column === 'language') {
         return(
         <Flex gap='5px' alignItems={'center'}>
@@ -102,11 +102,12 @@ const CellStyle = ({ column, element }:{column:string, element:any}) => {
     else return ( <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'}  fontWeight={column === 'title'?'medium':'normal'}  overflow={'hidden'} >{element === ''?'-':element}</Text>)
 }
 
-function Content ({contentData, setContentData}:{contentData:ContentData[] | null, setContentData:Dispatch<SetStateAction<ContentData[] | null>>}) {
+function Content ({contentData, setContentData, handleFolderUpdate}:{contentData:ContentData[] | null, setContentData:Dispatch<SetStateAction<ContentData[] | null>>, handleFolderUpdate:(type: 'edit' | 'add' | 'delete' | 'move', newFolderData: Folder, parentId: string | null) => void}) {
 
     //AUTH CONSTANT
     const auth = useAuth()
     const session = useSession()
+    const navigate = useNavigate()
     const { t } = useTranslation('knowledge')
     const columnsContentMap:{[key:string]:[string, number]} = {title: [t('title'), 200], type: [t('type'), 150], language: [t('language'), 150], is_available_to_tilda:[t('is_available_to_tilda'), 150], created_at: [t('created_at'), 180], updated_at: [t('updated_at'), 180], created_by:[t('created_by'), 150],updated_by:[t('updated_by'), 150], tags:[t('tags'), 300], public_article_help_center_collections:[t('public_article_help_center_collections'), 300], public_article_status:[t('public_article_status'), 150]}
 
@@ -114,14 +115,9 @@ function Content ({contentData, setContentData}:{contentData:ContentData[] | nul
     const [showCreate, setShowCreate] = useState<boolean>(false)
     const [showCreateFolder, setShowCreateFolder] = useState<boolean>(false)
 
-
     //SELECTED GROUP
     const [selectedIndex, setSelectedIndex] = useState<number>(-2)
 
-    //TRIGGER TO DELETE 
-    const [selectedElements, setSelectedElements] = useState<number[]>([])
-    const [automationToDeleteIndex, setAutomationToDeleteIndex] = useState<number | null>(null)
-    
     //FETCH INITIAL DATA
     useEffect(() => {
         
@@ -130,48 +126,15 @@ function Content ({contentData, setContentData}:{contentData:ContentData[] | nul
     
             if (contentDataList) setContentData(contentDataList)
             else {
-                const response  = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/knowledge/content`, setValue:setContentData, auth})
+                const response  = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/knowledge/sources`, setValue:setContentData, auth})
                 if (response?.status === 200) session.dispatch({ type: 'UPDATE_CONTENT_TABLE', payload: response.data })
-                else setContentData([
-                    {
-                    "uuid": "string",
-                    "type": "public_article",
-                    "title": "string",
-                    "language": "EN",
-                    "is_available_to_tilda": true,
-                    "created_at": "string",
-                    "updated_at": "string",
-                    "created_by": 0,
-                    "updated_by": 0,
-                    "tags": ["string"],
-                    "public_article_help_center_collections": ["string"],
-                    "public_article_uuid": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                    "public_article_status": "draft"
-                    },
-                    {
-                        "uuid": "string",
-                        "type": "folder",
-                        "title": "string",
-                        "language": "EN",
-                        "is_available_to_tilda": true,
-                        "created_at": "string",
-                        "updated_at": "string",
-                        "created_by": 0,
-                        "updated_by": 0,
-                        "tags": ["string"],
-                        "public_article_help_center_collections": ["string"],
-                        "public_article_uuid": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                        "public_article_status": "draft"
-                    }
-                ])
+              
             }
         }
         localStorage.setItem('currentSectionContent', 'content')
         document.title = `${t('Content')} - ${auth.authData.organizationName} - Matil`
         fetchTriggerData()
     }, [])
-
-
 
     //FILTER TRIGGER DATA
     const [text, setText]  =useState<string>('')
@@ -186,38 +149,12 @@ function Content ({contentData, setContentData}:{contentData:ContentData[] | nul
         filterUserData()
     }, [text, contentData])
 
-    //FUNCTION FOR DELETING THE TRIGGER
-    const DeleteComponent = () => {
-
-        //WAITING DELETION
-        const [waitingDelete, setWaitingDelete] = useState<boolean>(false)
-
-        //FUNCTION FOR DELETING AN AUTOMATION
-        const deleteTrigger= async () => {
-           
-        }
-
-        //FRONT
-        return(<>
-            <Box p='20px' > 
-                <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('ConfirmDelete')}</Text>
-                <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
-                <Text >{parseMessageToBold(t('ConfirmDeleteTrigger', {name:contentData?.[automationToDeleteIndex as number].title}))}</Text>
-            </Box>
-            <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-                <Button  size='sm' variant={'delete'} onClick={deleteTrigger}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
-                <Button  size='sm' variant={'common'}onClick={() => setAutomationToDeleteIndex(null)}>{t('Cancel')}</Button>
-            </Flex>
-        </>)
+    const navigateToContent = (row:ContentData) => {
+        if (row.type === 'public_article' || row.type === 'internal_article') navigate(`/knowledge/article/${row.uuid}`)
+        else if (row.type === 'snippet') navigate(`/knowledge/text/${row.uuid}`)
+        else if (row.type === 'website') navigate(`/knowledge/website/${row.uuid}`)
+        else if (row.type === 'pdf') navigate(`/knowledge/pdf/${row.uuid}`)
     }
-
-    //DELETE BOX
-    const memoizedDeleteBox = useMemo(() => (
-        <ConfirmBox isSectionWithoutHeader setShowBox={(b:boolean) => setAutomationToDeleteIndex(null)}> 
-            <DeleteComponent/>
-        </ConfirmBox>
-    ), [automationToDeleteIndex])
-
     const memoizedCreateBox = useMemo(() => (
         <ConfirmBox maxW={'800px'} isSectionWithoutHeader setShowBox={setShowCreate}> 
             <CreateBox/>
@@ -226,14 +163,13 @@ function Content ({contentData, setContentData}:{contentData:ContentData[] | nul
 
     const memoizedCreateFolderBox = useMemo(() => (
         <ConfirmBox maxW={'800px'} isSectionWithoutHeader setShowBox={setShowCreateFolder}> 
-            <CreateFolder setShowCreate={setShowCreateFolder} currentFolder={null}/>
+            <CreateFolder setShowCreate={setShowCreateFolder} type='add' parentId={null} currentFolder={null} onFolderUpdate={handleFolderUpdate}/>
         </ConfirmBox>
     ), [showCreateFolder])
 
 
     //FRONT
     return(<>
-        {automationToDeleteIndex !== null && memoizedDeleteBox}
         {showCreate && memoizedCreateBox}
         {showCreateFolder && memoizedCreateFolderBox}
 
@@ -259,7 +195,7 @@ function Content ({contentData, setContentData}:{contentData:ContentData[] | nul
                 
             </Flex>
             <Skeleton isLoaded={contentData !== null}> 
-                <Table data={filteredContentData} CellStyle={CellStyle} columnsMap={columnsContentMap}  excludedKeys={['uuid', 'public_article_uuid']} noDataMessage={t('NoContent')} onClickRow={(row, index) => setSelectedIndex(index)} selectedElements={selectedElements} setSelectedElements={setSelectedElements} currentIndex={selectedIndex}/>  
+                <Table data={filteredContentData} CellStyle={CellStyle} columnsMap={columnsContentMap}  excludedKeys={['uuid', 'public_article_uuid', 'content','is_ingested', 'public_article_common_uuid', 'folder_uuid' ]} noDataMessage={t('NoContent')} onClickRow={(row, index) => navigateToContent(row)} currentIndex={selectedIndex}/>  
             </Skeleton>
         </Box>
     

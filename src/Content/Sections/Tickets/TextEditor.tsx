@@ -606,8 +606,9 @@ function TextEditor({clientName, ticketData, updateData, deleteHeaderSection, ta
                          </Flex>
                     </Flex>
             </Box>}
- 
-            {emojiVisible &&<Box position={'fixed'} bottom={window.innerHeight - (emojiButtonRef?.current?.getBoundingClientRect().top || 0) + 2} left={emojiButtonRef?.current?.getBoundingClientRect().left} zIndex={1000} ref={emojiBoxRef}> <EmojiPicker onEmojiClick={handleEmojiClick}  allowExpandReactions={false}/></Box>}
+            <Portal> 
+                <Box position={'fixed'} pointerEvents={emojiVisible?'auto':'none'}    transition='opacity 0.2s ease-in-out' opacity={emojiVisible ? 1:0} bottom={`${window.innerHeight - (emojiButtonRef?.current?.getBoundingClientRect().top || 0) + 5}px`} left={`${emojiButtonRef?.current?.getBoundingClientRect().left}px`} zIndex={1000} ref={emojiBoxRef}> <EmojiPicker onEmojiClick={handleEmojiClick}  allowExpandReactions={false}/></Box>
+            </Portal>
             </>)
 }
 

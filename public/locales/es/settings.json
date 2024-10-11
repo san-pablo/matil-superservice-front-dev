@@ -153,7 +153,6 @@
     "FailedCreatedFields":"Hubo un error al crear el campos",
     "CorrectUpdatedFields":"Campo actualizado con éxito",
     "FailedUpdateFields":"Hubo un error al atualizar el campo",
-
     "CorrectDeletedFields":"Campo eliminado con éxito",
     "FailedDeletedFields":"Hubo un error al eliminar el campo",
 
@@ -167,8 +166,17 @@
     "AddArticles":"Añadir artículos",
     "CorrectAddedArticle":"Artículos añadidos con éxito",
     "FailedAddedArticle":"Hubo un error al añadir los artículos",
+    "NoArticlesToAdd":"No hay artículos disponibles para añadir",
+    "DeleteCollection":"Eliminar colección",
+    "DeleteArticle":"Eliminar artículo",
+    "DeleteCollectionMessage":"Esto borrará permanentemente la colección y eliminará tus artículos del Centro de ayuda. Los artículos seguirán guardados en tu lista de artículos.",
+    "DeleteArticleMessage":"Sigue en tu lista de artículos y puedes volver a añadirlo cuando quieras.",
+    "CorrectDeletedCollection":"Colección eliminada con éxito",
+    "CorrectDeletedArticle":"Artículo eliminado con éxito",
+    "FailedDeletedCollection":"Hubo un error al eliminar la colección",
+    "FailedDeletedArticle":"Hubo un error al eliminar el artículo",
 
-
+    
     "Styles":"Estilos",
     "header":"Encabezado",
     "common":"Elementos comunes",

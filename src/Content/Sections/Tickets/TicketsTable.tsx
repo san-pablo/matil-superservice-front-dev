@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next'
 import fetchData from "../../API/fetchData"
 import LoadingIconButton from "../../Components/Reusable/LoadingIconButton"
 //FRONT
-import { Flex, Box, Text, Icon, Button, IconButton, Skeleton, Tooltip } from '@chakra-ui/react'
+import { Flex, Box, Text, Icon, Button, IconButton, Skeleton, Tooltip, Portal } from '@chakra-ui/react'
 import { motion, AnimatePresence } from 'framer-motion'
 //COMPONENTS
 import ActionsButton from "./ActionsButton"
@@ -369,7 +369,7 @@ function TicketsTable({socket}:{socket:any}) {
                                 {auth.authData.views.private_views.map((view, index) => {
                                     const isSelected = selectedView.index === index && selectedView.type === 'private'
                                     return(
-                                        <Flex justifyContent='space-between' key={`private-view-${index}`} onClick={() => {if (!isRetrievingData.current) setSelectedView({index:index, type:'private', name:(view?.name || '')});localStorage.setItem('currentView', JSON.stringify({index:index, type:'private', name:view.name}))}}   _hover={{bg:isSelected?'blue.100':'gray.200'}} bg={isSelected? 'blue.100':'transparent'} fontWeight={isSelected? 'medium':'normal'} fontSize={'1em'} cursor={'pointer'} borderRadius={'.5rem'} p='10px'>
+                                        <Flex gap='10px' justifyContent='space-between' key={`private-view-${index}`} onClick={() => {if (!isRetrievingData.current) setSelectedView({index:index, type:'private', name:(view?.name || '')});localStorage.setItem('currentView', JSON.stringify({index:index, type:'private', name:view.name}))}}   _hover={{bg:isSelected?'blue.100':'gray.200'}} bg={isSelected? 'blue.100':'transparent'} fontWeight={isSelected? 'medium':'normal'} fontSize={'1em'} cursor={'pointer'} borderRadius={'.5rem'} p='10px'>
                                             <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{view.name}</Text>
                                             <Text>{auth.authData.views?.number_of_tickets_per_private_view?.[index] || 0}</Text>
                                         </Flex>
@@ -383,7 +383,7 @@ function TicketsTable({socket}:{socket:any}) {
                                 {auth.authData.views.shared_views.map((view, index) => {
                                 const isSelected = selectedView.index === index && selectedView.type === 'shared'
                                 return(
-                                    <Flex justifyContent='space-between' key={`shared-view-${index}`} onClick={() => {if (!isRetrievingData.current) setSelectedView({index:index, type:'shared', name:(view?.name || '')}); localStorage.setItem('currentView', JSON.stringify({index:index, type:'shared', name:view.name}))}} _hover={{bg:isSelected?'blue.100':'gray.200'}} bg={isSelected? 'blue.100':'transparent'} fontWeight={isSelected? 'medium':'normal'}fontSize={'1em'} cursor={'pointer'} borderRadius={'.5rem'} p='10px'>
+                                    <Flex gap='10px' justifyContent='space-between' key={`shared-view-${index}`} onClick={() => {if (!isRetrievingData.current) setSelectedView({index:index, type:'shared', name:(view?.name || '')}); localStorage.setItem('currentView', JSON.stringify({index:index, type:'shared', name:view.name}))}} _hover={{bg:isSelected?'blue.100':'gray.200'}} bg={isSelected? 'blue.100':'transparent'} fontWeight={isSelected? 'medium':'normal'}fontSize={'1em'} cursor={'pointer'} borderRadius={'.5rem'} p='10px'>
                                         <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{view.name}</Text>
                                         <Text>{auth.authData.views?.number_of_tickets_per_shared_view?.[index] || 0}</Text>
                                     </Flex>
@@ -404,7 +404,7 @@ function TicketsTable({socket}:{socket:any}) {
                     </Flex>
 
                     <Box width={'100%'} mt='2vh' mb='2vh' height={'1px'} bg='gray.300' />
-                    <Flex mb='1vh' height={'25px'} onClick={() => navigate('/settings/user/edit-views')} color='blue.600' alignItems={'center'} mt='2vh' gap='7px' cursor={'pointer'} _hover={{color:'blue.700', textDecor:'underline'}}> 
+                    <Flex mb='1vh' height={'25px'} onClick={() => navigate('/settings/user/edit-views')} color='brand.text_blue' alignItems={'center'} mt='2vh' gap='7px' cursor={'pointer'} _hover={{textDecor:'underline'}}> 
                         <Text fontSize={'.9em'} ml='7px'>{t('EditViews')}</Text>
                         <Icon as={FaRegEdit} boxSize={'13px'}/>
                     </Flex>
@@ -441,21 +441,24 @@ function TicketsTable({socket}:{socket:any}) {
                 </Skeleton >             
             </Box>
 
+                
             <AnimatePresence> 
                 {selectedElements.length > 0 && 
-                <motion.div initial={{bottom:-200}} animate={{bottom:0}} exit={{bottom:-200}} transition={{duration:.2}} style={{backgroundColor:'#F7FAFC',display:'flex', justifyContent:'space-between', alignItems:'center',padding:'0 2vw 0 2vw', height:'80px', left:'335px', gap:'20px',position:'fixed',  borderTop:' 1px solid #E2E8F0', overflow:'scroll', width:`calc(100vw - 335px)`}}>
-                    <Flex gap='1vw' alignItems={'center'}> 
-                        <Text whiteSpace={'nowrap'} fontWeight={'medium'}>{selectedElements.length} ticket{selectedElements.length > 1 ? 's':''}</Text>
-                        <Button onClick={() => setSelectedElements([])} size='sm' bg='transparent' borderColor={'transparent'} color='blue.400' _hover={{bg:'gray.100', color:'blue.500'}} leftIcon={<MdDeselect/>}>{t('DeSelect')}</Button> 
-                        {selectedView.type === 'deleted' ? 
-                            <Button  size='sm' bg='transparent' borderColor={'transparent'} color='blue.400' _hover={{bg:'gray.100', color:'blue.500'}} leftIcon={<FaArrowRotateLeft/>} onClick={recoverTickets}>{t('Recover')}</Button>
-                        :
-                            <> {selectedElements.length <= 1 && <Button onClick={() => `/tickets/ticket/${selectedElements[0]}`} size='sm' bg='transparent' borderColor={'transparent'} color='blue.400' _hover={{bg:'gray.100', color:'blue.500'}} leftIcon={<BiEditAlt/>}>{t('Edit')}</Button>}</>
-                        } 
-                        <Button size='sm' onClick={() => {if (selectedView.type === 'deleted') setShowConfirmDelete(true);else{deleteTickets()}}} bg='transparent' borderColor={'transparent'} color='red.500' _hover={{bg:'gray.100', color:'red.700'}}leftIcon={<BsTrash3Fill/>}>{waitingDelete?<LoadingIconButton/>:selectedView.type === 'deleted'?t('Delete'):t('MoveToBin')}</Button>
-                    </Flex>
-                    <Button sx={{ whiteSpace: 'nowrap', minWidth: 'auto' }} size='sm' color='red' onClick={() => setSelectedElements([])} _hover={{color:'red.700'}}>{t('Cancel')}</Button>
-                </motion.div>}
+                <Portal> 
+                    <motion.div initial={{bottom:-200}} animate={{bottom:0}} exit={{bottom:-200}} transition={{duration:.2}} style={{backgroundColor:'#F7FAFC',display:'flex', justifyContent:'space-between', alignItems:'center',padding:'0 2vw 0 2vw', height:'80px', left:'335px', gap:'20px',position:'fixed',  borderTop:' 1px solid #E2E8F0', overflow:'scroll', width:`calc(100vw - 335px)`}}>
+                        <Flex gap='1vw' alignItems={'center'}> 
+                            <Text whiteSpace={'nowrap'} fontWeight={'medium'}>{selectedElements.length} ticket{selectedElements.length > 1 ? 's':''}</Text>
+                            <Button  fontWeight={'medium'} color='brand.text_blue' onClick={() => setSelectedElements([])} size='sm' bg='transparent' borderColor={'transparent'}  _hover={{bg:'gray.100'}} leftIcon={<MdDeselect/>}>{t('DeSelect')}</Button> 
+                            {selectedView.type === 'deleted' ? 
+                                <Button  fontWeight={'medium'} color='brand.text_blue'  size='sm' bg='transparent' borderColor={'transparent'} _hover={{bg:'gray.100'}} leftIcon={<FaArrowRotateLeft/>} onClick={recoverTickets}>{t('Recover')}</Button>
+                            :
+                                <> {selectedElements.length <= 1 && <Button  fontWeight={'medium'} color='brand.text_blue' onClick={() => `/tickets/ticket/${selectedElements[0]}`} size='sm' bg='transparent' borderColor={'transparent'}  _hover={{bg:'gray.100'}} leftIcon={<BiEditAlt/>}>{t('Edit')}</Button>}</>
+                            } 
+                            <Button  fontWeight={'medium'} size='sm' onClick={() => {if (selectedView.type === 'deleted') setShowConfirmDelete(true);else{deleteTickets()}}} bg='transparent' borderColor={'transparent'} color='red.500' _hover={{bg:'gray.100', color:'red.700'}}leftIcon={<BsTrash3Fill/>}>{waitingDelete?<LoadingIconButton/>:selectedView.type === 'deleted'?t('Delete'):t('MoveToBin')}</Button>
+                        </Flex>
+                        <Button sx={{ whiteSpace: 'nowrap', minWidth: 'auto' }} size='sm' variant='delete' onClick={() => setSelectedElements([])} >{t('Cancel')}</Button>
+                    </motion.div>
+                </Portal>}
             </AnimatePresence>
         </Flex>
         

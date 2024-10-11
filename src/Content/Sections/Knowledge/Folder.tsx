@@ -13,6 +13,7 @@ import EditText from "../../Components/Reusable/EditText"
 import ConfirmBox from "../../Components/Reusable/ConfirmBox"
 import Table from "../../Components/Reusable/Table"
 import LoadingIconButton from "../../Components/Reusable/LoadingIconButton"
+import { CreateBox, CreateFolder } from "./Utils"
 //FUNCTIONS
 import timeStampToDate from "../../Functions/timeStampToString"
 import timeAgo from "../../Functions/timeAgo"
@@ -23,7 +24,7 @@ import { IoBook } from "react-icons/io5"
 import { RxCross2, RxCheck } from "react-icons/rx"
 import { BiWorld } from "react-icons/bi"
 //TYPING
-import { ContentData, languagesFlags } from "../../Constants/typing"
+import { ContentData, languagesFlags, Folder } from "../../Constants/typing"
   
 
 const TypesComponent = ({t,  type }:{t:any, type:'internal_article' | 'public_article' | 'folder' | 'pdf' | 'text' | 'web'}) => {
@@ -101,7 +102,7 @@ const CellStyle = ({ column, element }:{column:string, element:any}) => {
     else return ( <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'}  fontWeight={column === 'title'?'medium':'normal'}  overflow={'hidden'} >{element === ''?'-':element}</Text>)
 }
 
-function Folder () {
+function FoldeSection ({handleFolderUpdate}:{handleFolderUpdate:(type: 'edit' | 'add' | 'delete' | 'move', newFolderData: Folder, parentId: string | null) => void}) {
 
     //AUTH CONSTANT
     const auth = useAuth()
@@ -115,48 +116,17 @@ function Folder () {
     //SELECTED GROUP
     const [selectedIndex, setSelectedIndex] = useState<number>(-2)
 
-    //TRIGGER TO DELETE 
-    const [selectedElements, setSelectedElements] = useState<number[]>([])
-    const [automationToDeleteIndex, setAutomationToDeleteIndex] = useState<number | null>(null)
-    
+    //CREATE BOX AND FOLDER
+    const [showCreate, setShowCreate] = useState<boolean>(false)
+    const [showCreateFolder, setShowCreateFolder] = useState<boolean>(false)
+
     //FETCH INITIAL DATA
     useEffect(() => {
         
         const fetchTriggerData = async () => {
-            const response  = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/knowledge/content/${folderUuid}`, setValue:setContentData, auth})
+            const response  = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/knowledge/sources`, setValue:setContentData, auth})
                 if (response?.status === 200) session.dispatch({ type: 'UPDATE_CONTENT_TABLE', payload: response.data })
-                else setContentData([
-                    {
-                    "uuid": "string",
-                    "type": "public_article",
-                    "title": "string",
-                    "language": "EN",
-                    "is_available_to_tilda": true,
-                    "created_at": "string",
-                    "updated_at": "string",
-                    "created_by": 0,
-                    "updated_by": 0,
-                    "tags": ["string"],
-                    "public_article_help_center_collections": ["string"],
-                    "public_article_uuid": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                    "public_article_status": "draft"
-                    },
-                    {
-                        "uuid": "string",
-                        "type": "folder",
-                        "title": "string",
-                        "language": "EN",
-                        "is_available_to_tilda": true,
-                        "created_at": "string",
-                        "updated_at": "string",
-                        "created_by": 0,
-                        "updated_by": 0,
-                        "tags": ["string"],
-                        "public_article_help_center_collections": ["string"],
-                        "public_article_uuid": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                        "public_article_status": "draft"
-                    }
-                ])
+              
         }
         localStorage.setItem('currentSectionContent', 'content')
         document.title = `${t('Content')} - ${auth.authData.organizationName} - Matil`
@@ -176,51 +146,32 @@ function Folder () {
         filterUserData()
     }, [text, contentData])
 
-    //FUNCTION FOR DELETING THE TRIGGER
-    const DeleteComponent = () => {
-
-        //WAITING DELETION
-        const [waitingDelete, setWaitingDelete] = useState<boolean>(false)
-
-        //FUNCTION FOR DELETING AN AUTOMATION
-        const deleteTrigger= async () => {
-           
-        }
-
-        //FRONT
-        return(<>
-            <Box p='20px' > 
-                <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('ConfirmDelete')}</Text>
-                <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
-                <Text >{parseMessageToBold(t('ConfirmDeleteTrigger', {name:contentData?.[automationToDeleteIndex as number].title}))}</Text>
-            </Box>
-            <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-                <Button  size='sm' variant={'delete'} onClick={deleteTrigger}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
-                <Button  size='sm' variant={'common'}onClick={() => setAutomationToDeleteIndex(null)}>{t('Cancel')}</Button>
-            </Flex>
-        </>)
-    }
-
-    //DELETE BOX
-    const memoizedDeleteBox = useMemo(() => (
-        <ConfirmBox isSectionWithoutHeader setShowBox={(b:boolean) => setAutomationToDeleteIndex(null)}> 
-            <DeleteComponent/>
+ 
+    const memoizedCreateBox = useMemo(() => (
+        <ConfirmBox maxW={'800px'} isSectionWithoutHeader setShowBox={setShowCreate}> 
+            <CreateBox/>
         </ConfirmBox>
-    ), [automationToDeleteIndex])
+    ), [showCreate])
 
+    const memoizedCreateFolderBox = useMemo(() => (
+        <ConfirmBox maxW={'800px'} isSectionWithoutHeader setShowBox={setShowCreateFolder}> 
+            <CreateFolder setShowCreate={setShowCreateFolder} type='add' parentId={folderUuid} currentFolder={null} onFolderUpdate={handleFolderUpdate}/>
+        </ConfirmBox>
+    ), [showCreateFolder])
 
     //FRONT
     return(<>
-        {automationToDeleteIndex !== null && memoizedDeleteBox}
-        
+        {showCreate && memoizedCreateBox}
+        {showCreateFolder && memoizedCreateFolderBox}
+
         <Box> 
             <Flex justifyContent={'space-between'} alignItems={'end'}> 
                 <Box> 
                     <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Content')}</Text>
                 </Box>
-                <Flex gap='10px'> 
-                    <Button size={'sm'} variant={'common'} leftIcon={<FaFolder/>} >{t('CreateFolder')}</Button>
-                    <Button size={'sm'} variant={'main'} leftIcon={<FaPlus/>} >{t('CreateContent')}</Button>
+                 <Flex gap='10px'> 
+                    <Button size={'sm'} variant={'common'} leftIcon={<FaFolder/>} onClick={() => setShowCreateFolder(true)}>{t('CreateFolder')}</Button>
+                    <Button size={'sm'} variant={'main'} leftIcon={<FaPlus/>} onClick={() => setShowCreate(true)}>{t('CreateContent')}</Button>
                 </Flex> 
             </Flex>
             <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/>
@@ -236,11 +187,11 @@ function Folder () {
                 
             </Flex>
             <Skeleton isLoaded={contentData !== null}> 
-                <Table data={filteredContentData} CellStyle={CellStyle} columnsMap={columnsContentMap}  excludedKeys={['uuid', 'public_article_uuid']} noDataMessage={t('NoContent')} onClickRow={(row, index) => setSelectedIndex(index)} selectedElements={selectedElements} setSelectedElements={setSelectedElements} currentIndex={selectedIndex}/>  
+                <Table data={filteredContentData} CellStyle={CellStyle} columnsMap={columnsContentMap}  excludedKeys={['uuid', 'public_article_uuid']} noDataMessage={t('NoContent')} onClickRow={(row, index) => setSelectedIndex(index)} currentIndex={selectedIndex}/>  
             </Skeleton>
         </Box>
     
     </>)
 }
 
-export default Folder
+export default FoldeSection

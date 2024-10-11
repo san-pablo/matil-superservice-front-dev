@@ -92,14 +92,12 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
                     return newIndex
                 })
             }
-            else if (event.code === 'Space' && data && 0 <= selectedIndex && selectedIndex   <= data.length - 1 && selectedElements) {
-                handleCheckboxChange(selectedIndex, !selectedElements.includes(selectedIndex))
-            }
+            else if (event.code === 'Space' && data && 0 <= selectedIndex && selectedIndex   <= data.length - 1 && selectedElements) handleCheckboxChange(selectedIndex, !selectedElements.includes(selectedIndex))
             else if (event.code === 'Enter' && data && onClickRow) onClickRow(data[selectedIndex], selectedIndex)
         }
         window.addEventListener('keydown', handleKeyDown)
         return () => {window.removeEventListener('keydown', handleKeyDown)}
-    }, [selectedIndex, data])
+    }, [selectedIndex, selectedElements, data])
 
 
     //OBTAIN COLUMNS
@@ -129,6 +127,7 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
             else setSelectedElements(prevElements => prevElements.filter(el => el !== element))
         }
     }
+    
     //SORT LOGIC FOR TABLES THAT HAVE ALL THE AVAILABLE DATA
     const requestInternalSort = (column: string) => {
         let direction: 'asc' | 'desc' = 'asc'
@@ -177,7 +176,6 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
                      <CustomCheckbox  id={`checkbox-${-1}`} isChecked={selectedElements.length >= dataToWork.length} onChange={() =>  {if (onSelectAllElements) (onSelectAllElements)()}}/>
                     </Box>}
                     {columns.filter(column => column !== 'id').map((column) => (
-    
                         <Fragment key={`header-${column}`}>
                             {column in data[0] &&
                             <Flex minW={0}  alignItems={'center'} flex={`${(columnsMap?.[column]?.[1] || 180)/10} 0 ${(columnsMap?.[column]?.[1] || 180)}px`}> 
@@ -193,7 +191,7 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
                         
                         return (
                             <Flex height={'50px'} data-index={index}  position={'relative'} overflow={'hidden'} gap='20px' minWidth={`${totalWidth}px`} borderRadius={index === data.length - 1?'0 0 .5rem .5rem':'0'} borderWidth={'0 1px 1px 1px'}  cursor={onClickRow?'pointer':'normal'} onClick={() => {if (onClickRow) onClickRow(row, index)}} key={`row-${index}`}  bg={selectedIndex === index ? 'blue.50':(selectedElements || []).includes(index)?'blue.100':index%2 === 1?'#FCFCFC':'white'} alignItems={'center'}  fontSize={'.9em'} color='black' p='10px' borderColor={'gray.200'} _hover={{bg:(selectedElements || [] ).includes(index)?'blue.100':'blue.50'}}  > 
-                                {selectedIndex === index && <Box position='absolute' left={0} top={0} height={'100%'} width={'2px'} bg='blue.400'/>}
+                                {selectedIndex === index && <Box position='absolute' left={0} top={0} height={'100%'} width={'2px'} bg='brand.text_blue'/>}
                                 {selectedElements &&
                                     <Flex onClick={(e) => e.stopPropagation()}> 
                                         <CustomCheckbox id={`checkbox-${index}`}  onChange={() => handleCheckboxChange(index, !selectedElements.includes(index))} isChecked={selectedElements.includes(index)} />

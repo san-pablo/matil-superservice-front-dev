@@ -10,7 +10,7 @@ const openSafariPlugin = () => {
     configureServer(server:any) {
       server.httpServer?.once('listening', () => {
         const address = server.httpServer?.address();
-        const url = `http://localhost:${address.port}`;
+        const url = `http://192.168.0.179:${address.port}`;
         exec(`open -a Safari ${url}`);
       });
     }
@@ -18,8 +18,8 @@ const openSafariPlugin = () => {
 }
 
 // https://vitejs.dev/config/
-export default defineConfig({
-  plugins: [
+export default defineConfig(({ command, mode }) => {
+  const commonPlugins = [
     react(),
     visualizer({
       filename: './dist/bundle-analysis.html',
@@ -28,15 +28,35 @@ export default defineConfig({
       brotliSize: true,
     }),
     openSafariPlugin() // Agregar el plugin personalizado para abrir Safari
-  ],
+  ];
 
-  resolve: {
-    extensions: ['.mjs', '.js', '.jsx', '.ts', '.tsx'],
-  },
+  if (command === 'serve' && mode === 'hot-reload') {
+    // Development mode with hot-reloading
+    return {
+      plugins: commonPlugins,
+      server: {
+        port: 4001,
+        open: false,  // Desactivar la apertura automática del navegador predeterminado
+        host: '192.168.0.179',
+      },
+    };
+  }
 
-  server: {
-    port: 4001,
-    open: false,  // Desactivar la apertura automática del navegador predeterminado
-    host: '192.168.0.179',
-  },
-})
+  if (command === 'serve' && mode === 'no-hot-reload') {
+    // Production-like mode with no hot-reloading
+    return {
+      plugins: commonPlugins,
+      server: {
+        port: 4002, // Different port for the no-hot-reload version
+        open: false,
+        host: '192.168.0.179',
+        hmr: false, // Disable hot module replacement (HMR)
+      },
+    };
+  }
+
+  // Default configuration (for build, etc.)
+  return {
+    plugins: commonPlugins,
+  };
+});

@@ -152,7 +152,7 @@ function Content ({userInfo}:{userInfo:userInfo}) {
         else navigate(window.location)
 
         socket.current = io('https://api.matil.ai/superservice_platform', {
-            path: '/v2/socket.io/',
+            path: '/v1/socket.io/',
             query: {
                 access_token: auth.authData.accessToken,
                 organization_id: auth.authData.organizationId
@@ -165,8 +165,6 @@ function Content ({userInfo}:{userInfo:userInfo}) {
         //RECEIVE A TICKET
         socket.current.on('ticket', (data:any) => {
             session.dispatch({type: 'EDIT_HEADER_SECTION_TICKET', payload: {...data, auth}})
-
-            t
             if (data?.is_new) showToast({message:t('NewTicketCreated',{id:data.new_data.local_id}), type:'ticket', id:data.new_data.id, linkPath:true, navigate, isDesktop:true})
             
             function waitForProcessing() {
@@ -589,6 +587,7 @@ const NavBarItem = forwardRef<HTMLDivElement, NavBarItemProps>(({icon, section }
     const location = useLocation().pathname
     const sectionsMap = {tickets: 'Tickets', clients: t('Clients'), stats: t('Stats'), 'flows-functions':t('FlowsFunctions'),'knowledge':t('Knowledge'), 'contact-businesses':t('Businesses'), settings: t('Settings')}
     
+    console.log()
  
     //HOVER AND SELECT LOGIC
     const [isHovered, setIsHovered] = useState(false)
@@ -597,7 +596,7 @@ const NavBarItem = forwardRef<HTMLDivElement, NavBarItemProps>(({icon, section }
             navigate(section)
          }
     }
-    const isSelected = section === 'settings' ? location.split('/')[1] === 'settings' : section === 'stats' ? location.split('/')[1] === 'stats' : section === 'flows-functions' ? location.split('/')[1] === 'flows-functions' : location === `/${section}` 
+    const isSelected = section === 'settings' ? location.split('/')[1] === 'settings': section === 'knowledge' ? location.split('/')[1] === 'knowledge' : section === 'stats' ? location.split('/')[1] === 'stats' : section === 'flows-functions' ? location.split('/')[1] === 'flows-functions' : location === `/${section}` 
 
     //FRONT
     return (

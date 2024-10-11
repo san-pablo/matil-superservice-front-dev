@@ -4,6 +4,7 @@
     "CreateSubFolder":"Crear subcarpeta",
     "EditFolder":"Editar carpeta",
     "MoveFolder":"Mover a carpeta",
+    "MoveFolderName":"Mover {{name}}",
     "DeleteFolder":"Eliminar carpeta",
     "CreateContent":"Nuevo contenido",
     "CreateFolder":"Nueva carpeta",
@@ -23,11 +24,17 @@
     "NewSyncronize":"Volver a sincronizar",
     "Syncronize":"Sincronizar",
     "AddWeb":"Añadir página web",
+    
     "AddUrl":"Ingresa la URL del contenido que quieres sincronizar",
     "AddUrlDes":"Los dominios de nivel superior como https://tilda.ai darán mejores resultados que https://matil.ai/tilda.",
     "AddTextFragment":"Añadir fragmento de texto",
     "Edit":"Editar",
-    "AddPdf":"Anadir documento",
+    "AddPdf":"Añadir documento",
+    "AddPdfDes":"Proporciona un archivo PDF y buscaremos todos los datos de texto que contiene. \n\n El formato admitido es PDF de texto, hasta 45 MB. \n\n No se admiten imágenes ni varias columnas de texto.",
+    "Upload":"Subir",
+    "Sync":"Sincronizada",
+    "UploadPdf":"Subir documento",
+    
     "NoPublicArticles":"No hay artículos públicos",
     "NoInternalArticles":"No hay artículos internos",
     "NoWebs":"No hay sitios webs sincronizados",
@@ -36,7 +43,8 @@
     "IsAvailableTilda":"Disponible para Tilda",
     "IsAvailableTildaDes":"Cuando esté habilitado, Tilda usará este artículo público para generar respuestas de IA. Debe publicarse, formar parte de un centro de ayuda activo y de una colección.",
     "NoFolder":"Sin carpeta",
-
+    "CorrectSavedInfo":"Información guardada con éxito",
+    "FailedSavedInfo":"Hubo un error al guardar la información",
     "NoContent":"No hay artículos disponibles",
     "ContentCount_one":"{{count}} artículo",
     "ContentCount_other":"{{count}} artículos",
@@ -81,13 +89,22 @@
     "InsertBullet":"Insertar bullet list",
     "InsertNumber":"Insertar numeración",
     "InsertVideoUrl":"Inserta la URL del video...",
-
+    "DeleteArticleAnswer":"¿Estás seguro que desea eliminar el artículo con {{name}}?",
 
     "CorrectCreatedFolder":"Carpeta creado con éxito",
     "FailedCreatedFolder":"Hubo un error al crear la carpeta",
+    "CorrectEditedFolder":"Carpeta editada con éxito",
+    "FailedEditedFolder":"Hubo un error al editar la carpeta",
+    "CorrectMovedFolder":"Carpeta trasladada con éxito",
+    "FailedMovedFolder":"Hubo un error al trasladar la carpeta",
+    "CorrectDeletedFolder":"Carpeta eliminada con éxito",
+    "FailedDeletedFolder":"Hubo un error al editar la carpeta",
     "DeleteFolderAnswer":"¿Deseas eliminar/{ {{name}}}/ y todo lo que contiene?",
     "DeleteFolderWarning":"Esta acción eliminará permanentemente todas las subcarpetas y el contenido de esta carpeta. Una vez eliminados, no se pueden recuperar.",
-    "FolderName":"Nombre de la carpeta"
+    "FolderName":"Nombre de la carpeta",
+    "TextFragment":"Fragemento de texto",
+    "IsAvailableTildaDesText":"Cuando esté habilitado, Tilda usará este contenido para generar respuestas de IA.",
+    "NoTitleText":"Fragmento de texto sin título"
 
   }
 

@@ -62,7 +62,8 @@
         "vite-plugin-compression": "^0.5.1"
     },
     "scripts": {
-        "dev": "vite",
+        "dev": "vite --mode hot-reload",
+        "no-hot": "vite --mode no-hot-reload",
         "build": "tsc && vite build",
         "preview": "vite preview"
     },

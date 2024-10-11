@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../AuthContext'
 import { useTranslation } from 'react-i18next'
 //FRONT
-import { Button, Flex, Text, Icon, chakra, shouldForwardProp } from '@chakra-ui/react'
+import { Button, Flex, Text, Icon, chakra, shouldForwardProp, Portal } from '@chakra-ui/react'
 import { motion, isValidMotionProp, AnimatePresence } from 'framer-motion'
 import '../../Components/styles.css'
 //FUNCTIONS
@@ -100,9 +100,12 @@ const ActionsButton = ({items, view, section}:ButtonProps) =>{
             </Button>
             <AnimatePresence> 
                 {showList && 
-                    <MotionBox initial={{ opacity: 0, marginTop: -5 }} animate={{ opacity: 1, marginTop: 5 }}  exit={{ opacity: 0,marginTop: -5}} transition={{ duration: '.2', ease: 'easeOut'}}
-                    maxH='40vh' overflow={'scroll'} top='100%' gap='10px' ref={boxRef} fontSize={'.9em'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000}   position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
+   
+            <MotionBox ref={boxRef} initial={{ opacity: 0, scale: 0.95, }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.95 }}  transition={{ duration: '0.1', ease: 'easeOut'}}
+                style={{ transformOrigin: 'top' }}  fontSize={'.8em'} marginTop={'5px'} top='100%' position='absolute' bg='white' zIndex={1000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.200' borderWidth='1px' borderRadius='.5rem'>
 
+
+                 
                         <Flex onClick={handleDownloadCSV}  cursor={'pointer'}  px='15px' py='10px' gap='10px' alignItems={'center'} _hover={{bg:'gray.100'}}>
                             <Icon as={BsFiletypeCsv}/>
                             <Text whiteSpace={'nowrap'}>{t('CSV')}</Text>
@@ -118,7 +121,9 @@ const ActionsButton = ({items, view, section}:ButtonProps) =>{
                             <Text whiteSpace={'nowrap'}>{t('CloneView')}</Text>
                         </Flex></> }
                     </MotionBox >
+ 
                 }
+                
             </AnimatePresence>
         </Flex>
     )

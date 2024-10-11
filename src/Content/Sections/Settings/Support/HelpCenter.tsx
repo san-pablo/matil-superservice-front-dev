@@ -195,6 +195,7 @@ function HelpCenter ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
         const fetchInitialData = async() => {
             const helpCentersData = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/help_centers`, auth})
             const articlesData = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/knowledge/sources`, auth})
+           
             if (articlesData?.status === 200) {
                 const publicArticles = articlesData.data.filter((article:any) => article.type === 'public_article').map((article:any) => {
                     return desiredKeys.reduce((obj:any, key) => {
@@ -205,20 +206,37 @@ function HelpCenter ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
                 setPublicArticlesData(publicArticles)
             }
             if (helpCentersData?.status === 200 && helpCentersData?.data.length > 0) {
-                fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/help_centers/${helpCentersData.data[0].uuid}`, setValue:setHelpCenterData, auth})
-                fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/help_centers/${helpCentersData.data[0].uuid}/collections`, setValue:setCollectionsData, auth})
+                await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/help_centers/${helpCentersData.data[0].uuid}`, setValue:setHelpCenterData, auth})
+                await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/help_centers/${helpCentersData.data[0].uuid}/collections`, setValue:setCollectionsData, auth})
             }
-            setCollectionsData([{name:'Colección 1', uuid:'1', help_center_uuid:''}])
-            setPublicArticlesData([
-                {uuid:'12', title:'Artículo 1', public_article_help_center_collections:['1'], public_article_status:'draft', public_article_common_uuid:'' },
-                {uuid:'11', title:'Artículo 2', public_article_help_center_collections:['1'], public_article_status:'draft', public_article_common_uuid:'' },
-                {uuid:'11', title:'Artículo 2', public_article_help_center_collections:[], public_article_status:'draft', public_article_common_uuid:'' }
-                ])
-
         }
         fetchInitialData()
     }, [])
 
+    console.log(helpCenterData)
+
+    const createHelpCenter =async () => {
+        const data = {
+            "uuid": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+            "name": "MATIL",
+            "is_live": false,
+            "style": MatilStyles,
+            "url_identifier": "string",
+            "languages": ["ES"],
+            "created_at": "",
+            "updated_at": "",
+            "created_by": auth.authData.userId,
+            "updated_by": auth.authData.userId
+          }
+
+          const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/help_centers`, method:'post', requestForm:data, setValue:setHelpCenterData, auth})
+
+    }
+
+    const createCollection = async () => {
+        const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/help_centers/${helpCenterData?.uuid}/collections`, method:'post', requestForm:{name:'Colección 1'}, auth})
+
+    }
     const [boxHeight, setBoxHeight] = useState<number>(1000)
     useEffect(() => {
         const updateHeight = () => {
@@ -237,6 +255,7 @@ function HelpCenter ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
     }
 
 
+    console.log(publicArticlesData)
     const CollectionComponent = ({collection, index}:{collection:CollectionsData, index:number}) => {
 
         //COLLECTION ARTICLES
@@ -249,47 +268,62 @@ function HelpCenter ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
         //EXPAND COLLECTION
         const [expandCollection, setExpandCollection] = useState<boolean>(false)
 
-        //ADD ELEMENT LOGI REF
-        const buttonRef = useRef<HTMLDivElement>(null)
-        const boxRef = useRef<HTMLDivElement>(null) 
+        //ADD AND DELTE ELEMENT LOGIC
         const [showAddArtcile, setShowAddArtcile] = useState<boolean>(false)
-        
-
-        //COLLECTIONS ACTIONS
-        const [showDeleteElement, setShowDeleteElement] = useState<boolean>(false)
-
-
-        const AddBoxComponent = () => {
+        const [showDeleteElement, setShowDeleteElement] = useState<{type:'article' | 'collection', id:string} | null>(null)
+         const AddBoxComponent = () => {
             const [waitingAdd, setWaitingAdd] = useState<boolean>(false)
             const [selectedArticles, setSelectedArticles] = useState<string[]>([])
             const createAticles = async() => {
-                const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/help_centers/${helpCenterData?.uuid}/collections/${collection.uuid}/public_articles/${selectedArticles}`, setWaiting:setWaitingAdd, auth, toastMessages:{works:t('CorrectAddedArticle'), failed:t('FailedAddedArticle')}})
+                const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/help_centers/${helpCenterData?.uuid}/collections/${collection.uuid}/public_articles/${selectedArticles}`, method:'post', setWaiting:setWaitingAdd, auth, toastMessages:{works:t('CorrectAddedArticle'), failed:t('FailedAddedArticle')}})
                 setShowAddArtcile(false)
-            }
-
-                  
+            }     
             const handleCheckboxChange = (element:string, isChecked:boolean) => {
-                if (isChecked) {
-                    setSelectedArticles(prevElements=> [...prevElements, element])
-                }
+                if (isChecked) setSelectedArticles(prevElements=> [...prevElements, element])
                 else setSelectedArticles(prevElements => prevElements.filter(el => el !== element))
             }
+            console.log(selectedArticles)
+
             return (<> 
                     <Box p='20px' maxW='450px'> 
                         <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('AddArticles')}</Text>
                         <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
-                        {remainingArticles.map((article, index) => (
-                            <Flex key={`article-to-add-${index}`} gap='20px' bg={selectedArticles.includes(article.public_article_common_uuid)?'blue.100':''}>
-                                <Box flex='1'> 
-                                    <CustomCheckbox id={`checkbox-${index}`}  onChange={() => handleCheckboxChange(article.public_article_common_uuid, !selectedArticles.includes(article.public_article_common_uuid))} isChecked={selectedArticles.includes(article.public_article_common_uuid)} />
-                                </Box>
-                                <Text flex='5' fontWeight={'medium'}_hover={{color:'brand.text_blue', textDecor:'underline'}} cursor={'pointer'} onClick={() => navigate(`/knowledge/article/${article.uuid}`)} fontSize={'1.2em'}>{article.title}</Text> 
-                                <Text flex='3'  >{article.public_article_status}</Text>
-                            </Flex>
-                        ))}
+                        {remainingArticles.length === 0 ?<Text>{t('NoArticlesToAdd')}</Text>:
+                        <Box borderTopColor={'gay.300'} borderTopWidth={'1px'}> 
+                            {remainingArticles.map((article, index) => (
+                                <Flex key={`article-to-add-${index}`} p='10px' borderBottomWidth={'1px'} borderBottomColor='gray.200' alignItems={'center'}  gap='20px' bg={selectedArticles.includes(article.public_article_common_uuid)?'blue.100':''}>
+                                    <Box flex='1'> 
+                                        <CustomCheckbox id={`checkbox-${index}`}  onChange={() => handleCheckboxChange(article.public_article_common_uuid, !selectedArticles.includes(article.public_article_common_uuid))} isChecked={selectedArticles.includes(article.public_article_common_uuid)} />
+                                    </Box>
+                                    <Text flex='7' fontWeight={'medium'}_hover={{color:'brand.text_blue', textDecor:'underline'}} cursor={'pointer'} onClick={() => navigate(`/knowledge/article/${article.uuid}`)} fontSize={'1.2em'}>{article.title}</Text> 
+                                    <Text flex='4'  >{article.public_article_status}</Text>
+                                </Flex>
+                            ))}
+                        </Box>}
                     </Box>
                     <Flex  maxW='450px' p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
                         <Button  size='sm' variant={'main'} isDisabled={selectedArticles.length === 0} onClick={createAticles}>{waitingAdd?<LoadingIconButton/>:t('AddArticles')}</Button>
+                        <Button  size='sm' variant={'common'} onClick={() => {setShowAddArtcile(false)}}>{t('Cancel')}</Button>
+                    </Flex>
+            </>)
+        }
+
+        const DeleteComponent = () => {
+            const [waitingDelete, setWaitingDelete] = useState<boolean>(false)
+            const createAticles = async() => {
+                const endpoint = `superservice/${auth.authData.organizationId}/admin/help_centers/${helpCenterData?.uuid}/collections/${collection.uuid}${ showDeleteElement?.type === 'collection' ?'':`/public_articles/${showDeleteElement?.id}`}`
+                const response = await fetchData({endpoint, method:'delete', setWaiting:setWaitingDelete, auth, toastMessages:{works:showDeleteElement?.type === 'collection'? t('CorrectDeletedCollection'):t('CorrectDeletedArticle'), failed:showDeleteElement?.type === 'collection'? t('FailedDeletedCollection'):t('FailedtDeletedArticle')}})
+                setShowDeleteElement(null)
+            }     
+           
+            return (<> 
+                    <Box p='20px' maxW='450px'> 
+                        <Text fontWeight={'medium'} fontSize={'1.2em'}>{showDeleteElement?.type === 'collection'?t('DeleteCollection'):t('DeleteArticle')}</Text>
+                        <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
+                        <Text mt='2vh'>{showDeleteElement?.type === 'collection'?t('DeleteCollectionMessage'):t('DeleteArticleMessage')}</Text>
+                    </Box>
+                    <Flex  maxW='450px' p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+                        <Button  size='sm' variant={'delete'} onClick={createAticles}>{waitingDelete?<LoadingIconButton/>:showDeleteElement?.type === 'collection'?t('DeleteCollection'):t('DeleteArticle')}</Button>
                         <Button  size='sm' variant={'common'} onClick={() => {setShowAddArtcile(false)}}>{t('Cancel')}</Button>
                     </Flex>
             </>)
@@ -300,8 +334,16 @@ function HelpCenter ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
             </ConfirmBox>
         ), [showAddArtcile])
 
+        const DeleteBox = useMemo(() => (
+            <ConfirmBox isSectionWithoutHeader setShowBox={(b:boolean) => setShowDeleteElement(null)}> 
+                <DeleteComponent/>
+            </ConfirmBox>
+        ), [showDeleteElement])
+
         return (<>
             {showAddArtcile && AddBox} 
+            {showDeleteElement && DeleteBox} 
+
             <Box overflow={'hidden'} width={'100%'}> 
                 <Flex  position={'relative'} borderBottomColor={index === (collectionsData?.length || 0) - 1 ?'':'gray.200'} borderWidth={'1px'} gap='20px' alignItems={'center'}  p='20px'  _hover={{bg:'brand.gray_2'}} onMouseEnter={() => setHoveringSection('collection')} onMouseLeave={() => setHoveringSection('')}> 
                     <Flex flex='3' alignItems={'center'} gap={'20px'}>
@@ -317,12 +359,12 @@ function HelpCenter ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
                     <Text flex='1'>{'ESTADO'}</Text>
                     <Flex flex='1' alignItems={'center'} gap='20px'  > 
                         <Text fontWeight={'semibold'} >{filteredArticles.length}</Text>
-                        <Flex flexDir={'column'} alignItems={'center'} color='brand.text_blue' p='8px' borderRadius={'.5rem'} cursor={'pointer'} _hover={{bg:'white'}} onClick={() => setShowAddArtcile(true)}>
+                        <Flex flexDir={'column'} alignItems={'center'}  textAlign={'center'} color='brand.text_blue' p='8px' borderRadius={'.5rem'} cursor={'pointer'} _hover={{bg:'white'}} onClick={() => setShowAddArtcile(true)}>
                             <Icon as={FaPlus}/>
                             <Text>{t('AddArticles')}</Text>
                         </Flex>
                     </Flex>
-                    {hoveringSection === 'collection' && <IconButton aria-label='delete-collection' position={'absolute'} right={'40px'} bg='transparent' size='sm' variant={'delete'} icon={<HiTrash size='20px'/>}/>}
+                    {hoveringSection === 'collection' && <IconButton aria-label='delete-collection' position={'absolute'} right={'40px'} bg='transparent' size='sm' variant={'delete'} icon={<HiTrash size='20px'/>} onClick={() => setShowDeleteElement({type:'collection', id:''})}/>}
                 </Flex>
                 <motion.div initial={{height:expandCollection?0:'auto', opacity:expandCollection?0:1}} animate={{height:expandCollection?'auto':0, opacity:expandCollection?1:0 }} exit={{height:expandCollection?0:'auto',  opacity:expandCollection?0:1 }} transition={{duration:.2}} style={{overflow:expandCollection?'visible':'hidden'}}>           
                     {filteredArticles.map((article, index2) => (
@@ -335,7 +377,7 @@ function HelpCenter ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
                             </Flex>
                             <Text flex='1'  >{article.public_article_status}</Text>
                             <Text flex='1'>-</Text>
-                            {hoveringSection === article.uuid && <IconButton aria-label='delete-collection' position={'absolute'} right={'40px'} bg='transparent' size='sm' variant={'delete'} icon={<HiTrash size='20px'/>}/>}
+                            {hoveringSection === article.uuid && <IconButton aria-label='delete-collection' position={'absolute'} right={'40px'} bg='transparent' size='sm' variant={'delete'} icon={<HiTrash size='20px'/>}  onClick={() => setShowDeleteElement({type:'article', id:article.public_article_common_uuid})}/>}
                         </Flex>
                     ))}
                 </motion.div>
@@ -351,7 +393,7 @@ function HelpCenter ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
                     <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('HelpCenter')}</Text>
                     <Text color='gray.600' fontSize={'.9em'}>{t('HelpCenterDes')}</Text>
                 </Box>
-                <Button  variant='common' size={'sm'} leftIcon={<FaCircleDot color={helpCenterData?.is_live?'#68D391':'#ECC94B'}/>}>{helpCenterData?.is_live?t('IsLive'):t('NotIsLive')}</Button>
+                <Button  variant='common' size={'sm'} onClick={createHelpCenter} leftIcon={<FaCircleDot color={helpCenterData?.is_live?'#68D391':'#ECC94B'}/>}>{helpCenterData?.is_live?t('IsLive'):t('NotIsLive')}</Button>
             </Flex>
             <Box mt='2vh' mb='2vh'> 
                 <SectionSelector selectedSection={currentSection} sections={sectionsList} sectionsMap={sectionsMap} onChange={() => setCurrentSection(prev => (prev === 'collections'?'styles':'collections'))}/>
@@ -366,6 +408,9 @@ function HelpCenter ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
         </Skeleton>
         :
         <Box flex='1'>
+              <Flex flexDir={'row-reverse'}>
+                <Button size='sm' onClick={createCollection} variant='common'>{t('AddCollection')}</Button>
+                </Flex>
             <Skeleton isLoaded={collectionsData !== null && publicArticlesData !== null}>
                 <Box borderRadius={'.5em'}    >    
                     <Flex position={'sticky'}  borderTopRadius={'.5rem'} borderColor={'gray.200'} borderWidth={'1px'} gap='20px' ref={headerRef} alignItems={'center'}  color='gray.600' p='10px' fontSize={'1em'} bg='brand.gray_2' > 
@@ -374,6 +419,7 @@ function HelpCenter ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
                         <Text  flex='1'  color='gray.600' cursor='pointer'>{t('NumberArticles')}</Text>
                     </Flex>
                 </Box>
+               
                 <Box  overflowX={'hidden'}  overflowY={'scroll'} maxH={boxHeight}> 
                     {collectionsData?.map((collection, index) => (
                         <CollectionComponent collection={collection} index={index} key={`collection-${index}`}/>

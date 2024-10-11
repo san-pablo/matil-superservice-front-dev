@@ -401,9 +401,9 @@ export type DataTypes = 'bool' | 'int' | 'float' | 'str' | 'timestamp' | 'list'
 //CONTENT TYPES
 export interface ContentData {
     uuid: string 
-    type: 'internal_article' | 'public_article' | 'folder' | 'pdf' | 'text' | 'web'
+    type: 'internal_article' | 'public_article' | 'folder' | 'pdf' | 'snippet' | 'website'
     title: string
-    folder?:string[]
+    folder_uuid?:string
     description?: string
     language: string
     is_available_to_tilda: boolean
@@ -412,13 +412,24 @@ export interface ContentData {
     created_by: number
     updated_by: number
     tags: string[]
+    is_ingested?:boolean
     public_article_help_center_collections:string[]
-    public_article_uuid: string
+    public_article_common_uuid?: string
     public_article_status: 'active' | 'draft'
-
+    content?: any,
     public_article_content?: {text: string}
     internal_article_content?: {text: string},
     pdf_content?: {url: string, text: string},
     website_content?: {pages: {url: string, text: string}}
 }
+
+//FOLDERS
+export interface Folder {
+    uuid: string
+    name: string
+    emoji:string
+    disabled?:boolean
+    children: Folder[]
+}
+
 
