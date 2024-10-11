@@ -288,6 +288,7 @@ const Article = () => {
 
                 </CollapsableSection>
                 <CollapsableSection section={'HelpCenter'} isExpanded={sectionsExpanded.includes('HelpCenter')} onSectionExpand={onSectionExpand}> 
+                    <></>
                 </CollapsableSection>
                 <CollapsableSection section={'tags'} isExpanded={sectionsExpanded.includes('tags')} onSectionExpand={onSectionExpand}> 
                     <Box mt='2vh'  minHeight="30px" maxH="300px" border="1px solid #CBD5E0"   p="5px" _focusWithin={{ borderColor:'transparent', boxShadow:'0 0 0 2px rgb(77, 144, 254)'}} borderRadius=".5rem" overflow="auto" display="flex" flexWrap="wrap" alignItems="center" onKeyDown={handleKeyDown}  tabIndex={0}>
