@@ -73,7 +73,7 @@ function Automations ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
     //FETCH INITIAL DATA
     useEffect(() => {
         const fetchTriggerData = async () => {
-            const response  = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/automations`, setValue:setAutomationData, auth})
+            const response  = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/automations`, setValue:setAutomationData, auth})
         }
         document.title = `${t('Settings')} - ${t('Automations')} - ${auth.authData.organizationName} - Matil`
         fetchTriggerData()
@@ -90,7 +90,7 @@ function Automations ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
         const deleteTrigger= async () => {
             setWaitingDelete(true)
             const newTriggers = automationData?.filter((_, index) => index !== automationToDeleteIndex)
-            const response = await fetchData({endpoint: `superservice/${auth.authData.organizationId}/admin/settings/automations`, requestForm: newTriggers, method: 'put', setWaiting: setWaitingDelete, auth, toastMessages: {works: t('CorrectDeletedAutomation'), failed: t('FailedDeletedAutomation')}})
+            const response = await fetchData({endpoint: `${auth.authData.organizationId}/admin/settings/automations`, requestForm: newTriggers, method: 'put', setWaiting: setWaitingDelete, auth, toastMessages: {works: t('CorrectDeletedAutomation'), failed: t('FailedDeletedAutomation')}})
             if (response?.status === 200) {
                 setAutomationData(newTriggers as ActionDataType[])
                 setAutomationToDeleteIndex(null)
@@ -104,15 +104,16 @@ function Automations ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
                 <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
                 <Text >{parseMessageToBold(t('ConfirmDeleteTrigger', {name:automationData?.[automationToDeleteIndex as number].name}))}</Text>
             </Box>
-            <Box bg='brand.gray_1'>
-
-            </Box>
+            <Flex bg='brand.gray_2' p='20px' gap='10px' flexDir={'row-reverse'}>
+                <Button  size='sm' variant={'delete'} onClick={deleteTrigger}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
+                <Button  size='sm' variant={'common'}onClick={() => setAutomationToDeleteIndex(null)}>{t('Cancel')}</Button>
+            </Flex>
         </>)
     }
 
     //DELETE BOX
     const memoizedDeleteBox = useMemo(() => (
-        <ConfirmBox isSectionWithoutHeader setShowBox={(b:boolean) => setAutomationToDeleteIndex(null)}> 
+        <ConfirmBox setShowBox={(b:boolean) => setAutomationToDeleteIndex(null)}> 
             <DeleteComponent/>
         </ConfirmBox>
     ), [automationToDeleteIndex])
@@ -176,7 +177,7 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
             updatedAutomations[selectedIndex] = currentAutomationData
             newAutomations = updatedAutomations
         }
-        const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/automations`, requestForm:newAutomations, method:'put', setWaiting:setWaitingSend, auth, toastMessages:{works:selectedIndex === -1?t('CorrectCreatedAutomation'):t('CorrectUpdatedAutomation'), failed: selectedIndex === -1?t('FailedCreatedAutomation'):t('FailedUpdatedAutomation')}})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/automations`, requestForm:newAutomations, method:'put', setWaiting:setWaitingSend, auth, toastMessages:{works:selectedIndex === -1?t('CorrectCreatedAutomation'):t('CorrectUpdatedAutomation'), failed: selectedIndex === -1?t('FailedCreatedAutomation'):t('FailedUpdatedAutomation')}})
         if (response?.status === 200) {
             setSelectedIndex(-2)
             setAllTriggers(newAutomations)
@@ -185,7 +186,7 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
  
     //ADD A CONDITION OR AN ACTION
     const addElement = (type: 'all_conditions' | 'any_conditions' | 'actions') => {
-        const newElement = type === 'actions' ? {type:'email_csat', arguments:{content:'',  probability:50}}:{motherstructure:'ticket', is_customizable:false, name:'user_id', op:'eq', value:-1}
+        const newElement = type === 'actions' ? {type:'email_csat', arguments:{content:'',  probability:50}}:{motherstructure:'conversation', is_customizable:false, name:'user_id', op:'eq', value:-1}
         setCurrentAutomationData((prev) => ({ ...prev, [type]: [...prev[type],newElement]}))
     }
     //DELETE A CONDITION OR AN ACTION
@@ -217,7 +218,7 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
                 case 'agent_email_notification':
                     return {user_id:-1, notification_message:''}
                 case 'motherstructure_update':
-                    return {motherstructure:'ticket', is_customizable:false, name:'user_id', operation:'eq', value:-1}
+                    return {motherstructure:'conversation', is_customizable:false, name:'user_id', operation:'eq', value:-1}
             }
         }
 
@@ -238,7 +239,7 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
     //ACTIONS MAPPING
     const actionsList:ActionsType[] = ['email_csat', 'whatsapp_csat', 'webchat_csat', 'agent_email_notification', 'motherstructure_update']
     const actionsMap:{[key in ActionsType]:string} = {'email_csat':t('email_csat'), 'whatsapp_csat':t('whatsapp_csat'), 'webchat_csat':t('webchat_csat'), 'agent_email_notification':t('agent_email_notification'), 'motherstructure_update':t('motherstructure_update')}
-    const operationTypesDict = {'user_id':['eq', 'neq',  'exists'], 'group_id':['eq', 'neq',  'exists'], 'channel_type':['eq', 'neq', 'exists'], 'title':['eq', 'neq', 'exists'], 'subject':['eq', 'neq', 'exists'], 'urgency_rating':['eq', 'neq', 'leq', 'geq', 'exists'], 'status':['eq', 'neq'], 'unseen_changes':['eq', 'exists'], 'tags':['contains', 'ncontains', 'exists'], 'is_matilda_engaged':['eq', 'exists'],'is_csat_offered':['eq', 'exists'],
+    const operationTypesDict = {'user_id':['eq', 'neq',  'exists'], 'group_id':['eq', 'neq',  'exists'], 'channel_type':['eq', 'neq', 'exists'], 'title':['eq', 'neq', 'exists'], 'theme':['eq', 'neq', 'exists'], 'urgency_rating':['eq', 'neq', 'leq', 'geq', 'exists'], 'status':['eq', 'neq'], 'unseen_changes':['eq', 'exists'], 'tags':['contains', 'ncontains', 'exists'], 'is_matilda_engaged':['eq', 'exists'],'is_csat_offered':['eq', 'exists'],
     'contact_business_id':['eq', 'neq',  'exists'], 'name':['eq', 'neq', 'contains', 'ncontains', 'exists'], 'language':['eq', 'neq',  'exists'], 'rating':['eq','neq', 'leq', 'geq', 'exists'], 'notes':['eq', 'neq', 'contains', 'ncontains', 'exists'], 'labels':['contains', 'ncontains', 'exists'],
     'domain':['eq', 'neq', 'contains', 'ncontains', 'exists'], 'hours_since_created':['eq', 'neq', 'leq', 'geq',  'exists'], 'hours_since_updated':['eq', 'neq', 'leq', 'geq',   'exists']
     }
@@ -248,7 +249,7 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
     return (<>
         <Box> 
             <Flex fontWeight={'medium'} fontSize={'1.4em'} gap='10px' alignItems={'center'}> 
-                <Text onClick={() => setSelectedIndex(-2)} color='blue.500' cursor={'pointer'}>{t('Automations')}</Text>
+                <Text onClick={() => setSelectedIndex(-2)} color='brand.text_blue' cursor={'pointer'}>{t('Automations')}</Text>
                 <Icon as={IoIosArrowForward}/>
                 <Text>{triggerData.name}</Text>
             </Flex>
@@ -385,7 +386,7 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
                                 )
                             case 'motherstructure_update':
                                 {
-                                    const operationTypesDict = {'user_id':['set'], 'group_id':['set'], 'channel_type':['set'], 'title':['set', 'concatenate'], 'subject':['set'], 'urgency_rating':['set', 'add', 'substract'], 'status':['set'], 'unseen_changes':['set'], 'tags':['append', 'remove'], 'is_matilda_engaged':['set'],'is_csat_offered':['set'],
+                                    const operationTypesDict = {'user_id':['set'], 'group_id':['set'], 'channel_type':['set'], 'title':['set', 'concatenate'], 'theme':['set'], 'urgency_rating':['set', 'add', 'substract'], 'status':['set'], 'unseen_changes':['set'], 'tags':['append', 'remove'], 'is_matilda_engaged':['set'],'is_csat_offered':['set'],
                                     'contact_business_id':['set'], 'name':['set', 'concatenate'], 'language':['set'], 'rating':['set', 'add', 'substract'], 'notes':['set', 'concatenate'], 'labels':['append', 'remove'],
                                     'domain':['set', 'concatenate']
                                     }

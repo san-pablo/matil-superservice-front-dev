@@ -1,17 +1,16 @@
 //REACT
-import { useEffect, useState, KeyboardEvent, useRef } from 'react'
+import { useEffect, useState, KeyboardEvent } from 'react'
 import { useAuth } from './AuthContext'
 import { BrowserRouter as Router } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 //FETCH DATA
 import CryptoJS from 'crypto-js'
 import axios, { AxiosError, isAxiosError } from 'axios'
+import fetchData from './Content/API/fetchData'
 //FRONT
 import { Flex, Box, Stack, Button, ChakraProvider, extendTheme, Text,cssVar, defineStyleConfig, Icon } from '@chakra-ui/react'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import showToast from './Content/Components/Reusable/ToastNotification'
-import Waves from './Content/Components/Once/Waves'
 //CONTENT
 import Content from './Content/Content'
 //COMPONENTS
@@ -49,6 +48,7 @@ const theme = extendTheme({
         black_button:'#222',
         black_button_hover:'RGBA(0, 0, 0, 0.80)',
         text_blue:'rgb(59, 90, 246)',
+        blue_hover:'rgba(59, 90, 246, 0.08)',
         gray_1:"#e8e8e8",
         gray_2:"#f1f1f1",
         hover_gray:'#F2F5F9',
@@ -61,32 +61,28 @@ const theme = extendTheme({
     },
     fontWeights: { normal: 400, medium: 500, semibold: 600,bold: 700},
     components: {
-      Button: { 
-        baseStyle: {fontWeight:600, bg:'#f1f1f1', _hover:{bg:'#e8e8e8'}},
-        variants:{
-          main:{bg:'#222', _hover:{bg:'blackAlpha.800'}, color:'white',   _disabled: {bg: '#222', color: 'white', pointerEvents: 'none', cursor: 'not-allowed',opacity: 0.6}},
-          delete:{fontWeight:500, bg:'red.100', color:'red.600', _hover:{bg:'red.200'}},
-          delete_section:{fontWeight:500, color:'red'},
-          common:{fontWeight:500, _hover:{color:'rgb(59, 90, 246)'}}
-        }
-    },
-      Skeleton: skeletonTheme,
+      Switch: {
+        baseStyle: {
+          track: {bg: 'brand.gray_1', _checked: {bg: 'brand.text_blue'},},
+          thumb: {bg: 'white'}
+        },
+      },
       Radio: {
-        baseStyle: {control: {borderRadius: "full"}},
-        variants: {
-          custom: {
-            control: {
-              bg: "white", 
-              borderColor: "blue.500",
-              _checked: {
-                bg: "blue.500",
-                borderColor: "blue.500",
-                color: "white",
-              }
-            }
-          }
+        baseStyle: {
+          control:{_checked:{bg:'rgb(59, 90, 246)', _hover:{bg:'rgb(59, 90, 246)'}}}
         }
-      }
+      },
+      Button: { 
+          baseStyle: {fontWeight:600, bg:'#f1f1f1', _hover:{bg:'#e8e8e8'}},
+          variants:{
+            main:{bg:'#222', _hover:{bg:'blackAlpha.800'}, color:'white',   _disabled: {bg: '#222', color: 'white', pointerEvents: 'none', cursor: 'not-allowed',opacity: 0.6}},
+            delete:{fontWeight:500, bg:'red.100', color:'red.600', _hover:{bg:'red.200'}},
+            delete_section:{fontWeight:500, color:'red'},
+            common:{fontWeight:500, _hover:{color:'rgb(59, 90, 246)'}}
+          }
+      },
+      Skeleton: skeletonTheme,
+   
     }
   })
    
@@ -100,12 +96,15 @@ const App: React.FC = () => {
     //TRANSLATION
     const { t } = useTranslation('login')
 
-     //AUTH DATA
+    //AUTH DATA
+    const auth = useAuth()
     const { authData, setAuthData, signIn, signOut, isSignedIn } = useAuth()
 
     //USER CONFIGURATIONS AND WAIT BOOLEAN
     const [waitingInfo, setWaitingInfo] = useState<boolean>(true)
     const currentOrganizationName = localStorage.getItem('currentOrganization')
+    
+  
     const [userInfo, setUserInfo] = useState<userInfo>({name:'',surname:'', organizations:[]})
 
     //REGISTER VARIABLES
@@ -124,18 +123,14 @@ const App: React.FC = () => {
     //SIGN IN AND REGISTER FUNCTION
     const handleSignIn = async () => {
        if (showCode) {
-        try {
-          console.log({'name':registerName, 'surname':registerSurname, 'email':registerMail, 'password':registerPassword})
-          const response = await axios.post(URL + 'user', {'name':registerName, 'surname':registerSurname, 'email':registerMail, 'password':registerPassword})
-          showToast({message:t('RegisteredAccount')})
-          setShowCode(false)
-        }
-        catch (error) {showToast({message:t('RegisterError'), type:'failed'})}}
+        fetchData({endpoint:'user', requestForm:{'name':registerName, 'surname':registerSurname, 'email':registerMail, 'password':registerPassword}, auth, toastMessages:{works:t('RegisteredAccount'), failed: t('RegisterError')}})
+        setShowCode(false)
+      }
       else{
          try {
           const response = await axios.post(URL + 'user/login', {email: usernameLogin, password: passwordLogin})
           setAuthData({email:usernameLogin, accessToken:response.data.access_token, refreshToken:response.data.refresh_token})
-          fetchData(response.data.access_token, response.data.refresh_token,usernameLogin)
+          fetchInitialData(response.data.access_token, response.data.refresh_token,usernameLogin)
           const encryptedAccessToken = CryptoJS.AES.encrypt(response.data.access_token, TOKENS_KEY).toString()
           const encryptedRefreshToken = CryptoJS.AES.encrypt(response.data.refresh_token, TOKENS_KEY).toString()
         
@@ -150,31 +145,34 @@ const App: React.FC = () => {
     }
 
     //FUNCTION TO FETCH INITIAL USER DATA
-    const fetchData = async ( accessToken:string, refreshToken:string, email:string ) => {
+    const fetchInitialData = async ( accessToken:string, refreshToken:string, email:string ) => {
 
         const fetchInitialOrgData = async (user:{id:number, name:string, surname:string, organizations:Organization[]}, accessToken:string) => {
-          let superserviceOrganization
-          if (currentOrganizationName) {superserviceOrganization = user.organizations.find((org: Organization) => org.platform_type === 'superservice' && org.id === parseInt(currentOrganizationName))}
-          if (!superserviceOrganization) {superserviceOrganization = user.organizations.find((org: Organization) => org.platform_type === 'superservice')}
-          if (superserviceOrganization) {
-            setAuthData({ organizationData:{calls_status:superserviceOrganization.calls_status || 'out', avatar_image_url:superserviceOrganization.avatar_image_url || '', is_admin:superserviceOrganization.is_admin, alias:superserviceOrganization.alias || '', groups:superserviceOrganization.groups},
-            organizationId: superserviceOrganization.id, userId:user.id, organizationName:superserviceOrganization.name ,email:email, accessToken:accessToken, refreshToken:refreshToken })
-            localStorage.setItem('currentOrganization', String(superserviceOrganization.id))
+          let organization
+          if (currentOrganizationName) {organization = user.organizations.find((org: Organization) =>  org.id === parseInt(currentOrganizationName))}
+          if (!organization) {organization = user.organizations[0]}
+          if (organization) {
+
+            setAuthData({ organizationData:{calls_status:organization.calls_status || 'out', avatar_image_url:organization.avatar_image_url || '', is_admin:organization.is_admin, alias:organization.alias || '', groups:organization.groups},
+            organizationId: organization.id, userId:user.id, organizationName:organization.name ,email:email, accessToken:accessToken, refreshToken:refreshToken })
+            localStorage.setItem('currentOrganization', String(organization.id))
             try{
-              const responseOrg = await axios.get(URL + `superservice/${superserviceOrganization.id}/user`, {headers: {'Authorization': `Bearer ${accessToken}`}})
+              const responseOrg = await axios.get(URL + `${organization.id}/user`, {headers: {'Authorization': `Bearer ${accessToken}`}})
+              const responseThemes = await axios.get(URL + `${organization.id}/admin/settings/themes`, {headers: {'Authorization': `Bearer ${accessToken}`}})
                const viewsToAdd = {
-                number_of_tickets_in_bin:responseOrg.data.number_of_tickets_in_bin, 
+                number_of_conversations_in_bin:responseOrg.data.number_of_conversations_in_bin, 
                 private_views:responseOrg.data.private_views, 
-                number_of_tickets_per_private_view:responseOrg.data.number_of_tickets_per_private_view,
+                number_of_conversations_per_private_view:responseOrg.data.number_of_conversations_per_private_view,
                 shared_views:responseOrg.data.shared_views, 
-                number_of_tickets_per_shared_view:responseOrg.data.number_of_tickets_per_shared_view
+                number_of_conversations_per_shared_view:responseOrg.data.number_of_conversations_per_shared_view
               }
-              setAuthData({views: viewsToAdd, users:responseOrg.data.users, shortcuts:responseOrg.data.shortcuts, ticket_subjects:responseOrg.data.ticket_subjects})
+              setAuthData({views: viewsToAdd, users:responseOrg.data.users, shortcuts:responseOrg.data.shortcuts, conversation_themes:responseThemes.data.map((theme:{name:string, description:string}) => theme.name)
+              })
             }
             catch (error){console.log(error)}
           }
           
-          else setAuthData({ organizationId: null, email:email, userId:user.id, accessToken:accessToken, views:{'private_views':[], 'shared_views':[]}, users:null, shortcuts:[], ticket_subjects:[]})
+          else setAuthData({ organizationId: null, email:email, userId:user.id, accessToken:accessToken, views:{'private_views':[], 'shared_views':[]}, users:null, shortcuts:[], conversation_themes:[]})
           
           setUserInfo({name:user.name, surname:user.surname, organizations:user.organizations})
           signIn()
@@ -221,7 +219,7 @@ const App: React.FC = () => {
       if (storedMail && storedAccessToken && storedRefreshToken) {
         const encryptedAccessToken = CryptoJS.AES.decrypt(storedAccessToken, TOKENS_KEY).toString(CryptoJS.enc.Utf8)
         const encryptedRefreshToken = CryptoJS.AES.decrypt(storedRefreshToken, TOKENS_KEY).toString(CryptoJS.enc.Utf8)
-         if (storedMail !== null && encryptedAccessToken !== null && encryptedRefreshToken !== null) fetchData(encryptedAccessToken, encryptedRefreshToken,storedMail)
+         if (storedMail !== null && encryptedAccessToken !== null && encryptedRefreshToken !== null) fetchInitialData(encryptedAccessToken, encryptedRefreshToken,storedMail)
       }
       else setWaitingInfo(false)
     }, [])

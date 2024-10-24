@@ -57,8 +57,8 @@ const Surveys = ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) => {
     useEffect(() => {        
         document.title = `${t('Settings')} - ${t('Surveys')} - ${auth.authData.organizationId} - Matil`
         const fetchInitialData = async() => {
-            const response1 = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/surveys/csat`, setValue:setCsatData, auth})
-            const response2 = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/surveys/nps`, setValue:setNpsData, auth})
+            const response1 = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/surveys/csat`, setValue:setCsatData, auth})
+            const response2 = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/surveys/nps`, setValue:setNpsData, auth})
 
             if (response1?.status === 200 && response2?.status) {
                 csatDataRef.current = response1.data
@@ -79,11 +79,11 @@ const Surveys = ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) => {
     const sendNewData = async() => {
         setWaitingSend(true)
         if (currentSection === 'csat') {
-            const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/surveys/csat`, requestForm:csatData as SurveysConfigProps, setWaiting:setWaitingSend, method:'put', auth, toastMessages:{works:t('CorrectSurvey'), failed:t('FailedSurvey')}})
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/surveys/csat`, requestForm:csatData as SurveysConfigProps, setWaiting:setWaitingSend, method:'put', auth, toastMessages:{works:t('CorrectSurvey'), failed:t('FailedSurvey')}})
             if (response?.status === 200) csatDataRef.current = csatData
         }
         else {
-            const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/surveys/nps`, requestForm:npsData as SurveysConfigProps,method:'put', setWaiting:setWaitingSend,  auth, toastMessages:{works:t('CorrectSurvey'), failed:t('CorrectSurvey')}})
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/surveys/nps`, requestForm:npsData as SurveysConfigProps,method:'put', setWaiting:setWaitingSend,  auth, toastMessages:{works:t('CorrectSurvey'), failed:t('CorrectSurvey')}})
             if (response?.status === 200) npsDataRef.current = npsData
         }
     }

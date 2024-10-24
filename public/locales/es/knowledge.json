@@ -74,13 +74,15 @@
     "AddArticle":"Añadir artículo",
     "Sincronize":"Sincronizar",
     "AddContent":"Añadir contenido",
+    "Hide":"Ocultar",
     "Information":"Información",
     "Data":"Datos",
     "Delete":"Eliminar",
     "Publish":"Publicar",
+    "published":"Publicado",
     "SaveChanges":"Guardar cambios",
     "NoTitle":"Artículo sin título",
-    "AddDescription":"Añade una descripciónd de tu artículo",
+    "AddDescription":"Añade una descripción de tu artículo",
     "InsertImage":"Insertar imagen",
     "InsertTable":"Insertar tabla",
     "InsertVideo":"Insertar video",
@@ -102,11 +104,26 @@
     "DeleteFolderAnswer":"¿Deseas eliminar/{ {{name}}}/ y todo lo que contiene?",
     "DeleteFolderWarning":"Esta acción eliminará permanentemente todas las subcarpetas y el contenido de esta carpeta. Una vez eliminados, no se pueden recuperar.",
     "FolderName":"Nombre de la carpeta",
-    "TextFragment":"Fragemento de texto",
+    "TextFragment":"Fragmento de texto",
     "IsAvailableTildaDesText":"Cuando esté habilitado, Tilda usará este contenido para generar respuestas de IA.",
-    "NoTitleText":"Fragmento de texto sin título"
+    "NoTitleText":"Fragmento de texto sin título",
+    "description":"Descripción",
+    "Recharge":"Volver a cargar",
+    "subwebsite":"Web",
+    "SourceFilterMessage":"El tipo es",
+    "internal_article":"Artículo interno",
+    "public_article":"Artículo público",
+    "website":"Sitio Web",
+    "pdf":"PDF",
+    "folder":"Carpeta",
+    "snippet":"Texto",
+    "ApplyFilters":"Aplicar filtros",
+    "Page":"Página {{count}}",
+    "Cancel":"Cancelar",
+    "Processed":"Procesado"
 
-  }
+
+  } 
 
 
 

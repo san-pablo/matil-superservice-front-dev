@@ -9,7 +9,7 @@ import fetchData from "../../API/fetchData"
 import { Flex, Box, Text, Tooltip, Button, IconButton, Skeleton } from '@chakra-ui/react'
 //COMPONENTS
 import EditText from "../../Components/Reusable/EditText"
-import ActionsButton from "../Tickets/ActionsButton"
+import ActionsButton from "../Conversations/ActionsButton"
 import Table from "../../Components/Reusable/Table"
 //FUNCTIONS
 import timeAgo from "../../Functions/timeAgo"
@@ -92,7 +92,7 @@ function ContactBusinessesTable ({addHeaderSection}:{addHeaderSection:HeaderSect
                 setWaitingInfo(false)
             }
             else {
-                const businessResponse = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/contact_businesses`, setValue:setBusinesses, setWaiting:setWaitingInfo, params:{page_index:1},auth:auth})
+                const businessResponse = await fetchData({endpoint:`${auth.authData.organizationId}/contact_businesses`, setValue:setBusinesses, setWaiting:setWaitingInfo, params:{page_index:1},auth:auth})
                 if (businessResponse?.status === 200) session.dispatch({type:'UPDATE_BUSINESSES_TABLE',payload:{data:businessResponse?.data, filters, selectedIndex:-1}})
             }
         }    
@@ -104,7 +104,7 @@ function ContactBusinessesTable ({addHeaderSection}:{addHeaderSection:HeaderSect
     //FETCH NEW DATA ON FILTERS CHANGE
     const fetchBusinessDataWithFilter = async (new_filters:{page_index:number, sort_by?:string, search?:string, order?:'asc' | 'desc'} | null) => {
     
-         const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/contact_businesses`, setValue:setBusinesses, setWaiting:setWaitingInfo, params:new_filters?new_filters:filters, auth})
+         const response = await fetchData({endpoint:`${auth.authData.organizationId}/contact_businesses`, setValue:setBusinesses, setWaiting:setWaitingInfo, params:new_filters?new_filters:filters, auth})
         if (response?.status === 200) {            
             session.dispatch({ type: 'UPDATE_BUSINESSES_TABLE', payload: {data:response.data, filters:filters} })
             if (new_filters) setFilters(new_filters)

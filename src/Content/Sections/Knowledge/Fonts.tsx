@@ -28,12 +28,13 @@ import { FaCloudUploadAlt } from "react-icons/fa";
 import { ContentData, languagesFlags } from "../../Constants/typing"
 import { useSession } from "../../../SessionContext"
 import { useNavigate } from "react-router-dom"
+import LoadingIconButton from "../../Components/Reusable/LoadingIconButton"
  
 
 
 
 //MAIN FUNCTION
-function Fonts ({contentData, setContentData}:{contentData:ContentData[] | null, setContentData:Dispatch<SetStateAction<ContentData[] | null>>}) {
+function Fonts () {
 
     //AUTH CONSTANT
     const  { t } = useTranslation('knowledge')
@@ -54,51 +55,56 @@ function Fonts ({contentData, setContentData}:{contentData:ContentData[] | null,
     const [showSyncronize, setShowSyncronize] = useState<boolean>(false)
     const [showAddPdf, setShowAddPdf] = useState<boolean>(false)
 
+    //ALL DATA
+    const [publicArticles, setPublicArticles] = useState<ContentData[] | null>(null)
+    const [internalArticles, setInternalArticles] = useState<ContentData[] | null>(null)
+    const [pdfsArticles, setPdfArticles] = useState<ContentData[] | null>(null)
+    const [webArticles, setWebArticles] = useState<ContentData[] | null>(null)
+    const [textArticles, setTextArticles] = useState<ContentData[] | null>(null)
+
 
     //FETCH INITIAL DATA
     useEffect(() => {
         
         const fetchTriggerData = async () => {
-            const contentDataList = session.sessionData.contentData
-    
-            if (contentDataList) setContentData(contentDataList)
-            else {
-                const response  = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/knowledge/sources`, setValue:setContentData, auth})
-                if (response?.status === 200) session.dispatch({ type: 'UPDATE_CONTENT_TABLE', payload: response.data })
-             
-            }
+            const responseInternal  = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`, params:{page_index:1, type:['internal_article']}, auth})
+            if (responseInternal?.status === 200) setInternalArticles(responseInternal.data.page_data)
+            const responsePublic  = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`, params:{page_index:1, type:['public_article']}, auth})
+            if (responsePublic?.status === 200) setPublicArticles(responsePublic.data.page_data)
+            const responsePdf  = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`, params:{page_index:1, type:['pdf']}, auth})
+            if (responsePdf?.status === 200) setPdfArticles(responsePdf.data.page_data)
+            const responseWeb = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`, params:{page_index:1, type:'website'}, auth})
+            if (responseWeb?.status === 200) setWebArticles(responseWeb.data.page_data)
+            const responseText  = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`, params:{page_index:1, type:['snippet']}, auth})
+            if (responseText?.status === 200) setTextArticles(responseText.data.page_data)
         }
         localStorage.setItem('currentSectionContent', 'fonts')
         document.title = `${t('Fonts')} - ${auth.authData.organizationName} - Matil`
         fetchTriggerData()
     }, [])
 
-    const publicArticles = contentData?.filter((con) => con.type === 'public_article') || []
-    const internalArticles = contentData?.filter((con) => con.type === 'internal_article') || []
-    const pdfsArticles = contentData?.filter((con) => con.type === 'pdf') || []
-    const webArticles = contentData?.filter((con) => con.type === 'website') || []
-    const textArticles = contentData?.filter((con) => con.type === 'snippet') || []
-
+    
     const memoizedCreateBox = useMemo(() => (
-        <ConfirmBox maxW={'800px'} isSectionWithoutHeader setShowBox={setShowCreate}> 
+        <ConfirmBox maxW={'800px'} setShowBox={setShowCreate}> 
             <CreateBox/>
         </ConfirmBox>
     ), [showCreate])
 
       
     const memoizedSyncronizeBox = useMemo(() => (
-        <ConfirmBox maxW={'800px'} isSectionWithoutHeader setShowBox={setShowSyncronize}> 
-            <SyncronizeWeb setShowSyncronize={setShowSyncronize} setContentData={setContentData}/>
+        <ConfirmBox maxW={'800px'} setShowBox={setShowSyncronize}> 
+            <SyncronizeWeb setShowSyncronize={setShowSyncronize} setContentData={setWebArticles}/>
         </ConfirmBox>
     ), [showSyncronize])
 
     const memoizedAddPdfBox = useMemo(() => (
-        <ConfirmBox maxW={'800px'} isSectionWithoutHeader setShowBox={setShowAddPdf}> 
-            <CreatePdf setShowAddPdf={setShowAddPdf} setContentData={setContentData}/>
+        <ConfirmBox maxW={'800px'} setShowBox={setShowAddPdf}> 
+            <CreatePdf setShowAddPdf={setShowAddPdf} setContentData={setTextArticles}/>
         </ConfirmBox>
     ), [showAddPdf])
 
 
+    const isDataLoaded = (publicArticles !== null && internalArticles !== null &&  pdfsArticles !== null && webArticles !== null && textArticles !== null)
     return(
     <>
         {showSyncronize && memoizedSyncronizeBox}
@@ -118,7 +124,7 @@ function Fonts ({contentData, setContentData}:{contentData:ContentData[] | null,
         </Box>
         
         <Box px='1px' flex='1' overflow={'scroll'}>
-            <Skeleton isLoaded={contentData !== null}> 
+            <Skeleton isLoaded={isDataLoaded}> 
                 <Box p='20px' borderRadius={'.7em'} borderColor={'gray.300'} borderWidth={'1px'}>
                     <Flex justifyContent={'space-between'} > 
                         <Flex mb='2vh' alignItems={'center'} gap='10px'>
@@ -133,31 +139,37 @@ function Fonts ({contentData, setContentData}:{contentData:ContentData[] | null,
                         <Button size='sm' variant={'common'} leftIcon={<FaPlus/>} onClick={() => navigate(`/knowledge/article/create-public`)} >{t('AddArticle')}</Button>
                     </Flex>
 
-                    {publicArticles.length === 0 &&  <Text>{t('NoPublicArticles')}</Text> }
-                    <Box mt='2vh' borderColor={publicArticles.length >0 ?'gray.200':'transparent'}  borderTopWidth={'1px'}> 
-                        {publicArticles.map((art, index) => (
-                                <Flex py='10px' alignItems={'center'} borderBottomWidth={'1px'} key={`public-article-${index}`} borderBottomColor={'gray.200'}>
-                                    <Text flex={2} whiteSpace={'nowrap'} textOverflow={'ellipsis'}  fontWeight={'medium'}  overflow={'hidden'} >{art.title}</Text>
-                                    <Flex flex={1} gap='5px' alignItems={'center'}>
-                                        <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{typeof art.language === 'string' && art.language in languagesFlags ?languagesFlags[art.language][0]:t('NotDetected')}</Text>
-                                        <Text fontSize={'.8em'}>{typeof art.language === 'string' && art.language in languagesFlags ?languagesFlags[art.language][1]:'🏴󠁥󠁳󠁣󠁴󠁿'}</Text>
-                                    </Flex>
-                                    <Box flex={1}> 
-                                        <Box boxShadow={`1px 1px 1px rgba(0, 0, 0, 0.15)`} display="inline-flex" fontSize='.9em' py='2px' px='8px' fontWeight={'medium'} color='white'  bg={art.public_article_status === 'draft'?'red.100':'green.100'} borderRadius={'.7rem'}> 
-                                            <Text color={art.public_article_status === 'draft'?'red.600':'green.600'}>{t(art.public_article_status)}</Text>
+                     {publicArticles && <> 
+                        {(publicArticles?.length === 0) &&  <Text>{t('NoPublicArticles')}</Text> }
+                        <Box mt='2vh' borderColor={publicArticles.length >0 ?'gray.200':'transparent'}  borderTopWidth={'1px'}> 
+                            {publicArticles?.map((art, index) => (
+                                    <Flex py='10px' alignItems={'center'} borderBottomWidth={'1px'} key={`public-article-${index}`} borderBottomColor={'gray.200'}>
+                                        <Text flex={2} whiteSpace={'nowrap'} textOverflow={'ellipsis'}  fontWeight={'medium'}  overflow={'hidden'} >{art.title}</Text>
+                                        <Flex flex={1} gap='5px' alignItems={'center'}>
+                                            <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{typeof art.language === 'string' && art.language in languagesFlags ?languagesFlags[art.language][0]:t('NotDetected')}</Text>
+                                            <Text fontSize={'.8em'}>{typeof art.language === 'string' && art.language in languagesFlags ?languagesFlags[art.language][1]:'🏴󠁥󠁳󠁣󠁴󠁿'}</Text>
+                                        </Flex>
+                                        <Box flex={1}> 
+                                            <Box boxShadow={`1px 1px 1px rgba(0, 0, 0, 0.15)`} display="inline-flex" fontSize='.9em' py='2px' px='8px' fontWeight={'medium'} color='white'  bg={art.public_article_status === 'draft'?'red.100':'green.100'} borderRadius={'.7rem'}> 
+                                                <Text color={art.public_article_status === 'draft'?'red.600':'green.600'}>{t(art.public_article_status)}</Text>
+                                            </Box>
                                         </Box>
-                                    </Box>
-                                    <Tooltip label={timeStampToDate(art.created_at as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
-                                        <Text flex={1} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(art.created_at as string, t_formats)}</Text>
-                                    </Tooltip>
-                                    <Button size='sm' variant={'common'} leftIcon={<FiEdit/>}  onClick={() => navigate(`/knowledge/article/${art.uuid}`)}>{t('Edit')}</Button>
+                                        <Tooltip label={timeStampToDate(art.created_at as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
+                                            <Text flex={1} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(art.created_at as string, t_formats)}</Text>
+                                        </Tooltip>
+                                        <Button size='sm' variant={'common'} leftIcon={<FiEdit/>}  onClick={() => navigate(`/knowledge/article/${art.uuid}`)}>{t('Edit')}</Button>
 
-                                </Flex>
-                            ))}
-                    </Box>
+                                    </Flex>
+                                ))}
+                        </Box>
+                        </>}
+       
                 </Box>
-                
+            </Skeleton>
+
                 {selectedSection === 'all' && <> 
+                <Skeleton isLoaded={isDataLoaded}> 
+
                     <Box p='20px' mt='3vh' borderRadius={'.7em'} borderColor={'gray.300'} borderWidth={'1px'}>
                         <Flex justifyContent={'space-between'} > 
                             <Flex mb='2vh' alignItems={'center'} gap='10px'>
@@ -171,31 +183,36 @@ function Fonts ({contentData, setContentData}:{contentData:ContentData[] | null,
                             </Flex>
                             <Button size='sm' variant={'common'} leftIcon={<FaPlus/>} onClick={() => navigate(`/knowledge/article/create-internal`)} >{t('AddArticle')}</Button>
                         </Flex>
-                        {internalArticles.length === 0 &&  <Text color='gray.600' fontSize={'1.1em'}>{t('NoInternalArticles')}</Text> }
 
-                        <Box mt='2vh' borderColor={internalArticles.length >0 ?'gray.200':'transparent'} borderTopWidth={'1px'}> 
-                            {internalArticles.map((art, index) => (
-                                    <Flex py='10px' alignItems={'center'} borderBottomWidth={'1px'} key={`private-article-${index}`} borderBottomColor={'gray.200'}>
-                                        <Text flex={2} whiteSpace={'nowrap'} textOverflow={'ellipsis'}  fontWeight={'medium'}  overflow={'hidden'} >{art.title}</Text>
-                                        <Flex flex={1} gap='5px' alignItems={'center'}>
-                                            <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{typeof art.language === 'string' && art.language in languagesFlags ?languagesFlags[art.language][0]:t('NotDetected')}</Text>
-                                            <Text fontSize={'.8em'}>{typeof art.language === 'string' && art.language in languagesFlags ?languagesFlags[art.language][1]:'🏴󠁥󠁳󠁣󠁴󠁿'}</Text>
-                                        </Flex>
-                                        <Box flex={1}> 
-                                        <Box boxShadow={`1px 1px 1px rgba(0, 0, 0, 0.15)`} display="inline-flex" fontSize='.9em' py='2px' px='8px' fontWeight={'medium'} color='white'  bg={art.public_article_status === 'draft'?'red.100':'green.100'} borderRadius={'.7rem'}> 
-                                            <Text color={art.public_article_status === 'draft'?'red.600':'green.600'}>{t(art.public_article_status)}</Text>
-                                        </Box>
-                                        </Box>
-                                        <Tooltip label={timeStampToDate(art.created_at as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
-                                            <Text flex={1} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(art.created_at as string, t_formats)}</Text>
-                                        </Tooltip>
-                                        <Button size='sm' variant={'common'} leftIcon={<FiEdit/>} onClick={() => navigate(`/knowledge/article/${art.uuid}`)} >{t('Edit')}</Button>
+                             {internalArticles && <> 
+                                {internalArticles.length === 0 &&  <Text color='gray.600' fontSize={'1.1em'}>{t('NoInternalArticles')}</Text> }
+                                <Box mt='2vh' borderColor={internalArticles.length >0 ?'gray.200':'transparent'} borderTopWidth={'1px'}> 
+                                    {internalArticles.map((art, index) => (
+                                            <Flex py='10px' alignItems={'center'} borderBottomWidth={'1px'} key={`private-article-${index}`} borderBottomColor={'gray.200'}>
+                                                <Text flex={2} whiteSpace={'nowrap'} textOverflow={'ellipsis'}  fontWeight={'medium'}  overflow={'hidden'} >{art.title}</Text>
+                                                <Flex flex={1} gap='5px' alignItems={'center'}>
+                                                    <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{typeof art.language === 'string' && art.language in languagesFlags ?languagesFlags[art.language][0]:t('NotDetected')}</Text>
+                                                    <Text fontSize={'.8em'}>{typeof art.language === 'string' && art.language in languagesFlags ?languagesFlags[art.language][1]:'🏴󠁥󠁳󠁣󠁴󠁿'}</Text>
+                                                </Flex>
+                                                <Box flex={1}> 
+                                                <Box boxShadow={`1px 1px 1px rgba(0, 0, 0, 0.15)`} display="inline-flex" fontSize='.9em' py='2px' px='8px' fontWeight={'medium'} color='white'  bg={art.public_article_status === 'draft'?'red.100':'green.100'} borderRadius={'.7rem'}> 
+                                                    <Text color={art.public_article_status === 'draft'?'red.600':'green.600'}>{t(art.public_article_status)}</Text>
+                                                </Box>
+                                                </Box>
+                                                <Tooltip label={timeStampToDate(art.created_at as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
+                                                    <Text flex={1} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(art.created_at as string, t_formats)}</Text>
+                                                </Tooltip>
+                                                <Button size='sm' variant={'common'} leftIcon={<FiEdit/>} onClick={() => navigate(`/knowledge/article/${art.uuid}`)} >{t('Edit')}</Button>
 
-                                    </Flex>
-                                ))}
+                                            </Flex>
+                                        ))}
+                                </Box>
+                                </>}
+                   
                         </Box>
-                    </Box>
+                </Skeleton>
 
+                    <Skeleton isLoaded={isDataLoaded}> 
                     <Box p='20px' mt='3vh' borderRadius={'.7em'} borderColor={'gray.300'} borderWidth={'1px'}>
                         <Flex justifyContent={'space-between'} > 
                             <Flex mb='2vh' alignItems={'center'} gap='10px'>
@@ -209,33 +226,37 @@ function Fonts ({contentData, setContentData}:{contentData:ContentData[] | null,
                             </Flex>
                             <Button size='sm' variant={'common'} leftIcon={<FaCloudArrowUp/>} onClick={() => setShowSyncronize(true)} >{t('Sincronize')}</Button>
                         </Flex>
-                        {webArticles.length === 0 &&  <Text color='gray.600' fontSize={'1.1em'}>{t('NoWebs')}</Text> }
 
-                        <Box mt='2vh'  borderColor={webArticles.length >0 ?'gray.200':'transparent'}borderTopWidth={'1px'}> 
-                            {webArticles.map((art, index) => (
-                                    <Flex py='10px' alignItems={'center'} borderBottomWidth={'1px'} key={`web-article-${index}`} borderBottomColor={'gray.200'}>
-                                         <Box flex={1}> 
-                                            {art.is_ingested ? <Box boxShadow={`1px 1px 1px rgba(0, 0, 0, 0.15)`} display="inline-flex" fontSize='.9em' py='2px' px='8px' fontWeight={'medium'} color='white'  bg={'green.100'} borderRadius={'.7rem'}> 
-                                                <Text color={'green.600'}>{t('Sync')}</Text>
-                                            </Box>:<Spinner speed="2s" color={'brand.text_blue'}/>}
-                                        </Box>
-                                        <Text flex={4} whiteSpace={'nowrap'} textOverflow={'ellipsis'}  fontWeight={'medium'}  overflow={'hidden'} >{art.title}</Text>
-                                        <Flex flex={2} gap='5px' alignItems={'center'}>
-                                            <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{typeof art.language === 'string' && art.language in languagesFlags ?languagesFlags[art.language][0]:t('NotDetected')}</Text>
-                                            <Text fontSize={'.8em'}>{typeof art.language === 'string' && art.language in languagesFlags ?languagesFlags[art.language][1]:'🏴󠁥󠁳󠁣󠁴󠁿'}</Text>
-                                        </Flex>
-                                      
-                                      
-                                         <Tooltip label={timeStampToDate(art.created_at as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
-                                            <Text flex={2} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(art.created_at as string, t_formats)}</Text>
-                                        </Tooltip>
-                                        <Button size='sm' variant={'common'} leftIcon={<FaArrowsRotate/>} onClick={() => {}} >{t('NewSyncronize')}</Button>
-                                    </Flex>
-                                ))}
-                        </Box>
-                        
+                             {webArticles && <> 
+                                {webArticles.length === 0 &&  <Text color='gray.600' fontSize={'1.1em'}>{t('NoWebs')}</Text> }
+                                <Box mt='2vh'  borderColor={webArticles.length >0 ?'gray.200':'transparent'}borderTopWidth={'1px'}> 
+                                    {webArticles.map((art, index) => (
+                                            <Flex py='10px' alignItems={'center'} borderBottomWidth={'1px'} key={`web-article-${index}`} borderBottomColor={'gray.200'}>
+                                                <Box flex={1}> 
+                                                    {art.is_ingested ? <Box boxShadow={`1px 1px 1px rgba(0, 0, 0, 0.15)`} display="inline-flex" fontSize='.9em' py='2px' px='8px' fontWeight={'medium'} color='white'  bg={'green.100'} borderRadius={'.7rem'}> 
+                                                        <Text color={'green.600'}>{t('Sync')}</Text>
+                                                    </Box>:<Spinner speed="2s" color={'brand.text_blue'}/>}
+                                                </Box>
+                                                <Text flex={4} whiteSpace={'nowrap'} textOverflow={'ellipsis'}  fontWeight={'medium'}  overflow={'hidden'} >{art.title}</Text>
+                                                <Flex flex={2} gap='5px' alignItems={'center'}>
+                                                    <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{typeof art.language === 'string' && art.language in languagesFlags ?languagesFlags[art.language][0]:t('NotDetected')}</Text>
+                                                    <Text fontSize={'.8em'}>{typeof art.language === 'string' && art.language in languagesFlags ?languagesFlags[art.language][1]:'🏴󠁥󠁳󠁣󠁴󠁿'}</Text>
+                                                </Flex>
+                                            
+                                            
+                                                <Tooltip label={timeStampToDate(art.created_at as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
+                                                    <Text flex={2} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(art.created_at as string, t_formats)}</Text>
+                                                </Tooltip>
+                                                <Button size='sm' variant={'common'} leftIcon={<FiEdit/>} onClick={() => navigate(`/knowledge/website/${art.uuid}`)} >{t('Edit')}</Button>
+                                            </Flex>
+                                        ))}
+                                </Box>
+                                </>}
+                    
                     </Box>
+                    </Skeleton>
 
+                    <Skeleton isLoaded={isDataLoaded}> 
                     <Box p='20px' mt='3vh' borderRadius={'.7em'} borderColor={'gray.300'} borderWidth={'1px'}>
                         <Flex justifyContent={'space-between'} > 
                             <Flex mb='2vh' alignItems={'center'} gap='10px'>
@@ -247,34 +268,38 @@ function Fonts ({contentData, setContentData}:{contentData:ContentData[] | null,
                                     <Text color='gray.600'>{t('TextFragmentsDes')}</Text>
                                 </Box>
                             </Flex>
-                            <Button size='sm' variant={'common'} leftIcon={<FaPlus/>} onClick={() => navigate(`/knowledge/text/create`)} >{t('AddTextFragment')}</Button>
+                            <Button size='sm' variant={'common'} leftIcon={<FaPlus/>} onClick={() => navigate(`/knowledge/snippet/create`)} >{t('AddTextFragment')}</Button>
                         </Flex>
-                        {textArticles.length === 0 &&  <Text color='gray.600' fontSize={'1.1em'}>{t('NoText')}</Text> }
 
-                        <Box mt='2vh' borderColor={textArticles.length >0 ?'gray.200':'transparent'} borderTopWidth={'1px'}> 
-                            {textArticles.map((art, index) => (
-                                <Flex py='10px' alignItems={'center'} borderBottomWidth={'1px'} key={`text-article-${index}`} borderBottomColor={'gray.200'}>
-                                    <Text flex={2} whiteSpace={'nowrap'} textOverflow={'ellipsis'}  fontWeight={'medium'}  overflow={'hidden'} >{art.title}</Text>
-                                    <Flex flex={1} gap='5px' alignItems={'center'}>
-                                        <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{typeof art.language === 'string' && art.language in languagesFlags ?languagesFlags[art.language][0]:t('NotDetected')}</Text>
-                                        <Text fontSize={'.8em'}>{typeof art.language === 'string' && art.language in languagesFlags ?languagesFlags[art.language][1]:'🏴󠁥󠁳󠁣󠁴󠁿'}</Text>
+                             {textArticles && <> 
+                            {textArticles.length === 0 &&  <Text color='gray.600' fontSize={'1.1em'}>{t('NoText')}</Text> }
+                            <Box mt='2vh' borderColor={textArticles.length >0 ?'gray.200':'transparent'} borderTopWidth={'1px'}> 
+                                    {textArticles.map((art, index) => (
+                                    <Flex py='10px' alignItems={'center'} borderBottomWidth={'1px'} key={`text-article-${index}`} borderBottomColor={'gray.200'}>
+                                        <Text flex={2} whiteSpace={'nowrap'} textOverflow={'ellipsis'}  fontWeight={'medium'}  overflow={'hidden'} >{art.title}</Text>
+                                        <Flex flex={1} gap='5px' alignItems={'center'}>
+                                            <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{typeof art.language === 'string' && art.language in languagesFlags ?languagesFlags[art.language][0]:t('NotDetected')}</Text>
+                                            <Text fontSize={'.8em'}>{typeof art.language === 'string' && art.language in languagesFlags ?languagesFlags[art.language][1]:'🏴󠁥󠁳󠁣󠁴󠁿'}</Text>
+                                        </Flex>
+                                        <Box flex={1}> 
+                                        <Box boxShadow={`1px 1px 1px rgba(0, 0, 0, 0.15)`} display="inline-flex" fontSize='.9em' py='2px' px='8px' fontWeight={'medium'} color='white'  bg={art.public_article_status === 'draft'?'red.100':'green.100'} borderRadius={'.7rem'}> 
+                                            <Text color={art.public_article_status === 'draft'?'red.600':'green.600'}>{t(art.public_article_status)}</Text>
+                                        </Box>
+                                        </Box>
+                                        <Tooltip label={timeStampToDate(art.created_at as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
+                                            <Text flex={1} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(art.created_at as string, t_formats)}</Text>
+                                        </Tooltip>
+                                        <Button size='sm' variant={'common'} leftIcon={<FiEdit/>} onClick={() => navigate(`/knowledge/snippet/${art.uuid}`)} >{t('Edit')}</Button>
+
                                     </Flex>
-                                    <Box flex={1}> 
-                                    <Box boxShadow={`1px 1px 1px rgba(0, 0, 0, 0.15)`} display="inline-flex" fontSize='.9em' py='2px' px='8px' fontWeight={'medium'} color='white'  bg={art.public_article_status === 'draft'?'red.100':'green.100'} borderRadius={'.7rem'}> 
-                                        <Text color={art.public_article_status === 'draft'?'red.600':'green.600'}>{t(art.public_article_status)}</Text>
-                                    </Box>
-                                    </Box>
-                                    <Tooltip label={timeStampToDate(art.created_at as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
-                                        <Text flex={1} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(art.created_at as string, t_formats)}</Text>
-                                    </Tooltip>
-                                    <Button size='sm' variant={'common'} leftIcon={<FiEdit/>} onClick={() => navigate(`/knowledge/text/${art.uuid}`)} >{t('Edit')}</Button>
-
-                                </Flex>
-                            ))}
-                        </Box>
-                        
+                                ))}
+                            </Box>
+                            </>}
+                   
                     </Box>
+                    </Skeleton>
 
+                    <Skeleton isLoaded={isDataLoaded}> 
                     <Box p='20px' mt='3vh' borderRadius={'.7em'} borderColor={'gray.300'} borderWidth={'1px'}>
                         <Flex justifyContent={'space-between'} > 
                             <Flex mb='2vh' alignItems={'center'} gap='10px'>
@@ -288,34 +313,36 @@ function Fonts ({contentData, setContentData}:{contentData:ContentData[] | null,
                             </Flex>
                             <Button size='sm' variant={'common'} leftIcon={<FaPlus/>} onClick={() => setShowAddPdf(true)} >{t('AddPdf')}</Button>
                         </Flex>
-                        {pdfsArticles.length === 0 &&  <Text color='gray.600' fontSize={'1.1em'}>{t('NoPdfs')}</Text> }
 
-                        <Box mt='2vh'  borderColor={pdfsArticles.length >0 ?'gray.200':'transparent'}  borderTopWidth={'1px'}> 
-                            {pdfsArticles.map((art, index) => (
-                                <Flex py='10px' alignItems={'center'} borderBottomWidth={'1px'} key={`pdf-article-${index}`} borderBottomColor={'gray.200'}>
-                                    <Box flex={1}> 
-                                        {art.is_ingested ? <Box boxShadow={`1px 1px 1px rgba(0, 0, 0, 0.15)`} display="inline-flex" fontSize='.9em' py='2px' px='8px' fontWeight={'medium'} color='white'  bg={'green.100'} borderRadius={'.7rem'}> 
-                                            <Text color={'green.600'}>{t('Sync')}</Text>
-                                        </Box>:<Spinner speed="2s" color={'brand.text_blue'}/>}
-                                    </Box>
-                                    <Text flex={4} whiteSpace={'nowrap'} textOverflow={'ellipsis'}  fontWeight={'medium'}  overflow={'hidden'} >{art.title}</Text>
-                                    <Flex flex={2} gap='5px' alignItems={'center'}>
-                                        <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{typeof art.language === 'string' && art.language in languagesFlags ?languagesFlags[art.language][0]:t('NotDetected')}</Text>
-                                        <Text fontSize={'.8em'}>{typeof art.language === 'string' && art.language in languagesFlags ?languagesFlags[art.language][1]:'🏴󠁥󠁳󠁣󠁴󠁿'}</Text>
+                             {pdfsArticles && <> 
+                            {pdfsArticles.length === 0 &&  <Text color='gray.600' fontSize={'1.1em'}>{t('NoPdfs')}</Text> }
+                            <Box mt='2vh'  borderColor={pdfsArticles.length >0 ?'gray.200':'transparent'}  borderTopWidth={'1px'}> 
+                                {pdfsArticles.map((art, index) => (
+                                    <Flex py='10px' alignItems={'center'} borderBottomWidth={'1px'} key={`pdf-article-${index}`} borderBottomColor={'gray.200'}>
+                                        <Box flex={1}> 
+                                            {art.is_ingested ? <Box boxShadow={`1px 1px 1px rgba(0, 0, 0, 0.15)`} display="inline-flex" fontSize='.9em' py='2px' px='8px' fontWeight={'medium'} color='white'  bg={'green.100'} borderRadius={'.7rem'}> 
+                                                <Text color={'green.600'}>{t('Processed')}</Text>
+                                            </Box>:<Spinner speed="2s" color={'brand.text_blue'}/>}
+                                        </Box>
+                                        <Text flex={4} whiteSpace={'nowrap'} textOverflow={'ellipsis'}  fontWeight={'medium'}  overflow={'hidden'} >{art.title}</Text>
+                                        <Flex flex={2} gap='5px' alignItems={'center'}>
+                                            <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{typeof art.language === 'string' && art.language in languagesFlags ?languagesFlags[art.language][0]:t('NotDetected')}</Text>
+                                            <Text fontSize={'.8em'}>{typeof art.language === 'string' && art.language in languagesFlags ?languagesFlags[art.language][1]:'🏴󠁥󠁳󠁣󠁴󠁿'}</Text>
+                                        </Flex>
+                                        
+                                        <Tooltip label={timeStampToDate(art.created_at as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
+                                            <Text flex={2} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(art.created_at as string, t_formats)}</Text>
+                                        </Tooltip>
+                                        <Button size='sm' variant={'common'} leftIcon={<FiEdit/>} onClick={() => navigate(`/knowledge/pdf/${art.uuid}`)} >{t('Edit')}</Button>
+
                                     </Flex>
-                                      
-                                    <Tooltip label={timeStampToDate(art.created_at as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
-                                        <Text flex={2} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(art.created_at as string, t_formats)}</Text>
-                                    </Tooltip>
-                                    <Button size='sm' variant={'common'} leftIcon={<FiEdit/>} onClick={() => navigate(`/knowledge/pdf/${art.uuid}`)} >{t('Edit')}</Button>
-
-                                </Flex>
-                            ))}
-                        </Box>
-                        
+                                ))}
+                            </Box>
+                            </>}
                     </Box>
+                    </Skeleton>
                 </>}
-            </Skeleton>
+  
         </Box>
     </>)
     }
@@ -350,7 +377,7 @@ const SyncronizeWeb = ({setShowSyncronize, setContentData}:{setShowSyncronize:Di
             public_article_status: 'draft'
         }
         console.log(newWeb)
-        const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/knowledge/sources`, method:'post', requestForm:newWeb, auth})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`, method:'post', requestForm:newWeb, auth})
         if (response?.status === 200) setContentData(prev => ([...prev as ContentData[], newWeb]))
         setShowSyncronize(false)
      }
@@ -360,10 +387,7 @@ const SyncronizeWeb = ({setShowSyncronize, setContentData}:{setShowSyncronize:Di
             <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
             <Text fontWeight={'medium'}>{t('AddUrl')}</Text>
             <Text mt='1vh' mb='2vh'color='gray.600' fontSize={'.9em'}>{t('AddUrlDes')}</Text>
-
-
             <EditText placeholder={'https://matil.ai'} hideInput={false} value={webUrl} setValue={setWebUrl}/>
-     
         </Box>
         <Flex  maxW='450px' p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
             <Button  size='sm' variant={'main'} isDisabled={webUrl === ''} onClick={createFolder}>{t('Syncronize')}</Button>
@@ -379,10 +403,11 @@ const CreatePdf = ({setShowAddPdf, setContentData}:{setShowAddPdf:Dispatch<SetSt
     const { t } = useTranslation('knowledge')
     const auth = useAuth()
 
+    const [waitingCreate, setWaitingCreate] = useState<boolean>(false)
     const [selectedDocument, setSelectedDocument] = useState<File | null>(null)
 
     const getPreSignedUrl = async (file:File) => {
-        const response = await fetchData({endpoint: `superservice/${auth.authData.organizationId}/chatbot/s3_pre_signed_url`, method:'post', auth:auth, requestForm: { file_name: file.name}})   
+        const response = await fetchData({endpoint: `${auth.authData.organizationId}/chatbot/s3_pre_signed_url`, method:'post', auth:auth, requestForm: { file_name: file.name}})   
         if (response?.status === 200) {
             const responseUpload = await fetch(response.data.upload_url, {method: "PUT", headers: {}, body: file})
             if (responseUpload.ok) {
@@ -409,13 +434,12 @@ const CreatePdf = ({setShowAddPdf, setContentData}:{setShowAddPdf:Dispatch<SetSt
             created_by: auth.authData.userId || -1,
             updated_by: auth.authData.userId || -1,
             tags: [],
-            content:{url:getPreSignedUrl(selectedDocument as File)},
+            content:{url:await getPreSignedUrl(selectedDocument as File)},
             is_ingested:false,
             public_article_help_center_collections:[],
             public_article_status: 'draft'
         }
-        console.log(newPdf)
-        const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/knowledge/sources`, method:'post', requestForm:newPdf, auth})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`, setWaiting:setWaitingCreate, method:'post', requestForm:newPdf, auth})
         if (response?.status === 200) setContentData(prev => ([...prev as ContentData[], newPdf]))
         setShowAddPdf(false)
      }
@@ -427,7 +451,6 @@ const CreatePdf = ({setShowAddPdf, setContentData}:{setShowAddPdf:Dispatch<SetSt
 
     return(<> 
         <input type="file" accept=".pdf" id={'uploadPdf'} style={{ display: 'none' }} onChange={handleAddPdf}/>
-
         <Box p='20px' maxW='450px'> 
             <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('AddPdf')}</Text>
             <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
@@ -435,13 +458,13 @@ const CreatePdf = ({setShowAddPdf, setContentData}:{setShowAddPdf:Dispatch<SetSt
  
             <Button leftIcon={<FaCloudUploadAlt/>} onClick={() => document.getElementById('uploadPdf')?.click()} variant={'main'} size='sm'>{t('UploadPdf')}</Button>
             {selectedDocument && 
-                <Flex alignItems={'center'} gap='15px'>
-                    <Text>{selectedDocument.name}</Text>
-                    <IconButton aria-label="Remove image" icon={<RxCross2  size='20px'/>} size="sm" border='none' bg='transparent' onClick={() => setSelectedDocument(null)} />
+                <Flex mt='2vh' alignItems={'center'} gap='15px'>
+                    <Text fontSize={'.9em'}>{selectedDocument.name}</Text>
+                    <IconButton variant='delete' aria-label="Remove image" icon={<RxCross2  size='20px'/>} size="sm" border='none' bg='transparent' onClick={() => setSelectedDocument(null)} />
                 </Flex>}
         </Box>
-        <Flex  maxW='450px' p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-            <Button  size='sm' variant={'main'} isDisabled={selectedDocument === null} onClick={createPdf}>{t('Upload')}</Button>
+        <Flex  maxW='450px' p='20px' mt='4vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+            <Button  size='sm' variant={'main'} isDisabled={selectedDocument === null} onClick={createPdf}>{waitingCreate?<LoadingIconButton/>:t('Upload')}</Button>
             <Button  size='sm' variant={'common'} onClick={() => {setShowAddPdf(false)}}>{t('Cancel')}</Button>
         </Flex>
     </>)

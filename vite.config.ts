@@ -35,7 +35,7 @@ export default defineConfig(({ command, mode }) => {
     return {
       plugins: commonPlugins,
       server: {
-        port: 4001,
+        port: 4005,
         open: false,  // Desactivar la apertura automática del navegador predeterminado
         host: '192.168.0.179',
       },

@@ -28,6 +28,7 @@ function Phone () {
     //AUTH CONSTANT
     const auth = useAuth()
     const  { t } = useTranslation('settings')
+    const matildaScrollRef = useRef<HTMLDivElement>(null)
 
     //WAITING BOOLEANS FOR CREATING AN ACCOUNT
     const [waitingSend, setWaitingSend] = useState<boolean>(false)
@@ -42,12 +43,12 @@ function Phone () {
 
     //FETCH DATA
     const fetchInitialData = async() => {
-        const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/all_channels_basic_data`, auth})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/all_channels_basic_data`, auth})
          if (response?.status === 200){
           let phoneChannel 
           response.data.map((cha:any) => {if (cha.channel_type === 'phone')  phoneChannel = cha.id})
           if (phoneChannel) {
-            const responseMail = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/${phoneChannel}`,  setValue: setData, auth})
+            const responseMail = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${phoneChannel}`,  setValue: setData, auth})
             if (responseMail?.status === 200) {
             console.log(responseMail.data)
               setMatildaConfig(responseMail.data.matilda_configuraion)
@@ -67,7 +68,7 @@ function Phone () {
   
 
       const saveChanges = async () => {
-            const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/${dataRef.current.id}`, setValue:setWaitingSend, setWaiting:setWaitingSend, auth, method:'put', requestForm:{...data, matilda_configuration:matildaConfig}, toastMessages:{'works':t('CorrectUpdatedInfo'), 'failed':t('FailedUpdatedInfo')}})
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${dataRef.current.id}`, setValue:setWaitingSend, setWaiting:setWaitingSend, auth, method:'put', requestForm:{...data, matilda_configuration:matildaConfig}, toastMessages:{'works':t('CorrectUpdatedInfo'), 'failed':t('FailedUpdatedInfo')}})
             if (response?.status === 200) {
             dataRef.current = data
             matildaConfigRef.current = matildaConfig
@@ -107,7 +108,7 @@ function Phone () {
                         <ChannelInfo hide={true}  value={data?.credentials.access_token || ''} title={t('AccessToken')} description={t('AccessTokenDes')}/>
                     </Box>
                     <Box flex='1'> 
-                        <GetMatildaConfig configDict={matildaConfig} updateData={setMatildaConfig} />
+                        <GetMatildaConfig configDict={matildaConfig} setConfigDict={setMatildaConfig} scrollRef={matildaScrollRef}/>
                     </Box>                        
                 </Flex>
                 </Box>

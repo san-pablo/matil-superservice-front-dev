@@ -3,10 +3,10 @@
 */
 
 const timeUntil = (timestamp: string | undefined, t: (key: string, options?: { count?: number }) => string): string => {
-  const UTCDate = new Date();
-  const now = new Date(UTCDate.getTime() + UTCDate.getTimezoneOffset() * 60000);
+  const UTCDate = new Date()
+  const now = new Date(UTCDate.getTime() + UTCDate.getTimezoneOffset() * 60000)
 
-  const past = timestamp !== undefined ? new Date(timestamp) : new Date();
+  const past = timestamp !== undefined ? new Date(timestamp) : new Date()
   const diff = past.getTime() - now.getTime();
 
   const seconds = diff / 1000
@@ -39,4 +39,4 @@ const timeUntil = (timestamp: string | undefined, t: (key: string, options?: { c
   }
 }
 
-export default timeUntil;
+export default timeUntil

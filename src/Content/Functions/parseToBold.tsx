@@ -1,3 +1,7 @@
+/*
+  PARSE A MESSAGE TO BOLD
+*/
+
 const parseMessageToBold = (message:string, showLink?:boolean) => {
     const parts = message.split(/(\/{[^/]+}\/)/g)
     return parts.map((part, index) => {

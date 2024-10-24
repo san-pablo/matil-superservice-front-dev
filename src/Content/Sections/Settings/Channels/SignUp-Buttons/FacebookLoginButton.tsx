@@ -19,7 +19,7 @@ declare global {
     const handleSendNewChannel = async (data: any) => {
         data['name'] = name
         const response = await fetchData({
-          endpoint: `superservice/${auth.authData.organizationId}/admin/settings/channels/whatsapp`,
+          endpoint: `${auth.authData.organizationId}/admin/settings/channels/whatsapp`,
           requestForm: data,
           method: 'post',
           setWaiting: setWaitingInfo,

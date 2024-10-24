@@ -15,10 +15,9 @@ import { IconType } from "react-icons"
 import { IoPerson } from "react-icons/io5"
 import { BsLightningFill } from "react-icons/bs"
 import { BiSolidBuildings } from "react-icons/bi"
-import { FaDoorOpen, FaPlug, FaHeadset } from "react-icons/fa"
+import { FaDoorOpen, FaPlug } from "react-icons/fa"
 import { HiChatAlt2 } from "react-icons/hi"
 import { PiDesktopTowerFill, PiChatsFill } from "react-icons/pi"
-
 
 //TYPING
 import { IconKey, SubSectionProps, SectionsListProps } from "../../Constants/typing"
@@ -27,20 +26,22 @@ import { IconKey, SubSectionProps, SectionsListProps } from "../../Constants/typ
 const Main = lazy (() => import('./Main')) 
 //ORGANIZATION
 const Data = lazy(() => import('./Organization/Data'))
+const Tilda = lazy(() => import('./Organization/Tilda'))
 //const Payments = lazy(() => import('./Organization/Payments'))
 //USERS
 const User = lazy(() => import('./Users/User'))
 const AdminUsers = lazy(() => import('./Users/AdminUsers'))
 const Groups = lazy(() => import('./Users/Groups'))
 //SUPPORT
-const HelpCenter = lazy(() => import('./Support/HelpCenter'))
+const HelpCenters = lazy(() => import('./Support/HelpCenter'))
 const Surveys = lazy(() => import('./Support/Surveys'))
 //WORKFLOWS
 const ViewsList = lazy(() => import('./Workflows/Views'))
 const EditView = lazy(() => import('./Workflows/EditView'))
 const Shortcuts = lazy(() => import('./Workflows/Shortcuts'))
 const Fields = lazy(() => import('./Workflows/Fields'))
-const TicketsData = lazy(() => import('./Workflows/TicketsData'))
+const Themes = lazy(() => import('./Workflows/Themes'))
+const ConversationsData = lazy(() => import('./Workflows/ConversationsData'))
 //ACTIONS
 const Triggers = lazy(() => import('./Actions/Triggers'))
 const Automations = lazy(() => import('./Actions/Automations'))
@@ -54,12 +55,13 @@ const Phone = lazy(() => import('./Channels/Phone'))
 //INTEGRATIOSN
 const Shopify = lazy(() => import('./Integrations/Shopify'))
 
-
+//TYPING
 interface ExpandableSectionProps {
     section: IconKey
     subSections: SubSectionProps
   }
   
+//SECTION COMPONENT
 const Section = ({ section, subSections }: ExpandableSectionProps) => {
     
     //TRANSLATION
@@ -96,7 +98,7 @@ const Section = ({ section, subSections }: ExpandableSectionProps) => {
     </>)
     }
 
-
+//MAIN FUNCTION
 function Settings () {
 
     //TRANSLATION
@@ -106,19 +108,18 @@ function Settings () {
     const auth = useAuth()
     const isAdmin = auth.authData.users?.[auth.authData?.userId || '']?.is_admin
 
-    //SUBSECTINOS
+    //SECTIONS MAP
+    const sectionsList: (IconKey | '')[] = isAdmin ? ['organization', 'users', 'support', 'workflows', 'actions', 'channels', 'integrations'] : ['users']
     const subSections: SubSectionProps[] = [
-        [[t('Data'), 'data']],
+        [[t('Data'), 'data'], [t('Tilda'), 'tilda']],
         [[t('Profile'), 'user'], [t('Users'),'admin-users'], [t('Groups'),'groups']],
         [[t('HelpCenter'), 'help-center'], [t('Surveys'), 'surveys']],
-        [[t('Views'), 'edit-views'], [t('Shortcuts'), 'shortcuts'], [t('Tickets'), 'tickets'], [t('Fields'), 'fields']],
+        [[t('Views'), 'edit-views'], [t('Themes'), 'themes'], [t('Fields'), 'fields'], [t('Shortcuts'), 'shortcuts'], [t('Conversations'), 'conversations']],
         [[t('Triggers'), 'triggers'], [t('Automations'), 'automations']],
         [[t('Web'),'web'], ['Whatsapp','whatsapp'],['Instagram','instagram'], ['Google Business','google-business'], [t('Mail'),'mail']],
         [['Shopify','shopify']]
     ] 
-    
-    const sectionsList: (IconKey | '')[] = isAdmin ? ['organization', 'users', 'support', 'workflows', 'actions', 'channels', 'integrations'] : ['users']
-
+ 
     //CONSTANTS
     const navigate = useNavigate()
     const location = useLocation().pathname
@@ -153,19 +154,21 @@ function Settings () {
                         <Route path="/main" element={<Main subSections={subSections} sectionsList={sectionsList}/>} />
                         
                         <Route path="/organization/data" element={<Data />} />
+                        <Route path="/organization/tilda" element={<Tilda />} />
                         
                         <Route path="/users/user" element={<User />} />
                         <Route path="/users/admin-users" element={<AdminUsers />} />
                         <Route path="/users/groups" element={<Groups />} />
                        
-                        <Route path="/support/help-center" element={<HelpCenter scrollRef={scrollRef}/>} />
+                        <Route path="/support/help-center" element={<HelpCenters scrollRef={scrollRef}/>} />
                         <Route path="/support/surveys" element={<Surveys scrollRef={scrollRef}/>} />
 
                         <Route path="/workflows/edit-views" element={<ViewsList />} />
                         <Route path="/workflows/edit-views/edit/*" element={<EditView scrollRef={scrollRef}/>} />
-                        <Route path="/workflows/shortcuts" element={<Shortcuts/>} />
-                        <Route path="/workflows/tickets" element={<TicketsData />} />
                         <Route path="/workflows/fields" element={<Fields/>} />
+                        <Route path="/workflows/themes" element={<Themes/>} />
+                        <Route path="/workflows/shortcuts" element={<Shortcuts/>} />
+                        <Route path="/workflows/conversations" element={<ConversationsData />} />
                       
                         <Route path="/actions/triggers" element={<Triggers scrollRef={scrollRef}/>} />
                         <Route path="/actions/automations" element={<Automations scrollRef={scrollRef}/>} />

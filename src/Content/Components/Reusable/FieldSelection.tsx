@@ -3,7 +3,7 @@
 */
 
 //REACT
-import { useState, useRef, RefObject, CSSProperties, useEffect } from 'react'
+import { useState, useRef, RefObject, CSSProperties, useEffect, Dispatch, SetStateAction } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../AuthContext.js'
 //FETCH DATA
@@ -24,8 +24,6 @@ import { IconType } from "react-icons"
 //TYPING
 import { FieldAction } from '../../Constants/typing'
 
- 
-
 //TYPING
 type variables = 'bool' | 'int' | 'float' | 'str' | 'timestamp'
 type fieldConfigType = {name:string, type:variables, default:string}
@@ -33,29 +31,30 @@ interface FieldSelectiontProps {
     selectedItem: FieldAction
     setSelectedItem: (newData:FieldAction) => void
     containerRef?: RefObject<HTMLDivElement>
+    setCustomType:Dispatch<SetStateAction<string>>
+    excludedFields?:('conversation' | 'contact' | 'contact_business' | 'custom')[]
 }
-type FieldType = 'ticket' | 'client' | 'contact_business' | 'custom'
+type FieldType = 'conversation' | 'contact' | 'contact_business' | 'custom'
 
 //MOTION BOX
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
 
-
-function parseCustomFields(dict:{ticket:fieldConfigType[], client:fieldConfigType[], contact_business:fieldConfigType[]}) {
-    const result:{name:string, motherstructure:'ticket' | 'client' | 'contact_business', type:variables }[] = []
+//PARSE CUSTOM FIELDS TO CORRECT FORMAT
+function parseCustomFields(dict:{conversation:fieldConfigType[], contact:fieldConfigType[], contact_business:fieldConfigType[]}) {
+    const result:{name:string, motherstructure:'conversation' | 'contact' | 'contact_business', type:variables }[] = []
     for (const [key, values] of Object.entries(dict)) {
-        values.forEach(item => {result.push({motherstructure: key as 'ticket' | 'client' | 'contact_business', name: item.name, type:item.type})})
+        values.forEach(item => {result.push({motherstructure: key as 'conversation' | 'contact' | 'contact_business', name: item.name, type:item.type})})
     }
     return result
 }
 
-
 //MAIN FUNCTION
-const FieldSelection = ({selectedItem, setSelectedItem, containerRef}: FieldSelectiontProps) => {
+const FieldSelection = ({selectedItem, setSelectedItem, containerRef, setCustomType, excludedFields}: FieldSelectiontProps) => {
 
     //TRANSLATION
     const { t } = useTranslation('settings')
     const auth = useAuth()
-    const structuresMap:{[key in FieldType]:[string, IconType]} = {'ticket':[t('Tickets'), FaTicket],  'client':[t('Client'), IoPeopleSharp], 'contact_business':[t('Business'), FaBuilding], 'custom':[t('Customizable'), BiSolidCustomize]}
+    const structuresMap:{[key in FieldType]:[string, IconType]} = {'conversation':[t('Conversations'), FaTicket],  'contact':[t('Client'), IoPeopleSharp], 'contact_business':[t('Business'), FaBuilding], 'custom':[t('Customizable'), BiSolidCustomize]}
 
     //REFS
     const buttonRef = useRef<HTMLDivElement>(null)
@@ -65,40 +64,41 @@ const FieldSelection = ({selectedItem, setSelectedItem, containerRef}: FieldSele
     //SHOW THE SECTION HOVERED
     const [sectionHovered, setSectionHovered] = useState<FieldType | ''>('')
 
-    //FETH CUSTOM FIELDS ATRIBUTES
-    const [customFields, setCustomFields] = useState<{name:string,  motherstructure:'ticket' | 'client' | 'contact_business' }[]>([])
+    //FETCH CUSTOM FIELDS ATRIBUTES
+    const [customFields, setCustomFields] = useState<{name:string,  motherstructure:'conversation' | 'contact' | 'contact_business' }[]>([])
     useEffect(() => {        
         const fetchInitialData = async() => {
-            const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/custom_attributes`, auth})
-            if (response?.status === 200 ) setCustomFields(parseCustomFields(response.data))
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/custom_attributes`,  auth})
+            if (response?.status === 200)setCustomFields(parseCustomFields(response.data))
         }
-        fetchInitialData()
+        if (auth.authData.customAttributes) setCustomFields(parseCustomFields(auth.authData.customAttributes)) 
+        else fetchInitialData()
     }, [])
-   
+
     //BOOLEAN TO CONTROL THE VISIBILITY OF THE LIST AND CLOSE ON OUTSIDE CLICK
     const [showList, setShowList] = useState<boolean>(false)
     useOutsideClick({ref1:buttonRef, ref2:boxRef, containerRef, onOutsideClick:setShowList})
 
     //BOX POSITION LOGIC, TO SHOW IT UP OR DOWN OF THE INPUT, DEPENDING ON THE POSITION
-    const [boxPosition, setBoxPosition] = useState<'top' | 'bottom'>('bottom')
     const [boxStyle, setBoxStyle] = useState<CSSProperties>({})
-    determineBoxStyle({buttonRef, setBoxStyle, setBoxPosition, changeVariable:showList})
+    determineBoxStyle({buttonRef, setBoxStyle, boxPosition:'none', changeVariable:showList})
 
+    //FIELDS CLASESS BOX
     const FieldBox = () => {
         
         //MAPPING CONSTANTS
-        const ticketsList = ['user_id', 'group_id', 'channel_type', 'title', 'subject', 'urgency_rating', 'status', 'unseen_changes', 'tags', 'is_matilda_engaged', 'is_csat_offered', 'hours_since_created', 'hours_since_updated']
+        const conversationsList = ['user_id', 'group_id', 'channel_type', 'title', 'theme', 'urgency_rating', 'status', 'unseen_changes', 'tags', 'is_matilda_engaged', 'is_csat_offered', 'hours_since_created', 'hours_since_updated']
         const clientsList = ['contact_business_id', 'name', 'language', 'rating', 'notes', 'labels', 'hours_since_created', 'hours_since_updated']
         const businessList = ['name', 'domain', 'notes', 'labels', 'hours_since_created', 'hours_since_updated']
-        const listStructure = {'ticket':ticketsList, 'client':clientsList, 'contact_business':businessList, 'custom':customFields}
+        const listStructure = {'conversation':conversationsList, 'contact':clientsList, 'contact_business':businessList, 'custom':customFields}
 
         return (<>
              {listStructure[sectionHovered as FieldType].map((option:any, index:number) => (
                 <Flex position={'relative'} key={`name-${index}`} px='10px'  py='7px' cursor={'pointer'} justifyContent={'space-between'} alignItems={'center'} _hover={{bg:'brand.hover_gray'}}
-                    onClick={() => {setShowList(false);setSelectedItem({...selectedItem, name:sectionHovered === 'custom'?option.name:option, is_customizable:sectionHovered === 'custom', motherstructure:(sectionHovered === 'custom' || sectionHovered === '' )?option.type:sectionHovered})}}>
+                    onClick={() => {setShowList(false);setCustomType(sectionHovered === 'custom'?option.type:'');setSelectedItem({...selectedItem, name:sectionHovered === 'custom'?option.name:option, is_customizable:sectionHovered === 'custom', motherstructure:(sectionHovered === 'custom' || sectionHovered === '' )?option.type:sectionHovered})}}>
                     <Flex gap='5px' alignItems={'end'}>
                         <Text >{t(sectionHovered === 'custom'?option.name:option)}</Text>
-                        <Text color={'gray.600'} fontSize={'.7em'}>({sectionHovered === 'custom'?(t(option.motherstructure)):''})</Text>
+                        <Text color={'gray.600'} fontSize={'.7em'}>{sectionHovered === 'custom'?(t(option.motherstructure)):''}</Text>
                     </Flex>
                 </Flex>
             ))}
@@ -115,9 +115,9 @@ const FieldSelection = ({selectedItem, setSelectedItem, containerRef}: FieldSele
             <AnimatePresence> 
                 {showList && 
                     <Portal>
-                        <MotionBox initial={{ opacity: 0, marginTop: boxPosition === 'bottom'?-10:10 }} animate={{ opacity: 1, marginTop: 0 }}  exit={{ opacity: 0,marginTop: boxPosition === 'bottom'?-10:10}} transition={{ duration: '.2', ease: 'easeOut'}}
-                        top={boxStyle.top} bottom={boxStyle.bottom} right={boxStyle.right} width={boxStyle.width} maxH='40vh' gap='10px' ref={boxRef} fontSize={'.9em'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000}   position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
-                            {Object.keys(structuresMap).map((option, index) => (
+                        <MotionBox initial={{ opacity: 0, marginTop: -10, marginBottom:-10}} animate={{ opacity: 1, marginTop: 0, marginBottom:0 }}  exit={{ opacity: 0,marginTop:-10, marginBottom:-10}} transition={{ duration: '.2', ease: 'easeOut'}}
+                        top={boxStyle.top} bottom={boxStyle.bottom} left={boxStyle.left} minW={'200px'} width={boxStyle.width} maxH='40vh' gap='10px' ref={boxRef} fontSize={'.9em'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000}   position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
+                            {Object.keys(structuresMap).filter(key => !(excludedFields || []).includes(key as any)).map((option, index) => (
                                 <Flex ref={structureRef} position={'relative'}  key={`${selectedItem}-option-${index}`} px='10px'  py='7px' cursor={'pointer'} justifyContent={'space-between'} alignItems={'center'} _hover={{bg:'brand.hover_gray'}}
                                     onMouseEnter={() => setSectionHovered(option as FieldType)} onMouseLeave={() => setSectionHovered('')}>
                                     <Flex gap='5px' alignItems={'center'}>

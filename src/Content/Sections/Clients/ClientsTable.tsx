@@ -10,18 +10,23 @@ import fetchData from "../../API/fetchData"
 import { Flex, Box, Text, Button, IconButton, Skeleton, Tooltip } from '@chakra-ui/react'
 //COMPONENTS
 import EditText from "../../Components/Reusable/EditText"
-import AccionesButton from "../Tickets/ActionsButton"
+import AccionesButton from "../Conversations/ActionsButton"
 import FilterButton from "../../Components/Reusable/FilterButton"
 import Table from "../../Components/Reusable/Table"
 //FUNCTIONS
 import timeStampToDate from "../../Functions/timeStampToString"
 import timeAgo from "../../Functions/timeAgo"
 //ICONS
+import { IconType } from "react-icons"
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io"
 import { PiDesktopTowerFill } from "react-icons/pi"
 import { FaFilter } from "react-icons/fa"
+import { IoMdMail, IoLogoWhatsapp } from "react-icons/io"
+import { IoChatboxEllipses, IoLogoGoogle } from "react-icons/io5"
+import { AiFillInstagram } from "react-icons/ai"
+import { FaPhone } from "react-icons/fa"
 //TYPING
-import { Clients, Channels,  ClientColumn, logosMap, HeaderSectionType, languagesFlags } from "../../Constants/typing"
+import { Clients, Channels,  ClientColumn, HeaderSectionType, languagesFlags } from "../../Constants/typing"
   
 interface ClientsFilters {
     page_index:number
@@ -79,9 +84,14 @@ function ClientsTable ({addHeaderSection}:{addHeaderSection:HeaderSectionType}) 
     const navigate = useNavigate()
     const { t } = useTranslation('clients')
     const columnsClientsMap:{[key:string]:[string, number]} = {name: [t('name'), 200], contact: [t('contact'), 150], labels: [t('labels'), 350], last_interaction_at: [t('last_interaction_at'), 180], created_at: [t('created_at'), 150], rating: [t('rating'), 60], language: [t('language'), 150], notes: [t('notes'), 350],  is_blocked: [t('is_blocked'), 150]}
-
-    //CONTAINER REF
-    const containerRef = useRef<HTMLDivElement>(null)
+    const logosMap:{[key in Channels]: [string, IconType]} = { 
+        'email':[ t('email'), IoMdMail],
+        'whatsapp':[ t('whatsapp'), IoLogoWhatsapp ], 
+        'webchat':[ t('webchat'), IoChatboxEllipses], 
+        'google_business':[ t('google_business'), IoLogoGoogle],
+        'instagram': [t('instagram'), AiFillInstagram], 
+        'phone':[ t('phone'), FaPhone]
+    }
 
     //BOOLEAN FOR WAIT THE INFO
     const [waitingInfo, setWaitingInfo] = useState<boolean>(true)
@@ -104,7 +114,7 @@ function ClientsTable ({addHeaderSection}:{addHeaderSection:HeaderSectionType}) 
                 setWaitingInfo(false)
             }
             else {
-                const clientResponse = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/clients`, setValue:setClients, setWaiting:setWaitingInfo, params:{page_index:1},auth:auth})
+                const clientResponse = await fetchData({endpoint:`${auth.authData.organizationId}/contacts`, setValue:setClients, setWaiting:setWaitingInfo, params:{page_index:1},auth:auth})
                 if (clientResponse?.status === 200) session.dispatch({type:'UPDATE_CLIENTS_TABLE',payload:{data:clientResponse?.data, filters, selectedIndex:-1}})
             }
         }    
@@ -114,12 +124,12 @@ function ClientsTable ({addHeaderSection}:{addHeaderSection:HeaderSectionType}) 
 
     //SORT LOGIC
     const requestSort = (key: string) => {
-        const direction = (filters.sort_by === key && filters.order === 'asc') ? 'desc' : 'asc';
+        const direction = (filters?.sort_by === key && filters?.order === 'asc') ? 'desc' : 'asc';
         fetchClientDataWithFilter({...filters, sort_by: key as ClientColumn, order: direction as 'asc' | 'desc'})
     }
     const getSortIcon = (key: string) => {
-        if (filters.sort_by === key) { 
-            if (filters.order === 'asc') return true
+        if (filters?.sort_by === key) { 
+            if (filters?.order === 'asc') return true
             else return false
         }
         else return null    
@@ -135,7 +145,7 @@ function ClientsTable ({addHeaderSection}:{addHeaderSection:HeaderSectionType}) 
     //FETCH NEW DATA ON FILTERS CHANGE
     const fetchClientDataWithFilter = async (filters:{page_index:number, channel_types:Channels[], sort_by?:ClientColumn, search?:string, order?:'asc' | 'desc'}) => {
         setFilters(filters)
-        const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/clients`, setValue:setClients, setWaiting:setWaitingInfo, params:filters, auth})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/contacts`, setValue:setClients, setWaiting:setWaitingInfo, params:filters, auth})
         if (response?.status === 200) {            
             session.dispatch({ type: 'UPDATE_CLIENTS_TABLE', payload: {data:response.data, filters:filters, selectedIndex} })
          }
@@ -143,7 +153,7 @@ function ClientsTable ({addHeaderSection}:{addHeaderSection:HeaderSectionType}) 
 
     //SELECT CHANNELS LOGIC
     const toggleChannelsList = (element: Channels) => {
-        const channelsList = filters.channel_types
+        const channelsList = filters?.channel_types
         if (channelsList.includes(element)) setFilters({...filters, channel_types: channelsList.filter(e => e !== element)})
         else setFilters({...filters, channel_types: [...channelsList, element]})
     }
@@ -160,20 +170,20 @@ function ClientsTable ({addHeaderSection}:{addHeaderSection:HeaderSectionType}) 
     
             <Flex gap='15px' mt='2vh' > 
                 <Box width={'350px'}> 
-                    <EditText value={filters.search} setValue={(value) => setFilters(prev => ({...prev, search:value}))} searchInput={true}/>
+                    <EditText value={filters?.search} setValue={(value) => setFilters(prev => ({...prev, search:value}))} searchInput={true}/>
                 </Box>
-                <FilterButton selectList={Object.keys(logosMap)} selectedElements={filters.channel_types} setSelectedElements={(element) => toggleChannelsList(element as Channels)} icon={PiDesktopTowerFill} filter='channels'/>
+                <FilterButton selectList={Object.keys(logosMap)} itemsMap={logosMap} selectedElements={filters?.channel_types} setSelectedElements={(element) => toggleChannelsList(element as Channels)} icon={PiDesktopTowerFill} initialMessage={t('ClientsFilterMessage')}/>
                 <Button leftIcon={<FaFilter/>} size='sm' variant={'common'}  onClick={() => fetchClientDataWithFilter({...filters, page_index:1})}>{t('ApplyFilters')}</Button>
             </Flex>
 
             <Flex mt='2vh'  justifyContent={'space-between'} alignItems={'center'}> 
                 <Skeleton  isLoaded={!waitingInfo} >
-                    <Text fontWeight={'medium'} color='gray.600' fontSize={'1.2em'}> {t('ClientsCount', {count:clients?.total_clients})}</Text> 
+                    <Text fontWeight={'medium'} color='gray.600' fontSize={'1.2em'}> {t('ClientsCount', {count:clients?.total_contacts})}</Text> 
                 </Skeleton>
                 <Flex  alignItems={'center'} justifyContent={'end'} gap='10px' flexDir={'row-reverse'}>
-                    <IconButton isRound size='xs' aria-label='next-page' icon={<IoIosArrowForward />} isDisabled={filters.page_index >= Math.floor((clients?.total_clients || 0)/ 50)} onClick={() => fetchClientDataWithFilter({...filters,page_index:filters.page_index + 1})}/>
-                    <Text fontWeight={'medium'} fontSize={'.9em'} color='gray.600'>{t('Page')} {filters.page_index}</Text>
-                    <IconButton isRound size='xs' aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={filters.page_index === 1} onClick={() => fetchClientDataWithFilter({...filters,page_index:filters.page_index - 1})}/>
+                    <IconButton isRound size='xs'  variant={'common'}  aria-label='next-page' icon={<IoIosArrowForward />} isDisabled={filters?.page_index >= Math.floor((clients?.total_contacts || 0)/ 50)} onClick={() => fetchClientDataWithFilter({...filters,page_index:filters?.page_index + 1})}/>
+                    <Text fontWeight={'medium'} fontSize={'.9em'} color='gray.600'>{t('Page')} {filters?.page_index}</Text>
+                    <IconButton isRound size='xs' variant={'common'} aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={filters?.page_index === 1} onClick={() => fetchClientDataWithFilter({...filters,page_index:filters?.page_index - 1})}/>
                 </Flex>
             </Flex>
 

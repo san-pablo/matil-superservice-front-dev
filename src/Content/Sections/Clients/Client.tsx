@@ -1,5 +1,5 @@
 /*
-    MAIN CLIENT FUNCTION (clients/client/{client_id} or tickets/ticket/{ticket_id}/client)
+    MAIN CLIENT FUNCTION (clients/client/{contact_id} or conversations/conversation/{conversation_id}/client)
 */
 
 import { useState, useRef, useEffect, ChangeEvent, KeyboardEvent, Dispatch, SetStateAction, Fragment, lazy, Suspense, useMemo } from "react"
@@ -36,7 +36,7 @@ import { MdBlock } from "react-icons/md"
 import { FaExclamationCircle, FaExclamationTriangle, FaInfoCircle, FaCheckCircle } from 'react-icons/fa'
 import { IoIosArrowForward, IoIosArrowBack, IoIosArrowDown } from "react-icons/io"
 //TYPING
-import { ClientData, Tickets, contactDicRegex, ContactChannel, Channels, logosMap, HeaderSectionType, DeleteHeaderSectionType, languagesFlags, ContactBusinessesTable, TicketColumn, Clients } from "../../Constants/typing"
+import { ClientData, Conversations, contactDicRegex, ContactChannel, Channels, logosMap, HeaderSectionType, DeleteHeaderSectionType, languagesFlags, ContactBusinessesTable, ConversationColumn, Clients } from "../../Constants/typing"
 import showToast from "../../Components/Reusable/ToastNotification"
  
 //COMPONENTS    
@@ -44,13 +44,13 @@ const Business = lazy(() => import('../Businesses/Business'))
 
 //TYPING
 interface ClientProps {
-    comesFromTicket:boolean
+    comesFromConversation:boolean
     addHeaderSection:HeaderSectionType
     deleteHeaderSection: DeleteHeaderSectionType
     clientData?:ClientData | null
     setClientData?:Dispatch<SetStateAction<ClientData | null>>
-    clientTickets?:Tickets | null
-    setClientTickets?:Dispatch<SetStateAction<Tickets | null>>
+    clientConversations?:Conversations | null
+    setClientConversations?:Dispatch<SetStateAction<Conversations | null>>
     businessData?:ContactBusinessesTable | null
     setBusinessData?:Dispatch<SetStateAction<ContactBusinessesTable | null>>
     businessClients?:Clients | null
@@ -96,9 +96,8 @@ const AlertLevel = ({t,  rating }:{t:any, rating:number}) => {
 const CellStyle = ({column, element}:{column:string, element:any}) => {
 
     const auth = useAuth()
-    const { t } = useTranslation('tickets')
+    const { t } = useTranslation('conversations')
     const t_formats = useTranslation('formats').t
-
 
     if (column === 'local_id') return  <Text color='gray' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>#{element}</Text>
     else if (column === 'user_id') return  <Text fontWeight={'medium'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element === -1 ?'Matilda':element === 0 ? t('NoAgent'):(auth?.authData?.users?.[element as string | number].name || '')}</Text>
@@ -128,13 +127,12 @@ const CellStyle = ({column, element}:{column:string, element:any}) => {
     else return ( <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element}</Text>)
 }
 
-
 //MAIN FUNCTION
-function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSection, clientData, setClientData, clientTickets, setClientTickets, businessData, setBusinessData, businessClients, setBusinessClients}: ClientProps) {
+function Client ({comesFromConversation,  socket, addHeaderSection, deleteHeaderSection, clientData, setClientData, clientConversations, setClientConversations, businessData, setBusinessData, businessClients, setBusinessClients}: ClientProps) {
     
     //TRANSLATION
     const { t } = useTranslation('clients')
-    const t_ticket = useTranslation('tickets').t
+    const t_conver = useTranslation('conversations').t
     const t_formats = useTranslation('formats').t
 
     //CONSTANTS
@@ -151,7 +149,7 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
     }
 
     //TABLE MAPPING
-    const columnsTicketsMap:{[key in TicketColumn]:[string, number]} = {id: [t_ticket('id'), 50], local_id: [t_ticket('local_id'), 50], status:  [t_ticket('status'), 100], channel_type: [t_ticket('channel_type'), 150], subject:  [t_ticket('subject'), 200], user_id: [t_ticket('user_id'), 200], created_at: [t_ticket('created_at'), 150],updated_at: [t_ticket('updated_at'), 150], solved_at: [t_ticket('solved_at'), 150],closed_at: [t_ticket('closed_at'), 150],title: [t_ticket('title'), 300], urgency_rating: [t_ticket('urgency_rating'), 130], deletion_date: [t_ticket('deletion_date'), 180], unseen_changes: [t_ticket('unseen_changes'), 200]}
+    const columnsConversationsMap:{[key in ConversationColumn]:[string, number]} = {id: [t_conver('id'), 50], local_id: [t_conver('local_id'), 50], status:  [t_conver('status'), 100], channel_type: [t_conver('channel_type'), 150], theme:  [t_conver('theme'), 200], user_id: [t_conver('user_id'), 200], created_at: [t_conver('created_at'), 150],updated_at: [t_conver('updated_at'), 150], solved_at: [t_conver('solved_at'), 150],closed_at: [t_conver('closed_at'), 150],title: [t_conver('title'), 300], urgency_rating: [t_conver('urgency_rating'), 130], deletion_date: [t_conver('deletion_date'), 180], unseen_changes: [t_conver('unseen_changes'), 200]}
     
     //WEBSOCKET ACTIONS, THEY TRIGEGR ONLY IF THE USER IS INSIDE THE SECTION
     useEffect(() =>  {
@@ -162,17 +160,17 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
             }
         })
 
-        socket?.current.on('ticket', (data:any) => {
-            if (data.client_id === clientDataEditRef.current?.id && !setClientTickets) {
-                setClientTicketsEdit(prev => {
+        socket?.current.on('conversation', (data:any) => {
+            if (data.contact_id === clientDataEditRef.current?.id && !setClientConversations) {
+                setClientConversationsEdit(prev => {
                     if (!prev) return prev
                     const elementToAdd = {created_at:data.new_data.created_at, id:data.new_data.id, local_id:data.new_data.local_id, status:data.new_data.status, title:data.new_data.title, updated_at:data.new_data.updated_at }
                     let updatedPageData
                     if (data.is_new) updatedPageData = [elementToAdd, ...prev.page_data]
-                    else updatedPageData = prev.page_data.map(ticket =>ticket.id === data.new_data.id ? elementToAdd : ticket)
+                    else updatedPageData = prev.page_data.map(con => con.id === data.new_data.id ? elementToAdd : con)
                     return {
                       ...prev,
-                      total_tickets: data.is_new ? prev.total_tickets + 1 : prev.total_tickets,
+                      total_conversations: data.is_new ? prev.total_conversations + 1 : prev.total_conversations,
                       page_data: updatedPageData,
                     }
                   })
@@ -194,8 +192,8 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
     const [showAddBusiness, setShowAddBusiness] = useState<boolean>(false)
 
     //CLIENT DATA
-    const [clientDataEdit, setClientDataEdit] = useState<ClientData | null>(comesFromTicket ? clientData ?? null : null)
-    const clientDataEditRef = useRef<ClientData | null>(comesFromTicket ? clientData ?? null : null)
+    const [clientDataEdit, setClientDataEdit] = useState<ClientData | null>(comesFromConversation ? clientData ?? null : null)
+    const clientDataEditRef = useRef<ClientData | null>(comesFromConversation ? clientData ?? null : null)
     useEffect(() => {
         if (clientData) {
             clientDataEditRef.current = clientData
@@ -203,18 +201,18 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
         }
     }, [clientData])
 
-    //TICKET DATA
-    const [clientTicketsEdit, setClientTicketsEdit] = useState<Tickets | null>(comesFromTicket ? clientTickets ?? null : null)
+    //CONVERSATION DATA
+    const [clientConversationsEdit, setClientConversationsEdit] = useState<Conversations | null>(comesFromConversation ? clientConversations ?? null : null)
     useEffect(() => {
-        if (clientTickets) setClientTicketsEdit(clientTickets)
-    }, [clientTickets])
-    const [ticketsFilters, setTicketsFilters ] = useState<{page_index:number, sort_by?:TicketColumn | 'not_selected', search?:string, order?:'asc' | 'desc'}>({page_index:1}) 
+        if (clientConversations) setClientConversationsEdit(clientConversations)
+    }, [clientConversations])
+    const [conversationsFilters, setConversationsFilters ] = useState<{page_index:number, sort_by?:ConversationColumn | 'not_selected', search?:string, order?:'asc' | 'desc'}>({page_index:1}) 
    
     //BUSINESS DATA
-    const [businessDataEdit, setBusinessDataEdit] = useState<ContactBusinessesTable | null>(comesFromTicket ? businessData ?? null : null)
+    const [businessDataEdit, setBusinessDataEdit] = useState<ContactBusinessesTable | null>(comesFromConversation ? businessData ?? null : null)
    
     //BUSINESS CLIENTS
-    const [businessClientsEdit, setBusinessClientsEdit] = useState<Clients | null>(comesFromTicket ? businessClients ?? null : null)
+    const [businessClientsEdit, setBusinessClientsEdit] = useState<Clients | null>(comesFromConversation ? businessClients ?? null : null)
 
     //CHANGE SECTION AND CREATE CONTACT BUSINESS LOGIC (INLY IF COMES FROM CLIENT TABLE)
     const [clientSection, setClientSection ] = useState<'business' | 'client'>('client')
@@ -224,7 +222,7 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
         const loadData = async () => {
 
             //ONLY CALL IF IT COMES FROM CLIENTS TABLE
-            if (!comesFromTicket) {
+            if (!comesFromConversation) {
 
                 //FIND IF THERE IS A CLIENT IN HEADER SECTIONS
                 const clientId = parseInt(location.split('/')[location.split('/').length - 1])
@@ -240,35 +238,34 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
                     setClientDataEdit(clientElement.data.clientData)
                     clientDataEditRef.current = clientElement.data.clientData
 
-                    if (clientElement.data.clientTickets) setClientTicketsEdit(clientElement.data.clientTickets)
+                    if (clientElement.data.clientConversations) setClientConversationsEdit(clientElement.data.clientConversations)
                     else {
-                        console.log('HOLA')
-                        const reponse = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/tickets`, params:{page_index:1, view_index:0,view_type:'', retrieve_exclusively_for_client:true, client_id:clientId}, setValue:setClientTicketsEdit, auth })         
-                        session.dispatch({type:'UPDATE_HEADER_SECTIONS',payload:{action:'add', data:{id:clientId, type:'client', data:{...clientElement.data ,clientTickets:reponse?.data}}}})
+                        const reponse = await fetchData({endpoint:`${auth.authData.organizationId}/conversations`, params:{page_index:1, view_index:0,view_type:'', retrieve_exclusively_for_client:true, contact_id:clientId}, setValue:setClientConversationsEdit, auth })         
+                        session.dispatch({type:'UPDATE_HEADER_SECTIONS',payload:{action:'add', data:{id:clientId, type:'client', data:{...clientElement.data ,clientConversations:reponse?.data}}}})
                     }
 
                      setBusinessDataEdit(clientElement.data.businessData)
                     setBusinessClientsEdit(clientElement.data.businessClients)
                 }
                 
-                //CALL THE API AND REQUEST (CLIENT DATA, CLIENT TICKETS AND CONTACT BUSINESS)
+                //CALL THE API AND REQUEST (CLIENT DATA, CLIENT CONVERSATIONS AND CONTACT BUSINESS)
                 else {
-                    const clientResponse = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/clients/${clientId}`, setValue:setClientDataEdit,  auth})
+                    const clientResponse = await fetchData({endpoint:`${auth.authData.organizationId}/contacts/${clientId}`, setValue:setClientDataEdit,  auth})
                      
                     if (clientResponse?.status === 200) {
                         addHeaderSection(clientResponse.data.name , clientResponse.data.id, 'client')
                         clientDataEditRef.current = clientResponse.data
 
-                        const ticketsResponse = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/tickets`, params:{page_index:1, view_index:0,view_type:'', retrieve_exclusively_for_client:true, client_id:clientId}, setValue:setClientTicketsEdit, auth })         
+                        const conversationsResponse = await fetchData({endpoint:`${auth.authData.organizationId}/conversations`, params:{page_index:1, view_index:0,view_type:'', retrieve_exclusively_for_client:true, contact_id:clientId}, setValue:setClientConversationsEdit, auth })         
                         
                         let businessDict:ContactBusinessesTable = {id:-1, domain: '',name:'', notes: '', labels:'', created_at:'', last_interaction_at:''}
                         if (clientResponse.data.contact_business_id && clientResponse.data.contact_business_id !== -1)  {
-                            const businessResponse = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/contact_businesses/${clientResponse.data.contact_business_id}`, setValue:setBusinessDataEdit, auth })
+                            const businessResponse = await fetchData({endpoint:`${auth.authData.organizationId}/contact_businesses/${clientResponse.data.contact_business_id}`, setValue:setBusinessDataEdit, auth })
                             businessDict = businessResponse?.data
                         }
                         else setBusinessDataEdit(businessDict)
-                        if (ticketsResponse?.status === 200) {
-                            session.dispatch({type:'UPDATE_HEADER_SECTIONS',payload:{action:'add', data:{id:clientId, type:'client', data:{clientData:clientResponse.data,  clientTickets:ticketsResponse?.data, businessData:businessDict}}}})
+                        if (conversationsResponse?.status === 200) {
+                            session.dispatch({type:'UPDATE_HEADER_SECTIONS',payload:{action:'add', data:{id:clientId, type:'client', data:{clientData:clientResponse.data, clientConversations:conversationsResponse?.data, businessData:businessDict}}}})
                         }
                     }
                     else navigate('/clients')
@@ -278,16 +275,16 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
         loadData()
     }, [location])
 
-    //UPDATE CLIENT TICKETS TABLE
-    const updateTable = async(applied_filters:{page_index:number, sort_by?:TicketColumn | 'not_selected', search?:string, order?:'asc' | 'desc'} | null) => {
+    //UPDATE CLIENT CONVERSATIONS TABLE
+    const updateTable = async(applied_filters:{page_index:number, sort_by?:ConversationColumn | 'not_selected', search?:string, order?:'asc' | 'desc'} | null) => {
 
         const filtersToSend = applied_filters?applied_filters:{page_index:1}
 
-        const ticketsResponse = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/tickets`, params:{view_index:0,view_type:'', retrieve_exclusively_for_client:true, client_id:clientDataEdit?.id, ...filtersToSend}, setValue:setClientTicketsEdit, auth })         
-        if (ticketsResponse?.status == 200) {
-            setClientTicketsEdit(ticketsResponse?.data)
-            setTicketsFilters(filtersToSend)
-            session.dispatch({type:'UPDATE_HEADER_SECTIONS',payload:{action:'add', data:{clientTickets:ticketsResponse?.data}}})
+        const conversationsResponse = await fetchData({endpoint:`${auth.authData.organizationId}/conversations`, params:{view_index:0,view_type:'', retrieve_exclusively_for_client:true, contact_id:clientDataEdit?.id, ...filtersToSend}, setValue:setClientConversationsEdit, auth })         
+        if (conversationsResponse?.status == 200) {
+            setClientConversationsEdit(conversationsResponse?.data)
+            setConversationsFilters(filtersToSend)
+            session.dispatch({type:'UPDATE_HEADER_SECTIONS',payload:{action:'add', data:{clientConversations:conversationsResponse?.data}}})
         }
     }
   
@@ -296,10 +293,11 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
 
         const compareData = newData ? newData : clientDataEdit as ClientData
         if (JSON.stringify(clientDataEditRef.current) !== JSON.stringify(compareData)){
-            const updateResponse = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/clients/${compareData?.id}`, auth:auth, requestForm:compareData, method:'put', toastMessages:{'works':`El cliente /{${clientDataEdit?.name}}/ se actualizó correctamente.`,'failed':`Hubo un problema al actualizar la información.`}})
+            const updateResponse = await fetchData({endpoint:`${auth.authData.organizationId}/contacts/${compareData?.id}`, auth:auth, requestForm:compareData, method:'put', toastMessages:{'works':`El cliente /{${clientDataEdit?.name}}/ se actualizó correctamente.`,'failed':`Hubo un problema al actualizar la información.`}})
             if (updateResponse?.status === 200) {
                 clientDataEditRef.current = compareData
-                if (comesFromTicket && setClientData) setClientData(compareData)
+                if (comesFromConversation && setClientData) setClientData(compareData)
+                else setClientDataEdit(compareData)
             }
         }
     }
@@ -393,11 +391,12 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
     }
 
     //UPDATE CUSTOMATRIBUTES
-    const updateCustomAttributes = (newValue:any, index:number) => {
+    const updateCustomAttributes = ( attributeName:string, newValue:any) => {
+
         const newClientData = { ...clientDataEdit } as ClientData;
-        if (newClientData.custom_attributes && Array.isArray(newClientData.custom_attributes)) {
-            const updatedCustomAttributes = [...newClientData.custom_attributes]
-            updatedCustomAttributes[index] = {... updatedCustomAttributes[index], value:newValue}
+        if (newClientData.custom_attributes) {
+            const updatedCustomAttributes = {...newClientData.custom_attributes}
+            updatedCustomAttributes[attributeName] = newValue
             newClientData.custom_attributes = updatedCustomAttributes
         }
         updateData(newClientData)
@@ -426,7 +425,7 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
                 setWaitingResults(true)
                 const timeoutId = setTimeout(async () => {
  
-                const response = await fetchData({endpoint: `superservice/${auth.authData.organizationId}/contact_businesses`, setValue:setElementsList, auth, params: { page_index: 1, search: text }})
+                const response = await fetchData({endpoint: `${auth.authData.organizationId}/contact_businesses`, setValue:setElementsList, auth, params: { page_index: 1, search: text }})
                 if (response?.status === 200) {setShowResults(true);setWaitingResults(false)}
                 else {setShowResults(false);setWaitingResults(false)}
                 }, 500)
@@ -438,7 +437,7 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
  
      return (
          <Box position={'relative'}>
-            <Flex bg={'transaprent'} cursor={'pointer'} alignItems={'center'} onClick={() => setShowSearch(!showSearch)} ref={buttonRef} height={'37px'} fontSize={'.9em'}  border={showSearch ? "3px solid rgb(77, 144, 254)":"1px solid #CBD5E0"} justifyContent={'space-between'} px={showSearch?'5px':'7px'} py={showSearch ? "5px" : "7px"} borderRadius='.5rem' _hover={{border:showSearch?'3px solid rgb(77, 144, 254)':'1px solid #CBD5E0'}}>
+            <Flex bg={'transaprent'} cursor={'pointer'} alignItems={'center'} onClick={() => setShowSearch(!showSearch)} ref={buttonRef} height={'37px'} fontSize={'.9em'}  border={showSearch ? "3px solid rgb(59, 90, 246)":"1px solid #CBD5E0"} justifyContent={'space-between'} px={showSearch?'5px':'7px'} py={showSearch ? "5px" : "7px"} borderRadius='.5rem' _hover={{border:showSearch?'3px solid rgb(59, 90, 246)':'1px solid #CBD5E0'}}>
                 <Text>{businessDataEdit?.name}</Text>
                  <IoIosArrowDown className={showSearch ? "rotate-icon-up" : "rotate-icon-down"}/>
             </Flex>
@@ -477,6 +476,7 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
          </Box>
      )
     }
+
 
     //COMPONENT FOR BLOCKING A CLIENT
     const BlockComponent = () => {
@@ -521,11 +521,12 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
         </ConfirmmBox>
     ), [showBlock])
 
+
     return(
      
     <Suspense fallback={<></>} >    
 
-        {!comesFromTicket && 
+        {!comesFromConversation && 
             <Flex px='30px' height='60px' bg='#e8e8e8' borderBottomWidth={'1px'} borderBottomColor='gray.200' flex='1' alignItems={'center'} >
                 <Flex borderRadius={'.3rem'} height={'70%'}  alignItems={'center'} borderWidth={'1px 1px 1px 1px'}  borderColor='gray.300'> 
                     
@@ -533,7 +534,7 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
                         <Icon as={FaBuilding} boxSize={'14px'} />
                         <Skeleton isLoaded={businessDataEdit !== null}> <Text whiteSpace={'nowrap'} fontSize={{md:'.8em',lg:'1em'}}>{businessDataEdit?.id === -1?t('NoBusiness'):businessDataEdit?.name}</Text></Skeleton>
                     </Flex> 
-                    <Flex alignItems='center' gap='6px' onClick={() => setClientSection('client')}  cursor={'pointer'} bg={clientSection === 'client'?'gray.300':'transparent'} height={'100%'}  borderRightWidth={'1px'} borderRightColor='gray.300'  px={{md:'10px',lg:'20px'}}> 
+                    <Flex alignItems='center' gap='6px' onClick={() => setClientSection('client')}  cursor={'pointer'} bg={clientSection === 'client'?'brand.blue_hover':'transparent'} height={'100%'} px={{md:'10px',lg:'20px'}}> 
                         <Icon as={BsPersonFill} boxSize={'17px'} />
                         <Skeleton isLoaded={clientDataEdit !== null}> 
                             <Text whiteSpace={'nowrap'} fontSize={{md:'.8em',lg:'1em'}} >{clientDataEdit?.name === ''? t('WebClient'):clientDataEdit?.name}</Text>
@@ -564,9 +565,9 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
                         </Fragment>))}
                     </Skeleton>
                     <Box position={'relative'}> 
-                        <Flex ref={addNewChannelButtonRef} mt='2vh'  alignItems={'center'} gap='7px' color={'blue.600'} _hover={{color:'blue.700'}} cursor={'pointer'}>
+                        <Flex ref={addNewChannelButtonRef} mt='2vh'  alignItems={'center'} gap='7px' color={'brand.text_blue'} _hover={{opacity:0.8}}  cursor={'pointer'}>
                             <Icon as={FaPlus} boxSize={'11px'} />
-                            <Text fontSize={'.85em'} onClick={() => setShowAddNewChannel(!showAddNewChannel)}>{t('AddContact')}</Text>
+                            <Text fontWeight={'medium'} fontSize={'.85em'} onClick={() => setShowAddNewChannel(!showAddNewChannel)}>{t('AddContact')}</Text>
                         </Flex>
                         {showAddNewChannel && 
                             <MotionBox initial={{ opacity: 0, height:0}} animate={{ opacity: 1, height:'auto' }}  transition={{ duration: '0.15',  ease: 'easeOut'}}
@@ -598,11 +599,11 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
                     <Text mb='.5vh'fontWeight={'medium'} mt='2vh' fontSize='.9em'>{t('labels')}</Text>
                     <Skeleton isLoaded={clientDataEdit !== null}>
                         <Box flex='1'> 
-                            <Box   minHeight="30px" maxH="300px" border="1px solid #CBD5E0"   p="5px" _focusWithin={{ borderColor:'transparent', boxShadow:'0 0 0 2px rgb(77, 144, 254)'}} borderRadius=".5rem" overflow="auto" display="flex" flexWrap="wrap" alignItems="center" onKeyDown={handleKeyDown}  tabIndex={0}>
+                            <Box   minHeight="30px" maxH="300px" border="1px solid #CBD5E0"   p="5px" _focusWithin={{ borderColor:'transparent', boxShadow:'0 0 0 2px rgb(59, 90, 246)'}} borderRadius=".5rem" overflow="auto" display="flex" flexWrap="wrap" alignItems="center" onKeyDown={handleKeyDown}  tabIndex={0}>
                                 {clientDataEdit?.labels === '' ? <></>:
                                 <> 
                                     {((clientDataEdit?.labels || '').split(',')).map((label, index) => (
-                                        <Flex key={`label-${index}`} borderRadius=".4rem" p='4px' fontSize={'.75em'} alignItems={'center'} m="1"bg='gray.200' gap='5px'>
+                                        <Flex key={`label-${index}`} borderRadius=".4rem" p='4px' fontSize={'.75em'} alignItems={'center'} m="1"bg='brand.gray_1' borderWidth={'1px'} borderColor={'gray.300'} gap='5px'>
                                             <Text>{label}</Text>
                                             <Icon as={RxCross2} onClick={() => removeTag(index)} cursor={'pointer'} />
                                         </Flex>
@@ -616,7 +617,7 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
                    
                     <Text mb='.5vh'fontWeight={'medium'} mt='2vh' fontSize='.9em'>{t('notes')}</Text>
                     <Skeleton isLoaded={clientDataEdit !== null}>
-                        <Textarea  maxLength={1000} onBlur={() => updateData()} minHeight={'37px'} placeholder="Notas..." maxH='300px' value={clientDataEdit?.notes} ref={textareaNotasRef} onChange={handleInputNotasChange} size='sm' p='10px'  resize={'none'} borderRadius='.5rem' rows={1} fontSize={'.9em'}  borderColor='#CBD5E0'_focus={{p:'9px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
+                        <Textarea  maxLength={1000} onBlur={() => updateData()} minHeight={'37px'} placeholder="Notas..." maxH='300px' value={clientDataEdit?.notes} ref={textareaNotasRef} onChange={handleInputNotasChange} size='sm' p='10px'  resize={'none'} borderRadius='.5rem' rows={1} fontSize={'.9em'}  borderColor='#CBD5E0'_focus={{p:'9px',borderColor: "brand.text_blue", borderWidth: "2px"}}/>
                     </Skeleton>
 
                     <Text mb='.5vh'fontWeight={'medium'} mt='2vh' fontSize='.9em'>{t('created_at')}</Text>
@@ -630,7 +631,7 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
                     </Skeleton>
 
                     <Skeleton isLoaded={clientDataEdit !== null}>
-                        <CustomAttributes customAttributes={clientDataEdit?.custom_attributes || []} updateCustomAttributes={updateCustomAttributes}/>
+                        <CustomAttributes motherstructureType="contact" customAttributes={clientDataEdit?.custom_attributes || {}} updateCustomAttributes={updateCustomAttributes}/>
                     </Skeleton>
 
                 </Box>
@@ -645,25 +646,23 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
                     </Flex>
                     <Flex alignItems={'center'} gap='10px'>
                         <Button variant={'common'}  leftIcon={clientDataEdit?.is_blocked?<TbKey/>:<MdBlock/>} onClick={() => {if (!clientDataEdit?.is_blocked) setShowBlock(true); else updateData({...clientDataEditRef.current as ClientData, is_blocked:false})}} color={clientDataEdit?.is_blocked?'black':'red'} fontSize={'1em'} size='sm' fontWeight={'medium'}  _hover={{color:clientDataEdit?.is_blocked?'blue.500':'red.600'}}>{clientDataEdit?.is_blocked?'Desbloquear':'Bloquear'}</Button>
-                        <Button leftIcon={<TbArrowMerge/>}  size='sm' variant={'common'} onClick={() => setShowMerge(true)} _hover={{color:'blue.500'}}>{t('Merge')}</Button>
+                        <Button leftIcon={<TbArrowMerge/>}  size='sm' variant={'common'} onClick={() => setShowMerge(true)}>{t('Merge')}</Button>
                     </Flex>
                 </Flex>
                 <Box width={'100%'} mt='3vh' mb='3vh' height={'1px'} bg='gray.300'/>
-         
-
                 <Flex alignItems={'end'} justifyContent={'space-between'} >
                     <Skeleton isLoaded={clientDataEdit !== null}> 
-                        <Text fontWeight={'medium'} color='gray.600'>{t('Conversations', {count:clientTicketsEdit?.page_data.length})}</Text>
+                        <Text fontWeight={'medium'} color='gray.600'>{t('Conversations', {count:clientConversationsEdit?.page_data.length})}</Text>
                     </Skeleton>
                     <Flex alignItems={'center'}  gap='10px' flexDir={'row-reverse'}>
-                        <IconButton isRound size='xs' aria-label='next-page' icon={<IoIosArrowForward />} isDisabled={ticketsFilters.page_index > Math.floor((clientTickets?.total_tickets || 0)/ 25)} onClick={() => updateTable({...ticketsFilters,page_index:ticketsFilters.page_index + 1})}/>
-                        <Text fontWeight={'medium'} fontSize={'.9em'} color='gray.600'>{t('Page')} {ticketsFilters.page_index}</Text>
-                        <IconButton isRound size='xs' aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={ticketsFilters.page_index === 1} onClick={() => updateTable({...ticketsFilters,page_index:ticketsFilters.page_index - 1})}/>
+                        <IconButton isRound size='xs' variant={'common'} aria-label='next-page' icon={<IoIosArrowForward />} isDisabled={conversationsFilters.page_index > Math.floor((clientConversationsEdit?.total_conversations || 0)/ 25)} onClick={() => updateTable({...conversationsFilters,page_index:conversationsFilters.page_index + 1})}/>
+                        <Text fontWeight={'medium'} fontSize={'.9em'} color='gray.600'>{t('Page')} {conversationsFilters.page_index}</Text>
+                        <IconButton isRound size='xs' variant={'common'} aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={conversationsFilters.page_index === 1} onClick={() => updateTable({...conversationsFilters,page_index:conversationsFilters.page_index - 1})}/>
                     </Flex>
                 </Flex>
 
-                <Skeleton isLoaded={clientTicketsEdit !== null}> 
-                    <Table data={clientTicketsEdit?.page_data || []} CellStyle={CellStyle} noDataMessage={t('NoTickets')} columnsMap={columnsTicketsMap} excludedKeys={['id', 'conversation_id', 'end_client_id',  'is_matilda_engaged']} onClickRow={(row:any, index:number) => {navigate(`/tickets/ticket/${row.id}`)}}/>
+                <Skeleton isLoaded={clientConversationsEdit !== null}> 
+                    <Table data={clientConversationsEdit?.page_data || []} CellStyle={CellStyle} noDataMessage={t('NoConversations')} columnsMap={columnsConversationsMap} excludedKeys={['id', 'conversation_id', 'contact_id',  'is_matilda_engaged']} onClickRow={(row:any, index:number) => {navigate(`/conversations/conversation/${row.id}`)}}/>
                 </Skeleton>
                 </Box>
             </Flex>
@@ -672,7 +671,7 @@ function Client ({comesFromTicket,  socket, addHeaderSection, deleteHeaderSectio
             {showBlock && memoizedBlockBox}
         </>:
         <> 
-            {!comesFromTicket && <Business  socket={socket} comesFromTicket={true} businessData={businessData ? businessData:businessDataEdit} setBusinessData={setBusinessData? setBusinessData:setBusinessDataEdit} businessClients={businessClients?businessClients:businessClientsEdit} setBusinessClients={setBusinessClients?setBusinessClients:setBusinessClientsEdit}  addHeaderSection={addHeaderSection}/>}
+            {!comesFromConversation && <Business  socket={socket} comesFromConversation={true} businessData={businessData ? businessData:businessDataEdit} setBusinessData={setBusinessData? setBusinessData:setBusinessDataEdit} businessClients={businessClients?businessClients:businessClientsEdit} setBusinessClients={setBusinessClients?setBusinessClients:setBusinessClientsEdit}  addHeaderSection={addHeaderSection}/>}
         </>}
         
     </Suspense>)
@@ -692,6 +691,7 @@ const MergeBox = ({clientData, setShowMerge, deleteHeaderSection}:MergeBoxProps)
 
     //AUTH CONSTANT
     const { t } = useTranslation('clients')
+
     const auth = useAuth()
     const session = useSession()
     const navigate = useNavigate()
@@ -714,7 +714,7 @@ const MergeBox = ({clientData, setShowMerge, deleteHeaderSection}:MergeBoxProps)
         if (text === '') {setWaitingResult(false);setShowResults(false);return}
             const timeoutId = setTimeout(async () => {
             setWaitingResult(true)
-            const response = await fetchData({endpoint: `superservice/${auth.authData.organizationId}/clients`, setValue:setElementsList, auth:auth, params: { page_index: 1, search: text }})
+            const response = await fetchData({endpoint: `${auth.authData.organizationId}/contacts`, setValue:setElementsList, auth:auth, params: { page_index: 1, search: text }})
             if (response?.status === 200) {setShowResults(true);setWaitingResult(false)}
             else {setShowResults(false);setWaitingResult(false)}
         }, 500)
@@ -723,7 +723,7 @@ const MergeBox = ({clientData, setShowMerge, deleteHeaderSection}:MergeBoxProps)
 
 
     const confirmMerge = async () => {
-        const response = await fetchData({endpoint: `superservice/${auth.authData.organizationId}/clients/merge/${clientData?.id}/${selectedClient?.id}`, method:'put', setWaiting:setWaitingConfirmMerge, params: { newName:clientData?.name}, auth: auth, toastMessages:{'works':`${clientData?.name} y ${selectedClient?.name} se han fusionado correctamente`,'failed':'Hubo un fallo al fusionar los clientes'}})
+        const response = await fetchData({endpoint: `${auth.authData.organizationId}/contacts/merge/${clientData?.id}/${selectedClient?.id}`, method:'put', setWaiting:setWaitingConfirmMerge, params: { new_name:clientData?.name}, auth: auth, toastMessages:{'works':`${clientData?.name} y ${selectedClient?.name} se han fusionado correctamente`,'failed':'Hubo un fallo al fusionar los clientes'}})
         if (response?.status === 200) {
             session.dispatch({type:'DELETE_VIEW_FROM_CLIENT_LIST'})
             deleteHeaderSection({code:clientData?.id || 0, type:'client', description:'' })
@@ -741,7 +741,7 @@ const MergeBox = ({clientData, setShowMerge, deleteHeaderSection}:MergeBoxProps)
                     <Box p='15px'> 
                         <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('ConfirmMerge')}</Text>
                         <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
-                        <Text>{t('MergeUsersConfirm', {user_1:clientData?.name,user_2:selectedClient?.name})}</Text>
+                        <Text>{parseMessageToBold(t('MergeUsersConfirm', {user_1:clientData?.name,user_2:selectedClient?.name}))}</Text>
                     </Box>
                     <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
                         <Button  size='sm' variant='main' onClick={confirmMerge}>{waitingConfirmMerge?<LoadingIconButton/>:'Fusionar'}</Button>

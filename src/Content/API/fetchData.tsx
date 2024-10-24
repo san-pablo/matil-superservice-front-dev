@@ -8,7 +8,7 @@ import axios, { isAxiosError } from 'axios'
 //TOAST NOTIFICATIONS
 import showToast from "../Components/Reusable/ToastNotification"
 
-
+//SERIALIZE PARAMETERS
 function paramsSerializer(params:string) {
     const str = [];
     for (const [key, value] of Object.entries(params)) {
@@ -20,8 +20,9 @@ function paramsSerializer(params:string) {
             str.push(encodeURIComponent(key) + '=' + encodeURIComponent(value));
         }
     }
-    return str.join('&');
+    return str.join('&')
 }
+
 //TYPING
 interface fetchDataProps {
     endpoint:string
@@ -43,12 +44,10 @@ interface Config {
     params?: Object
     data?: Object
     paramsSerializer?: (params: any) => string
-
 }
 
 //MAIN FUNCTION
 const fetchData = async ({endpoint, setValue, setWaiting, auth, requestForm = {}, params = {}, method = 'get', toastMessages=null}: fetchDataProps) => {
-    
  
     //API ENDPOINT AND CONFIGURATION
     const URL = import.meta.env.VITE_PUBLIC_API_URL
@@ -73,11 +72,10 @@ const fetchData = async ({endpoint, setValue, setWaiting, auth, requestForm = {}
         //CONFIG REQUEST
         if (['post', 'put', 'delete'].includes(method.toLowerCase())) config.data = requestForm
         else config.params = {...config.params, ...requestForm}
- 
+  
         //RESPONSE
         const response = await axios(config)
 
-        console.log(response)
         //ACTIONS ON A SUCCESSFUL CALL
         if (setValue) setValue(response.data)
         if (setWaiting) setWaiting(false)

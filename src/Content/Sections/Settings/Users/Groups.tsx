@@ -81,7 +81,7 @@ function Groups () {
 
     //FETCH INITIAL DATA
     useEffect(() => {
-        fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/groups`, setValue:setGroupsData, auth})
+        fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/groups`, setValue:setGroupsData, auth})
         document.title = `${t('Settings')} - ${t('Groups')} - ${auth.authData.organizationName} - Matil`
     }, [])
 
@@ -94,7 +94,7 @@ function Groups () {
         //FUNCTION FOR DELETING AN AUTOMATION
         const deleteGroup = async () => {
             setWaitingDelete(true)
-            const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/groups/${groupToDelete?.id}`, setWaiting:setWaitingDelete, method:'delete', auth, toastMessages:{works:t('CorrectDeletedGroup'), failed:t('FailedDeletedGroup')}})
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/groups/${groupToDelete?.id}`, setWaiting:setWaitingDelete, method:'delete', auth, toastMessages:{works:t('CorrectDeletedGroup'), failed:t('FailedDeletedGroup')}})
             if (response?.status == 200) {
                 setGroupToDelete(null)
                 setGroupsData(prev => {
@@ -120,14 +120,14 @@ function Groups () {
 
     //DELETE BOX
     const memoizedDeleteBox = useMemo(() => (
-        <ConfirmBox isSectionWithoutHeader={true} setShowBox={(b:boolean) => setGroupToDelete(null)}> 
+        <ConfirmBox setShowBox={(b:boolean) => setGroupToDelete(null)}> 
             <DeleteComponent/>
         </ConfirmBox>
     ), [groupToDelete])
 
 
     const memoizedGroupBox = useMemo(() => (
-        <ConfirmBox setShowBox={(b:boolean) => setSelectedGroup(null)} isSectionWithoutHeader={true}> 
+        <ConfirmBox setShowBox={(b:boolean) => setSelectedGroup(null)}> 
             <EditGroup groupData={selectedGroup as GroupData} setGroupData={setSelectedGroup} setGroupsData={setGroupsData}/>
         </ConfirmBox>
     ), [selectedGroup])
@@ -184,7 +184,7 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
     const addUser = async(user:UserType) => {
 
         if (groupData.id !== -1) {
-            const userResponse = await fetchData({endpoint: `superservice/${auth.authData.organizationId}/admin/settings/groups/${groupData.id}/${user.id}`, method: 'post', auth})
+            const userResponse = await fetchData({endpoint: `${auth.authData.organizationId}/admin/settings/groups/${groupData.id}/${user.id}`, method: 'post', auth})
             if (userResponse?.status === 200) {
                 setCurrentGroupData(prev => {return {...prev, users:[...prev.users, user ]}})
                 setGroupsData(prev => {
@@ -207,7 +207,7 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
     const deleteUser = async(index:number, userId:number) => {
 
         if (groupData.id !== -1) {
-            const userResponse = await fetchData({endpoint: `superservice/${auth.authData.organizationId}/admin/settings/groups/${groupData.id}/${userId}`, method: 'delete', auth})
+            const userResponse = await fetchData({endpoint: `${auth.authData.organizationId}/admin/settings/groups/${groupData.id}/${userId}`, method: 'delete', auth})
             if (userResponse?.status === 200) {
                 setCurrentGroupData(prev => {
                     const newUsers = [...prev.users]
@@ -239,10 +239,10 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
         setWaitingSend(true)    
 
         if (groupData.id === -1) {
-            const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/groups`, requestForm:{name:currentGroupData.name, description:currentGroupData.description}, method:'post', auth})
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/groups`, requestForm:{name:currentGroupData.name, description:currentGroupData.description}, method:'post', auth})
             if (response?.status === 200) {
                 const assignUserPromises = currentGroupData.users.map(async (user) => {
-                    const userResponse = await fetchData({endpoint: `superservice/${auth.authData.organizationId}/admin/settings/groups/${response?.data.id}/${user.id}`, method: 'post',auth})
+                    const userResponse = await fetchData({endpoint: `${auth.authData.organizationId}/admin/settings/groups/${response?.data.id}/${user.id}`, method: 'post',auth})
                     if (userResponse?.status !== 200) throw new Error(`Failed to add user ${user.id}`)
                     return userResponse
                 })
@@ -260,7 +260,7 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
             else showToast({message:t('FailedAddedGroup'), type:'failed'})
         } 
         else {
-            const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/groups/${groupData.id}`, requestForm:{name:currentGroupData.name, description:currentGroupData.description}, method:'put', auth, toastMessages:{'works':t('CorrectEditedGroup'),'failed':t('FailedEditedGroup')}})
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/groups/${groupData.id}`, requestForm:{name:currentGroupData.name, description:currentGroupData.description}, method:'put', auth, toastMessages:{'works':t('CorrectEditedGroup'),'failed':t('FailedEditedGroup')}})
             if (response?.status === 200) {
                 setGroupsData(prev => {
                     if (prev) {

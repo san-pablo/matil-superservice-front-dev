@@ -1,3 +1,5 @@
+
+{/*  
 //REACT
 import { useEffect, useState, useRef, MutableRefObject, Dispatch, SetStateAction } from 'react'
 import { useAuth } from '../../../AuthContext'
@@ -48,7 +50,7 @@ const TestChat = ({flowId, channelIds, flowName, channelsList, currentChannelId,
 
     setMessages(prev => [...prev, {type:'plain', content:{text}, sent_by:'client' }])
     setWaitingMessage(true)
-    const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/flows/${flowId}/test`, method:'post', auth, setWaiting:setWaitingMessage, requestForm:{channel_id:selectedChannelId, flow_state:flowState, conversation_messages:[{type, content:{text}, sent_by:'client' }] }})
+    const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/flows/${flowId}/test`, method:'post', auth, setWaiting:setWaitingMessage, requestForm:{channel_id:selectedChannelId, flow_state:flowState, conversation_messages:[{type, content:{text}, sent_by:'client' }] }})
     if (response?.status === 200) {
       console.log(response.data)
       currentFlowIndex.current = response.data.flow_state_data.node_index + 1 
@@ -175,3 +177,4 @@ const TestChat = ({flowId, channelIds, flowName, channelsList, currentChannelId,
 }
 
 export default TestChat
+*/}

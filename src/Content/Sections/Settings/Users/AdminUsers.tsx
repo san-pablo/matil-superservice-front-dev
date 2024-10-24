@@ -51,7 +51,7 @@ const NewUserBox = ({userData, setUserData, setShowCreateNewUser}:NewUserBoxProp
      
     //CREATE A NEW USER FUNCTION
     const createNewUser = async() => {
-       const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/users`, setWaiting:setWaitingCreate, requestForm:newUserInfo,auth:auth, method:'post'})
+       const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/users`, setWaiting:setWaitingCreate, requestForm:newUserInfo,auth:auth, method:'post'})
        if (response?.status === 200 && response?.data) {
            const newInvitationKey = response.data.invitation_key
            const newUser = {...newUserInfo, is_active:true, invitation_key:newInvitationKey, name:response.data.name, surname:response.data.surname}
@@ -109,7 +109,7 @@ const UserCellStyles = ({column, element}:{column:string, element:any}) => {
             return (<Flex alignItems={'center'} gap='10px' maxW={'100%'}> 
                     <Text width={'300px'} whiteSpace={'nowrap'}  textOverflow={'ellipsis'} overflow={'hidden'}>{element}</Text>
                     <Tooltip label={t('CopyCode')}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
-                        <IconButton size='xs' onClick={() => copyToClipboard(element)}  aria-label={'copy-invitation-code'} icon={<BsClipboard2Check/>}/>
+                        <IconButton size='xs' onClick={() => copyToClipboard(element, t('CorrectCopiedCode'))}  aria-label={'copy-invitation-code'} icon={<BsClipboard2Check/>}/>
                     </Tooltip>
                 </Flex>)
         default:
@@ -146,7 +146,7 @@ function AdminUsers () {
     
     //FETCH INITIAL DATA
     useEffect(() => {
-        fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/users`, setValue:setUserData, setWaiting:setWaitingInfo, auth})
+        fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/users`, setValue:setUserData, setWaiting:setWaitingInfo, auth})
         document.title = `${t('Settings')} - ${t('Users')} - ${auth.authData.organizationName} - Matil`
     }, [])
  
@@ -158,7 +158,7 @@ function AdminUsers () {
     const [userToDelete, setUserToDelete] = useState<UserData | null>(null)
     const handleDeleteUsers = async() => {
 
-        const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/users`, setWaiting:setWaitingDelete, params:{email:userToDelete?.email},auth:auth, method:'delete'})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/users`, setWaiting:setWaitingDelete, params:{email:userToDelete?.email},auth:auth, method:'delete'})
         if (response && response.status === 200) {
             const updatedUserData = userData.filter(user =>  user.email !== userToDelete?.email)
             setUserData(updatedUserData)
@@ -169,13 +169,13 @@ function AdminUsers () {
     }
 
     const memoizedNewUserBox = useMemo(() => (
-        <ConfirmBox setShowBox={setShowCreateNewUser} isSectionWithoutHeader={true}> 
+        <ConfirmBox setShowBox={setShowCreateNewUser} > 
             <NewUserBox userData={userData} setUserData={setUserData} setShowCreateNewUser={setShowCreateNewUser}/>
         </ConfirmBox>
     ), [showCreateNewUser])
 
     const memoizedDeleteBox = useMemo(() => (
-        <ConfirmBox setShowBox={(b:boolean) => setUserToDelete(null)} isSectionWithoutHeader={true}> 
+        <ConfirmBox setShowBox={(b:boolean) => setUserToDelete(null)} > 
             <Box maxW={'400px'} p='20px'> 
                 <Text>{parseMessageToBold(t('DeleteUserMessage', {user:(userData && userToDelete) ? userToDelete.name +  ' ' + userToDelete.surname:''}))}</Text>
             </Box>

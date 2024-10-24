@@ -21,19 +21,18 @@ function Users ({data, waitingFilters}:UsersProps) {
     const auth = useAuth()
     const { t } = useTranslation('stats')
 
-    console.log(data)
 
     return(<> 
         <Skeleton flex='1' isLoaded={data !== null && !waitingFilters}> 
             <Flex mt='2vw' width='100%' height={'40vh'} gap='1vw'>
 
                 
-                <GradientIconText children={parseFloat(data?.total_tickets_participated_by_users || 0)} />
-                <Text mb='1vh'  color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('ParticipatedTickets')}</Text>
-                        <GradientIconText children={parseFloat(data?.total_tickets_solved_by_users || 0)} />
-                        <Text color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('SolvedTickets')}</Text>
+                <GradientIconText children={parseFloat(data?.total_conversations_participated_by_users || 0)} />
+                <Text mb='1vh'  color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('ParticipatedConversations')}</Text>
+                        <GradientIconText children={parseFloat(data?.total_conversations_solved_by_users || 0)} />
+                        <Text color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('SolvedConversations')}</Text>
                 
-                    <CompareChart totalValue={data?.total_tickets_participated_by_users || 0} firstValue={data?.total_tickets_solved_by_users || 0} firstString="Cerrados"  secondString="Sin cerrar"/>
+                    <CompareChart totalValue={data?.total_conversations_participated_by_users || 0} firstValue={data?.total_conversations_solved_by_users || 0} firstString="Cerrados"  secondString="Sin cerrar"/>
          
             
                 <Box width={'5%'} overflow={'hidden'} height={'40vh'}  bg='white' p='1vw' borderRadius={'1rem'} flex='1' boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.15)'} >
@@ -46,7 +45,7 @@ function Users ({data, waitingFilters}:UsersProps) {
                 <Box  bg='white' p='1vw' borderRadius={'1rem'} width={'5%'} flex='3'boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.15)'} > 
                     <Text fontWeight={'medium'}>{t('ResponseTime')}</Text>
                     <Box  height={'calc(100% - 2vw )'} >
-                    <ColumnChart  xaxis={data?.tickets_by_users.X || []} yaxis1={data?.tickets_by_users.Y_participated || []} yaxis2={data?.tickets_by_users.Y_solved || []} ytitle1={t('Participated')} ytitle2={t('Solved')}/>
+                    <ColumnChart  xaxis={data?.conversations_by_users.X || []} yaxis1={data?.conversations_by_users.Y_participated || []} yaxis2={data?.conversations_by_users.Y_solved || []} ytitle1={t('Participated')} ytitle2={t('Solved')}/>
                     </Box>
                 </Box>      
 
@@ -57,16 +56,16 @@ function Users ({data, waitingFilters}:UsersProps) {
             <Flex mt='2vw' flex='1'  gap='1vw' height={'50vh'} >
 
                 <Box bg='white' p='1vw' borderRadius={'1rem'} width={'5%'} flex='1'boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.15)'} > 
-                    <Text fontWeight={'medium'} >{t('TotalChannelTickets')}</Text>
+                    <Text fontWeight={'medium'} >{t('TotalChannelConversations')}</Text>
                     <Box height={'calc(100% - 2vw )'}  >
-                        <ColumnChart  isChannels={true}  xaxis={data?.solved_transfered_tickets_by_channel.map((element:any) => {return element.channel}) || []} yaxis1={data?.solved_transfered_tickets_by_channel.map((element:any) => {return element.transfered}) || []} yaxis2={data?.solved_transfered_tickets_by_channel.map((element:any) => {return element.solved}) || []} ytitle1={t('Transfered')} ytitle2={t('Solved')}/>
+                        <ColumnChart  isChannels={true}  xaxis={data?.solved_transfered_conversations_by_channel.map((element:any) => {return element.channel}) || []} yaxis1={data?.solved_transfered_conversations_by_channel.map((element:any) => {return element.transfered}) || []} yaxis2={data?.solved_transfered_conversations_by_channel.map((element:any) => {return element.solved}) || []} ytitle1={t('Transfered')} ytitle2={t('Solved')}/>
                     </Box>
                 </Box>
 
                 <Box bg='white' p='1vw' borderRadius={'1rem'} width={'5%'} flex='1'boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.15)'} > 
-                    <Text fontWeight={'medium'}>{t('TotalSubjectTickets')}</Text>
+                    <Text fontWeight={'medium'}>{t('TotalSubjectConversations')}</Text>
                     <Box height={'calc(100% - 2vw )'}  >
-                    <ColumnChart xaxis={data?.solved_transfered_tickets_by_subject.map((element:any) => {return element.subject}) || []} yaxis1={data?.solved_transfered_tickets_by_subject.map((element:any) => {return element.transfered}) || []} yaxis2={data?.solved_transfered_tickets_by_subject.map((element:any) => {return element.solved}) || []} ytitle1={t('Transfered')} ytitle2={t('Solved')}    />
+                    <ColumnChart xaxis={data?.solved_transfered_conversations_by_theme.map((element:any) => {return element.theme}) || []} yaxis1={data?.solved_transfered_conversations_by_theme.map((element:any) => {return element.transfered}) || []} yaxis2={data?.solved_transfered_conversations_by_theme.map((element:any) => {return element.solved}) || []} ytitle1={t('Transfered')} ytitle2={t('Solved')}    />
                     </Box>
                 </Box>
 

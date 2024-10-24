@@ -7,6 +7,9 @@ import { createContext, useContext, useState, ReactNode } from 'react'
 //TYPING
 import { Views } from './Content/Constants/typing'
  
+//TYPING
+type fieldConfigType = {name:string, type:'bool' | 'int' | 'float' | 'str' | 'timestamp', default:string}
+
 //AUTH DATA TYPE
 type AuthData = {
     email: string
@@ -17,10 +20,11 @@ type AuthData = {
     organizationName: string
     views: Views | null
     users:{[key:string | number]:{name:string, surname:string, email_address:string, last_login:string, is_admin:boolean}} | null
-    ticket_subjects:string[]
+    conversation_themes:string[]
     shortcuts:string[]
     userData:{name: string, surname: string, email_address: string, password: string, language:string, shortcuts_activated:boolean} | null
     organizationData:{calls_status:'connected' | 'out' | 'disconnected', avatar_image_url:string, is_admin:boolean, alias:string, groups:{id:number, name:string}[]} | null
+    customAttributes:{conversation:fieldConfigType[], contact:fieldConfigType[], contact_business:fieldConfigType[]} | null
 }
  
 //AUTH CONTEXT TYPE DEFINITION
@@ -34,7 +38,7 @@ type AuthContextType = {
 
 //CONTEXT TOOLS
 const AuthContext = createContext<AuthContextType>({
-    authData: { email: '', accessToken: '',refreshToken:'', organizationId: null, userId:null, organizationName:'', views:{"private_views": [], "shared_views": []}, users:null, ticket_subjects:[], shortcuts:[], userData:null, organizationData:null},
+    authData: { email: '', accessToken: '',refreshToken:'', organizationId: null, userId:null, organizationName:'', views:{"private_views": [], "shared_views": []}, users:null, conversation_themes:[], shortcuts:[], userData:null, organizationData:null, customAttributes:null},
     isSignedIn: false, 
     signIn: () => {},
     signOut: () => {},
@@ -53,10 +57,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         organizationName:'',
         views:null, 
         users:null, 
-        ticket_subjects:[], 
+        conversation_themes:[], 
         shortcuts:[],
         userData:null,
-        organizationData:null
+        organizationData:null,
+        customAttributes:null
     })
 
     //AUTHENTICATION FUNCTIONALITIES
@@ -67,7 +72,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     //SIGN OUT
     const signOut = () => {
-        setAuthData({ email: '', accessToken: '', refreshToken: '',organizationId: null, userId:null, organizationName:'', views:{"private_views": [], "shared_views": []}, users:null, ticket_subjects:[], shortcuts:[], userData:null,         organizationData:null
+        setAuthData({ email: '', accessToken: '', refreshToken: '',organizationId: null, userId:null, organizationName:'', views:{"private_views": [], "shared_views": []}, users:null, conversation_themes:[], shortcuts:[], userData:null,organizationData:null, customAttributes:null
     })
         setIsSignedIn(false)
         localStorage.clear()

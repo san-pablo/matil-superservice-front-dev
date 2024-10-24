@@ -5,25 +5,15 @@ import { Flex, Text, Box, Skeleton, Icon } from "@chakra-ui/react"
 //CHARTS
 import ColumnChart from "../Charts/ColumnChart"
 import PieChartComponent from '../Charts/PieChart'
-import CompareChart from "../Charts/CompareChart"
-import GradientIconText from "../Charts/GradientIconText"
 import { IconType } from 'react-icons'
 import { FaTicket } from 'react-icons/fa6'
 
 //TYOING
-interface TicketsProps {
+interface ConversationsProps {
     waitingFilters:boolean
     data:any | null
 }
 
-const gradients = [
-    { start: 'rgba(0, 51, 153, 1)', end: 'rgba(0, 102, 204, 1)' },
-    { start: 'rgba(0, 102, 204, 1)', end: 'rgba(51, 153, 255, 1)' },
-    { start: 'rgba(51, 153, 255, 1)', end: 'rgba(102, 204, 255, 1)' },
-    { start: 'rgba(102, 204, 255, 1)', end: 'rgba(153, 204, 255, 1)' },
-    { start: 'rgba(153, 204, 255, 1)', end: 'rgba(102, 153, 255, 1)' },
-    { start: 'rgba(102, 153, 255, 1)', end: 'rgba(153, 204, 255, 1)' }
-  ]
 
 const StatSection = ({dataNumber, unit, description, icon}:{dataNumber:number | string, unit:string, description:string, icon:IconType}) => {
     return (
@@ -36,7 +26,7 @@ const StatSection = ({dataNumber, unit, description, icon}:{dataNumber:number | 
 
 
 //MAIN FUNCTION
-function Tickets ({data, waitingFilters}:TicketsProps) {
+function Conversations ({data, waitingFilters}:ConversationsProps) {
 
     //TRANSLATION
     const { t } = useTranslation('stats')
@@ -53,31 +43,32 @@ function Tickets ({data, waitingFilters}:TicketsProps) {
         return index !== -1 ? data?.avg_conversations_per_hour_of_day.Y[index] : 0
     })
     
+    console.log(data)
     return(<>
     <Skeleton flex='1' isLoaded={data !== null && !waitingFilters}> 
         <Flex mt='2vw' width='100%' gap='1vw' justifyContent={'space-between'}>
-            <StatSection dataNumber={data?.total_conversations_maintained} unit={t('tickets')} description={t('ReceivedTickets')} icon={FaTicket}/>
-            <StatSection dataNumber={data?.total_conversations_closed} unit={t('tickets')} description={t('ClosedTickets')} icon={FaTicket}/>
+            <StatSection dataNumber={data?.total_conversations_maintained} unit={t('conversations')} description={t('ReceivedConversations')} icon={FaTicket}/>
+            <StatSection dataNumber={data?.total_conversations_closed} unit={t('conversations')} description={t('ClosedConversations')} icon={FaTicket}/>
             <StatSection dataNumber={parseFloat(data?.avg_initial_response_time || 0).toLocaleString('es-ES', {minimumFractionDigits:0, maximumFractionDigits:2})} unit={t('seconds')} description={t('FirstResponse')} icon={FaTicket}/>
-            <StatSection dataNumber={parseFloat(data?.avg_time_to_close_ticket || 0).toLocaleString('es-ES', {minimumFractionDigits:0, maximumFractionDigits:2})} unit={t('seconds')} description={t('ClosedTicket')} icon={FaTicket}/>
-            <StatSection dataNumber={( (data?.avg_initial_response_time && data?.avg_time_to_close_ticket)?parseFloat(data?.avg_time_to_close_ticket) - parseFloat(data?.avg_initial_response_time):0).toLocaleString('es-ES', {maximumFractionDigits:2})} unit={t('seconds')} description={t('Duration')} icon={FaTicket}/>
+            <StatSection dataNumber={parseFloat(data?.avg_time_to_close_ticket || 0).toLocaleString('es-ES', {minimumFractionDigits:0, maximumFractionDigits:2})} unit={t('seconds')} description={t('ClosedConversations')} icon={FaTicket}/>
+            <StatSection dataNumber={( (data?.avg_initial_response_time && data?.avg_time_to_close_conversation)?parseFloat(data?.avg_time_to_close_conversation) - parseFloat(data?.avg_initial_response_time):0).toLocaleString('es-ES', {maximumFractionDigits:2})} unit={t('seconds')} description={t('Duration')} icon={FaTicket}/>
         </Flex>
     </Skeleton>
 
     <Box height={'50vh'} width={'100%'} mt='3vh'> 
-        <Text whiteSpace={'nowrap'} fontWeight={'medium'} fontSize={'1.1em'}>{t('TotalTicketsMonth')}</Text>
-        <ColumnChart xaxis={data?.conversations_per_month.X || []} yaxis1={data?.conversations_per_month.Y || []} ytitle1={t('Ticktets')}/>
+        <Text whiteSpace={'nowrap'} fontWeight={'medium'} fontSize={'1.1em'}>{t('TotalConversationsMonth')}</Text>
+        <ColumnChart xaxis={data?.conversations_per_month.X || []} yaxis1={data?.conversations_per_month.Y || []} ytitle1={t('Conversations')}/>
     </Box>
 
     <Skeleton isLoaded={data !== null && !waitingFilters}> 
         <Flex mt='8vh' flex='1' gap='1vw' height={'40vh'} >
             <Box bg='white' width={'5%'} flex='4'> 
-                <Text  fontSize={'1.1em'} whiteSpace={'nowrap'}  fontWeight={'medium'}>{t('AverageTicketsHour')}</Text>
-                <ColumnChart xaxis={allHours}  yaxis1={hoursResult} ytitle1={t('Tickets')}/>
+                <Text  fontSize={'1.1em'} whiteSpace={'nowrap'}  fontWeight={'medium'}>{t('AverageConversationsHour')}</Text>
+                <ColumnChart xaxis={allHours}  yaxis1={hoursResult} ytitle1={t('Conversations')}/>
             </Box>
             <Box bg='white' width={'5%'} flex='3'> 
-                <Text  fontSize={'1.1em'} whiteSpace={'nowrap'} fontWeight={'medium'}>{t('AverageTicketsWeek')}</Text>
-                <ColumnChart xaxis={data?.avg_conversations_per_day_of_week.X || []} type ={'weekdays'}  yaxis1={data?.avg_conversations_per_day_of_week.Y || []} ytitle1={t('Ticktets')}/>
+                <Text  fontSize={'1.1em'} whiteSpace={'nowrap'} fontWeight={'medium'}>{t('AverageConversationsWeek')}</Text>
+                <ColumnChart xaxis={data?.avg_conversations_per_day_of_week.X || []} type ={'weekdays'}  yaxis1={data?.avg_conversations_per_day_of_week.Y || []} ytitle1={t('Conversations')}/>
             </Box>
         </Flex>
     </Skeleton>
@@ -86,16 +77,16 @@ function Tickets ({data, waitingFilters}:TicketsProps) {
         <Flex  height={'50vh'} mt='8vh' gap='1vw'>
             
             <Box bg='white' width={'5%'} flex='1'> 
-                <Text  fontSize={'1.1em'} whiteSpace={'nowrap'}  fontWeight={'medium'}>{t('TotalChannelTickets')}</Text>
+                <Text  fontSize={'1.1em'} whiteSpace={'nowrap'}  fontWeight={'medium'}>{t('TotalChannelConversations')}</Text>
                 {data !== null && <Box   height={'calc(100% - 2vw)'}  >
                     <PieChartComponent mapData={{'email':t('Mail'), 'whatsapp':'Whastapp', 'instagram':'Instagram', 'webchat':t('Web'), 'google_business':'Google Business'}} labels={data?.conversations_by_channel.X} data={data?.conversations_by_channel.Y} />
                 </Box>}
             </Box>
 
             <Box bg='white' width={'5%'} flex='1'> 
-                <Text  fontSize={'1.1em'}  whiteSpace={'nowrap'}  fontWeight={'medium'}>{t('TotalSubjectTickets')}</Text>
+                <Text  fontSize={'1.1em'}  whiteSpace={'nowrap'}  fontWeight={'medium'}>{t('TotalSubjectConversations')}</Text>
                 {data !== null && <Box height={'calc(100% - 2vw)'}  >
-                    <PieChartComponent labels={data?.conversations_by_subject.X} data={data?.conversations_by_subject.Y} />
+                    <PieChartComponent labels={data?.conversations_by_theme.X} data={data?.conversations_by_theme.Y} />
                 </Box>}
             </Box>
 
@@ -105,4 +96,4 @@ function Tickets ({data, waitingFilters}:TicketsProps) {
     </>)
 }
 
-export default Tickets
+export default Conversations

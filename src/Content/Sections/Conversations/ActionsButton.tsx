@@ -1,5 +1,5 @@
 /*
-    BUTTON TO MAKE ACTIONS ON THE TICKET TABLE
+    BUTTON TO MAKE ACTIONS ON THE DIFFERENT TABLES
 */
 
 //REACT
@@ -14,9 +14,7 @@ import '../../Components/styles.css'
 //FUNCTIONS
 import useOutsideClick from '../../Functions/clickOutside'
 //ICONS
-import { BsFiletypeCsv } from "react-icons/bs"
-import { FaRegEdit } from "react-icons/fa"
-import { FaRegClone } from "react-icons/fa6"
+import { FaPen, FaFileCsv, FaClone } from "react-icons/fa6"
 import { IoIosArrowDown } from "react-icons/io"
 //TYPING
 import { ViewType } from '../../Constants/typing'
@@ -28,12 +26,12 @@ interface Item {
 interface ButtonProps {
     items: Item[] | undefined
     view: ViewType | null
-    section: 'clients' | 'tickets' | 'flows'
+    section: 'clients' | 'conversations' | 'flows'
 }
 interface downloadCSVProps {
     items:  Item[] | undefined
     view: string
-    section: 'clients' | 'tickets' | 'flows'
+    section: 'clients' | 'conversations' | 'flows'
 }
 
 //FUNCTION FOR DOWNLOAD TO CSV A TABLE
@@ -67,7 +65,7 @@ const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotion
 const ActionsButton = ({items, view, section}:ButtonProps) =>{
     
     //TRANSLATION
-    const { t } = useTranslation('tickets')
+    const { t } = useTranslation('conversations')
 
     //CONSTANTS
     const navigate = useNavigate()
@@ -86,10 +84,10 @@ const ActionsButton = ({items, view, section}:ButtonProps) =>{
         setShowList(false)
     }, [items, view, section])
     const handleEditView = useCallback(() => {
-        if (section === 'tickets' && view) navigate(`/settings/people/edit-views/edit/${view.type}/${view.index}`)
+        if (section === 'conversations' && view) navigate(`/settings/people/edit-views/edit/${view.type}/${view.index}`)
     }, [navigate, section, view])
     const handleCloneView = useCallback(() => {
-        if (section === 'tickets' && view) navigate(`/settings/people/edit-views/edit/${view.type}/${view.index}/copy`)
+        if (section === 'conversations' && view) navigate(`/settings/people/edit-views/edit/${view.type}/${view.index}/copy`)
     }, [navigate, section, view])
 
     //FRONT
@@ -100,30 +98,24 @@ const ActionsButton = ({items, view, section}:ButtonProps) =>{
             </Button>
             <AnimatePresence> 
                 {showList && 
-   
-            <MotionBox ref={boxRef} initial={{ opacity: 0, scale: 0.95, }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.95 }}  transition={{ duration: '0.1', ease: 'easeOut'}}
-                style={{ transformOrigin: 'top' }}  fontSize={'.8em'} marginTop={'5px'} top='100%' position='absolute' bg='white' zIndex={1000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.200' borderWidth='1px' borderRadius='.5rem'>
-
-
-                 
-                        <Flex onClick={handleDownloadCSV}  cursor={'pointer'}  px='15px' py='10px' gap='10px' alignItems={'center'} _hover={{bg:'gray.100'}}>
-                            <Icon as={BsFiletypeCsv}/>
+                    <MotionBox ref={boxRef} initial={{ opacity: 0, scale: 0.95, }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.95 }}  transition={{ duration: '0.1', ease: 'easeOut'}}
+                        style={{ transformOrigin: 'top' }}  fontSize={'.9em'} marginTop={'5px'} top='100%' position='absolute' bg='white' zIndex={1000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.300' borderWidth='1px' borderRadius='.5rem'>
+                        <Flex onClick={handleDownloadCSV}  cursor={'pointer'}  px='15px' py='10px' gap='10px' alignItems={'center'} _hover={{bg:'brand.hover_gray'}}>
+                            <Icon  color='gray.600' as={FaFileCsv}/>
                             <Text whiteSpace={'nowrap'}>{t('CSV')}</Text>
                         </Flex>
                 
-                        {(section === 'tickets' && view?.type !== 'deleted' && !(!isAdmin && view?.type === 'shared')) &&<>
-                        <Flex onClick={handleEditView} px='15px' py='10px' cursor={'pointer'} gap='10px' alignItems={'center'} _hover={{bg:'gray.100'}}>
-                            <Icon as={FaRegEdit}/>
+                        {(section === 'conversations' && view?.type !== 'deleted' && !(!isAdmin && view?.type === 'shared')) &&<>
+                        <Flex onClick={handleEditView} px='15px' py='10px' cursor={'pointer'} gap='10px' alignItems={'center'} _hover={{bg:'brand.hover_gray'}}>
+                            <Icon color='gray.600'  as={FaPen}/>
                             <Text whiteSpace={'nowrap'}>{t('EditView')}</Text>
                         </Flex>
-                        <Flex  onClick={handleCloneView} px='15px' py='10px'cursor={'pointer'} gap='10px' alignItems={'center'} _hover={{bg:'gray.100'}}>
-                            <Icon as={FaRegClone}/>
+                        <Flex  onClick={handleCloneView} px='15px' py='10px'cursor={'pointer'} gap='10px' alignItems={'center'}_hover={{bg:'brand.hover_gray'}}>
+                            <Icon color='gray.600' as={FaClone}/>
                             <Text whiteSpace={'nowrap'}>{t('CloneView')}</Text>
                         </Flex></> }
-                    </MotionBox >
- 
+                   </MotionBox >
                 }
-                
             </AnimatePresence>
         </Flex>
     )

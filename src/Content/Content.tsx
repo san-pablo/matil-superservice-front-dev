@@ -13,7 +13,7 @@ import { t } from 'i18next'
 import fetchData from './API/fetchData'
 import io from 'socket.io-client' 
 //FRONT
-import { Flex, Box, Icon, Avatar, Text, Tooltip, Button, chakra, shouldForwardProp, Image, Portal } from '@chakra-ui/react'
+import { Flex, Box, Icon, Avatar, Text, Tooltip, Button, chakra, shouldForwardProp, Image, Portal, useColorMode } from '@chakra-ui/react'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import './Components/styles.css'
 import { motion, AnimatePresence, isValidMotionProp } from 'framer-motion' 
@@ -28,7 +28,8 @@ import ShortCutsList from './Components/Once/ShortCutsList'
 import SendFeedBack from './Components/Once/SendFeedback'
 //FUNCTIONS
 import useOutsideClick from './Functions/clickOutside'
-import DetermineTicketViews from './MangeData/DetermineTicketViews'
+import DetermineConversationViews from './MangeData/DetermineConversationViews'
+import determineBoxStyle from './Functions/determineBoxStyle'
 //ICONS
 import { IconType } from 'react-icons'
 import { IoFileTrayFull, IoChatboxOutline, IoPersonOutline } from "react-icons/io5" 
@@ -42,13 +43,13 @@ import { PiBuildingApartmentFill, PiKeyReturn } from "react-icons/pi"
 import { TbArrowBack } from 'react-icons/tb'
 import { VscFeedback } from "react-icons/vsc"
 //TYPING 
-import { Organization, TicketData, userInfo, Views } from './Constants/typing'
+import { Organization, ConversationsData, userInfo, Views } from './Constants/typing'
 //MAIN SECTIONS
-const TicketsTable = lazy(() => import('./Sections/Tickets/TicketsTable'))
+const ConversationsTable = lazy(() => import('./Sections/Conversations/ConversationsTable'))
 const ClientsTable = lazy(() => import('./Sections/Clients/ClientsTable'))
-const FlowsFunctions = lazy(() => import('./Sections/Flows/FlowsFunctions'))
+const Functions = lazy(() => import('./Sections/Flows/Functions'))
 const ContactBusinessesTable = lazy(() => import('./Sections/Businesses/BusinessesTable'))
-const Ticket = lazy(() => import('./Sections/Tickets/Ticket'))
+const Conversation = lazy(() => import('./Sections/Conversations/Conversation'))
 const Client = lazy(() => import('./Sections/Clients/Client'))
 const Business = lazy(() => import('./Sections/Businesses/Business'))
 const Stats = lazy(() => import('./Sections/Stats/Stats'))
@@ -58,7 +59,7 @@ const NotFound = lazy(() => import('./Components/Once/NotFound'))
 
  
 //TYPING
-type SectionKey = 'tickets' | 'clients' | 'contact-businesses' | 'flows-functions'| 'knowledge' | 'stats' | 'settings'
+type SectionKey = 'conversations' | 'clients' | 'contact-businesses' | 'functions'| 'knowledge' | 'stats' | 'settings'
 interface NavBarItemProps {
     icon: ElementType
     section: SectionKey
@@ -81,6 +82,7 @@ function Content ({userInfo}:{userInfo:userInfo}) {
  
     //SOCKET
     const socket = useRef<any>(null)
+    const { colorMode, toggleColorMode } = useColorMode()
 
     //TRANSLATION
     const { t } = useTranslation('main')
@@ -95,21 +97,21 @@ function Content ({userInfo}:{userInfo:userInfo}) {
     const [userInfoApp, setUserInfoApp] = useState<userInfo>(userInfo)
     const isAdmin = userInfoApp.organizations.find(org => org.id === auth.authData?.organizationId)?.is_admin || false
 
-    //REF FOR DETERMINIG IF A TICKET IS BEING PROCESSED, AND WAIT FOR THE FINISH
+    //REF FOR DETERMINIG IF A CONVERSATION IS BEING PROCESSED, AND WAIT FOR THE FINISH
     const isFirstSection = useRef<boolean>(true)
-    const isProcessingTicket = useRef<boolean>(false)
+    const isProcessingConversation = useRef<boolean>(false)
 
     //VIEWS REF, FOR USING ALWAYS THE LAST VIEWS VERSION
     const authDataRef = useRef(auth.authData.views as Views)
 
-    //UPDATE VIEWS WHEN A TICKET EVENT
-    const updateViews = (data:{new_data:TicketData, previous_data?:TicketData, is_new:boolean}, views:Views) => {
+    //UPDATE VIEWS WHEN A CONVERSATION EVENT
+    const updateViews = (data:{new_data:ConversationsData, previous_data?:ConversationsData, is_new:boolean}, views:Views) => {
         
-        isProcessingTicket.current = true
+        isProcessingConversation.current = true
         
         //EDIT VIEWS LOGIC
-        const previousViews = DetermineTicketViews(data?.previous_data, views, auth.authData?.userId || -1)
-        const newViews = DetermineTicketViews(data?.new_data, views, auth.authData?.userId || -1)
+        const previousViews = DetermineConversationViews(data?.previous_data, views, auth.authData?.userId || -1)
+        const newViews = DetermineConversationViews(data?.new_data, views, auth.authData?.userId || -1)
 
         //VIEWS TO ADD AND REMOVE
         const viewsToRemove = previousViews.filter(pv => !newViews.some(nv => nv.view_index === pv.view_index && nv.view_type === pv.view_type))
@@ -118,28 +120,29 @@ function Content ({userInfo}:{userInfo:userInfo}) {
         //NEW AUPDATED VIEWS NUMBER
         const updates:any = {}
         viewsToRemove.forEach(view => {
-            const keyToUpdate = view.view_type === 'shared' ? 'number_of_tickets_per_shared_view' : 'number_of_tickets_per_private_view'
+            const keyToUpdate = view.view_type === 'shared' ? 'number_of_conversations_per_shared_view' : 'number_of_conversations_per_private_view'
             if (!updates[keyToUpdate]) updates[keyToUpdate] = [...(views[keyToUpdate] || [])]
             updates[keyToUpdate][view.view_index] = (updates[keyToUpdate][view.view_index] || 0) - 1
         })
         viewsToAdd.forEach(view => {
-            const keyToUpdate = view.view_type === 'shared' ? 'number_of_tickets_per_shared_view' : 'number_of_tickets_per_private_view'
+            const keyToUpdate = view.view_type === 'shared' ? 'number_of_conversations_per_shared_view' : 'number_of_conversations_per_private_view'
             if (!updates[keyToUpdate]) updates[keyToUpdate] = [...(views[keyToUpdate] || [])]
             updates[keyToUpdate][view.view_index] = (updates[keyToUpdate][view.view_index] || 0) + 1
         }) 
 
         //NULLIFY ALL THE INVOLVED VIEWS
         const viewsToNullify = [...previousViews, ...newViews]
-        const updatedTicketsTable = session.sessionData.ticketsTable.filter(ticketTable => {
-            return !viewsToNullify.some(view => ticketTable.view.view_index === view.view_index && ticketTable.view.view_type === view.view_type)
+        const updatedConversationsTable = session.sessionData.conversationsTable.filter(conversationTable => {
+            return !viewsToNullify.some(view => conversationTable.view.view_index === view.view_index && conversationTable.view.view_type === view.view_type)
         })
 
-        //UPLPOAD THE VIEWS NUMBER
+        //UPLPOAD THE VIEWS NUMBER 
         authDataRef.current = {...views, ...updates}
+
         auth.setAuthData({ views: {...views, ...updates}})
-         session.dispatch({type: 'UPDATE_TICKETS_VIEWS', payload: updatedTicketsTable});
+         session.dispatch({type: 'UPDATE_CONVERSATIONS_VIEWS', payload: updatedConversationsTable});
   
-        isProcessingTicket.current = false
+        isProcessingConversation.current = false
     }
 
     //INITIALIZE SOCKET
@@ -148,11 +151,12 @@ function Content ({userInfo}:{userInfo:userInfo}) {
         if (Notification.permission !== 'granted') Notification.requestPermission()
 
         const section = localStorage.getItem('currentSection')
-        if (!window.location.hash.substring(1)) navigate(section !== null ? section : 'tickets')
+        if (!window.location.hash.substring(1)) navigate(section !== null ? section : 'conversations')
         else navigate(window.location)
 
-        socket.current = io('https://api.matil.ai/superservice_platform', {
+        socket.current = io('https://api.matil.ai/platform', {
             path: '/v1/socket.io/',
+            transports:['websocket'],
             query: {
                 access_token: auth.authData.accessToken,
                 organization_id: auth.authData.organizationId
@@ -160,17 +164,17 @@ function Content ({userInfo}:{userInfo:userInfo}) {
         })
     
         //CONNECT TO THE WEBSOCKET
-        socket.current.on('connect', () => {})
+        socket.current.on('connect', () => {console.log('CONECTADO')})
 
-        //RECEIVE A TICKET
-        socket.current.on('ticket', (data:any) => {
-            session.dispatch({type: 'EDIT_HEADER_SECTION_TICKET', payload: {...data, auth}})
-            if (data?.is_new) showToast({message:t('NewTicketCreated',{id:data.new_data.local_id}), type:'ticket', id:data.new_data.id, linkPath:true, navigate, isDesktop:true})
+        //RECEIVE A CONVERSATIONS
+        socket.current.on('conversation', (data:any) => {
+            session.dispatch({type: 'EDIT_HEADER_SECTION_CONVERSATION', payload: {...data, auth}})
+            if (data?.is_new) showToast({message:t('NewConversationCreated',{id:data.new_data.local_id}), type:'conversation', id:data.new_data.id, linkPath:true, navigate, isDesktop:true})
             
             function waitForProcessing() {
                 const startTime = Date.now()              
                 const waitInterval = setInterval(() => {
-                if (!isProcessingTicket.current) {
+                if (!isProcessingConversation.current) {
                     clearInterval(waitInterval)
                     updateViews(data, authDataRef.current)
                 } else if (Date.now() - startTime > MAX_WAIT_TIME) {
@@ -184,8 +188,8 @@ function Content ({userInfo}:{userInfo:userInfo}) {
 
         //RECEIVE A NEW MESSAGE
         socket.current.on('conversation_messages', (data:any) => {
-            if (data?.local_id && data?.ticket_id && (data.sender_type === 0) ) showToast({message: t('SendedMessage', {id:data.local_id}), type:'message', id:data.ticket_id, linkPath:true, navigate,  isDesktop:true})
-            session.dispatch({type: 'EDIT_HEADER_SECTION_MESSAGES', payload: {data, type:'new_message'}})
+            if (data?.local_id && data?.conversation_id && (data.sender_type === 0) ) showToast({message: t('SendedMessage', {id:data.local_id}), type:'message', id:data.conversation_id, linkPath:true, navigate,  isDesktop:true})
+            session.dispatch({type: 'EDIT_HEADER_SECTION_MESSAGES', payload: {data, type:'message'}})
         })  
 
         //RECEIVE A NEW SCHEDULED MESSAGE
@@ -215,7 +219,7 @@ function Content ({userInfo}:{userInfo:userInfo}) {
             socket?.current.disconnect()
             clearInterval(pingInterval)
         }
-    }, [])
+    }, [auth.authData.organizationId])
   
     //HEADER SECTIONS
     const [headerSections, setHeaderSections] = useState<Section[]>([])
@@ -274,8 +278,8 @@ function Content ({userInfo}:{userInfo:userInfo}) {
     
                 if (event.code === 'KeyW' || event.code === 'ArrowLeft' || event.code === 'ArrowRight') {
                   currentIndex = headerSections.findIndex(element => {
-                    const sectionToSelect = element.type === 'ticket'
-                      ? `tickets/ticket/${element.code}`
+                    const sectionToSelect = element.type === 'conversation'
+                      ? `conversations/conversation/${element.code}`
                       : element.type === 'client'
                       ? `clients/client/${element.code}`
                       : `contact-businesses/business/${element.code}`
@@ -285,7 +289,7 @@ function Content ({userInfo}:{userInfo:userInfo}) {
 
               switch (event.code) {           
                 case 'KeyV':
-                    navigate('tickets')
+                    navigate('conversations')
                     break
                 case 'KeyC':
                     navigate('clients')
@@ -306,8 +310,8 @@ function Content ({userInfo}:{userInfo:userInfo}) {
                 case 'ArrowLeft': 
                     if (currentIndex > 0) {
                         const previousSection = headerSections[currentIndex - 1]
-                        const previousPath = previousSection.type === 'ticket'
-                        ? `tickets/ticket/${previousSection.code}`
+                        const previousPath = previousSection.type === 'conversation'
+                        ? `conversations/conversation/${previousSection.code}`
                         : previousSection.type === 'client'
                         ? `clients/client/${previousSection.code}`
                         : `contact-businesses/business/${previousSection.code}`
@@ -318,8 +322,8 @@ function Content ({userInfo}:{userInfo:userInfo}) {
                   case 'ArrowRight': 
                     if (currentIndex < headerSections.length - 1) {
                         const nextSection = headerSections[currentIndex + 1];
-                        const nextPath = nextSection.type === 'ticket'
-                        ? `tickets/ticket/${nextSection.code}`
+                        const nextPath = nextSection.type === 'conversation'
+                        ? `conversations/conversation/${nextSection.code}`
                         : nextSection.type === 'client'
                         ? `clients/client/${nextSection.code}`
                         : `contact-businesses/business/${nextSection.code}`;
@@ -348,10 +352,10 @@ function Content ({userInfo}:{userInfo:userInfo}) {
     }
   
     //ADD HEADER SECTION LOGIC
-    const addHeaderSection = (description:string, code:number, section:'ticket' | 'client' | 'contact-business', local_id?:number) => {
+    const addHeaderSection = (description:string, code:number, section:'conversation' | 'client' | 'contact-business', local_id?:number) => {
         if (!headerSections.some(value => value.code === code && value.type === section)) {
             setHeaderSections(prev => [...prev, {'description':description, 'code': code, local_id, 'type':section}])
-            if (section ===  'ticket') navigate(`tickets/ticket/${code}`)
+            if (section ===  'conversation') navigate(`conversations/conversation/${code}`)
             else if (section === 'client')  navigate(`clients/client/${code}`)
             else if (section === 'contact-business')  navigate(`contact-businesses/business/${code}`)
         }
@@ -364,7 +368,7 @@ function Content ({userInfo}:{userInfo:userInfo}) {
             const filteredHeaderSections = prevHeaderSections.filter((e, idx) => idx !== index)
             const currentLocation = location
     
-            const isUserInSection = (prevHeaderSections[index].type === 'ticket' && location === `/tickets/ticket/${prevHeaderSections[index].code}`) || 
+            const isUserInSection = (prevHeaderSections[index].type === 'conversation' && location === `/conversations/conversation/${prevHeaderSections[index].code}`) || 
                 (prevHeaderSections[index].type === 'client' && location === `/clients/client/${prevHeaderSections[index].code}`) || 
                 (prevHeaderSections[index].type === 'contact-business' && location === `/contact-businesses/business/${prevHeaderSections[index].code}`)
     
@@ -373,11 +377,11 @@ function Content ({userInfo}:{userInfo:userInfo}) {
                     const targetIndex = Math.max(index - 1, 0)
                     if (prevHeaderSections[targetIndex].type === 'client') navigate(`/clients/client/${filteredHeaderSections[targetIndex].code}`)
                     else if (prevHeaderSections[targetIndex].type === 'contact-business') navigate(`/contact-businesses/business/${filteredHeaderSections[targetIndex].code}`)
-                    else navigate(`/tickets/ticket/${filteredHeaderSections[targetIndex].code}`)
+                    else navigate(`/conversations/conversation/${filteredHeaderSections[targetIndex].code}`)
                 } else {
                     if (currentLocation.startsWith('/clients')) navigate('/clients')
                     else if (currentLocation.startsWith('/contact-businesses')) navigate('/contact-businesses')
-                    else navigate('/tickets')
+                    else navigate('/conversations')
                 }
             }
     
@@ -394,25 +398,25 @@ function Content ({userInfo}:{userInfo:userInfo}) {
     const memoizedCallWidget = useMemo(() => <CallWidget />, [])
 
     //SECTIONS WITH HEADER
-    const isHeaderSection =  location.startsWith('/ticket') || location.startsWith('/client') || location.startsWith('/contact-businesses')
+    const isHeaderSection =  location.startsWith('/conversation') || location.startsWith('/client') || location.startsWith('/contact-businesses')
     
-    const barRef = useRef<HTMLDivElement>(null);
+    const barRef = useRef<HTMLDivElement>(null)
 
     const NavBar = () => {
 
         //REFS
-        const ticketsRef = useRef<HTMLDivElement>(null)
+        const conversationsRef = useRef<HTMLDivElement>(null)
         const clientsRef = useRef<HTMLDivElement>(null)
         const businessesRef = useRef<HTMLDivElement>(null)
         const flowsRef = useRef<HTMLDivElement>(null)
         const knowledgeRef = useRef<HTMLDivElement>(null)
         const statsRef = useRef<HTMLDivElement>(null)
         const settingsRef = useRef<HTMLDivElement>(null)
-        const sectionsRefs = {tickets:ticketsRef, clients:clientsRef, 'contact-businesses':businessesRef, 'knowledge':knowledgeRef, 'flows-functions':flowsRef, 'stats':statsRef, 'settings':settingsRef}
+        const sectionsRefs = {conversations:conversationsRef, clients:clientsRef, 'contact-businesses':businessesRef, 'knowledge':knowledgeRef, 'functions':flowsRef, 'stats':statsRef, 'settings':settingsRef}
  
         useEffect(() => {
             const updateBarPosition = () => {
-                const currentSection = location.split('/')[1] as 'tickets' | 'clients' | 'contact-businesses' | 'knowledge' | 'flows-functions' | 'stats' | 'settings';
+                const currentSection = location.split('/')[1] as 'conversations' | 'clients' | 'contact-businesses' | 'knowledge' | 'functions' | 'stats' | 'settings';
                 if (sectionsRefs[currentSection].current && barRef.current) {
                     isFirstSection.current = false
                     const sectionTop = sectionsRefs[currentSection]?.current?.getBoundingClientRect().top || 0
@@ -429,17 +433,17 @@ function Content ({userInfo}:{userInfo:userInfo}) {
         
             <Flex alignItems='center' flexDir='column' >
                 <Box  width='100%'> 
-                    <Flex width={'100%'} justifyContent={'center'} mb='5vh'> 
+                    <Flex width={'100%'} onClick={toggleColorMode} justifyContent={'center'} mb='5vh'> 
                         <Image src='/images/matil-simple-2.svg' width={'22px'} height={'22px'} />
                     </Flex>
-                    <NavBarItem ref={ticketsRef} icon={IoFileTrayFull} section={'tickets'}/>
+                    <NavBarItem ref={conversationsRef} icon={IoFileTrayFull} section={'conversations'}/>
                     <NavBarItem ref={clientsRef} icon={BsFillPersonLinesFill} section={'clients'}/>
                     <NavBarItem ref={businessesRef} icon={PiBuildingApartmentFill} section={'contact-businesses'}/>
                   
                 </Box>
             </Flex>
             <Flex  alignItems='center' flexDir='column' position={'relative'}>
-                {isAdmin && <NavBarItem ref={flowsRef}  icon={BsStars} section={'flows-functions'}/>}
+                {isAdmin && <NavBarItem ref={flowsRef}  icon={BsStars} section={'functions'}/>}
                 {isAdmin && <NavBarItem  ref={statsRef} icon={BsBarChartFill} section={'stats'}/>}
                 {isAdmin && <NavBarItem ref={knowledgeRef}  icon={BsFillLayersFill} section={'knowledge'}/>}
                 {isAdmin && <NavBarItem ref={settingsRef} icon={IoIosSettings} section={'settings'}/>}
@@ -471,7 +475,7 @@ function Content ({userInfo}:{userInfo:userInfo}) {
  
                 {/*HEADER ELEMENTS*/}
                 <motion.div initial={{ y: !isHeaderSection ? -60 : 0 }} animate={{ y: !isHeaderSection ? -60 : 0 }} exit={{ y: !isHeaderSection ? -60 : 0 }} transition={{ duration: 0.2 }}
-                    style={{  height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex:1000, background:'#f1f1f1'}}>
+                    style={{  height: '60px', display: 'flex', width:'calc(100vw - 55px)', alignItems: 'center', justifyContent: 'space-between', zIndex:1000, background:'#f1f1f1'}}>
                     <Flex height='100%' minW={0} flex='1' overflow={'scroll'} ref={containerRef} > 
                         <DragDropContext onDragEnd={onDragEnd}>
                             <Droppable droppableId="sections" direction="horizontal">
@@ -484,7 +488,7 @@ function Content ({userInfo}:{userInfo:userInfo}) {
                                         :
                                     <>
                                         {headerSections.slice(0, visibleSectionsIndex).map((element, index) => {
-                                            const sectionToSelect = element.type === 'ticket' ? 'tickets/ticket/' + element.code :  element.type === 'client' ? 'clients/client/' + element.code:'contact-businesses/business/' + element.code
+                                            const sectionToSelect = element.type === 'conversation' ? 'conversations/conversation/' + element.code :  element.type === 'client' ? 'clients/client/' + element.code:'contact-businesses/business/' + element.code
                                             const isSectionSelected = location.startsWith(`/${sectionToSelect}/`) || location === `/${sectionToSelect}`;
                                             const width = `calc(${(containerRef.current?.getBoundingClientRect().width || 0) / visibleSectionsIndex}% - 10px)`;
                                             return (
@@ -492,7 +496,7 @@ function Content ({userInfo}:{userInfo:userInfo}) {
                                                 {(provided, snapshot) => (
                                                     <Flex  boxShadow={snapshot.isDragging?'0 4px 8px rgba(0, 0, 0, 0.3)':'none'}  height="100%" ref={provided.innerRef}  {...provided.draggableProps} {...provided.dragHandleProps} justifyContent={'space-between'} alignItems='center' w={width} minW='120px' maxW='280px' bg={isSectionSelected ? '#e8e8e8' :'#f1f1f1'} _hover={{ bg: isSectionSelected ? '#e8e8e8' : 'brand.hover_gray' }} borderColor='gray.200' borderBottomWidth={isSectionSelected?'0':'1px'} borderRightWidth='1px' px='15px'cursor='pointer' onClick={() => {navigate(sectionToSelect)}}>
                                                         <Flex flex='1' minW='0' gap='10px' alignItems={'center'}>
-                                                            <Icon as={element.type === 'ticket' ? IoChatboxOutline : element.type === 'client' ? IoPersonOutline:BsBuildings } />
+                                                            <Icon as={element.type === 'conversation' ? IoChatboxOutline : element.type === 'client' ? IoPersonOutline:BsBuildings } />
                                                             <Box flex='1' minW='0'>
                                                                 <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'} fontSize='xs' >{element.description}</Text>
                                                                 <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'} fontSize='2xs'>#{element.local_id?element.local_id:element.code}</Text>
@@ -514,16 +518,19 @@ function Content ({userInfo}:{userInfo:userInfo}) {
                                                             <Icon as={IoIosArrowDown} className={showMoreHeaderSectionsBox ? "rotate-icon-up" : "rotate-icon-down"}/>
                                                         </Flex>
                                                     </Flex>
+                                                    <AnimatePresence> 
+
                                                     {showMoreHeaderSectionsBox &&
-                                                        <MotionBox transition={{ duration: '0.1',  ease: 'easeOut'}} initial={{ opacity: 0 }} animate={{ opacity: 1 }}  mt='3px' maxH='80vh' overflowY='scroll'  ref={showMoreHeaderSectionsBoxRef}  position='absolute'  bg='white' zIndex={1000} boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.15)'}  borderColor={'gray.300'} borderWidth={'1px'} borderRadius={'.5rem'}> 
+                                                    <Portal> 
+                                                        <MotionBox transition={{ duration: '0.2',  ease: 'easeOut'}} initial={{ opacity: 0, marginTop: 0 }} animate={{ opacity: 1, marginTop: 10 }} exit={{opacity: 0, marginTop: 0 }} right={window.innerWidth - (showMoreHeaderSectionsButtonRef.current?.getBoundingClientRect()?.right || 0)} top={`${showMoreHeaderSectionsButtonRef.current?.getBoundingClientRect().bottom}px`}  mt='3px' maxH='80vh' overflowY='scroll'  ref={showMoreHeaderSectionsBoxRef}  position='fixed'  bg='white' zIndex={1000} boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.15)'}  borderColor={'gray.300'} borderWidth={'1px'} borderRadius={'.5rem'}> 
                                                         {headerSections.slice(visibleSectionsIndex).map((element, index) => {
-                                                            const sectionToSelect = element.type === 'ticket' ? 'tickets/ticket/' + element.code :  element.type === 'client' ? 'clients/client/' + element.code:'contact-businesses/business/' + element.code
+                                                            const sectionToSelect = element.type === 'conversation' ? 'conversations/conversation/' + element.code :  element.type === 'client' ? 'clients/client/' + element.code:'contact-businesses/business/' + element.code
                                                             const isSectionSelected = location.startsWith(`/${sectionToSelect}/`) || location ===  `/${sectionToSelect}`
                                                                             
                                                             return(
-                                                                <Flex height='100%' key={`visible-header-${index}`}  justifyContent={'space-between'} alignItems='center' width={'200px'} bg={isSectionSelected?'#e8e8e8':'transparent'} p='15px' cursor='pointer' _hover={{bg:isSectionSelected?'#e8e8e8':'brand.hover_gray'}}  onClick={()=>{navigate(sectionToSelect)}}> 
+                                                                <Flex height='100%' key={`visible-header-${index}`}  justifyContent={'space-between'} alignItems='center' width={'200px'} bg={isSectionSelected?'#e8e8e8':'transparent'} gap='10px' p='15px' cursor='pointer' _hover={{bg:isSectionSelected?'#e8e8e8':'brand.hover_gray'}}  onClick={()=>{navigate(sectionToSelect)}}> 
                                                                     <Flex flex='1'minW='0'  gap='10px' alignItems={'center'} >
-                                                                    <Icon as={element.type === 'ticket' ? IoChatboxOutline : element.type === 'client' ? IoPersonOutline:BsBuildings } />
+                                                                    <Icon as={element.type === 'conversation' ? IoChatboxOutline : element.type === 'client' ? IoPersonOutline:BsBuildings } />
                                                                         <Box  flex='1' minW='0'   > 
                                                                             <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}  fontSize='xs' fontWeight={'medium'}>{element.description}</Text>
                                                                             <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'} fontSize='2xs'>#{element.local_id?element.local_id:element.code}</Text>
@@ -536,7 +543,10 @@ function Content ({userInfo}:{userInfo:userInfo}) {
                                                             )
                                                         })}
                                                         </MotionBox>
+                                                        </Portal>
                                                     }
+                                                   </AnimatePresence> 
+
                                                 </Box>
                                         )}
                                             {provided.placeholder}
@@ -554,13 +564,13 @@ function Content ({userInfo}:{userInfo:userInfo}) {
                 <motion.div initial={{ y: !isHeaderSection ? -60 : 0 }} animate={{ y: !isHeaderSection ? -60 : 0 }} exit={{ y: !isHeaderSection ? -60 : 0 }} transition={{ duration: 0.2 }}>
                     <Suspense fallback={<></>}>    
                         <Routes >
-                            <Route path="/tickets" element={<TicketsTable socket={socket}/>}/>
-                            <Route path="/tickets/ticket/:n/*" element={<Ticket socket={socket} addHeaderSection={addHeaderSection} deleteHeaderSection={deleteHeaderSection} />} />
+                            <Route path="/conversations" element={<ConversationsTable socket={socket}/>}/>
+                            <Route path="/conversations/conversation/:n/*" element={<Conversation socket={socket} addHeaderSection={addHeaderSection} deleteHeaderSection={deleteHeaderSection} />} />
                             <Route path="/clients" element={<ClientsTable addHeaderSection={addHeaderSection}/>}  />
-                            <Route path="/clients/client/:n" element={<Client socket={socket} comesFromTicket={false}  addHeaderSection={addHeaderSection} deleteHeaderSection={deleteHeaderSection}/>}/>
+                            <Route path="/clients/client/:n" element={<Client socket={socket} comesFromConversation={false}  addHeaderSection={addHeaderSection} deleteHeaderSection={deleteHeaderSection}/>}/>
                             <Route path="/contact-businesses" element={<ContactBusinessesTable  addHeaderSection={addHeaderSection}/>}/>
-                            <Route path="/contact-businesses/business/:n" element={<Business socket={socket} comesFromTicket={false} addHeaderSection={addHeaderSection}/>}/>
-                            <Route path="/flows-functions/*" element={<FlowsFunctions/>}/>
+                            <Route path="/contact-businesses/business/:n" element={<Business socket={socket} comesFromConversation={false} addHeaderSection={addHeaderSection}/>}/>
+                            <Route path="/functions/*" element={<Functions/>}/>
                             <Route path="/knowledge/*" element={<Knowledge/>}/>
                             <Route path="/stats/*" element={<Stats/>}/>
                             <Route path="/settings/*" element={<Settings />}/>
@@ -585,18 +595,16 @@ const NavBarItem = forwardRef<HTMLDivElement, NavBarItemProps>(({icon, section }
     //NAVIGATE CONSTANT
     const navigate = useNavigate()
     const location = useLocation().pathname
-    const sectionsMap = {tickets: 'Tickets', clients: t('Clients'), stats: t('Stats'), 'flows-functions':t('FlowsFunctions'),'knowledge':t('Knowledge'), 'contact-businesses':t('Businesses'), settings: t('Settings')}
-    
-    console.log()
+    const sectionsMap = {conversations: t('Conversations'), clients: t('Clients'), stats: t('Stats'), 'functions':t('FlowsFunctions'),'knowledge':t('Knowledge'), 'contact-businesses':t('Businesses'), settings: t('Settings')}
  
     //HOVER AND SELECT LOGIC
     const [isHovered, setIsHovered] = useState(false)
     const handleClick = () => {
-        if (section === 'tickets' || section === 'clients' || location.split('/')[1] !== section) {
+        if (section === 'conversations' || section === 'clients' || location.split('/')[1] !== section) {
             navigate(section)
          }
     }
-    const isSelected = section === 'settings' ? location.split('/')[1] === 'settings': section === 'knowledge' ? location.split('/')[1] === 'knowledge' : section === 'stats' ? location.split('/')[1] === 'stats' : section === 'flows-functions' ? location.split('/')[1] === 'flows-functions' : location === `/${section}` 
+    const isSelected = section === 'settings' ? location.split('/')[1] === 'settings': section === 'knowledge' ? location.split('/')[1] === 'knowledge' : section === 'stats' ? location.split('/')[1] === 'stats' : section === 'functions' ? location.split('/')[1] === 'functions' : location === `/${section}` 
 
     //FRONT
     return (
@@ -630,7 +638,6 @@ const LogoutBox = ({ userInfoApp, auth }:{userInfoApp:userInfo, auth:any}) => {
 
     //VIEW FEEDBACK
     const [showFeedback, setShowFeedback] = useState<boolean>(false)
-
 
     //MEMOIZED BOXES
     const memoizedShortcutsBox = useMemo(() => (
@@ -737,13 +744,14 @@ const OrganizationsBox = ({ userInfoApp, isAdmin, setUserInfoApp, auth, session,
                 <EditText value={invitationCode} setValue={setInvitationCode} hideInput={false} size='sm' placeholder='xxxx-xxxx-xxxx-xxxx' />
             </Box>
             <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-                <Button  size='sm' bg='brand.gradient_blue' color='white'_hover={{bg:'brand.gradient_blue_hover'}} isDisabled={invitationCode === ''} onClick={() => addOrganization({invitationCode, setInvitationCode})}>{waitingNewOrganization?<LoadingIconButton/>:t('Join')}</Button>
+                <Button  size='sm' variant={'main'} isDisabled={invitationCode === ''} onClick={() => addOrganization({invitationCode, setInvitationCode})}>{waitingNewOrganization?<LoadingIconButton/>:t('Join')}</Button>
                 <Button  size='sm' onClick={()=>setShowAddOrganization(false)}>{t('Cancel')}</Button>
             </Flex>
         </>)
     }
     //NAVIGATE CONSTANT
     const navigate = useNavigate()
+ 
 
     //SHOW AND HIDE ORGANIZATIONS BOX ON HOVER LOGIC
     const [showOrganizations, setShowOrganizations] = useState<boolean>(false)
@@ -768,14 +776,14 @@ const OrganizationsBox = ({ userInfoApp, isAdmin, setUserInfoApp, auth, session,
         setInvitationCode('')
         setShowOrganizations(false)
         setWaitingOrganization(true)
-        navigate('/tickets')
+        navigate('/conversations')
 
-        const response = await fetchData({endpoint:`user/join_superservice_organization/${invitationCode}`, method:'put', auth:auth})
+        const response = await fetchData({endpoint:`user/join/${invitationCode}`, method:'put', auth:auth})
 
-        if (response?.status === 200){
+        if (response?.status === 200) {
             const response2 = await fetchData({endpoint:`user`, setValue:setUserInfoApp, auth:auth})
             if (response2?.status === 200){
-                const response3 = await fetchData({endpoint:`superservice/${response2.data.organizations[response2.data.organizations.length - 1].id}/user`,  auth:auth})
+                const response3 = await fetchData({endpoint:`${response2.data.organizations[response2.data.organizations.length - 1].id}/user`,  auth:auth})
                     
                     if (response3?.status === 200){
                         auth.setAuthData({views:response3.data, organizationId:response2.data.organizations[response2.data.organizations.length - 1].id})
@@ -790,25 +798,31 @@ const OrganizationsBox = ({ userInfoApp, isAdmin, setUserInfoApp, auth, session,
 
     //CHANGE ORGANIZATION LOGIC
     const changeOrganization = async (org:Organization) => {
+
         localStorage.removeItem('currentView')
         localStorage.removeItem('currentSection')
         localStorage.removeItem('currentSectionTop')
+       
 
+        console.log(localStorage)
         localStorage.setItem('currentOrganization', String(org.id))
+        console.log(localStorage.getItem('currentOrganization'))
+
+        
         session.dispatch({type:'DELETE_ALL_SESSION'})
         setHeaderSections([])
-        const responseOrg = await fetchData({endpoint:`superservice/${org.id}/user`, auth})
+        const responseOrg = await fetchData({endpoint:`${org.id}/user`, auth})
         if (responseOrg?.status === 200) {
             const viewsToAdd = {
-            number_of_tickets_in_bin:responseOrg.data.number_of_tickets_in_bin, 
+            number_of_conversations_in_bin:responseOrg.data.number_of_conversations_in_bin, 
             private_views:responseOrg.data.private_views, 
-            number_of_tickets_per_private_view:responseOrg.data.number_of_tickets_per_private_view,
+            number_of_conversations_per_private_view:responseOrg.data.number_of_conversations_per_private_view,
             shared_views:responseOrg.data.shared_views, 
-            number_of_tickets_per_shared_view:responseOrg.data.number_of_tickets_per_shared_view
+            number_of_conversations_per_shared_view:responseOrg.data.number_of_conversations_per_shared_view
           }
-          auth.setAuthData({views: viewsToAdd, users:responseOrg.data.users, shortcuts:responseOrg.data.shortcuts, ticket_subjects:responseOrg.data.ticket_subjects, organizationId:org.id, organizationName:org.name})
+          auth.setAuthData({views: viewsToAdd, users:responseOrg.data.users, shortcuts:responseOrg.data.shortcuts, conversation_themes:responseOrg.data.conversation_themes, organizationId:org.id, organizationName:org.name})
         }
-        navigate('/tickets')
+        navigate('/conversations')
      }
 
     //FRONT
@@ -865,9 +879,9 @@ const OrganizationsBox = ({ userInfoApp, isAdmin, setUserInfoApp, auth, session,
                 <Text fontWeight='medium' fontSize={'1.2em'}>{t('NoOrganizationUser')}</Text>
                 <Text fontWeight='medium' fontSize={'1em'} mt='2vh' mb='.5vh'>{t('GetInvitationCode')}</Text>
                 <EditText value={firstInvitationCode} setValue={setFirstInvitationCode} placeholder='xxxxxxxx-xxxx-xxxx-xxxxxxxxxxxx' hideInput={false}/>
-                <Button color='white' bg={'brand.gradient_blue'} _hover={{bg:'brand.gradient_blue_hover'}} size='sm' leftIcon={waitingNewOrganization?<></>:<FaPlus />} mt='2vh' isDisabled={firstInvitationCode === ''} width='100%' onClick={() => addOrganization({invitationCode:firstInvitationCode, setInvitationCode:setFirstInvitationCode})}>{waitingNewOrganization?<LoadingIconButton/>:t('Join')}</Button>
+                <Button variant={'main'} size='sm' leftIcon={waitingNewOrganization?<></>:<FaPlus />} mt='2vh' isDisabled={firstInvitationCode === ''} width='100%' onClick={() => addOrganization({invitationCode:firstInvitationCode, setInvitationCode:setFirstInvitationCode})}>{waitingNewOrganization?<LoadingIconButton/>:t('Join')}</Button>
             </Box>
-            <Button onClick={() => auth.signOut()} position='fixed' bottom='2vh' left='2vh' size='sm'bg='brand.gradient_blue' color='white' leftIcon={<TbArrowBack/>} _hover={{bg:'brand.gradient_blue_hover'}}>{t('Return')}</Button>
+            <Button onClick={() => auth.signOut()} position='fixed' bottom='2vh' left='2vh' size='sm' variant={'main'} leftIcon={<TbArrowBack/>}>{t('Return')}</Button>
         </Flex>}
         </>
     )

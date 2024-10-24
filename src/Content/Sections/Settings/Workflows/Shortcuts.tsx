@@ -6,12 +6,10 @@ import { useAuth } from '../../../../AuthContext'
 //FETCH DATA
 import fetchData from "../../../API/fetchData"
 //FRONT
-import { Flex, Text, Box, IconButton, Button } from "@chakra-ui/react"
+import { Flex, Text, Box, IconButton } from "@chakra-ui/react"
 //COMPONENTS
 import EditText from '../../../Components/Reusable/EditText'
-import LoadingIconButton from '../../../Components/Reusable/LoadingIconButton'
 //ICONS
-import { FaPlus } from 'react-icons/fa6'
 import { RxCross2 } from 'react-icons/rx'
 import { useTranslation } from 'react-i18next'
  
@@ -45,7 +43,7 @@ function Shortcuts () {
     const sendEditShortcut = async(newShortCuts:string[]) => {
         setCurrentShortcuts(newShortCuts)
         const newViews = {...auth.authData.views, shortcuts:newShortCuts}
-        const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/user`, method:'put', auth:auth, requestForm:newViews, toastMessages:{'works':'Atajos actualizados con éxito', 'failed':'Hubo un error al actualizar los atajos'}})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/user`, method:'put', auth:auth, requestForm:newViews, toastMessages:{'works':t('CorrectAddedShortcut'), 'failed':t('FailedAddedShortcut')}})
         if (response?.status === 200) auth.setAuthData({shortcuts:currentShorcuts})  
     }
     
@@ -68,7 +66,7 @@ function Shortcuts () {
             </Box>
         </Flex>
 
-        <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='5vh'/>
+        <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/>
         <Box width={'60%'} mt='2vh' minW={'500px'}> 
             {currentShorcuts?.map((option, index) => (
                 <Flex key={`option-${index}`} mt={index === 0?'0':'1vh'} justifyContent={'space-between'} alignItems={'center'} shadow='sm' p='5px' borderRadius='.5rem' borderColor="gray.200" borderWidth="1px"  bg='brand.gray_2'>

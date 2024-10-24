@@ -1,7 +1,7 @@
 //DATES
 import { startOfWeek, subDays, startOfMonth, formatISO } from 'date-fns'
 //TYPING
-import { TicketData, View, Views } from "../Constants/typing"
+import { ConversationsData, View, Views } from "../Constants/typing"
  
 //TYPING
 interface ViewResult {
@@ -26,9 +26,9 @@ const getDynamicTimestamps = () => {
 
 
 //CHECK IF A VIEW PASS A GIVEN CONDITION
-const checkConditions = (ticket: TicketData, conditions: Array<{ column: string, operation_type: string, value: string | number }>, userId:number): boolean => {
+const checkConditions = (ticket: ConversationsData, conditions: Array<{ column: string, operation_type: string, value: string | number }>, userId:number): boolean => {
     return conditions.every(condition => {
-        const ticketValue = ticket[condition.column as keyof TicketData]
+        const ticketValue = ticket[condition.column as keyof ConversationsData]
 
         let normalizedTicketValue = ticketValue
         let normalizedConditionValue = condition.value
@@ -64,7 +64,7 @@ const checkConditions = (ticket: TicketData, conditions: Array<{ column: string,
 }
 
 //MAIN FUNCTION
-const DetermineTicketViews = (ticketData: TicketData | null | undefined, views:Views, userId:number ): ViewResult[]  => {
+const DetermineConversationViews = (ticketData: ConversationsData | null | undefined, views:Views, userId:number ): ViewResult[]  => {
     
     if (!ticketData) return []
 
@@ -84,4 +84,4 @@ const DetermineTicketViews = (ticketData: TicketData | null | undefined, views:V
     return results
 }
 
-export default DetermineTicketViews
+export default DetermineConversationViews

@@ -22,4 +22,4 @@ function obtainDates() {
   return { startDate: isoStartDate, endDate: isoEndDate }
 }
 
-export default obtainDates;
+export default obtainDates

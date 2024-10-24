@@ -1,7 +1,13 @@
+/*
+    COMONENT FOR SELECTING BETWEEN A FEW OPTIONS
+*/
+
+//REACT
 import { useEffect, ReactElement, useState } from 'react'
 // FRONT
 import { Flex, Button } from '@chakra-ui/react'
 
+//TYPING
 interface SectionSelectorProps<T extends string | number>  { 
     selectedSection: T
     sections: T[]
@@ -9,12 +15,11 @@ interface SectionSelectorProps<T extends string | number>  {
     onChange: (section: T) => void 
 }
 
-
-
+//MAIN FUNCTION
 const SectionSelector =  <T extends string | number>({ selectedSection, sections, sectionsMap, onChange }: SectionSelectorProps<T>) => {
 
+    //GET THE SIZE OF EACH COMPONENT
     const [indicatorStyle, setIndicatorStyle] = useState<{ width: number, left: number }>({ width: 0, left: 0 })
-
     useEffect(() => {
         const selectedButton = document.getElementById(`section-btn-${selectedSection}`)
         if (selectedButton) {
@@ -23,14 +28,15 @@ const SectionSelector =  <T extends string | number>({ selectedSection, sections
         }
     }, [selectedSection])
 
+    //FRONT
     return (
-        <Flex  bg='gray.100' position='relative' display={'inline-flex'} p='4px' borderRadius={'.7rem'} fontWeight={'medium'}>
+        <Flex  bg='brand.gray_1' position='relative' display={'inline-flex'} p='4px' borderRadius={'.7rem'} fontWeight={'medium'}>
             <Flex position='absolute' height='calc(100% - 8px)' bg='white' borderRadius={'calc(.7rem - 4px)'} transition={'all 0.3s ease'} style={{width: `${indicatorStyle.width}px`, left: `${indicatorStyle.left}px`}}/>
             {sections.map((section, index) => {
                 const isSelected = selectedSection === section;
                 return (
                     <Flex alignItems={'center'} color={'black'} key={`secciones-${index}`} id={`section-btn-${section}`} onClick={() => { onChange(section) }}>
-                        <Button size='sm' border='none' bg='transparent' color={isSelected ? 'black' : 'gray.600'} _hover={{ color: 'black' }} leftIcon={sectionsMap[section][1]}>
+                        <Button size='sm' border='none' fontWeight={'medium'} bg='transparent' color={isSelected ? 'black' : 'gray.600'} _hover={{ color: 'black' }} leftIcon={sectionsMap[section][1]}>
                             {sectionsMap[section][0]}
                         </Button>
                     </Flex>

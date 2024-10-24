@@ -11,7 +11,7 @@ import { IconType } from "react-icons"
 import { IoLogoWhatsapp } from "react-icons/io"
 import { IoChatboxEllipses, IoMail } from "react-icons/io5";
 import { RiInstagramFill } from "react-icons/ri";
-import { FaHeadset, FaCreditCard, FaDatabase, FaShopify, FaUserGroup,FaPhone,  FaPeopleGroup, FaUser, FaTicket, FaRectangleList, FaArrowsSplitUpAndLeft, FaShapes } from "react-icons/fa6"
+import { FaHeadset, FaCreditCard, FaDatabase, FaShopify, FaUserGroup,FaPhone,  FaPeopleGroup, FaUser, FaTicket, FaRectangleList, FaArrowsSplitUpAndLeft, FaShapes, FaBookmark, FaRobot} from "react-icons/fa6"
 import { HiViewColumns } from "react-icons/hi2"
 import { MdKeyboardCommandKey, MdWebhook } from "react-icons/md"
 import { SiGooglemybusiness } from "react-icons/si"
@@ -34,8 +34,10 @@ function Main ({subSections, sectionsList}:MainProps) {
     //TRANSLATION
     const { t } = useTranslation('settings')
     
+    //SUBSECTIONS MAP
     const subSectionsMap: {[key:string]:[string, IconType]} = {
         'data':[t('DataDes'), FaDatabase],
+        'tilda':[t('TildaDes'), FaRobot],
         'payments':[t('PaymentsDes'), FaCreditCard],
         'admin-users':[t('UsersDes'), FaUserGroup],
         'groups':[t('GroupsDes'), FaPeopleGroup],
@@ -43,8 +45,9 @@ function Main ({subSections, sectionsList}:MainProps) {
         'edit-views':[t('ViewsDes'), HiViewColumns],
         'help-center':[t('HelpCenterDes'), FaHeadset],
         'shortcuts':[t('ShortcutsDes'), MdKeyboardCommandKey],
-        'tickets':[t('TicketsDes'), FaTicket],
+        'conversations':[t('ConversationsDes'), FaTicket],
         'fields':[t('FieldsDes'),  FaShapes],
+        'themes':[t('ThemesDes'),  FaBookmark],
         'surveys':[t('SurveysDes'), FaRectangleList],
         'automations':[t('AutomationsDes'), FaArrowsSplitUpAndLeft],
         'triggers':[t('TriggersDes'), MdWebhook],
@@ -65,8 +68,9 @@ function Main ({subSections, sectionsList}:MainProps) {
 
     //COMPONENT FOR EACH BOX SECTION
     const SectionBox = ({section, subSections}:SectionBoxProps) => {
-        const sectionsMap:SectionsListProps = {'organization':[t('Organization'),'blue.200' ], 'users':[t('User'), 'green.200'], 'support':[t('Support'), 'cyan.200'],  'workflows':[t('Workflows'), 'orange.200'],  'actions':[t('Actions'), 'yellow.200'], 'channels': [t('Channels'), 'purple.200'], 'integrations':[t('Integrations'), 'red.200'], 'main':[t('Main'), '#FF69B4']}
 
+        //CONSTANTS
+        const sectionsMap:SectionsListProps = {'organization':[t('Organization'),'blue.200' ], 'users':[t('User'), 'green.200'], 'support':[t('Support'), 'cyan.200'],  'workflows':[t('Workflows'), 'orange.200'],  'actions':[t('Actions'), 'yellow.200'], 'channels': [t('Channels'), 'purple.200'], 'integrations':[t('Integrations'), 'red.200'], 'main':[t('Main'), '#FF69B4']}
         const navigate = useNavigate()
 
         return(

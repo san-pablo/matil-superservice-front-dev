@@ -1,29 +1,34 @@
 //REACT
-import { Dispatch, SetStateAction, useRef, useState, CSSProperties } from "react"
+import { Dispatch, SetStateAction, useRef, useState, CSSProperties, RefObject } from "react"
 import { useTranslation } from "react-i18next"
 //FRONT
-import { Text, Box, Flex, Button, NumberInput, NumberInputField, Switch, Icon, chakra, shouldForwardProp } from "@chakra-ui/react"
+import { Text, Box, Flex, Button, NumberInput, NumberInputField, Switch, Icon, chakra, shouldForwardProp, IconButton } from "@chakra-ui/react"
 import EmojiPicker, { EmojiClickData } from 'emoji-picker-react'
 import { motion, isValidMotionProp } from 'framer-motion'
 //COMPONENTS
 import EditText from "../../../Components/Reusable/EditText"
+import EditStructure from "../../../Components/Reusable/EditStructure"
 //FUNCTIONS
 import useOutsideClick from "../../../Functions/clickOutside"
 import determineBoxStyle from "../../../Functions/determineBoxStyle"
 //ICONS
 import { RxCross2 } from "react-icons/rx"
-//TYPING
-import { configProps } from "../../../Constants/typing"
 import { FaPlus } from "react-icons/fa6"
-  
+//TYPING
+import { configProps, FieldAction } from "../../../Constants/typing"
+   
 //MOTION BOX
-const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
 
-const GetMatildaConfig = ({configDict, setConfigDict, updateData, configIndex, isPhone = false}:{configDict:configProps | null, setConfigDict?:Dispatch<SetStateAction<configProps | null>>, updateData?: (configDict: configProps, index:number) => void, configIndex?:number, isPhone?:boolean}) => {
+const GetMatildaConfig = ({configDict, setConfigDict, updateData, configIndex, isPhone = false, scrollRef}:{configDict:configProps | null, setConfigDict?:Dispatch<SetStateAction<configProps | null>>, updateData?: (configDict: configProps, index:number) => void, configIndex?:number, isPhone?:boolean, scrollRef:RefObject<HTMLDivElement>}) => {
 
     //TRANSLATION CONSTANT
     const { t } = useTranslation('settings')
-  
+    const operationTypesDict = {'user_id':['eq', 'neq',  'exists'], 'group_id':['eq', 'neq',  'exists'], 'channel_type':['eq', 'neq', 'exists'], 'title':['eq', 'neq', 'exists'], 'theme':['eq', 'neq', 'exists'], 'urgency_rating':['eq', 'neq', 'leq', 'geq', 'exists'], 'status':['eq', 'neq'], 'unseen_changes':['eq', 'exists'], 'tags':['contains', 'ncontains', 'exists'], 'is_matilda_engaged':['eq', 'exists'],'is_csat_offered':['eq', 'exists'],
+    'contact_business_id':['eq', 'neq',  'exists'], 'name':['eq', 'neq', 'contains', 'ncontains', 'exists'], 'language':['eq', 'neq',  'exists'], 'rating':['eq','neq', 'leq', 'geq', 'exists'], 'notes':['eq', 'neq', 'contains', 'ncontains', 'exists'], 'labels':['contains', 'ncontains', 'exists'],
+    'domain':['eq', 'neq', 'contains', 'ncontains', 'exists'], 'hours_since_created':['eq', 'neq', 'leq', 'geq',  'exists'], 'hours_since_updated':['eq', 'neq', 'leq', 'geq',   'exists']
+    }
+    const typesMap = {'bool':['eq', 'exists'], 'int':['eq','neq', 'leq', 'geq', 'exists'], 'float':['eq','neq', 'leq', 'geq', 'exists'],'str': ['eq', 'neq', 'contains', 'ncontains', 'exists'], 'timestamp':['eq', 'neq', 'leq', 'geq',  'exists']}
+
     //SELECT EMOJIS
     const emojiBoxRef = useRef<HTMLDivElement>(null)
     const emojiButtonRef = useRef<HTMLButtonElement>(null)
@@ -31,9 +36,8 @@ const GetMatildaConfig = ({configDict, setConfigDict, updateData, configIndex, i
     useOutsideClick({ref1:emojiBoxRef, ref2:emojiButtonRef, onOutsideClick:setEmojiVisible})
 
     //BOX POSITION LOGIC, TO SHOW IT UP OR DOWN OF THE INPUT, DEPENDING ON THE POSITION
-    const [boxPosition, setBoxPosition] = useState<'top' | 'bottom'>('bottom')
     const [boxStyle, setBoxStyle] = useState<CSSProperties>({})
-    determineBoxStyle({buttonRef:emojiButtonRef, setBoxStyle, setBoxPosition, changeVariable:emojiVisible})
+    determineBoxStyle({buttonRef:emojiButtonRef, setBoxStyle, boxPosition:'right', changeVariable:emojiVisible})
 
      const handleEmojiClick = (emojiObject: EmojiClickData, event: any) => {
         if (!configDict?.allowed_emojis.includes(emojiObject.emoji)) {
@@ -93,6 +97,40 @@ const GetMatildaConfig = ({configDict, setConfigDict, updateData, configIndex, i
         }
     }
  
+    const addElement = (type: 'contact_all_conditions' | 'contact_any_conditions') => {
+        const newElement = {motherstructure:'contact', is_customizable:false, name:'name', op:'eq', value:''}
+
+        if (setConfigDict){ setConfigDict((prev) => {
+            if (prev) return { ...prev , [type]: [...prev?.[type] || [], newElement]}
+            else return prev
+        })
+     }
+    }
+    //DELETE A CONDITION OR AN ACTION
+    const removeElement = (type: 'contact_all_conditions' | 'contact_any_conditions', index: number ) => {
+        if (setConfigDict) {
+            setConfigDict((prev) => {
+                if (prev) {
+                    const conditionList = [...prev[type]]
+                    const updatedConditionList = [...conditionList.slice(0, index), ...conditionList.slice(index + 1)]
+                    return {...prev, [type]: updatedConditionList}  
+                }
+                else return prev
+            })
+        }
+    }
+    //EDIT A CONDITION OR AN ACTION
+    const editElement = (type:'contact_all_conditions' | 'contact_any_conditions' , index:number, updatedCondition:FieldAction) => {
+        if (setConfigDict) setConfigDict((prev) => {
+            if (prev) {
+                const lastConditionList = [...prev[type]]
+                const updatedConditionList = [...lastConditionList.slice(0, index), updatedCondition, ...lastConditionList.slice(index + 1)]
+                return {...prev, [type]: updatedConditionList}
+            }
+            else return prev
+        })
+    }
+
     //EMOJI COMPONENT
     const EmojiComponent = ({emoji, index}:{emoji:string, index:number}) => {
         const [isHovering, setIsHovering] = useState<boolean>(false)
@@ -135,11 +173,10 @@ return(
              </Flex>
              <Button ref={emojiButtonRef} onClick={() => setEmojiVisible(!emojiVisible)} variant={'common'} size='xs' mt='1vh' leftIcon={<FaPlus/>}>{t('AddEmoji')}</Button>
 
-            {emojiVisible && 
-                <MotionBox initial={{ opacity: 0, marginTop: boxPosition === 'bottom'?-10:10 }} animate={{ opacity: 1, marginTop: 0 }}  exit={{ opacity: 0,marginTop: boxPosition === 'bottom'?-10:10}} transition={{ duration: '.2', ease: 'easeOut'}}
-                top={boxStyle.top} bottom={boxStyle.bottom}right={boxStyle.right}  overflow={'scroll'} gap='10px' ref={emojiBoxRef} fontSize={'.9em'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000}   position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
-                    <EmojiPicker onEmojiClick={handleEmojiClick}  allowExpandReactions={false}/>
-            </MotionBox>}
+             
+            <Box position={'fixed'} pointerEvents={emojiVisible?'auto':'none'} marginTop={'10px'} marginBottom={'10px'} top={boxStyle.top} bottom={boxStyle.bottom}right={boxStyle.right}  transition='opacity 0.2s ease-in-out' opacity={emojiVisible ? 1:0} zIndex={1000} ref={emojiBoxRef}> 
+                <EmojiPicker onEmojiClick={handleEmojiClick}  open={emojiVisible} allowExpandReactions={false}/>
+            </Box>
              
             {!isPhone && <> 
                 <Flex gap='10px' mt='4vh' alignItems={'center'}>
@@ -224,6 +261,31 @@ return(
             </Flex>
             <Text fontSize={'.8em'} color='gray.600'>{t('ConfirmInfoDes')}</Text>
         
+            <Text mt='4vh' fontWeight={'medium'} >{t('ContactConditions')}</Text>
+            <Text mt='1.5vh' fontWeight={'medium'}  fontSize={'.9em'}>{t('contact_all_conditions')}</Text>
+            {(configDict?.contact_all_conditions || []).map((condition, index) => (
+                    <Flex  key={`all-automation-${index}`} mt='2vh' gap='10px'>
+                    <Box flex={'1'}> 
+                        <EditStructure excludedFields={['conversation', 'contact_business'] }  data={condition} setData={(newCondition) => {editElement('contact_all_conditions', index, newCondition)}} scrollRef={scrollRef} operationTypesDict={operationTypesDict} typesMap={typesMap}/>
+                    </Box>
+                    <IconButton bg='transaprent' border='none' color='red' size='sm' _hover={{bg:'gray.200'}} icon={<RxCross2/>} aria-label='delete-all-condition' onClick={() => removeElement('contact_all_conditions', index)}/>
+                    </Flex>
+            ))}
+            <Button mt='2vh' variant={'common'}  leftIcon={<FaPlus/>} size='xs'  onClick={() => addElement('contact_all_conditions')}>{t('AddCondition')}</Button>
+            
+            <Text mt='1.5vh' fontWeight={'medium'}  fontSize={'.9em'}>{t('contact_any_conditions')}</Text>
+            {(configDict?.contact_any_conditions || []).map((condition, index) => (
+                    <Flex  key={`all-automation-${index}`} mt='2vh' gap='10px'>
+                    <Box flex={'1'}> 
+                        <EditStructure excludedFields={['conversation', 'contact_business'] } data={condition} setData={(newCondition) => {editElement('contact_any_conditions', index, newCondition)}} scrollRef={scrollRef} operationTypesDict={operationTypesDict} typesMap={typesMap}/>
+                    </Box>
+                    <IconButton bg='transaprent' border='none' color='red' size='sm' _hover={{bg:'gray.200'}} icon={<RxCross2/>} aria-label='delete-any-condition' onClick={() => removeElement('contact_any_conditions', index)}/>
+                    </Flex>
+            ))}
+            <Button mt='2vh' variant={'common'}  leftIcon={<FaPlus/>} size='xs'  onClick={() => addElement('contact_any_conditions')}>{t('AddCondition')}</Button>
+            
+
+ 
         </>}
         </>}
 

@@ -9,24 +9,24 @@ import { CSSProperties, Dispatch, RefObject, SetStateAction, useEffect } from "r
 interface determineBoxStyleProps {
     buttonRef:RefObject<HTMLDivElement | HTMLButtonElement>
     setBoxStyle:Dispatch<SetStateAction<CSSProperties>>
-    changeVariable:boolean
-    setBoxPosition?:Dispatch<SetStateAction<'top' | 'bottom'>>
+    boxPosition:'right' | 'left' | 'none'
+    changeVariable:any
 }
 
 //MAIN FUNCTION
-const determineBoxStyle = ({buttonRef, setBoxStyle, setBoxPosition, changeVariable}:determineBoxStyleProps) => {
+const determineBoxStyle = ({buttonRef, setBoxStyle, boxPosition, changeVariable}:determineBoxStyleProps) => {
  
     //UPDATE THE BOX POSTION BASED ON THEIR SCREEN POSITION
     const updateBoxPosition = () => {
         if (buttonRef.current) {
             const buttonRect = buttonRef.current.getBoundingClientRect()
             const halfScreenHeight = window.innerHeight / 2
-            if (setBoxPosition) setBoxPosition(buttonRect.bottom > halfScreenHeight ? 'top' : 'bottom')
 
             const newBoxStyle: CSSProperties = {
-                top: buttonRect.bottom > halfScreenHeight ? 'auto' : `${buttonRect.bottom + window.scrollY}px`,
-                bottom: buttonRect.bottom > halfScreenHeight ? `${window.innerHeight - buttonRect.top - window.scrollY}px` : 'auto',
-                right: `${window.innerWidth - buttonRect.right}px`,
+                top: buttonRect.bottom > halfScreenHeight ? undefined : `${buttonRect.bottom + window.scrollY}px`,
+                bottom: buttonRect.bottom > halfScreenHeight ? `${window.innerHeight - buttonRect.top - window.scrollY}px` : undefined,
+                right: boxPosition === 'right' ? `${window.innerWidth - buttonRect.right}px`:undefined,
+                left: boxPosition === 'right' ? undefined :`${buttonRect.left}px`,
                 width: `${buttonRect.width}px`
             }
             setBoxStyle(newBoxStyle)
@@ -41,7 +41,7 @@ const determineBoxStyle = ({buttonRef, setBoxStyle, setBoxPosition, changeVariab
             window.removeEventListener('resize', updateBoxPosition)
         }
     }, [])
-    useEffect(() => {if (changeVariable) updateBoxPosition()}, [changeVariable])
+    useEffect(() => {updateBoxPosition()}, [changeVariable])
 }
 
 export default determineBoxStyle

@@ -4,7 +4,7 @@
     "ClientsCount_other":"{{count}} clientes",
     "Cancel":"Cancelar",
     "Business":"Empresa",
-    "NoTickets":"No hay clientes disponibles",
+    "NoConversations":"No hay conversaciones disponibles",
 
     "Conversations_one":"{{count}} conversación",
     "Conversations_other":"{{count}} conversaciones",
@@ -39,7 +39,7 @@
     "Merge":"Fusionar",
     "MergeUser":"Fusionar con otro usuario",
     "ConfirmMerge":"Confirmar fusión",
-    "MergeUsersConfirm":"¿Desea fusionar a  {{user_1}} y a {{user_2}}?</span>",
+    "MergeUsersConfirm":"¿Desea fusionar a/{ {{user_1}} }/y a/{ {{user_2}}}/?",
     "SearchToMerge":"Busca un cliente para fusionar",
     "SelectMergeClient":"Seleccione un cliente para fusionar",
     "ConfirmAndMerge":"Confirmar y fusionar",
@@ -49,5 +49,6 @@
     "whatsapp":"Whatsapp",
     "instagram": "Instagram",
     "google_business":"Google Business",
-    "phone":"Teléfono"
+    "phone":"Teléfono",
+    "ClientsFilterMessage":"Los canales son"
 }

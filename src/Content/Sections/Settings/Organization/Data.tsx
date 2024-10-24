@@ -3,7 +3,6 @@
 import  {useState, useEffect} from 'react'
 import { useAuth } from '../../../../AuthContext'
 import { useTranslation } from 'react-i18next'
-
 //FETCH DATA
 import fetchData from "../../../API/fetchData"
 //FRONT
@@ -15,27 +14,29 @@ import { FaTicket } from "react-icons/fa6"
 //FUNTIONS
 import formatFileSize from '../../../Functions/formatFileSize'
 import timeStampToDate from '../../../Functions/timeStampToString'
- interface OrganizationData  {
+
+//TYPING
+interface OrganizationData  {
     'name': string
     'timestamp_created': string
     'is_active': boolean
     'current_active_users':number
     'max_users': number
-    'processed_tickets_this_month':number
-    'max_tickets_per_month': number
+    'processed_conversations_this_month':number
+    'max_conversations_per_month': number
     'data_storage_capacity': number
     'data_storage_used': number
     'file_storage_capacity': number
     'file_storage_used': number
 }
 
+//MAIN FUNCTION
 function Data () {
 
     //CONSTANTS
     const auth = useAuth()
     const { t } = useTranslation('settings')
     const t_formats  = useTranslation('formats').t
-
 
     //BOOLEAN FOR WAIT THE INFO
     const [waitingInfo, setWaitingInfo] = useState<boolean>(true)
@@ -45,7 +46,7 @@ function Data () {
 
     //FETCH NEW DATA WHEN THE VIEEW CHANGE
     useEffect(() => {
-        fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/organization`, setValue:setOrganizationData, setWaiting:setWaitingInfo,auth:auth})
+        fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/organization`, setValue:setOrganizationData, setWaiting:setWaitingInfo,auth:auth})
         document.title = `${t('Settings')} - ${t('Data')} - ${auth.authData.organizationId} - Matil`
     }, [])
 
@@ -89,10 +90,10 @@ function Data () {
             <Box p='20px'  minW={'20vw'}  borderWidth={'1px'} bg='brand.gray_2' borderColor={'gray.200'} shadow={'md'} borderRadius={'.5rem'}>
                 <Flex alignItems={'center'} gap='10px' color='gray.600'>
                     <Icon as={FaTicket}/>
-                    <Text fontWeight={'medium'}>{t('MatildaTickets')}</Text>
+                    <Text fontWeight={'medium'}>{t('MatildaConversations')}</Text>
                 </Flex>
-                <Text mt='1vh' fontWeight={'medium'} fontSize={'1.4em'}>{t('MatildaWork', {count:organizationData?.processed_tickets_this_month})}</Text>
-                <Text mt='1vh'  color='gray.600' fontWeight={'medium'}>{t('LimitMatilda', {count:organizationData?.processed_tickets_this_month, max:organizationData?.max_tickets_per_month || '1.000.000'})}</Text>
+                <Text mt='1vh' fontWeight={'medium'} fontSize={'1.4em'}>{t('MatildaWork', {count:organizationData?.processed_conversations_this_month})}</Text>
+                <Text mt='1vh'  color='gray.600' fontWeight={'medium'}>{t('LimitMatilda', {count:organizationData?.processed_conversations_this_month, max:organizationData?.max_conversations_per_month || '1.000.000'})}</Text>
             </Box>
         </Skeleton>
 

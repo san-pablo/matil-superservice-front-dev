@@ -20,6 +20,7 @@ interface ImageUploadProps {
 //MAIN FUNCTION
 const ImageUpload = ({ id, initialImage, onImageUpdate, maxImageSize = 100}:ImageUploadProps) => {
 
+  //CONSTANTS
   const { t } = useTranslation('settings')
 
   //IMAGES VARIABLES
@@ -38,7 +39,7 @@ const ImageUpload = ({ id, initialImage, onImageUpdate, maxImageSize = 100}:Imag
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (file) {
-        const validTypes = ['image/jpeg', 'image/png', 'image/gif']
+        const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml']
         if (!validTypes.includes(file.type)) {
             setError(t('FormatError'))
             setImage(undefined)
@@ -78,7 +79,7 @@ const ImageUpload = ({ id, initialImage, onImageUpdate, maxImageSize = 100}:Imag
 
     //FRONT
     return (<> 
-    <input type="file" accept="image/jpeg, image/png, image/gif" onChange={handleImageChange} style={{display:'none'}} id={`image-upload-${id}`} />
+    <input type="file" accept="image/jpeg, image/png, image/gif, image/svg+xml" onChange={handleImageChange} style={{display:'none'}} id={`image-upload-${id}`} />
         <Flex onClick={handleContainerClick} width="100%" alignItems="center" justifyContent="space-between" height="100px" borderRadius=".5em" borderColor="gray.300" borderWidth="1px" bg="brand.gray_2" cursor="pointer" position="relative" p='20px'>
           {!image && <Text textAlign={'center'} fontSize={'.9em'} color='brand.text_blue'>{t('DragImage')}</Text>}
           {image && (
@@ -95,9 +96,7 @@ const ImageUpload = ({ id, initialImage, onImageUpdate, maxImageSize = 100}:Imag
             </>
           )}
         </Flex>
- 
       {error && <Text color="red.500" fontSize=".9em"> {error}</Text>}
-
         </>
     )
   }

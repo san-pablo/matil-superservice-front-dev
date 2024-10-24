@@ -44,7 +44,7 @@ const FindBusinessComponent = ({value, setValue, auth}:{value:number, setValue:a
         else {
             setWaitingResults(true)
             const timeoutId = setTimeout(async () => {
-                const response = await fetchData({endpoint: `superservice/${auth.authData.organizationId}/contact_businesses`, setValue:setElementsList, auth, params: { page_index: 1, search: text }})
+                const response = await fetchData({endpoint: `${auth.authData.organizationId}/contact_businesses`, setValue:setElementsList, auth, params: { page_index: 1, search: text }})
                 if (response?.status === 200) {setShowResults(true);setWaitingResults(false)}
                 else {setShowResults(false);setWaitingResults(false)}
             }, 500)
@@ -85,28 +85,63 @@ const FindBusinessComponent = ({value, setValue, auth}:{value:number, setValue:a
 }
 
 //SHOWING THE VALUE TYPE DEPENDING ON THE VATIABLE TO EDIT IN MOTHERSTRUCTURE
-const VariableTypeChanger = ({inputType, value, setValue, operation}:{inputType:string, value:any, setValue:(value:any) => void, operation?:string}) => {
-    
+const VariableTypeChanger = ({inputType, value, setValue, operation, customType, min, max, disabled}:{inputType:string, value:any, setValue:(value:any) => void, operation?:string, customType?:boolean, min?:number, max?:number, disabled?:boolean}) => {
+
     //USEFUL CONSTANTS
-    const { t } = useTranslation('flows')
-    const t_tickets = useTranslation('tickets').t
+    const auth = useAuth()
+    const { t } = useTranslation('settings')
+    const t_con = useTranslation('conversations').t
 
     const [groups, setGroups] = useState<{[key:number]:string}>([])
     useEffect(() => {        
         const fetchInitialData = async() => {
-            const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/groups`, auth})
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/groups`, auth})
             let currentGroupsDict: { [key: number]: string } = {}
             response?.data?.forEach((group: any) => {currentGroupsDict[group.id as number] = group.name})
             if (response?.status === 200 ) setGroups(currentGroupsDict)
         }
-        fetchInitialData()
+        if (!customType) fetchInitialData()
     }, [])
    
 
-    const auth = useAuth()
+    const [currentValue, setCurrentValue] = useState<string>((inputType === 'float' || inputType === 'int' || inputType === 'str') ?value:'') 
 
-    if (operation === 'exists') return null
-    switch(inputType) {
+   
+    if (operation === 'exists') return <></>
+
+    if (customType) {
+
+         switch(inputType) {
+            case 'bool': 
+            const boolDict = {'true':t('true'), 'false':t('false')}
+            return <CustomSelect isDisabled={disabled} hide={false} selectedItem={value} setSelectedItem={(value) => setValue(value)}  options={[true, false]} labelsMap={boolDict}/>
+            case 'int':
+            case 'float':
+                {  
+                    const handleBlur = () => { 
+                        if (currentValue !== value) {
+                            const normalizedValueString = currentValue?.replace(',', '.')
+                            if (normalizedValueString ) {
+                                if (!(normalizedValueString && isNaN((parseFloat(normalizedValueString)))) ) setValue(null)
+                                if (inputType === 'int') setValue(parseInt(normalizedValueString))
+                                else if (inputType === 'float') return setValue(parseInt(normalizedValueString))
+                            }
+                        }
+                   } 
+                   return (
+                   <NumberInput bg={disabled?'brand.gray_1':'transparent'} isDisabled={disabled} value={currentValue || undefined} onBlur={handleBlur} onChange={(value) => setCurrentValue(value) } clampValueOnBlur={false} min={min} max={max}>
+                       <NumberInputField borderRadius='.5rem'  fontSize={'.9em'} height={'37px'}  borderColor={'gray.300'} _hover={{ border:'1px solid #CBD5E0'}} _focus={{ px:'11px', borderColor: "brand.text_blue", borderWidth: "2px" }} px='12px' />
+                   </NumberInput>)
+               }    
+            case 'str':
+                return <EditText isDisabled={disabled}  value={currentValue} setValue={(value) => setCurrentValue(value) } updateData={() => {if (currentValue !== value) setValue(currentValue)}} hideInput={false} />
+            default:
+                return <></>
+        }
+    }
+
+    else {
+        switch(inputType) {
         case 'user_id':
             {
                 let usersDict:{[key:number]:string} = {}
@@ -126,15 +161,15 @@ const VariableTypeChanger = ({inputType, value, setValue, operation}:{inputType:
         case 'labels':
         case 'domain':
             return <EditText value={value} setValue={(value) => setValue(value) } hideInput={false} />
-        case 'subject':
+        case 'theme':
             let subjectsDict:{[key:number]:string} = {}
-            if (auth.authData?.ticket_subjects) Object.keys(auth.authData?.ticket_subjects).map((key:any) => {if (auth?.authData?.ticket_subjects) subjectsDict[key] = auth?.authData?.ticket_subjects[key]})
+            if (auth.authData?.conversation_themes) Object.keys(auth.authData?.conversation_themes).map((key:any) => {if (auth?.authData?.conversation_themes) subjectsDict[key] = auth?.authData?.conversation_themes[key]})
             return (<CustomSelect hide={false} selectedItem={value} setSelectedItem={(value) => setValue(value) }  options={Object.keys(subjectsDict).map(key => parseInt(key))} labelsMap={subjectsDict} />)
         case 'urgency_rating':
             const ratingMapDic = {0:`${t('Priority_0')} (0)`, 1:`${t('Priority_1')} (1)`, 2:`${t('Priority_2')} (2)`, 3:`${t('Priority_3')} (3)`, 4:`${t('Priority_4')} (4)`}
             return (<CustomSelect hide={false} selectedItem={value} setSelectedItem={(value) => setValue(value) }  options={Object.keys(ratingMapDic).map(key => parseInt(key))} labelsMap={ratingMapDic} />)
         case 'status':
-            const statusMapDic = {'new':t_tickets('new'), 'open':t_tickets('open'), solved:t_tickets('solved'), 'pending':t_tickets('pending'), 'closed':t_tickets('closed')}
+            const statusMapDic = {'new':t_con('new'), 'open':t_con('open'), solved:t_con('solved'), 'pending':t_con('pending'), 'closed':t_con('closed')}
             return (<CustomSelect hide={false} selectedItem={value} setSelectedItem={(value) => setValue(value) }  options={Object.keys(statusMapDic)} labelsMap={statusMapDic} />)
         case 'is_matilda_engaged':
         case 'unseen_changes':
@@ -158,13 +193,53 @@ const VariableTypeChanger = ({inputType, value, setValue, operation}:{inputType:
         case 'hours_since_updated': 
             return (
                 <NumberInput value={value} onChange={(value) => setValue(value)} min={0} max={1000000} clampValueOnBlur={false} >
-                    <NumberInputField borderRadius='.5rem'  fontSize={'.9em'} height={'37px'}  borderColor={'gray.300'} _hover={{ border:'1px solid #CBD5E0'}} _focus={{ px:'11px', borderColor: "rgb(77, 144, 254)", borderWidth: "2px" }} px='12px' />
+                    <NumberInputField borderRadius='.5rem'  fontSize={'.9em'} height={'37px'}  borderColor={'gray.300'} _hover={{ border:'1px solid #CBD5E0'}} _focus={{ px:'11px', borderColor: "rgb(59, 90, 246)", borderWidth: "2px" }} px='12px' />
                 </NumberInput>)
         default: 
             return null
-
+            }
     }
 
 } 
 
 export default VariableTypeChanger
+
+
+//INPUT DEPENDING ON THE VARIABLE TYPE
+const InputType = ({inputType, value, setValue}:{inputType:string,value:string, setValue:(value:any) => void}) => {
+    
+    //USEFUL CONSTANTS
+    const { t } = useTranslation('settings')
+    const boolDict = {true:t('True'), false:t('False')}
+    const datesMap = {'{today}':t('today'), '{yesterday}':t('yesterday'), '{start_of_week}':t('start_of_week'),'{start_of_month}':t('start_of_month')}
+
+    const [currentValue, setCurrentValue] = useState<string | null>(value) 
+
+    switch(inputType) {
+        case 'boolean':
+            return <CustomSelect hide={false} selectedItem={value} setSelectedItem={(value) => setValue(value) }  options={Object.keys(boolDict)} labelsMap={boolDict}/>
+        case 'integer':
+        case 'float':  {  
+             const handleBlur = () => {
+                const normalizedValueString = currentValue?.replace(',', '.')
+                if (normalizedValueString) {
+                    if (!(normalizedValueString && isNaN((parseFloat(normalizedValueString)))) ) setValue(null)
+                    if (inputType === 'integer') setValue(parseInt(normalizedValueString))
+                    else if (inputType === 'float') return setValue(parseInt(normalizedValueString))
+                }
+            } 
+            return (
+            <NumberInput value={value || undefined} onBlur={handleBlur} onChange={(value) => setCurrentValue(value) } clampValueOnBlur={false} >
+                <NumberInputField borderRadius='.5rem'  fontSize={'.9em'} height={'37px'}  borderColor={'gray.300'} _hover={{ border:'1px solid #CBD5E0'}} _focus={{ px:'11px', borderColor: "rgb(77, 144, 254)", borderWidth: "2px" }} px='12px' />
+            </NumberInput>)
+        }           
+        case 'string':
+        case 'list':
+                return <EditText value={value} setValue={(value) => setValue(value) } hideInput={false} />
+        case 'timestamp':
+            return <CustomSelect hide={false} selectedItem={value}  setSelectedItem={(value) => setValue(value)}  options={Object.keys(datesMap)} labelsMap={datesMap}/>
+
+        default: 
+            return null
+    }
+} 

@@ -28,7 +28,7 @@ const CreateBusiness = ({setShowBox, actionTrigger}:{setShowBox:(key:boolean) =>
    
     //FUNCTION FOR CREATE A NEW BUSINESS
     const createBusiness = async () => {
-        const businessData = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/contact_businesses`, method:'post', setWaiting:setWaitingCreate, requestForm:{name:businessName, domain:businessDomain}, auth, toastMessages:{'works': t('CorrectCreated'), 'failed':t('FailedtCreated')}})
+        const businessData = await fetchData({endpoint:`${auth.authData.organizationId}/contact_businesses`, method:'post', setWaiting:setWaitingCreate, requestForm:{name:businessName, domain:businessDomain}, auth, toastMessages:{'works': t('CorrectCreated'), 'failed':t('FailedtCreated')}})
         setShowBox(false)
         if (businessData?.status === 200) actionTrigger( businessData?.data.contact_business)
     }

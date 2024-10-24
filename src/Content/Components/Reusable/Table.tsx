@@ -1,19 +1,18 @@
 /* 
-    TABLE FOR SHOW TICKETS DATA
+    TABLE FOR SHOW  DATA
 */
 
 //REACT
-import { useState, useMemo, useRef, useEffect, Fragment, Dispatch, SetStateAction } from "react"
+import { useState, useMemo, useRef, useEffect, Fragment, Dispatch, SetStateAction, useCallback } from "react"
 //FRONT
-import { Flex, Box, Text, IconButton, Checkbox } from '@chakra-ui/react'
+import { Flex, Box, Text, IconButton } from '@chakra-ui/react'
 import '../styles.css'
 //COMPONENTS
 import CustomCheckbox from "./CheckBox"
 //ICONS
 import { IoMdArrowDropdown, IoMdArrowDropup } from 'react-icons/io'
-//TYPING
 import { BsTrash3Fill } from "react-icons/bs"
-
+ 
 //TYPING
 interface TableProps{
     data: any[]
@@ -36,11 +35,11 @@ interface TableProps{
 //MAIN FUNCTION
 const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  columnsMap, excludedKeys = [], onClickRow, selectedElements, onlyOneSelect = false, setSelectedElements, onSelectAllElements, currentIndex = -1, deletableFunction, height }:TableProps ) =>{
 
-
     //CALCULATE DYNAMIC HEIGHT OF TABLE
     const tableBoxRef = useRef<HTMLDivElement>(null)
     const headerRef = useRef<HTMLDivElement>(null)
     const [selectedIndex, setSelectedIndex] = useState<number>(currentIndex)
+    useEffect(()=>{setSelectedIndex(currentIndex)} ,[currentIndex])
     const [boxHeight, setBoxHeight] = useState<number>(1000)
     useEffect(() => {
         const updateHeight = () => {
@@ -66,9 +65,10 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
             const itemBottom = itemTop + (item as HTMLElement).offsetHeight
             const containerTop = tableBoxRef.current.scrollTop
             const containerBottom = containerTop + tableBoxRef.current.offsetHeight
+            const buffer = 90
             if (tableBoxRef.current.scrollHeight > tableBoxRef.current.offsetHeight) {
-                if (itemTop < containerTop) tableBoxRef.current.scrollTop = itemTop
-                else if (itemBottom > containerBottom) tableBoxRef.current.scrollTop = itemBottom - tableBoxRef.current.offsetHeight
+                if (itemTop < containerTop) tableBoxRef.current.scrollTop = itemTop 
+                else if (itemBottom > containerBottom) tableBoxRef.current.scrollTop = itemBottom - tableBoxRef.current.offsetHeight + buffer
             }
         }
       }}
@@ -118,7 +118,7 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
         }, 0) + 20 + (selectedElements ? 58 : 0) + (deletableFunction ? 100 : 0)
       }, [columns])
       
-    const handleCheckboxChange = (element:number, isChecked:boolean) => {
+    const handleCheckboxChange = useCallback((element:number, isChecked:boolean) => {
         if (selectedElements && setSelectedElements) {
             if (isChecked) {
                 if (onlyOneSelect) setSelectedElements([element])
@@ -126,7 +126,7 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
             }
             else setSelectedElements(prevElements => prevElements.filter(el => el !== element))
         }
-    }
+    }, [selectedElements, setSelectedElements, onlyOneSelect])
     
     //SORT LOGIC FOR TABLES THAT HAVE ALL THE AVAILABLE DATA
     const requestInternalSort = (column: string) => {
@@ -190,14 +190,14 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
                     {dataToWork.map((row:any, index:number) => {  
                         
                         return (
-                            <Flex height={'50px'} data-index={index}  position={'relative'} overflow={'hidden'} gap='20px' minWidth={`${totalWidth}px`} borderRadius={index === data.length - 1?'0 0 .5rem .5rem':'0'} borderWidth={'0 1px 1px 1px'}  cursor={onClickRow?'pointer':'normal'} onClick={() => {if (onClickRow) onClickRow(row, index)}} key={`row-${index}`}  bg={selectedIndex === index ? 'blue.50':(selectedElements || []).includes(index)?'blue.100':index%2 === 1?'#FCFCFC':'white'} alignItems={'center'}  fontSize={'.9em'} color='black' p='10px' borderColor={'gray.200'} _hover={{bg:(selectedElements || [] ).includes(index)?'blue.100':'blue.50'}}  > 
+                            <Flex height={'50px'} data-index={index}  position={'relative'} overflow={'hidden'} gap='20px' minWidth={`${totalWidth}px`} borderRadius={index === data.length - 1?'0 0 .5rem .5rem':'0'} borderWidth={'0 1px 1px 1px'}  cursor={onClickRow?'pointer':'normal'} onClick={() => {if (onClickRow) onClickRow(row, index)}} key={`row-${index}`}  bg={selectedIndex === index ? 'brand.blue_hover':(selectedElements || []).includes(index)?'brand.blue_hover':index%2 === 1?'#FCFCFC':'white'} alignItems={'center'}  fontSize={'.9em'} color='black' p='10px' borderColor={'gray.200'} _hover={{bg:(selectedElements || [] ).includes(index)?'brand.blue_hover':'brand.blue_hover'}}  > 
                                 {selectedIndex === index && <Box position='absolute' left={0} top={0} height={'100%'} width={'2px'} bg='brand.text_blue'/>}
                                 {selectedElements &&
                                     <Flex onClick={(e) => e.stopPropagation()}> 
                                         <CustomCheckbox id={`checkbox-${index}`}  onChange={() => handleCheckboxChange(index, !selectedElements.includes(index))} isChecked={selectedElements.includes(index)} />
                                     </Flex>}
-                                    {columns.map((column:string, index:number) => (
-                                        <Fragment key={`header-${index}`}>
+                                    {columns.map((column:string, index2:number) => (
+                                        <Fragment key={`header-${index}-${index2}`}>
                                             {(!(excludedKeys.includes(column)) && column in row) && 
                                                 <Flex minW={0}  alignItems={'center'}  flex={`${(columnsMap?.[column]?.[1] || 180)/10} 0 ${(columnsMap?.[column]?.[1] || 180)}px`}> 
                                                     {(columnsMap?.[column] !== undefined) ?

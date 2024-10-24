@@ -15,13 +15,13 @@ import parseMessageToBold from '../../Functions/parseToBold'
 //ICONS
 import { FaCheckCircle , FaTimesCircle} from 'react-icons/fa'
 import { IoChatboxOutline } from 'react-icons/io5'
-import { PiTicketLight } from "react-icons/pi";
+import { PiTicketLight } from "react-icons/pi"
 import { IconType } from 'react-icons'
 
 //TYPING
 interface ShowToastOptions {
     message: string
-    type?: 'failed' | 'works' | 'ticket' | 'message'
+    type?: 'failed' | 'works' | 'conversation' | 'message'
     duration?: number
     position?: ToastPosition
     linkPath?: boolean
@@ -34,7 +34,7 @@ interface ShowToastOptions {
 const showToast = ({message, duration = 3000, position = 'top-right', type = 'works', linkPath=false, id, navigate, isDesktop = false}: ShowToastOptions) => {
   
   //ICONS MAP
-  const iconsMap:{[key in 'failed' | 'works' | 'ticket' | 'message']:[IconType, string]} = {'works':[FaCheckCircle, '#48BB78'], 'failed':[FaTimesCircle, '#E53E3E'], 'ticket':[PiTicketLight,'#2D3748'], 'message':[IoChatboxOutline,'#A0AEC0']}
+  const iconsMap:{[key in 'failed' | 'works' | 'conversation' | 'message']:[IconType, string]} = {'works':[FaCheckCircle, '#48BB78'], 'failed':[FaTimesCircle, '#E53E3E'], 'conversation':[PiTicketLight,'#2D3748'], 'message':[IoChatboxOutline,'#A0AEC0']}
 
   //STYLING THE TOAST
   const toastStyles = {
@@ -57,9 +57,8 @@ const showToast = ({message, duration = 3000, position = 'top-right', type = 'wo
 
       const [showLink, setShowLink] = useState(false)
 
-      console.log(message)
       return(
-        <Flex gap='20px' alignItems="center" cursor={linkPath ? 'pointer':'normal'}  onMouseOver={() => setShowLink(true)}  onMouseLeave={() => setShowLink(false)} onClick={() => {if (linkPath) {navigate(`/tickets/ticket/${id}`)}}}>
+        <Flex gap='20px' alignItems="center" cursor={linkPath ? 'pointer':'normal'}  onMouseOver={() => setShowLink(true)}  onMouseLeave={() => setShowLink(false)} onClick={() => {if (linkPath) {navigate(`/conversations/conversation/${id}`)}}}>
           <Text fontSize={'.9em'} color='black'>{parseMessageToBold(message, linkPath && showLink)}</Text>
         </Flex>
     )}

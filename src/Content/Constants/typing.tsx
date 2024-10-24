@@ -24,18 +24,18 @@ export interface userInfo {
 
 //VIEWS
 interface Condition {
-    column: TicketColumn
+    column: ConversationColumn
     operation_type: 'geq' | 'leq' | 'eq'
     value: any
 }
 interface Order {
-    column: TicketColumn
+    column: ConversationColumn
     order: string
 }
 export interface View {
     created_at?:string
     name?: string
-    columns: TicketColumn[]
+    columns: ConversationColumn[]
     all_conditions: Condition[]
     any_conditions: Condition[]
     order_by: Order
@@ -43,20 +43,20 @@ export interface View {
 export interface Views {
     private_views: View[]
     shared_views: View[]
-    number_of_tickets_per_shared_view?:number[]
-    number_of_tickets_per_private_view?:number[]
-    number_of_tickets_in_bin?:number
+    number_of_conversations_per_shared_view?:number[]
+    number_of_conversations_per_private_view?:number[]
+    number_of_conversations_in_bin?:number
 }
 export interface ViewType {type:'private' | 'shared' | 'deleted', index:number, name:string}
  
 
 //HEADER SECTIONS
-export type HeaderSectionType = (description: string, code: number, section: 'ticket' | 'client' | 'contact-business', local_id?:number) => void
+export type HeaderSectionType = (description: string, code: number, section: 'conversation' | 'client' | 'contact-business', local_id?:number) => void
 export type DeleteHeaderSectionType = (element:{description: string, code: number, local_id?:number, type: string}) => void
 
 
-//TICKETS TABLE
-export type TicketColumn = 
+//CONVERSATIONS TABLE
+export type ConversationColumn = 
     'id'
   | 'local_id'
   | 'user_id'
@@ -65,7 +65,7 @@ export type TicketColumn =
   | 'updated_at'
   | 'solved_at'
   | 'title'
-  | 'subject'
+  | 'theme'
   | 'urgency_rating'
   | 'status'
   | 'deletion_date'
@@ -74,14 +74,14 @@ export type TicketColumn =
 
   
 
-type ColumnsTicketsMap = {[key in TicketColumn]: number}
+type ColumnsConversationsMap = {[key in ConversationColumn]: number}
   
-export const columnsTicketsMap: ColumnsTicketsMap = {
+export const columnConversationsMap: ColumnsConversationsMap = {
     id: 50,
     local_id: 50 ,
     status:  100,
     channel_type: 150,
-    subject:  200,
+    theme:  200,
     user_id: 200,
     created_at: 150,
     updated_at: 150,
@@ -93,25 +93,25 @@ export const columnsTicketsMap: ColumnsTicketsMap = {
     unseen_changes: 250,
   }
 
-export interface TicketsTableProps {
+export interface ConversationsTableProps {
     'id': number
     'local_id': number
     [key:string]: number | string | boolean
  }
-export interface Tickets {
-    'total_tickets':number
+export interface Conversations {
+    'total_conversations':number
     'page_index':number
-    'page_data':TicketsTableProps[]
-    'ticket_ids'?:number[]
+    'page_data':ConversationsTableProps[]
+    'conversations_ids'?:number[]
 }
-export interface ClientTicketsProps{
+export interface ClientConversationsProps{
     'status':'new' | 'open' |'solved' | 'pending' | 'closed'
     'created_at':string
     'title':string
 }
 
-//TICKET SECTION
-export interface TicketData {
+//CONVERSATIONS SECTION
+export interface ConversationsData {
     id: number
     local_id: number
     user_id:number
@@ -121,11 +121,11 @@ export interface TicketData {
     created_at: string
     updated_at: string
     solved_at: string
-    subject: string
+    theme: string
     urgency_rating: number
     status: 'new' | 'open' |'solved' | 'pending' | 'closed'
     unseen_changes: boolean
-    custom_attributes:any[]
+    custom_attributes:{ [key: string]: any }
 }
 
 
@@ -209,11 +209,10 @@ export interface ClientData {
     notes: string
     labels: string
     is_blocked:boolean
-    custom_attributes:any[]
-
+    custom_attributes:{ [key: string]: any }
   }
 export interface Clients {
-    'total_clients':number
+    'total_contacts':number
     'page_index':number
     'page_data':ClientData[]
 }
@@ -247,7 +246,7 @@ export interface ContactBusiness {
     labels: string
     created_at:string
     last_interaction_at: string
-    custom_attributes:any[]
+    custom_attributes:{ [key: string]: any }
 }
 
 //FLOWS
@@ -279,11 +278,22 @@ export const columnsFlowsMap: ColumnsMap = {
  }
 
  //FUNCTIONS
- export interface FunctionsData {
+ export interface FunctionTableData  {
     uuid:string
     name:string
     description:string
     number_of_errors:number
+    is_active:boolean
+ }
+ export interface FunctionsData {
+    uuid:string
+    name:string
+    description:string
+    code:string
+    is_active:boolean
+    parameters:{confirm: boolean, description:string, name: string, required: boolean, type: string, default:any, enum:any[]}[]
+    channels_basic_data:{channel_type: string, display_id: string, id: string, is_active: boolean, name: string, uuid: string}[]
+    errors: {message: string, line: number, timestamp: string, arguments: {name: string, type: string, value: any}[]}[] 
 }
 
  
@@ -301,7 +311,7 @@ export type FlowMessage = {
 }
 
 export type FieldAction = {
-    motherstructure:'ticket' | 'client' | 'contact_business'
+    motherstructure:'conversation' | 'contact' | 'contact_business'
     is_customizable:boolean
     name:string
     operation?:string
@@ -310,7 +320,7 @@ export type FieldAction = {
 export type FunctionType = {
     uuid:string
     variable_args:{[key:string]:number}
-    motherstructure_args:{[key:string]:{motherstructure:'ticket' | 'client' | 'contact_business',is_customizable:boolean, name:string }}
+    motherstructure_args:{[key:string]:FieldAction}
     hardcoded_args:{[key:string]:string}
     error_nodes_ids:{[key:number]:number | null}
     next_node_index:string | null
@@ -327,7 +337,6 @@ export type MessagesProps = {
 }
 export type MessagesData = {
     messages:MessagesProps[]
-    extracted_data:{[key:string]:any} |  null
     scheduled_messages:MessagesProps[]
 }
 
@@ -393,6 +402,9 @@ export interface configProps {
     agent_transfer_message: string
     out_of_business_agent_transfer_message: string
     allow_variable_confirmation: boolean
+    contact_all_conditions: FieldAction[]
+    contact_any_conditions: FieldAction[]
+
  }
 
 //CONDITIONS TYPES
@@ -401,7 +413,7 @@ export type DataTypes = 'bool' | 'int' | 'float' | 'str' | 'timestamp' | 'list'
 //CONTENT TYPES
 export interface ContentData {
     uuid: string 
-    type: 'internal_article' | 'public_article' | 'folder' | 'pdf' | 'snippet' | 'website'
+    type: 'internal_article' | 'public_article' | 'folder' | 'pdf' | 'snippet' | 'website' | 'subwebsite'
     title: string
     folder_uuid?:string
     description?: string
@@ -415,7 +427,7 @@ export interface ContentData {
     is_ingested?:boolean
     public_article_help_center_collections:string[]
     public_article_common_uuid?: string
-    public_article_status: 'active' | 'draft'
+    public_article_status: 'published' | 'draft'
     content?: any,
     public_article_content?: {text: string}
     internal_article_content?: {text: string},

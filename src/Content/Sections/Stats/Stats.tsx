@@ -20,13 +20,13 @@ import { FaClipboardList } from "react-icons/fa"
 
 //STATS SECTIONS
 const Users = lazy(() => import('./Sections/Users'))
-const Tickets = lazy(() => import('./Sections/Tickets'))
+const Conversations = lazy(() => import('./Sections/Conversations'))
 const Matilda = lazy(() => import('./Sections/Matilda'))
 const CSAT = lazy(() => import('./Sections/CSAT'))
 
  
 //TYPING
-type IconKey = 'tickets' | 'matilda' | 'users' | 'csat'
+type IconKey = 'conversations' | 'matilda' | 'users' | 'csat'
 type filter = {'initial_date':string, 'final_date':string, 'channel_types':string[]}
 
 
@@ -36,15 +36,15 @@ function Stats () {
     //CONSTANTS
     const { t } = useTranslation('stats')
     const auth = useAuth()
-    const sectionsMap: Record<IconKey, [string, ReactElement]> = {tickets: [t('Tickets'),<FaTicket/>], matilda: ['Matilda',<FaRobot/>], users: [t('Users'),<IoPeople/>], csat:[t('CSAT'),<FaClipboardList/> ]}
-    const sectionsList: IconKey[] = ['tickets', 'matilda', 'users', 'csat']
-    const curentSectionTickets = localStorage.getItem('curentSectionTickets') || 'tickets'
+    const sectionsMap: Record<IconKey, [string, ReactElement]> = {conversations: [t('Conversations'),<FaTicket/>], matilda: ['Tilda',<FaRobot/>], users: [t('Users'),<IoPeople/>], csat:[t('CSAT'),<FaClipboardList/> ]}
+    const sectionsList: IconKey[] = ['conversations', 'matilda', 'users', 'csat']
+    const curentSection = localStorage.getItem('curentSectionStats') || 'conversations'
 
     //BOOLEAN FOR WAIT THE FILTERS
     const [waitingFilters, setWaitingFilters] = useState<boolean>(false)
 
     //NAVIGATE LOGIC
-    const [selectedSection, setSelectedSection] =  useState<IconKey>(curentSectionTickets as IconKey)
+    const [selectedSection, setSelectedSection] =  useState<IconKey>(curentSection as IconKey)
 
 
     const navigate = useNavigate()
@@ -64,7 +64,7 @@ function Stats () {
 
     //GLOBAL INFO 
     const [sectionsData, setSectionsData] = useState<{[key in IconKey]:null | Object}>({
-        'tickets':null,
+        'conversations':null,
         'matilda':null,
         'users':null,
         'csat':null,
@@ -72,7 +72,7 @@ function Stats () {
 
     //GLOBAL FILTERS
     const [sectionsFilters, setSectionFilters] = useState<{[key in IconKey]:filter}>({
-        'tickets':{'initial_date':obtainDates().startDate,'final_date':obtainDates().endDate, 'channel_types':[]},
+        'conversations':{'initial_date':obtainDates().startDate,'final_date':obtainDates().endDate, 'channel_types':[]},
         'matilda':{'initial_date':obtainDates().startDate,'final_date':obtainDates().endDate,'channel_types':[]},
         'users':{'initial_date':obtainDates().startDate,'final_date':obtainDates().endDate, 'channel_types':[]},
         'csat':{'initial_date':obtainDates().startDate,'final_date':obtainDates().endDate, 'channel_types':[]}
@@ -122,14 +122,14 @@ function Stats () {
     useEffect(() => {
 
         if (sectionsData[selectedSection] === null) {
-            fetchData({auth:auth, endpoint:`superservice/${auth.authData.organizationId}/admin/statistics/${selectedSection}`, setValue:(data:any) => setSectionsData({...sectionsData, [selectedSection]:data}), params:sectionsFilters[selectedSection]})
+            fetchData({auth:auth, endpoint:`${auth.authData.organizationId}/admin/statistics/${selectedSection}`, setValue:(data:any) => setSectionsData({...sectionsData, [selectedSection]:data}), params:sectionsFilters[selectedSection]})
         }
     },[selectedSection])
 
     //FECTCH DATA ON FILTER UPLOAD
     const uploadFilters = (newFilters:filter) => {
         if (JSON.stringify(newFilters) !== JSON.stringify(sectionsFilters[selectedSection])){
-            fetchData({auth:auth, endpoint:`superservice/${auth.authData.organizationId}/admin/statistics/${selectedSection}`, setValue:(data:any) => setSectionsData({...sectionsData, [selectedSection]:data}), setWaiting:setWaitingFilters,params:newFilters})
+            fetchData({auth:auth, endpoint:`${auth.authData.organizationId}/admin/statistics/${selectedSection}`, setValue:(data:any) => setSectionsData({...sectionsData, [selectedSection]:data}), setWaiting:setWaitingFilters,params:newFilters})
             setSectionFilters(prevFilters => ({...prevFilters, [selectedSection]:newFilters}))
         }
     }
@@ -161,7 +161,7 @@ function Stats () {
                 <Suspense fallback={<></>}>    
                     <Routes >
                         <Route path="/users" element={<Users waitingFilters={waitingFilters} data={sectionsData.users} />} />
-                        <Route path="/tickets" element={<Tickets waitingFilters={waitingFilters}  data={sectionsData.tickets} />} />
+                        <Route path="/conversations" element={<Conversations waitingFilters={waitingFilters}  data={sectionsData.conversations} />} />
                         <Route path="/matilda" element={<Matilda waitingFilters={waitingFilters} data={sectionsData.matilda} />} />
                         <Route path="/csat" element={<CSAT waitingFilters={waitingFilters} data={sectionsData.csat} />} />
                     </Routes>

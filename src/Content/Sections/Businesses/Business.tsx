@@ -1,5 +1,5 @@
 /*
-    MAIN CLIENT FUNCTION (clients/client/{client_id} or tickets/ticket/{ticket_id}/client)
+    MAIN CLIENT FUNCTION 
 */
 
 import { useState, useRef, useEffect, ChangeEvent, KeyboardEvent, Dispatch, SetStateAction } from "react"
@@ -29,7 +29,7 @@ import { Clients, HeaderSectionType, ContactBusinessesTable, Channels, ClientCol
 
 //TYPING
 interface BusinessProps {
-    comesFromTicket:boolean
+    comesFromConversation:boolean
     addHeaderSection:HeaderSectionType
     businessData?:ContactBusinessesTable | null
     setBusinessData?:Dispatch<SetStateAction<ContactBusinessesTable | null>>
@@ -77,7 +77,7 @@ const CellStyle = ({ column, element }:{column:string, element:any}) => {
 }
  
 //MAIN FUNCTION
-function Business ({comesFromTicket, socket, addHeaderSection, businessData, setBusinessData, businessClients, setBusinessClients  }: BusinessProps) {
+function Business ({comesFromConversation, socket, addHeaderSection, businessData, setBusinessData, businessClients, setBusinessClients  }: BusinessProps) {
     
     //CONSTANTS
     const auth = useAuth()
@@ -103,8 +103,8 @@ function Business ({comesFromTicket, socket, addHeaderSection, businessData, set
     })},[])
 
     //BUSINESS DATA
-    const [businessDataEdit, setBusinessDataEdit] = useState<ContactBusinessesTable | null>(comesFromTicket ? businessData ?? null : null)
-    const businessDataEditRef = useRef<ContactBusinessesTable | null>(comesFromTicket ? businessData ?? null : null)
+    const [businessDataEdit, setBusinessDataEdit] = useState<ContactBusinessesTable | null>(comesFromConversation ? businessData ?? null : null)
+    const businessDataEditRef = useRef<ContactBusinessesTable | null>(comesFromConversation ? businessData ?? null : null)
     useEffect(() => {
         if (businessData) {
             businessDataEditRef.current = businessData
@@ -113,7 +113,7 @@ function Business ({comesFromTicket, socket, addHeaderSection, businessData, set
     }, [businessData])
 
     //TABLE OF CLIENTS
-    const [businessClientsEdit, setBusinessClientsEdit] = useState<Clients | null>(comesFromTicket ? businessClients ?? null : null)
+    const [businessClientsEdit, setBusinessClientsEdit] = useState<Clients | null>(comesFromConversation ? businessClients ?? null : null)
     const [clientsFilters, setClientsFilters ] = useState<{page_index:number, channel_types:Channels[], sort_by?:ClientColumn , search?:string, order?:'asc' | 'desc'}>({page_index:1, channel_types:[]}) 
     useEffect(() => {
         if (businessClients) setBusinessClientsEdit(businessClients)       
@@ -123,7 +123,7 @@ function Business ({comesFromTicket, socket, addHeaderSection, businessData, set
     useEffect(() => { 
         const loadData = async () => {
 
-            if (!comesFromTicket) {
+            if (!comesFromConversation) {
 
                 //FIND BUSINESS ELEMENT IN SECTIONS
                 const businessId = parseInt(location.split('/')[location.split('/').length - 1])
@@ -140,17 +140,17 @@ function Business ({comesFromTicket, socket, addHeaderSection, businessData, set
                     businessDataEditRef.current = businessElement.data.businessData
                     if (businessElement.data.businessClients) setBusinessClientsEdit(businessElement.data.businessClients)
                     else {
-                        const businessClientsResponse = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/clients`, params:{page_index:1, contact_business_id:businessElement.data.businessData.id}, setValue:setBusinessClientsEdit, auth })
+                        const businessClientsResponse = await fetchData({endpoint:`${auth.authData.organizationId}/contacts`, params:{page_index:1, contact_business_id:businessElement.data.businessData.id}, setValue:setBusinessClientsEdit, auth })
                     }
                 }
 
                 //FETCH THE DATA
                 else {
-                    const businessResponse = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/contact_businesses/${businessId}`, setValue:setBusinessDataEdit,  auth})    
+                    const businessResponse = await fetchData({endpoint:`${auth.authData.organizationId}/contact_businesses/${businessId}`, setValue:setBusinessDataEdit,  auth})    
  
                     if (businessResponse?.status === 200 ) {
                         addHeaderSection(businessResponse.data.name , businessResponse.data.id, 'contact-business')
-                        const businessClientsResponse = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/clients`, params:{page_index:1, contact_business_id:businessResponse.data.id}, setValue:setBusinessClientsEdit, auth })
+                        const businessClientsResponse = await fetchData({endpoint:`${auth.authData.organizationId}/contacts`, params:{page_index:1, contact_business_id:businessResponse.data.id}, setValue:setBusinessClientsEdit, auth })
                         businessDataEditRef.current = businessResponse?.data
                         session.dispatch({type:'UPDATE_HEADER_SECTIONS',payload:{action:'add', data:{type:'business', id: businessId, data:{businessData:businessResponse?.data, businessClients:businessClientsResponse?.data} }}})
                     }
@@ -159,7 +159,7 @@ function Business ({comesFromTicket, socket, addHeaderSection, businessData, set
                 }
             }
             else {
-                if (!businessClients) await fetchData({endpoint:`superservice/${auth.authData.organizationId}/clients`, params:{page_index:1, contact_business_id:businessData?.id}, setValue:setBusinessClients, auth })
+                if (!businessClients) await fetchData({endpoint:`${auth.authData.organizationId}/contacts`, params:{page_index:1, contact_business_id:businessData?.id}, setValue:setBusinessClients, auth })
 
             }
         }
@@ -170,7 +170,7 @@ function Business ({comesFromTicket, socket, addHeaderSection, businessData, set
     const updateTable = async(applied_filters:{page_index:number, channel_types:Channels[], sort_by?:ClientColumn , search?:string, order?:'asc' | 'desc'} | null) => {
 
         let filtersToSend = applied_filters ? applied_filters:{page_index:1, channel_types:[]}
-        const clientsResponse = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/clients`, params:{...filtersToSend, contact_business_id:businessDataEdit?.id}, setValue:setBusinessClientsEdit, auth })         
+        const clientsResponse = await fetchData({endpoint:`${auth.authData.organizationId}/contacts`, params:{...filtersToSend, contact_business_id:businessDataEdit?.id}, setValue:setBusinessClientsEdit, auth })         
         if (clientsResponse?.status == 200) setClientsFilters(filtersToSend)
         
     } 
@@ -180,10 +180,10 @@ function Business ({comesFromTicket, socket, addHeaderSection, businessData, set
         const compareData = newData ?newData:businessDataEdit as ContactBusinessesTable
 
         if (JSON.stringify(businessDataEditRef.current) !== JSON.stringify(compareData)){
-            const updateResponse = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/contact_businesses/${businessDataEdit?.id}`, auth:auth, requestForm:compareData, method:'put', toastMessages:{'works':`La empresa #/{${businessDataEdit?.id}}/ se actualizó correctamente.`,'failed':`Hubo un problema al actualizar la información.`}})
+            const updateResponse = await fetchData({endpoint:`${auth.authData.organizationId}/contact_businesses/${businessDataEdit?.id}`, auth:auth, requestForm:compareData, method:'put', toastMessages:{'works':`La empresa #/{${businessDataEdit?.id}}/ se actualizó correctamente.`,'failed':`Hubo un problema al actualizar la información.`}})
             if (updateResponse?.status === 200) {
                 businessDataEditRef.current = compareData
-                if (comesFromTicket && setBusinessData) setBusinessData(compareData)
+                if (comesFromConversation && setBusinessData) setBusinessData(compareData)
             }
         }
     }
@@ -244,7 +244,7 @@ function Business ({comesFromTicket, socket, addHeaderSection, businessData, set
     const handelChangeName = (value:string) => {if (businessDataEdit) setBusinessDataEdit(prevData => prevData ? ({ ...prevData, name:value}) as ContactBusinessesTable : null)}
     
     return (<> 
-        {!comesFromTicket && 
+        {!comesFromConversation && 
             <Flex px='30px' height='60px' bg='#e8e8e8' borderBottomWidth={'1px'} borderBottomColor='gray.200' flex='1' alignItems={'center'} >
                 <Flex borderRadius={'.3rem'} height={'70%'}  alignItems={'center'} borderWidth={'1px 1px 1px 1px'}  borderColor='gray.300'> 
                     <Flex alignItems='center' gap='6px' cursor={'pointer'}  bg={'gray.300'} height={'100%'}  borderRightWidth={'1px'} borderRightColor='gray.300'  px={{md:'10px',lg:'20px'}}> 
@@ -326,7 +326,7 @@ function Business ({comesFromTicket, socket, addHeaderSection, businessData, set
             </Skeleton>
 
             <Flex p='10px' alignItems={'center'} justifyContent={'end'} gap='10px' flexDir={'row-reverse'}>
-                    <IconButton isRound size='xs' aria-label='next-page' icon={<IoIosArrowForward />} isDisabled={clientsFilters.page_index > Math.floor((businessClientsEdit?.total_clients || 0)/ 25)} onClick={() => updateTable({...clientsFilters,page_index:clientsFilters.page_index + 1})}/>
+                    <IconButton isRound size='xs' aria-label='next-page' icon={<IoIosArrowForward />} isDisabled={clientsFilters.page_index > Math.floor((businessClientsEdit?.total_contacts || 0)/ 25)} onClick={() => updateTable({...clientsFilters,page_index:clientsFilters.page_index + 1})}/>
                     <Text fontWeight={'medium'} fontSize={'.9em'} color='gray.600'>{t('Page')} {clientsFilters.page_index}</Text>
                     <IconButton isRound size='xs' aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={clientsFilters.page_index === 1} onClick={() => updateTable({...clientsFilters,page_index:clientsFilters.page_index - 1})}/>
                 </Flex>

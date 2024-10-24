@@ -45,23 +45,21 @@ const CustomSelect = <T extends string | number>({options, selectedItem, setSele
     useOutsideClick({ref1:buttonRef, ref2:boxRef, containerRef, onOutsideClick:setShowList})
 
     //BOX POSITION LOGIC, TO SHOW IT UP OR DOWN OF THE INPUT, DEPENDING ON THE POSITION
-    const [boxPosition, setBoxPosition] = useState<'top' | 'bottom'>('bottom')
     const [boxStyle, setBoxStyle] = useState<CSSProperties>({})
-    determineBoxStyle({buttonRef, setBoxStyle, setBoxPosition, changeVariable:showList})
-
+    determineBoxStyle({buttonRef, setBoxStyle, boxPosition:'none', changeVariable:showList})
 
     //FRONT
     return(
         <Box position={'relative'}>
-            <Flex bg={isDisabled ? 'gray.300':'transaprent'} cursor={isDisabled ? 'not-allowed':'pointer'} alignItems={'center'} ref={buttonRef} height={'37px'} fontSize={'.9em'}  onClick={()=>{if (!isDisabled) setShowList(!showList)}} border={showList ? "3px solid rgb(59, 90, 246)": hide ? "1px solid transparent": "1px solid #CBD5E0"} justifyContent={'space-between'} px={hide?showList?'5px':'7px':showList?'11px':'13px'} py={showList ? "5px" : "7px"} borderRadius='.5rem' _hover={{border:showList?'3px solid rgb(59, 90, 246)':'1px solid #CBD5E0'}}>
-                <Text color={isDisabled ? 'gray.500':'black'}  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{(labelsMap && selectedItem !== undefined)?labelsMap[selectedItem]:iconsMap?.[selectedItem as T]?iconsMap[selectedItem][0]:selectedItem}</Text>
+            <Flex bg={isDisabled ? 'brand.gray_1':'transaprent'} cursor={isDisabled ? 'not-allowed':'pointer'} alignItems={'center'} ref={buttonRef} height={'37px'} fontSize={'.9em'}  onClick={()=>{if (!isDisabled) setShowList(!showList)}} border={showList ? "3px solid rgb(59, 90, 246)": hide ? "1px solid transparent": "1px solid #CBD5E0"} justifyContent={'space-between'} px={hide?showList?'5px':'7px':showList?'11px':'13px'} py={showList ? "5px" : "7px"} borderRadius='.5rem' _hover={{border:showList?'3px solid rgb(59, 90, 246)':'1px solid #CBD5E0'}}>
+                <Text color={isDisabled ? 'gray.600':'black'}  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{(labelsMap && selectedItem !== undefined)?labelsMap[selectedItem]:iconsMap?.[selectedItem as T]?iconsMap[selectedItem][0]:selectedItem}</Text>
                 <IoIosArrowDown className={showList ? "rotate-icon-up" : "rotate-icon-down"}/>
             </Flex>
             <AnimatePresence> 
                 {showList && 
                     <Portal>
-                        <MotionBox initial={{ opacity: 0, marginTop: boxPosition === 'bottom'?-10:10 }} animate={{ opacity: 1, marginTop: 0 }}  exit={{ opacity: 0,marginTop: boxPosition === 'bottom'?-10:10}} transition={{ duration: '.2', ease: 'easeOut'}}
-                        top={boxStyle.top} bottom={boxStyle.bottom}right={boxStyle.right} width={boxStyle.width} maxH='40vh' overflow={'scroll'} gap='10px' ref={boxRef} fontSize={'.9em'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000}   position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
+                        <MotionBox initial={{ opacity: 0, marginTop:-10, marginBottom:-10 }} animate={{ opacity: 1, marginTop: 0,marginBottom:0 }}  exit={{ opacity: 0,marginTop:-10,marginBottom:-10}} transition={{ duration: '.2', ease: 'easeOut'}}
+                        top={boxStyle.top} bottom={boxStyle.bottom}left={boxStyle.left} width={boxStyle.width} maxH='40vh' overflow={'scroll'} gap='10px' ref={boxRef} fontSize={'.9em'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000}   position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
                             {options.map((option:T, index:number) => (
                                 <Flex key={`${selectedItem}-option-${index}`} px='10px' bg={disabledOptions?.includes(option)?'gray.200':'transparent'}   py='7px' cursor={disabledOptions?.includes(option)?'not-allowed':'pointer'} justifyContent={'space-between'} alignItems={'center'} color={selectedItem === option?'brand.text_blue':'black'} _hover={{bg:disabledOptions?.includes(option)?'gray.200':'brand.hover_gray'}}
                                     onClick={() => {if (!disabledOptions?.includes(option)) {setSelectedItem(option as T); setShowList(false); setTimeout( () => updateData(), 0)} }}>

@@ -1,108 +1,34 @@
  //REACT
-import { useState, useEffect, useRef, Dispatch, SetStateAction, ReactNode, KeyboardEvent, useMemo } from "react"
+import { useState, useEffect, useRef, Dispatch, SetStateAction, useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { useAuth } from "../../../AuthContext"
 import { useLocation, useNavigate } from "react-router-dom"
 //FETCH DATA
 import fetchData from "../../API/fetchData"
 //FRONT
-import { Flex, Skeleton, Box, Text, Icon, chakra, shouldForwardProp, Tooltip, Button, IconButton, Input, Switch, Textarea } from "@chakra-ui/react"
-import { motion, AnimatePresence, isValidMotionProp } from 'framer-motion'
+import { Flex, Skeleton, Box, Text, chakra, shouldForwardProp, Button, IconButton } from "@chakra-ui/react"
+import { motion, isValidMotionProp } from 'framer-motion'
 import "../../Components/styles.css"
 import ReactQuill, { Quill } from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
 import 'quill-divider'
-//import QuillTable from 'quill-table'
 //COMPONENTS
 import ConfirmBox from "../../Components/Reusable/ConfirmBox"
+import { SourceSideBar } from "./Utils"
 //FUNCTIONS
 import parseMessageToBold from "../../Functions/parseToBold"
-import timeStampToDate from "../../Functions/timeStampToString"
-import timeAgo from "../../Functions/timeAgo"
+import generateUUID from "../../Functions/generateUuid"
 //ICONS
-import { FaFolder,FaLink, FaCode, FaLock, FaFilePdf, FaFileLines, FaAlignCenter, FaAlignJustify, FaAlignLeft, FaAlignRight, FaImage, FaTable, FaListOl, FaListUl } from "react-icons/fa6"
-import { IoBook } from "react-icons/io5"
-import { IoIosArrowDown } from "react-icons/io"
-import { RxCross2, } from "react-icons/rx"
-import { BsTypeH1, BsTypeH2, BsTypeH3, BsTypeH4, BsTypeBold, BsTypeItalic,  BsTypeUnderline } from "react-icons/bs";
-import { MdVideoLibrary } from "react-icons/md"
-import { TbLayoutDistributeVerticalFilled } from "react-icons/tb"
-import { PiCursorClickFill, PiSidebarSimpleBold } from "react-icons/pi"
-import { BiWorld } from "react-icons/bi"
-
+import { FaLink } from "react-icons/fa6"
+import { BsTypeH1, BsTypeH2, BsTypeBold, BsTypeItalic,  BsTypeUnderline } from "react-icons/bs";
+import { PiSidebarSimpleBold } from "react-icons/pi"
 //TYPING
-import { ContentData, languagesFlags } from "../../Constants/typing" 
+import { ContentData } from "../../Constants/typing" 
 import { BsTrash3Fill } from "react-icons/bs"
 import LoadingIconButton from "../../Components/Reusable/LoadingIconButton"
- 
-
-function generateUUID() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-    })
-}
-
-
-const TypesComponent = ({t,  type }:{t:any, type:'internal_article' | 'public_article' | 'folder' | 'pdf' | 'text' | 'web'}) => {
-    const getAlertDetails = (type:'internal_article' | 'public_article' | 'folder' | 'pdf' | 'text' | 'web') => {
-        switch (type) {
-            case 'internal_article':
-                return { color1: 'yellow.100', color2:'yellow.200', icon: FaLock, label: t('InternalArticle') }
-            case 'public_article':
-                return { color1: 'blue.100', color2:'blue.200', icon: IoBook, label: t('PublicArticle')  }
-            case 'folder':
-                return { color1: 'brand.gray_1', color2:'gray.300', icon: FaFolder, label: t('Folder')  }
-            case 'pdf':
-                return { color1: 'brand.gray_1', color2:'gray.300', icon: FaFilePdf, label: t('Pdf')  }
-            case 'text':
-                return { color1: 'brand.gray_1', color2:'gray.300', icon: FaFileLines, label: t('Text')  }
-            case 'web':
-                return { color1: 'brand.gray_1', color2:'gray.300', icon: BiWorld, label: t('Web')  }
-        }
-    }
-    const { color1, color2, icon, label } = getAlertDetails(type)
-    return (
-        <Flex  display={'inline-flex'}  gap='10px' alignItems="center" borderRadius={'1rem'} borderColor={color2} borderWidth={'1px'} py='2px' px='5px' bg={color1}>
-            <Icon as={icon} />
-            <Text >
-                {label}
-            </Text>
-        </Flex>
-    )
-} 
-//GET THE CELL STYLE
-const CellStyle = ({ column, element }:{column:string, element:any}) => {
-     
-    //TRANSLATION
-    const { t } = useTranslation('knowledge')
-    const t_formats = useTranslation('formats').t
-    const auth = useAuth()
-
-    if (column === 'created_at' ||  column === 'updated_at' )  
-    return(
-        <Tooltip label={timeStampToDate(element as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
-            <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(element as string, t_formats)}</Text>
-        </Tooltip>)
-     
-    else if (column === 'language') {
-        return(
-        <Flex gap='5px' alignItems={'center'}>
-            <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{typeof element === 'string' && element in languagesFlags ?languagesFlags[element][0]:'No detectado'}</Text>
-            <Text fontSize={'.8em'}>{typeof element === 'string' && element in languagesFlags ?languagesFlags[element][1]:'🏴󠁥󠁳󠁣󠁴󠁿'}</Text>
-        </Flex>)
-    }   
-    else if (column === 'type') return <TypesComponent t={t} type={element}/>
-    else if (column === 'created_by' || column === 'updated_by') return <Text fontWeight={'medium'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element === -1 ?'Matilda':element === 0 ? t('NoAgent'):(auth?.authData?.users?.[element as string | number].name || '')}</Text>
-    else return ( <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'}  fontWeight={column === 'title'?'medium':'normal'}  overflow={'hidden'} >{element === ''?'-':element}</Text>)
-
-}
-
-
 
 //MOTION BOX
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)}) 
-const dataKeys:string[] = [ 'type', 'language', 'created_at', 'updated_at', 'created_by', 'updated_by']
 
 const TextSection = () => {
 
@@ -117,7 +43,7 @@ const TextSection = () => {
         type: 'snippet',
         title: '',
         description: '',
-        language: 'ES',
+        language: auth.authData.userData?.language || 'ES',
         is_available_to_tilda: false,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -130,16 +56,9 @@ const TextSection = () => {
     }
 
     //SECTIONS EXPANDED
-    const [sectionsExpanded, setSectionsExpanded] = useState<string[]>(['Data', 'Tilda', 'HelpCenter', 'tags', 'Folder' ])
     const firstSendedRef = useRef<boolean>(true)
 
-    const onSectionExpand = (section: string) => {
-        setSectionsExpanded((prevSections) => {
-          if (prevSections.includes(section))return prevSections.filter((s) => s !== section)
-          else return [...prevSections, section]
-        })
-      }
-
+     
     //ARTICLE DATA 
     const articleDataRef = useRef<ContentData | null>(null)
     const [articleData, setArticleData] = useState<ContentData | null>(null)
@@ -149,7 +68,7 @@ const TextSection = () => {
         const articleId = location.split('/')[3]
         
         const fetchInitialData = async() => {
-            const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/knowledge/sources/${articleId}`, auth, setValue:setArticleData})
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources/${articleId}`, auth, setValue:setArticleData})
             if (response?.status === 200) articleDataRef.current = response?.data
         }
 
@@ -165,8 +84,8 @@ const TextSection = () => {
     const saveChanges = async () => {
         const articleId = location.split('/')[3]
         let response
-        if (articleId.startsWith('create') && firstSendedRef.current) response =  await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/knowledge/sources`, method:'post', setWaiting:setWaitingSave, requestForm:articleData  as ContentData, auth, toastMessages:{works:t('CorrectSavedInfo'), failed:t('FailedSavedInfo')} }) 
-        else response = response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/knowledge/sources/${articleData?.uuid}`, method:'put', setWaiting:setWaitingSave, requestForm:articleData as ContentData, auth, toastMessages:{works:t('CorrectSavedInfo'), failed:t('FailedSavedInfo')} })
+        if (articleId.startsWith('create') && firstSendedRef.current) response =  await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`, method:'post', setWaiting:setWaitingSave, requestForm:articleData  as ContentData, auth, toastMessages:{works:t('CorrectSavedInfo'), failed:t('FailedSavedInfo')} }) 
+        else response = response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources/${articleData?.uuid}`, method:'put', setWaiting:setWaitingSave, requestForm:articleData as ContentData, auth, toastMessages:{works:t('CorrectSavedInfo'), failed:t('FailedSavedInfo')} })
 
         if (response?.status === 200) articleDataRef.current = articleData
         firstSendedRef.current = false
@@ -176,30 +95,6 @@ const TextSection = () => {
 
     //SHOW DELETE BOX
     const [showDeleteBox, setShowDeleteBox] = useState<boolean>(false)
-
-    //TAGS LOGIC
-    const [inputValue, setInputValue] = useState<string>('')
-    const handleKeyDown = (event:KeyboardEvent<HTMLDivElement>) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault()
-          const newTag = inputValue.trim()
-          if (newTag) {
-            let newArticleData:ContentData | null = null
-            const labelsArray = articleData?.tags || []
-            labelsArray.push(newTag)
-            newArticleData = { ...articleData as ContentData, tags: labelsArray }
-            setArticleData(newArticleData)
-            setInputValue('')
-          }
-        }
-      } 
-    const removeTag = (index: number) => {
-        let newArticleData:ContentData | null = null
-        const labelsArray = articleData?.tags || []
-        labelsArray.splice(index, 1)
-        newArticleData = { ...articleData as ContentData, tags: labelsArray}
-        setArticleData(newArticleData)
-    }
 
     const [clientBoxWidth, setClientBoxWidth] = useState(400)
     const sendBoxWidth = `calc(100vw - 335px - ${clientBoxWidth}px)`
@@ -211,7 +106,7 @@ const TextSection = () => {
         //FUNCTION FOR CREATE A NEW BUSINESS
         const deleteArticle= async () => {
             const articleId = location.split('/')[3]
-            const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/knowledge/sources/${articleId}`, method:'delete',  auth, toastMessages:{works:t('CorrectSavedInfo'), failed:t('FailedSavedInfo')} })
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources/${articleId}`, method:'delete',  auth, toastMessages:{works:t('CorrectSavedInfo'), failed:t('FailedSavedInfo')} })
             if (response?.status === 200) navigate('/knowledge/content')
         }
         return(<> 
@@ -227,7 +122,7 @@ const TextSection = () => {
         </>)
     }
     const DeleteBox = useMemo(() => (
-        <ConfirmBox isSectionWithoutHeader setShowBox={setShowDeleteBox}> 
+        <ConfirmBox setShowBox={setShowDeleteBox}> 
             <DeleteArticle/>
         </ConfirmBox>
     ), [showDeleteBox])
@@ -244,96 +139,26 @@ const TextSection = () => {
                 </Skeleton>
                 <Flex gap='15px'>
                     <Button leftIcon={<BsTrash3Fill/>} variant={'delete'} isDisabled={location.split('/')[3].startsWith('create')} size='sm' onClick={() => setShowDeleteBox(true)}>{t('Delete')}</Button>
-                    <Button variant={'common'} size='sm'>{t('Publish')}</Button>
                     <Button variant={'main'} size='sm' isDisabled={JSON.stringify(articleData) === JSON.stringify(articleDataRef.current)} onClick={saveChanges}>{waitingSave?<LoadingIconButton/>:t('SaveChanges')}</Button>
                     {clientBoxWidth === 0 && <IconButton aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'20px'}/>} onClick={() =>setClientBoxWidth(400)}/>}
                 </Flex>
             </Flex>
             <Flex width={'100%'} height={'100%'} justifyContent={'center'}  >
-                <Box  maxW={'750px'} width={'100%'} height={'100%'} py='5vh'>
+                <Box  maxW={'750px'} width={'100%'} height={'100%'} py='2vw'>
                     <Skeleton isLoaded={articleData !== null}> 
                         {articleData !== null && <EditorComponent  articleData={articleData as ContentData}  setArticleData={setArticleData}/>}
                     </Skeleton>
                  </Box>
             </Flex>
         </MotionBox>
-        <MotionBox width={clientBoxWidth + 'px'}  whiteSpace={'nowrap'} initial={{ width: clientBoxWidth + 'px' }} animate={{ width: clientBoxWidth + 'px' }} exit={{ width: clientBoxWidth + 'px' }} transition={{ duration: '.2'}}> 
-            <Flex p='2vh' height={'70px'} justifyContent={'space-between'} alignItems={'center'} borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
-                <Text fontSize={'1.5em'} fontWeight={'medium'}>{t('Information')}</Text>
-                <IconButton aria-label="close-tab" variant={'common'} bg='transparent' size='sm' icon={<RxCross2 size={'20px'}/>} onClick={() =>setClientBoxWidth(0)}/>
-            </Flex>
-            <Box p='2vh' height={'100%'} > 
-
-                <CollapsableSection section={'Data'} isExpanded={sectionsExpanded.includes('Data')} onSectionExpand={onSectionExpand}> 
-                        {dataKeys.map((showKey, index) => (
-                            <Skeleton key={`article-feature-${index}`} isLoaded={articleData !== null}> 
-                                <Flex mt='2vh' key={`article-data-${index}`}>
-                                    <Text flex='1' fontWeight={'medium'} color='gray.600'>{t(showKey)}</Text>
-                                    <Box flex='1' maxW={'50%'}> 
-                                        {(articleData !== null)&&  
-                                            <Box fontSize={'.9em'}>
-                                                <CellStyle column={showKey} element={articleData?.[showKey as keyof ContentData]}/>
-                                            </Box>
-                                        }
-                                     </Box>
-                                </Flex>
-                            </Skeleton>
-                        ))}
-                </CollapsableSection>
-
-                <CollapsableSection section={'Tilda'} isExpanded={sectionsExpanded.includes('Tilda')} onSectionExpand={onSectionExpand}> 
-                    <Flex gap='8px' mt='1vh'  alignItems={'center'}>
-                        <Switch isChecked={articleData?.is_available_to_tilda}  onChange={(e) => setArticleData(prev => ({...prev as ContentData, is_available_to_tilda:e.target.checked}))} />
-                        <Text fontWeight={'medium'} fontSize={'.9em'}>{t('IsAvailableTilda')}</Text>
-                    </Flex>
-                    <Text mt='.5vh' whiteSpace={'normal'} color={'gray.600'} fontSize={'.8em'}>{t('IsAvailableTildaDesText')}</Text>
-
-                </CollapsableSection>
-     
-                <CollapsableSection section={'tags'} isExpanded={sectionsExpanded.includes('tags')} onSectionExpand={onSectionExpand}> 
-                    <Box mt='2vh'  minHeight="30px" maxH="300px" border="1px solid #CBD5E0"   p="5px" _focusWithin={{ borderColor:'transparent', boxShadow:'0 0 0 2px rgb(77, 144, 254)'}} borderRadius=".5rem" overflow="auto" display="flex" flexWrap="wrap" alignItems="center" onKeyDown={handleKeyDown}  tabIndex={0}>
-                        {((articleData?.tags || [])).map((label, index) => (
-                            <Flex key={`label-${index}`} borderRadius=".4rem" p='4px' fontSize={'.75em'} alignItems={'center'} m="1"bg='gray.200' gap='5px'>
-                                <Text>{label}</Text>
-                                <Icon as={RxCross2} onClick={() => removeTag(index)} cursor={'pointer'} />
-                            </Flex>
-                        ))}
-                        <Textarea  maxLength={20} p='5px'  resize={'none'} borderRadius='.5rem' rows={1} fontSize={'.9em'}  borderColor='transparent' borderWidth='0px' _hover={{borderColor:'transparent',borderWidth:'0px'}} focusBorderColor={'transparent'}  value={inputValue}  onChange={(event) => {setInputValue(event.target.value)}}/>
-                    </Box>  
-                </CollapsableSection>
-                <CollapsableSection section={'Folder'} isExpanded={sectionsExpanded.includes('Folder')} onSectionExpand={onSectionExpand}> 
-                    <Flex mt='2vh' bg='brand.gray_2' alignItems={'center'} cursor={'pointer'} borderRadius={'.5rem'} p='10px' gap='10px'>
-                        <Icon as={FaFolder}/>
-                        <Text>{articleData?.folder_uuid?articleData?.folder_uuid:t('NoFolder')}</Text>
-                    </Flex>
-                </CollapsableSection>
-
-            </Box>
-        </MotionBox>
+        <SourceSideBar clientBoxWidth={clientBoxWidth} setClientBoxWidth={setClientBoxWidth} sourceData={articleData} setSourceData={setArticleData}/>
 
     </Flex>
     </>)
 }
 
 export default TextSection
-
-const CollapsableSection = ({ section, isExpanded, onSectionExpand, children}:{section:string, isExpanded:boolean, onSectionExpand:(key:string) => void ,children:ReactNode}) => {
-
-    const { t } = useTranslation('knowledge')
  
-    return (
-        <Box py='3vh' borderBottomColor={'gray.200'} borderBottomWidth={'1px'}> 
-            <Flex cursor={'pointer'} alignItems={'center'} justifyContent={'space-between'} onClick={() => onSectionExpand(section)}>
-                <Text fontWeight={'semibold'}  fontSize={'.9em'}>{t(section).toLocaleUpperCase()}</Text>
-                <IoIosArrowDown color={'gray.600'} className={isExpanded ? "rotate-icon-up" : "rotate-icon-down"}/>
-            </Flex>
-            <motion.div initial={{height:isExpanded?0:'auto', opacity:isExpanded?0:1}} animate={{height:isExpanded?'auto':0, opacity:isExpanded?1:0 }} exit={{height:isExpanded?0:'auto',  opacity:isExpanded?0:1 }} transition={{duration:.2}} style={{overflow:isExpanded?'visible':'hidden'}}>           
-                {children}
-            </motion.div>
-        </Box>
-    )
-}
-
 //CUSTOM TOOLBAR
 const CustomToolbar = ({ quillRef, toolbarPosition }:{quillRef:any, toolbarPosition:{top:number, left:number} | null}) => {
     
@@ -377,8 +202,6 @@ const CustomToolbar = ({ quillRef, toolbarPosition }:{quillRef:any, toolbarPosit
         className="ql-underline" ml='5px' variant={'common'}   icon={<BsTypeUnderline/>} size='sm' aria-label="underline" />
          <IconButton  onClick={() => formatText('link', !activeFormats.link)}  bg={activeFormats.link? 'rgba(59, 90, 246, 0.15)' : 'transparent'} _hover={{bg:activeFormats.link?'rgba(59, 90, 246, 0.25)':'brand.gray_2'}} color={activeFormats.link? 'rgba(59, 90, 246)' : 'black'} 
         className="ql-link" ml='5px' variant={'common'}  icon={<FaLink/>} size='sm' aria-label="link" />
-
-      
     </Flex>
   
     )}
@@ -450,11 +273,13 @@ const EditorComponent = ({articleData, setArticleData}:{articleData:ContentData 
     }
     useEffect(() =>{adjustTextareaHeight(textAreaTitleRef.current)}, [articleData?.title])
 
-    return (<>
+    return (
+        <Flex height={'calc(100vh - 70px - 4vw)'}   flexDir={'column'}>
+
          <Box  px='20px' position={'relative'}> 
             <textarea ref={textAreaTitleRef} value={articleData?.title} className="title-textarea"  onChange={(e) => {setArticleData(prev => ({...prev as ContentData, title:e.target.value}))}}  placeholder={t('NoTitleText')} rows={1}  />
         </Box>
-        <Flex  height={window.innerHeight - (textAreaTitleRef.current?.getBoundingClientRect().bottom || 0) - window.innerWidth * 0.02}  flexDir={'column'} position='relative' alignItems={'center'}> 
+        <Flex  flex='1' flexDir={'column'} position='relative' alignItems={'center'}> 
             <CustomToolbar quillRef={quillRef} toolbarPosition={toolbarPosition} />
             <ReactQuill
                 ref={quillRef}
@@ -468,5 +293,5 @@ const EditorComponent = ({articleData, setArticleData}:{articleData:ContentData 
       
              
         </Flex>
-    </>)
+    </Flex>)
 }

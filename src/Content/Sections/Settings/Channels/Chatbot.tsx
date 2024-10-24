@@ -1,6 +1,6 @@
 
 //REACT
-import  {useState, useEffect, useRef } from 'react'
+import  {useState, useEffect, useRef, useMemo } from 'react'
 import { useAuth } from '../../../../AuthContext'
 import { useTranslation } from 'react-i18next'
 //FETCH DATA
@@ -11,17 +11,21 @@ import '../../../Components/styles.css'
 import { motion, AnimatePresence, isValidMotionProp } from 'framer-motion'
 //COMPONENTS
 import EditText from '../../../Components/Reusable/EditText'
-import ImageUpload from '../../../Components/Once/ImageUpload'
+import ImageUpload from '../../../Components/Reusable/ImageUpload'
 import LoadingIconButton from '../../../Components/Reusable/LoadingIconButton'
 import ColorPicker from '../../../Components/Once/ColorPicker'
 import GetMatildaConfig from './GetMatildaConfig'
+import ConfirmBox from '../../../Components/Reusable/ConfirmBox'
 //FUNCTIONS
 import timeStampToDate from '../../../Functions/timeStampToString'
+import copyToClipboard from '../../../Functions/copyTextToClipboard'
 //ICONS
 import { RxCross2 } from 'react-icons/rx'
 import { IoIosArrowDown, IoMdArrowRoundForward } from 'react-icons/io'
 import { PiChatsBold } from "react-icons/pi"
-import { FaPlus } from 'react-icons/fa6'
+import { FaPlus , FaCode} from 'react-icons/fa6'
+import { MdContentCopy } from "react-icons/md"
+
 //TYPING
 import { configProps } from '../../../Constants/typing'
  
@@ -51,6 +55,10 @@ function Chatbot () {
 
     //REF FOR ALL THE COLOR PICKER CONTAINERS
     const containerRef = useRef<HTMLDivElement>(null)
+    const matildaScrollRef = useRef<HTMLDivElement>(null)
+
+    //SHOW CODE BOX
+    const [showCode, setShowCode] = useState<boolean>(false)
 
     //FIXED AND CHANGING CHATBOT DATA
     const chatbotDataRef = useRef<ChatBotData | null>(null)
@@ -85,7 +93,7 @@ function Chatbot () {
       }
 
     const getPreSignedUrl = async (file:File) => {
-        const response = await fetchData({endpoint: `superservice/${auth.authData.organizationId}/chatbot/s3_pre_signed_url`, method:'post', auth:auth, requestForm: { file_name: file.name}})   
+        const response = await fetchData({endpoint: `${auth.authData.organizationId}/chatbot/s3_pre_signed_url`, method:'post', auth:auth, requestForm: { file_name: file.name}})   
         if (response?.status === 200) {
             const responseUpload = await fetch(response.data.upload_url, {method: "PUT", headers: {}, body: file})
             if (responseUpload.ok) {
@@ -121,17 +129,14 @@ function Chatbot () {
         document.title = `${t('Channels')} - ${t('Web')} - ${auth.authData.organizationName} - Matil`
   
         const fetchInitialData = async() => {
-            const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/all_channels_basic_data`, auth})
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/all_channels_basic_data`, auth})
              if (response?.status === 200){
               let chatChannel:any 
               response.data.map((cha:any) => {if (cha.channel_type === 'webchat')  chatChannel = cha})
-              console.log(response.data)
-
               if (chatChannel) {
                 channelDict.current = chatChannel
-                const responseChat = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/${chatChannel?.id}`, auth})
+                const responseChat = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${chatChannel?.id}`, auth})
                 if (responseChat?.status === 200) {
-                    console.log(responseChat.data)
                     setChatBotData(responseChat.data.configuration)
                     chatbotDataRef.current = responseChat.data.configuration
                     setMatildaConfig(responseChat.data.matilda_configuration)
@@ -152,19 +157,36 @@ function Chatbot () {
         let chatAvatar = chatbotDataRef.current?.chat_avatar 
         if (logoFile) companyLogo = await getPreSignedUrl(logoFile)
         if (avatarFile) chatAvatar = await getPreSignedUrl(avatarFile)
-        fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/${channelDict.current.id}`, setValue:setWaitingSend, setWaiting:setWaitingSend, auth, method:'put', requestForm:{...channelDict.current, configuration:{...chatBotData, company_logo:companyLogo, chat_avatar:chatAvatar}, matilda_configuration:matildaConfig}, toastMessages:{'works':t('CorrectUpdatedInfo'), 'failed':t('FailedUpdatedInfo')}})
+        fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${channelDict.current.id}`, setValue:setWaitingSend, setWaiting:setWaitingSend, auth, method:'put', requestForm:{...channelDict.current, configuration:{...chatBotData, company_logo:companyLogo, chat_avatar:chatAvatar}, matilda_configuration:matildaConfig}, toastMessages:{'works':t('CorrectUpdatedInfo'), 'failed':t('FailedUpdatedInfo')}})
         chatbotDataRef.current = chatBotData
         matildaConfigRef.current = matildaConfig
     }
 
+    //SHIOW CODE BOX
+    const memoizedShowCodeBox = useMemo(() => (
+        <ConfirmBox setShowBox={setShowCode}> 
+            <Box p='20px'>
+                <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('InsertCode')}</Text>
+                <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
+                <Text  mb='2vh' fontSize={'.9em'} color='gray.600'>{t('InsertCodeDes')}</Text>
+                <Flex p='15px' gap='20px'  borderColor={'gray.300'}borderWidth={'1px'} borderRadius={'.5rem'} bg='brand.gray_2'>
+                    <Text flex='1' color='gray.600' fontSize={'.7em'}>{`<script defer src="https://chat-widget-matlil.s3.eu-west-3.amazonaws.com/insert.js?organization_id=${auth.authData.organizationId}&chatbot_id=${channelDict?.current?.id}" id="matil-chat-widget"></script>`}</Text>
+                </Flex>
+                <Button onClick={() => copyToClipboard(`<script defer src="https://chat-widget-matlil.s3.eu-west-3.amazonaws.com/insert.js?organization_id=${auth.authData.organizationId}&chatbot_id=${channelDict?.current?.id}" id="matil-chat-widget"></script>`, t('CorrectCopiedCode'))} leftIcon={<MdContentCopy/>} size='sm' variant={'common'} mt='2vh'>{t('CopyCode')}</Button>
+            </Box>  
+        </ConfirmBox>
+    ), [showCode])
+
+
     return(<>
+    {showCode && memoizedShowCodeBox}
         <Box> 
-            <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('WebConfig')}</Text>    
+            <Flex justifyContent={'space-between'}> 
+                <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('WebConfig')}</Text>  
+                <Button leftIcon={<FaCode/>} onClick={() => setShowCode(true)} size='sm' variant={'main'}>{t('ShowCode')}</Button>  
+            </Flex>
             <Box height={'1px'} width={'100%'} bg='gray.300' mt='1vh'  />
         </Box>
-
-        
- 
             <Flex flex='1' overflow={'hidden'} gap='80px' px='2px' > 
                     <Box flex='1' pt='4vh'ref={containerRef} overflow={'scroll'}> 
                         <Skeleton isLoaded={chatBotData !== null}> 
@@ -275,9 +297,9 @@ function Chatbot () {
                             <Box height={'5vh'}/>
                         </Skeleton>
                     </Box>
-                    <Box flex='1' pt='4vh'  overflow={'scroll'}> 
+                    <Box flex='1' pt='4vh' ref={matildaScrollRef}  overflow={'scroll'}> 
                         <Skeleton isLoaded={matildaConfig !== null}> 
-                            <GetMatildaConfig configDict={matildaConfig} setConfigDict={setMatildaConfig}/>
+                            <GetMatildaConfig configDict={matildaConfig} setConfigDict={setMatildaConfig}  scrollRef={matildaScrollRef}/>
                         </Skeleton>
                     </Box>
                 

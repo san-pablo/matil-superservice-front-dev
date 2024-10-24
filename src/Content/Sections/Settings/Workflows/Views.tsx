@@ -93,7 +93,7 @@ function ViewsList () {
         }
 
         const newViews = {'private_views': newPrivateViews, 'shared_views': newSharedViews}
-        const response = await fetchData({endpoint: `superservice/${auth.authData.organizationId}/user`, method: 'put', requestForm: {...newViews, shortcuts:auth.authData.shortcuts, users:auth.authData.users, tickets_subjects:auth.authData.ticket_subjects}, auth: auth, toastMessages: {'works': `${toDelete?t('CorrectDelete'):t('CorrectOrder')}`, 'failed': `${toDelete?t('FailedDelete'):t('FailedOrder')}`}})
+        const response = await fetchData({endpoint: `${auth.authData.organizationId}/user`, method: 'put', requestForm: {...newViews, shortcuts:auth.authData.shortcuts, users:auth.authData.users, conversation_themes:auth.authData.conversation_themes}, auth: auth, toastMessages: {'works': `${toDelete?t('CorrectDelete'):t('CorrectOrder')}`, 'failed': `${toDelete?t('FailedDelete'):t('FailedOrder')}`}})
     
         if (response?.status === 200) {
             auth.setAuthData({views: {...auth.authData.views, 'private_views': newPrivateViews, 'shared_views': newSharedViews}})

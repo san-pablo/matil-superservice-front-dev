@@ -5,8 +5,8 @@
 //REACT
 import { useState, useRef, RefObject, CSSProperties } from 'react'
 //FRONT
-import { Box, Flex, Portal } from '@chakra-ui/react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { Box, Flex, Portal, chakra, shouldForwardProp } from '@chakra-ui/react'
+import { motion, AnimatePresence, isValidMotionProp } from 'framer-motion'
 import '../styles.css'
 //COMPONENTS
 import Chrome, { ChromeInputType } from '@uiw/react-color-chrome'
@@ -23,6 +23,10 @@ interface ColorPickerProps {
     setColor: (value: string) => void
     containerRef?: RefObject<HTMLDivElement>
 }
+
+//MOTION BOX
+const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
+ 
 
 //MAIN FUNCTION
 const ColorPicker = ({ color, setColor,containerRef }: ColorPickerProps) => {
@@ -46,7 +50,7 @@ const ColorPicker = ({ color, setColor,containerRef }: ColorPickerProps) => {
 
     //UPDATE POSITION
     const [pickerStyle, setPickerStyle] = useState<CSSProperties>({})
-    determineBoxStyle({buttonRef:colorButtonRef, setBoxStyle:setPickerStyle, changeVariable:showColorPicker})
+    determineBoxStyle({buttonRef:colorButtonRef, setBoxStyle:setPickerStyle, boxPosition:'right', changeVariable:showColorPicker})
   
     //FRONT
     return (
@@ -55,14 +59,15 @@ const ColorPicker = ({ color, setColor,containerRef }: ColorPickerProps) => {
                 <EditText value={color} setValue={handleInputChange} hideInput={false} />
             </Box>
             <Box position={'relative'}>
-                <Flex ref={colorButtonRef} borderRadius={'.5rem'} height={'100%'} gap='7px' justifyContent={'center'} alignItems={'center'} borderColor={'gray.300'} borderWidth={'1px'} px='5px' onClick={() => setShowColorPicker(!showColorPicker)}>
+                <Flex ref={colorButtonRef} cursor={'pointer'} borderRadius={'.5rem'} height={'100%'} gap='7px' justifyContent={'center'} alignItems={'center'} borderColor={'gray.200'}  _hover={{borderColor:'gray.300'}} borderWidth={'1px'} px='5px' onClick={() => setShowColorPicker(!showColorPicker)}>
                     <Box height={'20px'} width='20px' borderRadius={'.3rem'} bg={color} />
                     <IoIosArrowDown className={showColorPicker ? "rotate-icon-up" : "rotate-icon-down"} />
                 </Flex>
                 <AnimatePresence>
-                    {showColorPicker &&
-                        <Portal>
-                            <motion.div ref={colorBoxRef} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ marginTop:'5px', marginBottom:'5px', position: 'absolute', zIndex: 1000, ...pickerStyle }}>
+                {showColorPicker && 
+                <Portal> 
+                <MotionBox ref={colorBoxRef} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.95 }}  transition={{ duration: '0.1', ease: 'easeOut'}}
+                    style={{ transformOrigin: pickerStyle.top ? 'top right':'bottom right' }} mt={pickerStyle.top ?'5px':''} mb={'5px'}  right={pickerStyle.right}  top={pickerStyle.top || undefined}  bottom={pickerStyle.bottom ||undefined} position='absolute' bg='white'  zIndex={1000} >
                                 <Chrome
                                     color={color}
                                     inputType={ChromeInputType.HEXA}
@@ -72,7 +77,7 @@ const ColorPicker = ({ color, setColor,containerRef }: ColorPickerProps) => {
                                     showHue={true}
                                     showAlpha={true}
                                     onChange={(newColor) => setColor(newColor.hex)} />
-                            </motion.div>
+                            </MotionBox>
                         </Portal>
                     }
                 </AnimatePresence>

@@ -34,6 +34,9 @@ function Instagram () {
     const  { t } = useTranslation('settings')
     const navigate = useNavigate()
 
+    const matildaScrollRef = useRef<HTMLDivElement>(null)
+
+
     //WAITING BOOLEANS FOR CREATING AN ACCOUNT
     const [waitingSend, setWaitingSend] = useState<boolean>(false)
 
@@ -51,12 +54,12 @@ function Instagram () {
 
     //FETCH DATA
     const fetchInitialData = async() => {
-        const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/all_channels_basic_data`, auth})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/all_channels_basic_data`, auth})
          if (response?.status === 200){
           let instaChannel 
           response.data.map((cha:any) => {if (cha.channel_type === 'instagram')  instaChannel = cha.id})
           if (instaChannel) {
-            const responseMail = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/${instaChannel}`,  setValue: setData, auth})
+            const responseMail = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${instaChannel}`,  setValue: setData, auth})
             if (responseMail?.status === 200) {
               setMatildaConfig(responseMail.data.matilda_configuration)
               matildaConfigRef.current = responseMail.data.matilda_configuration
@@ -74,7 +77,7 @@ function Instagram () {
       }, [])
   
       const saveChanges = async () => {
-            const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/${dataRef.current.id}`, setValue:setWaitingSend, setWaiting:setWaitingSend, auth, method:'put', requestForm:{...data, matilda_configuration:matildaConfig}, toastMessages:{'works':t('CorrectUpdatedInfo'), 'failed':t('FailedUpdatedInfo')}})
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${dataRef.current.id}`, setValue:setWaitingSend, setWaiting:setWaitingSend, auth, method:'put', requestForm:{...data, matilda_configuration:matildaConfig}, toastMessages:{'works':t('CorrectUpdatedInfo'), 'failed':t('FailedUpdatedInfo')}})
             if (response?.status === 200) {
             dataRef.current = data
             matildaConfigRef.current = matildaConfig
@@ -83,7 +86,7 @@ function Instagram () {
 
     
     const callNewWInstagram = async() => {
-        const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/instagram`,  setValue: setData, auth})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/instagram`,  setValue: setData, auth})
     }
 
     const returnToInsta = (key:boolean) => {
@@ -92,7 +95,7 @@ function Instagram () {
     }
 
      const memoizedCreateBox = useMemo(() => (
-        <ConfirmBox setShowBox={returnToInsta} isSectionWithoutHeader={true}>
+        <ConfirmBox setShowBox={returnToInsta} >
             <SuccessPage  name={'instagram'}  callNewData={callNewWInstagram}/>
         </ConfirmBox>
     ), [location])
@@ -130,7 +133,7 @@ function Instagram () {
                     </Box>
                     <Box flex='1' pt='4vh' overflow={'scroll'}> 
                         <Skeleton isLoaded={ matildaConfig !== null}> 
-                            <GetMatildaConfig configDict={matildaConfig} updateData={setMatildaConfig} />
+                            <GetMatildaConfig configDict={matildaConfig} setConfigDict={setMatildaConfig} scrollRef={matildaScrollRef} />
                         </Skeleton>
                     </Box>                        
                 </Flex>
@@ -180,7 +183,7 @@ const SuccessPage = ({name, callNewData}:{name:string, callNewData:() => void}) 
 
     //SEND NEW ACCOUNT
     const sendData = async () => {     
-        const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/instagram`, setWaiting:setWaitingSend, method:'post', requestForm:{name:name === ''?pages[selectedPage].name:name, instagram_username:pages[selectedPage].name, page_id:pages[selectedPage].id,access_token:pages[selectedPage].access_token, instagram_business_account_id:pages[selectedPage].instagram_business_account.id}, auth, toastMessages:{'works':'Nueva cuenta añadida con éxito', 'failed':'Hubo un error al añadir las cuentas'}})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/instagram`, setWaiting:setWaitingSend, method:'post', requestForm:{name:name === ''?pages[selectedPage].name:name, instagram_username:pages[selectedPage].name, page_id:pages[selectedPage].id,access_token:pages[selectedPage].access_token, instagram_business_account_id:pages[selectedPage].instagram_business_account.id}, auth, toastMessages:{'works':'Nueva cuenta añadida con éxito', 'failed':'Hubo un error al añadir las cuentas'}})
         if (response?.status == 200) callNewData()
         localStorage.setItem('currentSettingsSection', 'channels/instagram')
         navigate('/settings/channels/instagram')

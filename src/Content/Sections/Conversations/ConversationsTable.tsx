@@ -1,5 +1,5 @@
 /*
-  MAIN TICKETS FUNCTION (/tickets)
+  MAIN CONVERSATIONS FUNCTION (/conversations)
 */
 
 //REACT
@@ -21,7 +21,7 @@ import Table from "../../Components/Reusable/Table"
 import StateMap from "../../Components/Reusable/StateMap"
 import ConfirmBox from "../../Components/Reusable/ConfirmBox"
 //FUNCTIONS
-import DetermineTicketViews from "../../MangeData/DetermineTicketViews"
+import DetermineConversationViews from "../../MangeData/DetermineConversationViews"
 import timeStampToDate from "../../Functions/timeStampToString"
 import timeAgo from "../../Functions/timeAgo"
 import showToast from "../../Components/Reusable/ToastNotification"
@@ -34,12 +34,12 @@ import { FaExclamationCircle, FaExclamationTriangle, FaInfoCircle, FaCheckCircle
 import { FaArrowRotateLeft, FaFilter } from "react-icons/fa6"
 import { BiEditAlt } from "react-icons/bi"
 //TYPING
-import { Tickets, TicketColumn, Views, ViewType, TicketsTableProps, logosMap, Channels  } from "../../Constants/typing"
+import { Conversations, ConversationColumn, Views, ViewType, ConversationsTableProps, logosMap, Channels  } from "../../Constants/typing"
  
 //TYPING
-interface TicketFilters {
+interface ConversationFilters {
     page_index:number
-    sort_by?:TicketColumn | 'not_selected'
+    sort_by?:ConversationColumn | 'not_selected'
     search?:string, 
     order?:'asc' | 'desc'
 }
@@ -85,7 +85,7 @@ const AlertLevel = ({t,  rating }:{t:any, rating:number}) => {
 const CellStyle = ({column, element}:{column:string, element:any}) => {
 
     const auth = useAuth()
-    const { t } = useTranslation('tickets')
+    const { t } = useTranslation('conversations')
     const t_formats = useTranslation('formats').t
 
     if (column === 'local_id') return  <Text color='gray' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>#{element}</Text>
@@ -117,10 +117,10 @@ const CellStyle = ({column, element}:{column:string, element:any}) => {
 }
 
 //MAIN FUNCTION
-function TicketsTable({socket}:{socket:any}) {
+function ConversationsTable({socket}:{socket:any}) {
 
     //TRANSLATION
-    const { t } = useTranslation('tickets')
+    const { t } = useTranslation('conversations')
 
     //CONSTANTS
     const auth = useAuth()
@@ -129,44 +129,44 @@ function TicketsTable({socket}:{socket:any}) {
     const tableRef = useRef<HTMLDivElement>(null)
     
     //TABLE MAPPING
-    const columnsTicketsMap:{[key in TicketColumn]:[string, number]} = {id: [t('id'), 50], local_id: [t('local_id'), 50], status:  [t('status'), 100], channel_type: [t('channel_type'), 150], subject:  [t('subject'), 200], user_id: [t('user_id'), 200], created_at: [t('created_at'), 150],updated_at: [t('updated_at'), 180], solved_at: [t('solved_at'), 150],closed_at: [t('closed_at'), 150],title: [t('title'), 300], urgency_rating: [t('urgency_rating'), 130], deletion_date: [t('deletion_date'), 180], unseen_changes: [t('unseen_changes'), 200]}
+    const columnsConversationsMap:{[key in ConversationColumn]:[string, number]} = {id: [t('id'), 50], local_id: [t('local_id'), 50], status:  [t('status'), 100], channel_type: [t('channel_type'), 150], theme:  [t('theme'), 200], user_id: [t('user_id'), 200], created_at: [t('created_at'), 150],updated_at: [t('updated_at'), 180], solved_at: [t('solved_at'), 150],closed_at: [t('closed_at'), 150],title: [t('title'), 300], urgency_rating: [t('urgency_rating'), 130], deletion_date: [t('deletion_date'), 180], unseen_changes: [t('unseen_changes'), 200]}
     
     //WAIT INFO AND FORCE TH REUPDATE OF THE TABLE ON DELETE
     const [waitingInfo, setWaitingInfo] = useState<boolean>(true)
     const [waitingDelete, setWaitingDelete] = useState<boolean>(false)
 
-    //TICKET DATA AND SELECTED VIEW
-    const [tickets, setTickets] = useState<Tickets | null>(null)
+    //CONVERSATION DATA AND SELECTED VIEW
+    const [conversations, setConversations] = useState<Conversations | null>(null)
     const [selectedView, setSelectedView] = useState<ViewType>((localStorage.getItem('currentView') && JSON.parse(localStorage.getItem('currentView') as string)) || getFirstView(auth.authData.views as Views))
-    const [allTicketsIds, setAllTicketsIds] = useState<number[]>([])
+    const allConversationsIdsRef = useRef<number[]>([])
     const [selectedIndex, setSelectedIndex] = useState<number>(-1)
  
     //SHOW FILTERS AND FILTERS INFO
     const isRetrievingData = useRef<boolean>(false)
-    const [filters, setFilters ] = useState<TicketFilters>({page_index:1, search:''}) 
-    const filtersRef = useRef<TicketFilters>({page_index:1, search:''}) 
+    const [filters, setFilters ] = useState<ConversationFilters>({page_index:1, search:''}) 
+    const filtersRef = useRef<ConversationFilters>({page_index:1, search:''}) 
     useEffect(() => {filtersRef.current = filters}, [filters])
 
 
-    //SOCKET FOR RELOADING VIEWS ON A NEW TICKET
+    //SOCKET FOR RELOADING VIEWS ON A NEW CONVERSATION
     useEffect(() => {
 
-        document.title = `Tickets - ${selectedView.name} - ${auth.authData.organizationName} - Matil`
-        localStorage.setItem('currentSection', 'tickets')
+        document.title = `${t('Conversations')} - ${selectedView.name} - ${auth.authData.organizationName} - Matil`
+        localStorage.setItem('currentSection', 'conversations')
 
         setSelectedView(localStorage.getItem('currentView') && JSON.parse(localStorage.getItem('currentView') as string) || getFirstView(auth.authData.views as Views))
 
-        socket?.current.on('ticket', (data:any) => {
+        socket?.current.on('conversation', (data:any) => {
             const editTable = async () => {
-                    const previousViews = DetermineTicketViews(data?.previous_data, auth.authData.views as Views, auth.authData?.userId || -1)
-                    const newViews = DetermineTicketViews(data?.new_data, auth.authData.views as Views, auth.authData?.userId || -1)
+                    const previousViews = DetermineConversationViews(data?.previous_data, auth.authData.views as Views, auth.authData?.userId || -1)
+                    const newViews = DetermineConversationViews(data?.new_data, auth.authData.views as Views, auth.authData?.userId || -1)
 
                     const combinedViews = previousViews.concat(newViews)
 
                     for (const view of combinedViews) {
                         if (view.view_type === selectedView.type && view.view_index === selectedView.index) {
                             isRetrievingData.current = true
-                            await fetchTicketDataWithFilter(null)
+                            await fetchConversationsDataWithFilter(null)
                             isRetrievingData.current = false
                             break
                         }
@@ -178,64 +178,71 @@ function TicketsTable({socket}:{socket:any}) {
 
     //FETCH NEW DATA WHEN THE VIEW CHANGE
     useEffect(() => {
-        const fetchTicketData = async() => {
+        const fetchConversationData = async() => {
 
             //FIND IF THE SECTION IS OPENED
-            const ticketsList = session.sessionData.ticketsTable
-            const foundTicket = ticketsList.find(ticket => ticket.view.view_type === selectedView.type && ticket.view.view_index === selectedView.index)
+            const conversationsList = session.sessionData.conversationsTable
+            const foundCon = conversationsList.find(con => con.view.view_type === selectedView.type && con.view.view_index === selectedView.index)
 
             //SECTION FOUND
-            if (foundTicket){
-                setTickets(foundTicket.data)
-                setFilters(foundTicket?.filters || {page_index:1})
-                setSelectedIndex(foundTicket.selectedIndex || -1)
+            if (foundCon){
+                setConversations(foundCon.data)
+                setFilters(foundCon?.filters || {page_index:1})
+                setSelectedIndex(foundCon.selectedIndex || -1)
                 setWaitingInfo(false)
             } 
 
             //SECTION NOT FOUND (FETCH THE DATA)
             else {
-
                 //CLEAR THE FILTERS
                 setFilters({page_index:1})
                 setSelectedIndex(-1)
-                
+                 
                 //CALL THE BIN
                 if (selectedView.type === 'deleted') {
-                    const response1 = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/tickets/bin`, setValue:setTickets, setWaiting:setWaitingInfo, params:{page_index:1}, auth})
+                    const response1 = await fetchData({endpoint:`${auth.authData.organizationId}/conversations/bin`, setValue:setConversations, setWaiting:setWaitingInfo, params:{page_index:1}, auth})
                     if (response1?.status === 200) {      
-                        const newTicket:{data:TicketsTableProps[] | null, view:{view_type:'shared' | 'private' | 'deleted', view_index:number}, selectedIndex:number, filters:TicketFilters} = 
+                        const newConversations:{data:ConversationsTableProps[] | null, view:{view_type:'shared' | 'private' | 'deleted', view_index:number}, selectedIndex:number, filters:ConversationFilters} = 
                         {data:response1.data, view: {view_type: selectedView.type, view_index: selectedView.index}, filters: {page_index:1}, selectedIndex:-1}
-                        session.dispatch({ type: 'UPDATE_TICKETS_TABLE', payload: newTicket })
+                        session.dispatch({ type: 'UPDATE_CONVERSATIONS_TABLE', payload: newConversations })
                     }
                 }
 
-                //CALL A NORMAL TICKET VIEW
+                //CALL A NORMAL CONVERSATIONS VIEW
                 else {
-                    const response2 = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/tickets`, setValue:setTickets, setWaiting:setWaitingInfo, params:{page_index:1, view_type:selectedView.type, view_index:selectedView.index}, auth})
+                    const response2 = await fetchData({endpoint:`${auth.authData.organizationId}/conversations`, setValue:setConversations, setWaiting:setWaitingInfo, params:{page_index:1, view_type:selectedView.type, view_index:selectedView.index}, auth})
                     if (response2?.status === 200) {
-                        const newTicket:{data:TicketsTableProps[] | null, view:{view_type:'shared' | 'private' | 'deleted', view_index:number}, selectedIndex:number, filters:TicketFilters} = 
+                        const newConversation:{data:ConversationsTableProps[] | null, view:{view_type:'shared' | 'private' | 'deleted', view_index:number}, selectedIndex:number, filters:ConversationFilters} = 
                         {data:response2.data, view: {view_type: selectedView.type, view_index: selectedView.index}, selectedIndex:-1, filters: {page_index:1}}
-                        session.dispatch({ type: 'UPDATE_TICKETS_TABLE', payload: newTicket })
+                        session.dispatch({ type: 'UPDATE_CONVERSATIONS_TABLE', payload: newConversation })
                     }
                 }
             }
         }
-        fetchTicketData()
+        fetchConversationData()
     }, [selectedView])
 
    
-     //NAVIGATE TO THE CLICKED TICKET AND SHOW IT IN THE HEADER
+   
+     //NAVIGATE TO THE CLICKED CONVERSATIONS AND SHOW IT IN THE HEADER
     const [selectedElements, setSelectedElements] = useState<number[]>([])
-    const handleClickRow  = (row:TicketsTableProps, index:number) => {
-        session.dispatch({type:'UPDATE_TICKETS_TABLE_SELECTED_ITEM', payload:{view:{view_type:selectedView?.type, view_index:selectedView?.index}, index}})
+    const handleClickRow  = (row:ConversationsTableProps, index:number) => {
+        session.dispatch({type:'UPDATE_CONVERSATIONS_TABLE_SELECTED_ITEM', payload:{view:{view_type:selectedView?.type, view_index:selectedView?.index}, index}})
         if (selectedView?.type === 'deleted') {showToast({message:t('NoTrash'), type:'failed'});return}
-        navigate(`/tickets/ticket/${row.id}`) 
+        navigate(`/conversations/conversation/${row.id}`) 
     }
+
+    //GET ALL CONVERSATIONS IDS
+    useEffect(() => {
+        const idsList = selectedElements.map(index => (conversations?.page_data?.[index]?.id || 0))
+        allConversationsIdsRef.current = idsList
+    },[selectedElements])
+
 
     //SORT LOGIC
     const requestSort = (key: string) => {
         const direction = (filters.sort_by === key && filters.order === 'asc') ? 'desc' : 'asc';
-        fetchTicketDataWithFilter({...filters, sort_by: key as TicketColumn, order: direction as 'asc' | 'desc'})
+        fetchConversationsDataWithFilter({...filters, sort_by: key as ConversationColumn, order: direction as 'asc' | 'desc'})
      }
     const getSortIcon = (key: string) => {
         if (filters.sort_by === key) { 
@@ -245,34 +252,28 @@ function TicketsTable({socket}:{socket:any}) {
         else return null    
     }
 
-    //GET ALL TICKETS IDS
-    const getAllTicketIds = async () => {
-        if (selectedElements.length >= (tickets?.page_data?.length || 0)) setSelectedElements([])
+    //GET ALL CONVERSATIONS IDS
+    const getAllConversationsIds = async () => {
+        if (selectedElements.length >= (conversations?.page_data?.length || 0)) setSelectedElements([])
         else {
-            const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/all_ticket_ids`, setValue:setAllTicketsIds, params:{page_index:filters.page_index, view_type:selectedView.type === 'deleted'?'bin':selectedView.type, view_index:selectedView.index}, auth})
-            console.log(response?.data)
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/conversations/all_conversation_ids`,  params:{page_index:filters.page_index, view_type:selectedView.type === 'deleted'?'bin':selectedView.type, view_index:selectedView.index}, auth})
             if (response?.status === 200) {
-                setSelectedElements( Array.from({ length: response.data.total_tickets }, (v, i) => i ))
+                allConversationsIdsRef.current === response.data
+                setSelectedElements( Array.from({ length: response.data.total_conversations }, (v, i) => i ))
             }
         }
     }
 
-    //GET ALL TICKETS IDS
-    useEffect(() => {
-        const idsList = selectedElements.map(index => (tickets?.page_data?.[index]?.id || 0))
-        setAllTicketsIds(idsList)
-    },[selectedElements])
-
-
-    //DELETE AND RECOVER TICKETS LOGIC
+    //DELETE AND RECOVER CONVERSATIONS LOGIC
     const [showConfirmDelete, setShowConfirmDelete] = useState<boolean>(false)
 
 
     //FETCH NEW DATA ON FILTERS CHANGE
-    const fetchTicketDataWithFilter = async (applied_filters:{page_index:number, sort_by?:TicketColumn | 'not_selected', search?:string, order?:'asc' | 'desc'} | null) => {
+    const fetchConversationsDataWithFilter = async (applied_filters:{page_index:number, sort_by?:ConversationColumn | 'not_selected', search?:string, order?:'asc' | 'desc'} | null) => {
         
+        setSelectedElements([])
         //APPLY FILTERS
-        let selectedFilters:TicketFilters
+        let selectedFilters:ConversationFilters
         if (applied_filters === null) selectedFilters = filtersRef.current
         else {
             selectedFilters = {...filters, ...applied_filters}
@@ -280,54 +281,54 @@ function TicketsTable({socket}:{socket:any}) {
         }
 
         //CHOOSE CONFIGURATION DEPENDING ON ITS BIN OR A NORMAL VIEW
-        let endpoint = `superservice/${auth.authData.organizationId}/tickets`
+        let endpoint = `${auth.authData.organizationId}/conversations`
         let viewsToSend:{view_type:string, view_index:number} | {} = {view_type:selectedView.type, view_index:selectedView.index}
-        if (selectedView.type === 'deleted') {endpoint = `superservice/${auth.authData.organizationId}/tickets/bin`;viewsToSend = {}}
+        if (selectedView.type === 'deleted') {endpoint = `${auth.authData.organizationId}/conversations/bin`;viewsToSend = {}}
         
         //API CALL
-        const response = await fetchData({endpoint, setValue:setTickets, setWaiting:setWaitingInfo, params:{...viewsToSend, ...selectedFilters}, auth})
+        const response = await fetchData({endpoint, setValue:setConversations, setWaiting:setWaitingInfo, params:{...viewsToSend, ...selectedFilters}, auth})
         if (response?.status === 200) {
             setFilters(selectedFilters)
-            const newTicket:{data:TicketsTableProps[] | null, view:{view_type:'shared' | 'private' | 'deleted', view_index:number}, selectedIndex:number, filters:{page_index:number, sort_by?:TicketColumn | 'not_selected', search?:string, order?:'asc' | 'desc'}} = 
+            const newConversation:{data:ConversationsTableProps[] | null, view:{view_type:'shared' | 'private' | 'deleted', view_index:number}, selectedIndex:number, filters:{page_index:number, sort_by?:ConversationColumn | 'not_selected', search?:string, order?:'asc' | 'desc'}} = 
             {data:response.data, view: {view_type: selectedView.type, view_index: selectedView.index}, selectedIndex:-1, filters: selectedFilters}
-            session.dispatch({ type: 'UPDATE_TICKETS_TABLE', payload: newTicket })
+            session.dispatch({ type: 'UPDATE_CONVERSATIONS_TABLE', payload: newConversation })
          }
     }
     
-    //RECOVER TICKETS FUNCTION
-    const recoverTickets = async() => { 
-        session.dispatch({type:'DELETE_VIEW_FROM_TICKET_LIST'})
-        await fetchData({endpoint:`superservice/${auth.authData.organizationId}/tickets/bin/restore`,  auth, method:'post', requestForm:{ticket_ids:allTicketsIds},toastMessages:{'works':t('TicketsRecovered'),'failed':('TicketsRecoveredFailed')}})
-        const responseOrg = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/user`, auth})
+    //RECOVER CONVERSATIONS FUNCTION
+    const recoverConversations = async() => { 
+        session.dispatch({type:'DELETE_VIEW_FROM_CONVERSATIONS_LIST'})
+        await fetchData({endpoint:`${auth.authData.organizationId}/conversations/bin/restore`,  auth, method:'post', requestForm:{conversation_ids:allConversationsIdsRef.current},toastMessages:{'works':t('ConversationsRecovered'),'failed':('ConversationsRecoveredFailed')}})
+        const responseOrg = await fetchData({endpoint:`${auth.authData.organizationId}/user`, auth})
         auth.setAuthData({views: responseOrg?.data})
-        fetchTicketDataWithFilter(null)
+        fetchConversationsDataWithFilter(null)
         setSelectedElements([])
     }
 
-    //DELETE A TICKET FUNCTION
-    const deleteTickets = async() => {
-        session.dispatch({type:'DELETE_VIEW_FROM_TICKET_LIST'})
-        const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/tickets/bin`, setWaiting:setWaitingDelete, auth, method:'post', requestForm:{ticket_ids:allTicketsIds, days_until_deletion:30},toastMessages:{'works':t('TicketsTrash'),'failed':t('TicketsTrashFailed')}})
+    //DELETE A CONVERSATIONS FUNCTION
+    const deleteConversations = async() => {
+        session.dispatch({type:'DELETE_VIEW_FROM_CONVERSATIONS_LIST'})
+
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/conversations/bin`, setWaiting:setWaitingDelete, auth, method:'post', requestForm:{conversation_ids:allConversationsIdsRef.current, days_until_deletion:30},toastMessages:{'works':t('ConversationsTrash'),'failed':t('ConversationsTrashFailed')}})
         if (response?.status === 200) {
-            const responseOrg = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/user`, auth})
+            const responseOrg = await fetchData({endpoint:`${auth.authData.organizationId}/user`, auth})
             auth.setAuthData({views: responseOrg?.data})
         }
         setShowConfirmDelete(false)
-        fetchTicketDataWithFilter(null)
+        fetchConversationsDataWithFilter(null)
         setSelectedElements([])
     }
 
-
-    //COMPONENT FOR DELETING TICKETS
+    //COMPONENT FOR DELETING CONVERSATIONS
     const ConfirmDeleteBox = () => {
     
         const [showWaitingDeletePermanently, setShowWaitingDeletePermanently] = useState<boolean>(false)
-        const deleteTicketsPermanently = async() => {
+        const deleteConversationsPermanently = async() => {
             if (selectedView.type === 'deleted') {
-                const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/tickets/bin/delete`,  setWaiting:setShowWaitingDeletePermanently, auth:auth, method:'post', requestForm:{ticket_ids:allTicketsIds},toastMessages:{'works':t('TicketsDeleted'),'failed':t('TicketsDeletedFailed')}})
-                const responseOrg = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/user`, auth})
+                const response = await fetchData({endpoint:`${auth.authData.organizationId}/conversations/bin/delete`,  setWaiting:setShowWaitingDeletePermanently, auth:auth, method:'post', requestForm:{conversation_ids:allConversationsIdsRef.current},toastMessages:{'works':t('ConversationsDeleted'),'failed':t('ConversationsDeletedFailed')}})
+                const responseOrg = await fetchData({endpoint:`${auth.authData.organizationId}/user`, auth})
                 auth.setAuthData({views: responseOrg?.data})
-                fetchTicketDataWithFilter(null)
+                fetchConversationsDataWithFilter(null)
                 setSelectedElements([])
                 setShowConfirmDelete(false)
             }
@@ -339,7 +340,7 @@ function TicketsTable({socket}:{socket:any}) {
             <Text >{parseMessageToBold(t('DeleteWarning'))}</Text>
         </Box>
         <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-            <Button  size='sm' color='red' _hover={{color:'red.600', bg:'gray.200'}} onClick={deleteTicketsPermanently}>{showWaitingDeletePermanently?<LoadingIconButton/>:t('Delete')}</Button>
+            <Button  size='sm' color='red' _hover={{color:'red.600', bg:'gray.200'}} onClick={deleteConversationsPermanently}>{showWaitingDeletePermanently?<LoadingIconButton/>:t('Delete')}</Button>
             <Button  size='sm' onClick={() => setShowConfirmDelete(false)}>{t('Cancel')}</Button>
         </Flex>
     </>)
@@ -369,9 +370,9 @@ function TicketsTable({socket}:{socket:any}) {
                                 {auth.authData.views.private_views.map((view, index) => {
                                     const isSelected = selectedView.index === index && selectedView.type === 'private'
                                     return(
-                                        <Flex gap='10px' justifyContent='space-between' key={`private-view-${index}`} onClick={() => {if (!isRetrievingData.current) setSelectedView({index:index, type:'private', name:(view?.name || '')});localStorage.setItem('currentView', JSON.stringify({index:index, type:'private', name:view.name}))}}   _hover={{bg:isSelected?'blue.100':'gray.200'}} bg={isSelected? 'blue.100':'transparent'} fontWeight={isSelected? 'medium':'normal'} fontSize={'1em'} cursor={'pointer'} borderRadius={'.5rem'} p='10px'>
+                                        <Flex gap='10px' justifyContent='space-between' key={`private-view-${index}`} onClick={() => {if (!isRetrievingData.current) setSelectedView({index:index, type:'private', name:(view?.name || '')});localStorage.setItem('currentView', JSON.stringify({index:index, type:'private', name:view.name}))}}   _hover={{bg:isSelected? 'white':'brand.blue_hover'}} bg={isSelected? 'white':'transparent'} fontWeight={isSelected? 'medium':'normal'} fontSize={'1em'} cursor={'pointer'} borderRadius={'.5rem'} p='10px'>
                                             <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{view.name}</Text>
-                                            <Text>{auth.authData.views?.number_of_tickets_per_private_view?.[index] || 0}</Text>
+                                            <Text>{auth.authData.views?.number_of_conversations_per_private_view?.[index] || 0}</Text>
                                         </Flex>
                                         )
                                 })}
@@ -383,9 +384,9 @@ function TicketsTable({socket}:{socket:any}) {
                                 {auth.authData.views.shared_views.map((view, index) => {
                                 const isSelected = selectedView.index === index && selectedView.type === 'shared'
                                 return(
-                                    <Flex gap='10px' justifyContent='space-between' key={`shared-view-${index}`} onClick={() => {if (!isRetrievingData.current) setSelectedView({index:index, type:'shared', name:(view?.name || '')}); localStorage.setItem('currentView', JSON.stringify({index:index, type:'shared', name:view.name}))}} _hover={{bg:isSelected?'blue.100':'gray.200'}} bg={isSelected? 'blue.100':'transparent'} fontWeight={isSelected? 'medium':'normal'}fontSize={'1em'} cursor={'pointer'} borderRadius={'.5rem'} p='10px'>
+                                    <Flex gap='10px' justifyContent='space-between' key={`shared-view-${index}`} onClick={() => {if (!isRetrievingData.current) setSelectedView({index:index, type:'shared', name:(view?.name || '')}); localStorage.setItem('currentView', JSON.stringify({index:index, type:'shared', name:view.name}))}} _hover={{bg:isSelected? 'white':'brand.blue_hover'}} bg={isSelected? 'white':'transparent'} fontWeight={isSelected? 'medium':'normal'}fontSize={'1em'} cursor={'pointer'} borderRadius={'.5rem'} p='10px'>
                                         <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{view.name}</Text>
-                                        <Text>{auth.authData.views?.number_of_tickets_per_shared_view?.[index] || 0}</Text>
+                                        <Text>{auth.authData.views?.number_of_conversations_per_shared_view?.[index] || 0}</Text>
                                     </Flex>
                                     )
                                 })}
@@ -393,18 +394,17 @@ function TicketsTable({socket}:{socket:any}) {
                         </>}
                     </Box>
                 </Flex>
-
                 <Box>
-                    <Flex  color='red' onClick={() => {if (!isRetrievingData.current) setSelectedView({index:0, type:'deleted', name:'Papelera'}); localStorage.setItem('currentView', JSON.stringify({index:0, type:'deleted', name:'Papelera'}))}} justifyContent={'space-between'} _hover={{bg:selectedView.type === 'deleted'?'blue.100':'gray.200'}} bg={selectedView.type === 'deleted'? 'blue.100':'transparent'} fontWeight={selectedView.type === 'deleted'? 'medium':'normal'}fontSize={'1em'} cursor={'pointer'} borderRadius={'.5rem'} p='8px'>
+                    <Flex  color='red' onClick={() => {if (!isRetrievingData.current) setSelectedView({index:0, type:'deleted', name:'Papelera'}); localStorage.setItem('currentView', JSON.stringify({index:0, type:'deleted', name:'Papelera'}))}} justifyContent={'space-between'} _hover={{bg:selectedView.type === 'deleted'? 'white':'brand.blue_hover'}} bg={selectedView.type === 'deleted'? 'white':'transparent'} fontWeight={selectedView.type === 'deleted'? 'medium':'normal'}fontSize={'1em'} cursor={'pointer'} borderRadius={'.5rem'} p='8px'>
                         <Flex gap='10px' alignItems={'center'}> 
                             <Icon boxSize={'12px'} as={BsTrash3Fill}/>
                             <Text mt='2px' >{t('Trash')}</Text>
                         </Flex>
-                        <Text>{auth.authData.views?.number_of_tickets_in_bin || 0}</Text>
+                        <Text>{auth.authData.views?.number_of_conversations_in_bin || 0}</Text>
                     </Flex>
 
                     <Box width={'100%'} mt='2vh' mb='2vh' height={'1px'} bg='gray.300' />
-                    <Flex mb='1vh' height={'25px'} onClick={() => navigate('/settings/user/edit-views')} color='brand.text_blue' alignItems={'center'} mt='2vh' gap='7px' cursor={'pointer'} _hover={{textDecor:'underline'}}> 
+                    <Flex mb='1vh' height={'25px'} onClick={() => navigate(`/settings/workflows/edit-views/edit/${selectedView.type}/${selectedView.index}`)} color='brand.text_blue' alignItems={'center'} mt='2vh' gap='7px' cursor={'pointer'} _hover={{textDecor:'underline'}}> 
                         <Text fontSize={'.9em'} ml='7px'>{t('EditViews')}</Text>
                         <Icon as={FaRegEdit} boxSize={'13px'}/>
                     </Flex>
@@ -415,46 +415,45 @@ function TicketsTable({socket}:{socket:any}) {
             <Box p='2vw' width={'calc(100vw - 335px)'}>
                 <Flex justifyContent={'space-between'} gap='10px'>
                     <Text flex='1' minW={0} fontWeight={'medium'} fontSize={'1.5em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{selectedView.name}</Text>
-                    <ActionsButton items={tickets?.page_data} view={selectedView} section={'tickets'} />
+                    <ActionsButton items={conversations?.page_data} view={selectedView} section={'conversations'} />
                 </Flex>
                                
                 <Flex gap='15px' mt='2vh'> 
                         <Box width={'350px'}> 
                             <EditText value={filters?.search || ''} setValue={(value) => setFilters(prev => ({...prev, search:value}))} searchInput={true}/>
                         </Box>
-                        <Button variant='common' size='sm' leftIcon={<FaFilter/>}  onClick={() => fetchTicketDataWithFilter(filters)}>{t('ApplyFilters')}</Button>
+                        <Button variant='common' size='sm' leftIcon={<FaFilter/>}  onClick={() => fetchConversationsDataWithFilter(filters)}>{t('ApplyFilters')}</Button>
                     </Flex>
                     
                 <Flex mt='2vh'  justifyContent={'space-between'} alignItems={'end'} > 
                     <Skeleton isLoaded={!waitingInfo} >
-                        <Text fontWeight={'medium'} color='gray.600' fontSize={'1.2em'}> {t('TicketsCount', {count:tickets?.total_tickets})}</Text> 
+                        <Text fontWeight={'medium'} color='gray.600' fontSize={'1.2em'}> {t('ConversationsCount', {count:(conversations?.total_conversations || 0)})}</Text> 
                     </Skeleton>
                     <Flex alignItems={'center'} justifyContent={'end'} gap='10px' flexDir={'row-reverse'}>
-                        <IconButton isRound size='xs'  variant='common'  aria-label='next-page' icon={<IoIosArrowForward />} isDisabled={filters.page_index > Math.floor((tickets?.total_tickets || 0)/ 25)} onClick={() => fetchTicketDataWithFilter({...filters,page_index:filters.page_index + 1})}/>
+                        <IconButton isRound size='xs'  variant='common'  aria-label='next-page' icon={<IoIosArrowForward />} isDisabled={filters.page_index > Math.floor((conversations?.total_conversations || 0)/ 25)} onClick={() => fetchConversationsDataWithFilter({...filters,page_index:filters.page_index + 1})}/>
                         <Text fontWeight={'medium'} fontSize={'.9em'} color='gray.600'>{t('Page')} {filters.page_index}</Text>
-                        <IconButton isRound size='xs' variant='common' aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={filters.page_index === 1} onClick={() => fetchTicketDataWithFilter({...filters,page_index:filters.page_index - 1})}/>
+                        <IconButton isRound size='xs' variant='common' aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={filters.page_index === 1} onClick={() => fetchConversationsDataWithFilter({...filters,page_index:filters.page_index - 1})}/>
                     </Flex>
                 </Flex>
                 
                 <Skeleton ref={tableRef} isLoaded={!waitingInfo}>
-                    <Table height={selectedElements.length > 0 ?window.innerHeight - (tableRef.current?.getBoundingClientRect().top || 0) - 150:undefined } data={(tickets?.page_data || [])} CellStyle={CellStyle} noDataMessage={t('NoTickets')} requestSort={requestSort} getSortIcon={getSortIcon} columnsMap={columnsTicketsMap} excludedKeys={['id', 'conversation_id', 'end_client_id',  'is_matilda_engaged']} onClickRow={handleClickRow} selectedElements={selectedElements} setSelectedElements={setSelectedElements} onSelectAllElements={getAllTicketIds} currentIndex={selectedIndex}/> 
+                    <Table height={selectedElements.length > 0 ?window.innerHeight - (tableRef.current?.getBoundingClientRect().top || 0) - 150:undefined } data={(conversations?.page_data || [])} CellStyle={CellStyle} noDataMessage={t('NoConversations')} requestSort={requestSort} getSortIcon={getSortIcon} columnsMap={columnsConversationsMap} excludedKeys={['id', 'conversation_id', 'contact_id',  'is_matilda_engaged']} onClickRow={handleClickRow} selectedElements={selectedElements} setSelectedElements={setSelectedElements} onSelectAllElements={getAllConversationsIds} currentIndex={selectedIndex}/> 
                 </Skeleton >             
             </Box>
 
-                
             <AnimatePresence> 
                 {selectedElements.length > 0 && 
                 <Portal> 
                     <motion.div initial={{bottom:-200}} animate={{bottom:0}} exit={{bottom:-200}} transition={{duration:.2}} style={{backgroundColor:'#F7FAFC',display:'flex', justifyContent:'space-between', alignItems:'center',padding:'0 2vw 0 2vw', height:'80px', left:'335px', gap:'20px',position:'fixed',  borderTop:' 1px solid #E2E8F0', overflow:'scroll', width:`calc(100vw - 335px)`}}>
                         <Flex gap='1vw' alignItems={'center'}> 
-                            <Text whiteSpace={'nowrap'} fontWeight={'medium'}>{selectedElements.length} ticket{selectedElements.length > 1 ? 's':''}</Text>
+                            <Text whiteSpace={'nowrap'} fontWeight={'medium'}>{t('ConversationsCount', {count:conversations?.total_conversations})}</Text>
                             <Button  fontWeight={'medium'} color='brand.text_blue' onClick={() => setSelectedElements([])} size='sm' bg='transparent' borderColor={'transparent'}  _hover={{bg:'gray.100'}} leftIcon={<MdDeselect/>}>{t('DeSelect')}</Button> 
                             {selectedView.type === 'deleted' ? 
-                                <Button  fontWeight={'medium'} color='brand.text_blue'  size='sm' bg='transparent' borderColor={'transparent'} _hover={{bg:'gray.100'}} leftIcon={<FaArrowRotateLeft/>} onClick={recoverTickets}>{t('Recover')}</Button>
+                                <Button  fontWeight={'medium'} color='brand.text_blue'  size='sm' bg='transparent' borderColor={'transparent'} _hover={{bg:'gray.100'}} leftIcon={<FaArrowRotateLeft/>} onClick={recoverConversations}>{t('Recover')}</Button>
                             :
-                                <> {selectedElements.length <= 1 && <Button  fontWeight={'medium'} color='brand.text_blue' onClick={() => `/tickets/ticket/${selectedElements[0]}`} size='sm' bg='transparent' borderColor={'transparent'}  _hover={{bg:'gray.100'}} leftIcon={<BiEditAlt/>}>{t('Edit')}</Button>}</>
+                                <> {selectedElements.length <= 1 && <Button  fontWeight={'medium'} color='brand.text_blue' onClick={() => navigate(`/conversations/conversation/${selectedElements[0]}`)} size='sm' bg='transparent' borderColor={'transparent'}  _hover={{bg:'gray.100'}} leftIcon={<BiEditAlt/>}>{t('Edit')}</Button>}</>
                             } 
-                            <Button  fontWeight={'medium'} size='sm' onClick={() => {if (selectedView.type === 'deleted') setShowConfirmDelete(true);else{deleteTickets()}}} bg='transparent' borderColor={'transparent'} color='red.500' _hover={{bg:'gray.100', color:'red.700'}}leftIcon={<BsTrash3Fill/>}>{waitingDelete?<LoadingIconButton/>:selectedView.type === 'deleted'?t('Delete'):t('MoveToBin')}</Button>
+                            <Button  fontWeight={'medium'} size='sm' onClick={() => {if (selectedView.type === 'deleted') setShowConfirmDelete(true);else{deleteConversations()}}} bg='transparent' borderColor={'transparent'} color='red.500' _hover={{bg:'gray.100', color:'red.700'}}leftIcon={<BsTrash3Fill/>}>{waitingDelete?<LoadingIconButton/>:selectedView.type === 'deleted'?t('Delete'):t('MoveToBin')}</Button>
                         </Flex>
                         <Button sx={{ whiteSpace: 'nowrap', minWidth: 'auto' }} size='sm' variant='delete' onClick={() => setSelectedElements([])} >{t('Cancel')}</Button>
                     </motion.div>
@@ -469,6 +468,6 @@ function TicketsTable({socket}:{socket:any}) {
         </>)
 }
 
-export default TicketsTable
+export default ConversationsTable
 
  

@@ -5,14 +5,14 @@
 //REACT
 import { createContext, useContext, useReducer, ReactNode, Dispatch } from 'react'
 //TYPING
-import { Clients, TicketColumn,  Channels , Tickets, TicketData, ClientColumn, ClientData, ContactBusinessesProps, ContactBusinessesTable, FlowsData ,FunctionsData, MessagesData, MessagesProps, ContentData } from './Content/Constants/typing'
+import { Clients, ConversationColumn,  Channels , Conversations, ConversationsData, ClientColumn, ClientData, ContactBusinessesProps, ContactBusinessesTable, FlowsData ,FunctionsData, MessagesData, MessagesProps, ContentData } from './Content/Constants/typing'
 
-//TICKETS TABLE DATA TYPE
-type TicketsTable = {
-    data:Tickets
+//CONVERSATIONS TABLE DATA TYPE
+type ConversationsTable = {
+    data:Conversations
     selectedIndex:number
     view:{view_type:'shared' | 'private' | 'deleted', view_index:number}
-    filters:{page_index:number, sort_by?:TicketColumn | 'not_selected', search:string, order:'asc' | 'desc'}
+    filters:{page_index:number, sort_by?:ConversationColumn | 'not_selected', search:string, order:'asc' | 'desc'}
 }
 //CLIENTS TABLE DATA TYPE
 type ClientsTable = {
@@ -26,16 +26,16 @@ type ContactBusinessesSection = {
     selectedIndex:number
     filters:{page_index:number, sort_by?:ClientColumn, search?:string, order?:'asc' | 'desc'}
 }
-//HEADER SECTIONS DATA TYPE (CLIENTS OR TICKETS)
+//HEADER SECTIONS DATA TYPE (CLIENTS OR CONVERSATIONS)
 type HeaderSections = { 
     id:number
     local_id?:number
-    type:'client' | 'ticket' | 'business'
+    type:'client' | 'conversation' | 'business'
     data:{
-        ticketData:TicketData | null,
+        conversationData:ConversationsData | null,
         messagesList:MessagesData | null,  
         clientData:ClientData | null, 
-        clientTickets:Tickets | null,
+        clientConversations:Conversations | null,
         businessData:ContactBusinessesTable | null, 
         businessClients:Clients | null,
     }
@@ -43,7 +43,7 @@ type HeaderSections = {
 //STATS SECTION DATA TYPE
 type StatsSection = {data:any, filters:{channels:Channels[], selectedMonth:number, selectedYear:number}}
 type StatsSectionData = {
-    tickets: StatsSection
+    conversations: StatsSection
     matilda: StatsSection
     users: StatsSection
     csat: StatsSection
@@ -51,7 +51,7 @@ type StatsSectionData = {
 
 //SESSION DATA TYPE
 type SessionData = {
-    ticketsTable:TicketsTable[]
+    conversationsTable:ConversationsTable[]
     clientsTable:ClientsTable | null
     contactBusinessesTable:ContactBusinessesSection | null
     flowsFunctions:{flows:FlowsData[] | null, functions:FunctionsData[] | null},
@@ -70,14 +70,14 @@ const SessionContext = createContext<AuthContextType | undefined>(undefined)
 
 //INITIAL SESSION DATA
 const initialState: SessionData = {
-    ticketsTable: [],
+    conversationsTable: [],
     clientsTable: null,
     contactBusinessesTable:null,
     flowsFunctions:{flows:null, functions:null},
     contentData: null,
     headerSectionsData: [],
     statsSectionData: {
-        tickets: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } },
+        conversations: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } },
         matilda: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } },
         users: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } },
         csat: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } }
@@ -88,27 +88,33 @@ const initialState: SessionData = {
 const sessionReducer = (state: SessionData, action: { type: string; payload: any }): SessionData => {
     switch (action.type) {
 
-        //SAVE THE INFORMATION ABOUT THE DIFFERNET TICKETS VIEWS
-        case 'UPDATE_TICKETS_TABLE':
-            let updatedTicketsActivity = state.ticketsTable
-            const index = state.ticketsTable.findIndex(ticket =>
-                ticket.view.view_type === action.payload.view.view_type &&
-                ticket.view.view_index === action.payload.view.view_index
+        //SAVE THE INFORMATION ABOUT THE DIFFERNET CONVERSATIONS VIEWS
+        case 'UPDATE_CONVERSATIONS_TABLE':
+            let updatedConversationsActivity = state.conversationsTable
+
+ 
+            const index = state.conversationsTable.findIndex(con =>
+                con.view.view_type === action.payload.view.view_type &&
+                con.view.view_index === action.payload.view.view_index
             )
+ 
             if (index !== -1) {
-                updatedTicketsActivity[index] = action.payload
-                return { ...state, ticketsTable: updatedTicketsActivity }
-            } else return { ...state, ticketsTable: [...state.ticketsTable, action.payload] }     
-        case 'UPDATE_TICKETS_TABLE_SELECTED_ITEM':
-                let updatedTicketsActivity2 = state.ticketsTable
-                const index2 = state.ticketsTable.findIndex(ticket =>
-                    ticket.view.view_type === action.payload.view.view_type &&
-                    ticket.view.view_index === action.payload.view.view_index
+                updatedConversationsActivity[index] = action.payload
+                return { ...state, conversationsTable: updatedConversationsActivity }
+            } 
+            else return { ...state, conversationsTable: [...state.conversationsTable, action.payload] }     
+        case 'UPDATE_CONVERSATIONS_TABLE_SELECTED_ITEM':
+                let updatedConversationsActivity2 = state.conversationsTable
+
+                const index2 = state.conversationsTable.findIndex(con =>
+                    con.view.view_type === action.payload.view.view_type &&
+                    con.view.view_index === action.payload.view.view_index
                 )
                 if (index2 !== -1) {
-                    updatedTicketsActivity2[index2].selectedIndex = action.payload.index
-                    return { ...state, ticketsTable: updatedTicketsActivity2 }
-                } else return { ...state, ticketsTable: [...state.ticketsTable, action.payload] }
+                    updatedConversationsActivity2[index2].selectedIndex = action.payload.index
+                    return { ...state, conversationsTable: updatedConversationsActivity2 }
+                } 
+                else return state
 
         //SAVE CLIENTS TABLE INFORMATION
         case 'UPDATE_CLIENTS_TABLE':
@@ -136,7 +142,7 @@ const sessionReducer = (state: SessionData, action: { type: string; payload: any
         case 'UPDATE_FUNCTIONS':
             return { ...state, flowsFunctions: { ...state.flowsFunctions, functions:action.payload.data }}
 
-        //ADD A NEW HEADER SECTION (TICKET, CLIENT, CONTACT_BUSINESS)
+        //ADD A NEW HEADER SECTION (CONVERSATION, CLIENT, CONTACT_BUSINESS)
         case 'UPDATE_HEADER_SECTIONS':
             if (action.payload.action === 'add') {
                 const exists = state.headerSectionsData.some(section =>section.id === action.payload.data.id && section.type === action.payload.data.type)
@@ -146,26 +152,26 @@ const sessionReducer = (state: SessionData, action: { type: string; payload: any
             }
             return state
 
-        //UPDATE A TICKET
-        case 'EDIT_HEADER_SECTION_TICKET':
-            let updatedHeaderSectionsTicket =  state.headerSectionsData
+        //UPDATE A CONVERSATION
+        case 'EDIT_HEADER_SECTION_CONVERSATION':
+            let updatedHeaderSectionsConversation =  state.headerSectionsData
 
-            updatedHeaderSectionsTicket = state.headerSectionsData.filter((section) => {
-                if (section.type === 'ticket' && section?.data?.ticketData?.id === action.payload.new_data.id && action.payload.is_deleted) return false              
+            updatedHeaderSectionsConversation = state.headerSectionsData.filter((section) => {
+                if (section.type === 'conversation' && section?.data?.conversationData?.id === action.payload.new_data.id && action.payload.is_deleted) return false              
                 else return true    
             }).map((section, idx) => {
                 
-            if (action.payload?.is_new && section.type === 'ticket'  && action.payload.client_id === section?.data?.clientData?.id) return { ...section, data:{...section.data, clientTickets:null}}
-            else if (section.type === 'ticket' && section?.data?.ticketData?.id === action.payload.new_data.id) return { ...section, data:{...section.data, ticketData: action.payload.new_data, clientTickets:null}}
+            if (action.payload?.is_new && section.type === 'conversation'  && action.payload.client_id === section?.data?.clientData?.id) return { ...section, data:{...section.data, clientConversations:null}}
+            else if (section.type === 'conversation' && section?.data?.conversationData?.id === action.payload.new_data.id) return { ...section, data:{...section.data, conversationData: action.payload.new_data, clientConversations:null}}
         
-            if (section.type === 'client' && action.payload.client_id === section.id) return { ...section, data:{...section.data, clientTickets:null}}
+            if (section.type === 'client' && action.payload.client_id === section.id) return { ...section, data:{...section.data, clientConversations:null}}
             return section
             })
             
-            return {...state, headerSectionsData: updatedHeaderSectionsTicket}
+            return {...state, headerSectionsData: updatedHeaderSectionsConversation}
          
-        case 'UPDATE_TICKETS_VIEWS':
-            return {...state, ticketsTable: action.payload}
+        case 'UPDATE_CONVERSATIONS_VIEWS':
+            return {...state, conversationsTable: action.payload}
             
         //UPDATE A CLIENT
         case 'EDIT_HEADER_SECTION_CLIENT':
@@ -175,7 +181,7 @@ const sessionReducer = (state: SessionData, action: { type: string; payload: any
             updatedHeaderSectionsClient = state.headerSectionsData.map((section, idx) => {
                 if (!action.payload.is_new) {
                     if (section.type === 'client' && section?.data?.clientData?.id  === action.payload.data.id) return { ...section, data: {...section.data, clientData: action.payload.data}}    
-                    else if (section.type === 'ticket' && section.data.clientData?.id === action.payload.data.id) return {  ...section, data: {...section.data, clientData: action.payload.data} }         
+                    else if (section.type === 'conversation' && section.data.clientData?.id === action.payload.data.id) return {  ...section, data: {...section.data, clientData: action.payload.data} }         
                 }
                 else if (section.type === 'business' && section?.data?.businessData?.id  === action.payload.data.contact_business_id) return {  ...section, data: {...section.data, businessClients: null} }  
                 
@@ -193,7 +199,7 @@ const sessionReducer = (state: SessionData, action: { type: string; payload: any
 
                     if (section.type === 'business' && section?.data?.businessData?.id === action.payload.data.id) return { ...section, data: {...section.data, businessData: action.payload.data}} 
                     else if (section.type === 'client' && section.data.clientData?.contact_business_id === action.payload.data.id) return { ...section, data: {...section.data, businessData: action.payload.data}}
-                    else if (section.type === 'ticket' && section.data.clientData && section.data.clientData.contact_business_id === action.payload.data.id) {
+                    else if (section.type === 'conversation' && section.data.clientData && section.data.clientData.contact_business_id === action.payload.data.id) {
                         return { ...section, data: { ...section.data,  businessData: action.payload.data }}
                     }            
                     
@@ -207,7 +213,7 @@ const sessionReducer = (state: SessionData, action: { type: string; payload: any
             let updatedHeaderSectionsChange =  state.headerSectionsData        
 
             updatedHeaderSectionsChange = state.headerSectionsData.map((section, idx) => {
-                if ((section.type === 'ticket' || section.type === 'client') && section.data.clientData?.id === action.payload.id) return { ...section, data: { ...section.data, businessData:action.payload.data, businessClients:null }}
+                if ((section.type === 'conversation' || section.type === 'client') && section.data.clientData?.id === action.payload.id) return { ...section, data: { ...section.data, businessData:action.payload.data, businessClients:null }}
                 return section
             })
             
@@ -217,18 +223,17 @@ const sessionReducer = (state: SessionData, action: { type: string; payload: any
         case 'EDIT_HEADER_SECTION_MESSAGES':
                     
             let updatedHeaderSectionsMessages =  state.headerSectionsData        
-
             updatedHeaderSectionsMessages = state.headerSectionsData.map((section, idx) => {
-                if (section.type === 'ticket' && section.data.ticketData?.conversation_id=== action.payload.data.id) {
-                    if (action.payload.type === 'new_message') 
+                if (section.type === 'conversation' && section.data.conversationData?.id === action.payload.data.id) {
+                    if (action.payload.type === 'message') 
                         {
                             action.payload.data.new_messages.forEach((msg:any) => {msg.sender_type = action.payload.data.sender_type})
                             const newMessages = action.payload.data.new_messages
                             return { ...section, data: { ...section.data, messagesList:{ ...section.data.messagesList as MessagesData,  scheduled_messages:[], messages:[...section?.data?.messagesList?.messages as MessagesProps[], ...newMessages]} }}
                         }
-                    else if (action.payload.type === 'new_scheduled') return { ...section, data: { ...section.data, messagesList:{ ...section.data.messagesList as MessagesData, scheduled_messages:[...section?.data?.messagesList?.scheduled_messages as MessagesProps[], ...action.payload.data.new_messages]} }}
+                    else if (action.payload.type === 'scheduled-new') return { ...section, data: { ...section.data, messagesList:{ ...section.data.messagesList as MessagesData, scheduled_messages:[...section?.data?.messagesList?.scheduled_messages as MessagesProps[], ...action.payload.data.new_messages]} }}
                     
-                    else if (action.payload.type === 'canceled_scheduled'){
+                    else if (action.payload.type === 'scheduled-canceled'){
                         return { ...section, data: { ...section.data, messagesList:{ ...section.data.messagesList as MessagesData, scheduled_messages:[]} }}
                     }              
                 }
@@ -238,8 +243,8 @@ const sessionReducer = (state: SessionData, action: { type: string; payload: any
             return {...state, contactBusinessesTable: null, headerSectionsData: updatedHeaderSectionsMessages}
             
         //DELETE ALL VIEWS
-        case 'DELETE_VIEW_FROM_TICKET_LIST':         
-            return {...state, ticketsTable: []}
+        case 'DELETE_VIEW_FROM_CONVERSATIONS_LIST':         
+            return {...state, conversationsTable: []}
             
         //DELETE ALL CLIENTS
         case 'DELETE_VIEW_FROM_CLIENT_LIST':         
@@ -252,39 +257,39 @@ const sessionReducer = (state: SessionData, action: { type: string; payload: any
         //DELETE ALL SESSION DATA (LOG OUT OR ORGANIZATION CHANGE)
         case 'DELETE_ALL_SESSION':
             return {
-                ticketsTable: [],
+                conversationsTable: [],
                 clientsTable: null,
                 contactBusinessesTable:null,
                 flowsFunctions:{flows:null, functions:null},
                 headerSectionsData: [],
                 contentData: null,
                 statsSectionData: {
-                    tickets: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } },
+                    conversations: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } },
                     matilda: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } },
                     users: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } },
                     csat: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } }
                 }
             }
 
-        //CHANGE UNSEEN_CHANGES ON OPEN VIEWS WHEN ENTERING A TICKET
+        //CHANGE UNSEEN_CHANGES ON OPEN VIEWS WHEN ENTERING A clientConversations
         case 'CHANGE_UNSEEN_CHANGES':
 
-            let updatedTicketsTables = state.ticketsTable.map((section) => {
+            let updatedConversationsTables = state.conversationsTable.map((section) => {
                 let updatedSection = { ...section }
                 if (updatedSection?.data?.page_data) {
-                    let updatedData = section.data.page_data.map((ticket) => {
-                        if (ticket.id === action.payload && ticket.hasOwnProperty('unseen_changes')) {
-                            let updatedTicket = { ...ticket }
-                            updatedTicket.unseen_changes = false
-                            return updatedTicket
+                    let updatedData = section.data.page_data.map((con) => {
+                        if (con.id === action.payload && con.hasOwnProperty('unseen_changes')) {
+                            let updatedCon = { ...con }
+                            updatedCon.unseen_changes = false
+                            return updatedCon
                         }
-                        return ticket
+                        return con
                     })
                     updatedSection.data.page_data = updatedData
                 }
                 return updatedSection
             })
-            return { ...state, ticketsTable: updatedTicketsTables }
+            return { ...state, conversationsTable: updatedConversationsTables }
             
             
         default:

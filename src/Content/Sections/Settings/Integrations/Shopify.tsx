@@ -83,7 +83,7 @@ function Whatsapp () {
 
     return(<>
     {showCreateAccount && 
-        <ConfirmBox setShowBox={setShowCreateAccount} isSectionWithoutHeader={true}>
+        <ConfirmBox setShowBox={setShowCreateAccount} >
            <CreateNewAccount/>
         </ConfirmBox>}
         <Box> 

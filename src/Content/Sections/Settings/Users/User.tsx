@@ -59,7 +59,7 @@ const User = () => {
     //BOOLEAN FOR WAITING THE UPLOAD
     const [waitingSend, setWaitingSend] = useState<boolean>(false)
 
-    //TICKETS DATA
+    //USER DATA
     const userDataRef = useRef<UserData>(auth?.authData?.userData as UserData)
     const organizationDataRef = useRef<OrganizationData>(auth?.authData?.organizationData as OrganizationData)
     const [userData, setUserData] = useState<UserData>(auth?.authData?.userData as UserData)
@@ -86,59 +86,58 @@ const User = () => {
         </Box>
         <Box overflow={'scroll'} flex='1' pb='2vh'  pt='3vh' maxW={'1000px'}> 
 
-            <Flex alignItems={'center'} justifyContent={'space-between'}>
+            <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('GeneralInfo')}</Text>
+            <Text color='gray.600' fontSize={'.9em'}>{t('GeneralInfoDes')}</Text>
+            <Flex mt='3vh' gap='30px'>
+                <Box   flex='1'>
+                    <Text mb='.5vh' fontWeight={'medium'}>{t('Name')}</Text>
+                    <EditText hideInput={false} value={userData.name} setValue={(value) => handleEditKey('name', value)}/>
+                </Box>
+                <Box  flex='1'>
+                    <Text mb='.5vh' fontWeight={'medium'}> {t('Surname')}</Text>
+                    <EditText hideInput={false} value={userData.surname} setValue={(value) => handleEditKey('surname', value)}/>
+                </Box>
+            </Flex>
+            <Box mt='3vh'  maxW={'500px'}>
+                <Text mb='.5vh' fontWeight={'medium'}> {t('Mail')}</Text>
+                <EditText hideInput={false} value={userData.email_address} setValue={(value) => handleEditKey('email_address', value)}/>
+            </Box>
+            <Box mt='3vh' maxW={'500px'}>
+                <Text mb='.5vh' fontWeight={'medium'}> {t('Password')}</Text>
+                <EditText hideInput={false} value={userData.password} setValue={(value) => handleEditKey('password', value)}/>
+            </Box>
+         
+            <Box mt='3vh' maxW={'500px'}>
+                <Text mb='.5vh' fontWeight={'medium'}>{t('Language')}</Text>
+                <CustomSelect labelsMap={languagesMap}  selectedItem={userData.language}  setSelectedItem={(value) => handleEditKey('language', value)} options={Object.keys(languagesMap)} hide={false} />
+            </Box>
+
+            <Text fontWeight={'medium'} mt='5vh' fontSize={'1.2em'}>{t('OrgInfo', {name:auth.authData.organizationName})}</Text>
+            <Text color='gray.600' fontSize={'.9em'}>{t('OrgInfoDes')}</Text>
+
+            <Flex alignItems={'center'} justifyContent={'space-between'} mt='3vh'>
                 <Flex alignItems={'center'} gap='10px'>
                     <Avatar src={organizationData.avatar_image_url}/>
                     <Box alignItems={'center'} gap='10px'>
-                        <Text>{t('ProfilePicture')}</Text>
-                        <Text color={'gray.600'}>{t('ProfilePicture_Exp')}</Text>
+                        <Text fontWeight={'medium'}>{t('ProfilePicture')}</Text>
+                        <Text color={'gray.600'} fontSize={'.9em'}>{t('ProfilePicture_Exp')}</Text>
                     </Box>
                 </Flex>
-
                 <Flex alignItems={'center'} gap='10px'>
                     <Button size='xs'>{t('AddNewPicture')}</Button>
                     <Button size='xs' color='red'>{t('Delete')}</Button>
                 </Flex>
             </Flex>
+
+            
+         
             
             <Flex mt='3vh' gap='30px'>
-                <Box flex='1'>
-                    <Text fontWeight={'medium'}>{t('Name')}</Text>
-                    <EditText value={userData.name} setValue={(value) => handleEditKey('name', value)}/>
-                </Box>
-                <Box  flex='1'>
-                    <Text fontWeight={'medium'}> {t('Surname')}</Text>
-                    <EditText value={userData.name} setValue={(value) => handleEditKey('surname', value)}/>
-                </Box>
-            </Flex>
-
-            <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='5vh'/>
-            <Box>
-                <Text fontWeight={'medium'}> {t('Mail')}</Text>
-                <EditText value={userData.email_address} setValue={(value) => handleEditKey('email_address', value)}/>
-            </Box>
-        
-            <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='5vh'/>
-            <Box>
-                <Text fontWeight={'medium'}> {t('Password')}</Text>
-                <EditText value={userData.password} setValue={(value) => handleEditKey('password', value)}/>
-            </Box>
-
-            <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='5vh'/>
-            <Box>
-                <Text fontWeight={'medium'}> {t('Mail')}</Text>
-                <EditText value={userData.email_address} setValue={(value) => handleEditKey('email_address', value)}/>
-            </Box>
-            
-            <Flex mt='3vh' gap='30px'>
-                <Box flex='1'>
-                    <Text fontWeight={'medium'}>{t('Language')}</Text>
-                    <CustomSelect labelsMap={languagesMap}  selectedItem={userData.language}  setSelectedItem={(value) => handleEditKey('language', value)} options={Object.keys(languagesMap)} hide={false} />
-                </Box>
+               
                 <Box  flex='1'>
                     <Text fontWeight={'medium'}> {t('CallStatus')}</Text>
-                    <Box position='relative' mt='7px'> 
-                        <Flex borderColor={'gray.200'} borderWidth={'1px'}  color={phoneMap[organizationData.calls_status][2]}  justifyContent={'space-between'}  px='7px' py='5px'  alignItems='center' cursor='pointer' _hover={{ bg: 'brand.hover_gray' }} borderRadius='.4rem' onClick={() => setShowStatusList(!showStatusList)}>
+                    <Box position='relative' mt='7px' maxW='350px'> 
+                        <Flex borderColor={'gray.300'} borderWidth={'1px'}  color={phoneMap[organizationData.calls_status][2]}  justifyContent={'space-between'}  px='7px' py='5px'  alignItems='center' cursor='pointer' _hover={{ bg: 'brand.hover_gray' }} borderRadius='.4rem' onClick={() => setShowStatusList(!showStatusList)}>
                             <Flex  alignItems={'center'} gap='10px'> 
                                 <Icon height={'12px'} width={'12px'} as={phoneMap[organizationData.calls_status][1]} />
                                 <Text fontWeight={'medium'} fontSize='.8em' whiteSpace='nowrap'>{phoneMap[organizationData.calls_status][0]}</Text>

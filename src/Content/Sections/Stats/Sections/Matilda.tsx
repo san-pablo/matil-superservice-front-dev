@@ -26,12 +26,12 @@ function Matilda ({data, waitingFilters}:MatildaProps) {
 
                 <Flex width={'5%'} overflow={'hidden'}  flex='1'  flexDir={'column'} gap='3vh' height={'40vh'}     justifyContent={'space-between'}  bg='white' p='1vw' borderRadius={'1rem'}  boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.15)'} > 
                     <Box> 
-                        <GradientIconText children={parseFloat(data?.total_tickets_participated || 0)} />
-                        <Text mb='1vh'  color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('ParticipatedTickets')}</Text>
-                        <GradientIconText children={parseFloat(data?.total_tickets_solved || 0)} />
-                        <Text color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('SolvedTickets')}</Text>
+                        <GradientIconText children={parseFloat(data?.total_conversations_participated || 0)} />
+                        <Text mb='1vh'  color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('ParticipatedConversations')}</Text>
+                        <GradientIconText children={parseFloat(data?.total_conversations_solved || 0)} />
+                        <Text color='gray.600' fontSize={'.8em'} fontWeight={'medium'}>{t('SolvedConversations')}</Text>
                     </Box> 
-                    <CompareChart totalValue={data?.total_tickets_participated || 0} firstValue={data?.total_tickets_solved || 0} firstString={t('Closed')}  secondString={t('NoClosed')}/>
+                    <CompareChart totalValue={data?.total_conversations_participated || 0} firstValue={data?.total_conversations_solved || 0} firstString={t('Closed')}  secondString={t('NoClosed')}/>
                 </Flex>
             
                 <Box width={'5%'} overflow={'hidden'} height={'40vh'}  bg='white' p='1vw' borderRadius={'1rem'} flex='1' boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.15)'} >
@@ -57,16 +57,16 @@ function Matilda ({data, waitingFilters}:MatildaProps) {
             <Flex mt='2vw' flex='1'  gap='1vw' height={'50vh'} >
                 
                 <Box bg='white' p='1vw' borderRadius={'1rem'} width={'5%'} flex='1'boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.15)'} > 
-                    <Text fontWeight={'medium'}>{t('TotalChannelTickets')}</Text>
+                    <Text fontWeight={'medium'}>{t('TotalChannelConversations')}</Text>
                     <Box height={'calc(100% - 2vw )'}  >
-                        <ColumnChart  isChannels={true} xaxis={data?.solved_transfered_tickets_by_channel.map((element:any) => {return element.channel}) || []} yaxis1={data?.solved_transfered_tickets_by_channel.map((element:any) => {return element.transfered}) || []} yaxis2={data?.solved_transfered_tickets_by_channel.map((element:any) => {return element.solved}) || []} ytitle1={t('Transfered')} ytitle2={t('Solved')}/>
+                        <ColumnChart  isChannels={true} xaxis={data?.solved_transfered_conversations_by_channel.map((element:any) => {return element.channel}) || []} yaxis1={data?.solved_transfered_conversations_by_channel.map((element:any) => {return element.transfered}) || []} yaxis2={data?.solved_transfered_conversations_by_channel.map((element:any) => {return element.solved}) || []} ytitle1={t('Transfered')} ytitle2={t('Solved')}/>
                     </Box>
                 </Box>
 
                 <Box bg='white' p='1vw' borderRadius={'1rem'} width={'5%'} flex='1'boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.15)'} > 
-                    <Text fontWeight={'medium'}>{t('TotalSubjectTickets')}</Text>
+                    <Text fontWeight={'medium'}>{t('TotalSubjectConversations')}</Text>
                     <Box height={'calc(100% - 2vw )'}  >
-                        <ColumnChart xaxis={data?.solved_transfered_tickets_by_subject.map((element:any) => {return element.subject}) || []} yaxis1={data?.solved_transfered_tickets_by_subject.map((element:any) => {return element.transfered}) || []} yaxis2={data?.solved_transfered_tickets_by_subject.map((element:any) => {return element.solved}) || []} ytitle1={t('Transfered')} ytitle2={t('Solved')}/>
+                        <ColumnChart xaxis={data?.solved_transfered_conversations_by_theme.map((element:any) => {return element.theme}) || []} yaxis1={data?.solved_transfered_conversations_by_theme.map((element:any) => {return element.transfered}) || []} yaxis2={data?.solved_transfered_conversations_by_theme.map((element:any) => {return element.solved}) || []} ytitle1={t('Transfered')} ytitle2={t('Solved')}/>
                     </Box>
                 </Box>
                 

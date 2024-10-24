@@ -19,14 +19,15 @@
     "Out":"Ausente",
     "Disconnected":"Desconectado",
     "Clients":"Clientes",
+    "Conversations":"Conversaciones",
     "Businesses":"Empresas de Contacto",
     "Flows":"Flujos",
     "Stats":"Estadísticas",
     "Knowledge":"Conocimiento",
     "Settings":"Ajustes",
-    "FlowsFunctions":"Flujos y Funciones",
-    "NewTicketCreated":"Se ha creado un nuevo ticket con ID /{#{{id}} }/",
-    "SendedMessage":"Se ha enviado un mensaje al ticket/{ {{#id}}}/",
+    "FlowsFunctions":"Funciones",
+    "NewConversationCreated":"Se ha creado una nueva conversación con ID /{#{{id}} }/",
+    "SendedMessage":"Se ha enviado un mensaje a la conversación/{ {{#id}}}/",
     "NotFoundError":"Oops! No se ha encontrado la página que estás buscando.",
     "GoBack":"Volver a la aplicación",
     "UsersFeedback":"Feedback de usuarios",
@@ -40,7 +41,7 @@
         "title": "Navegación",
         "description": "Se usan en cualquier lugar",
         "shortcuts": {
-          "tickets": "Acceder a tickets",
+          "conversations": "Acceder a conversaciones",
           "clients": "Acceder a clientes",
           "contactCompanies": "Acceder a empresas de contacto",
           "statistics": "Acceder a estadísticas",
@@ -57,9 +58,9 @@
           "mark": "Marcar el elemento actual"
         }
       },
-      "tickets": {
-        "title": "Tickets",
-        "description": "Se usan al estar dentro de un ticket",
+      "conversations": {
+        "title": "Conversaciones",
+        "description": "Se usan al estar dentro de una conversación",
         "shortcuts": {
           "publicReply": "Abrir respuesta pública",
           "internalNote": "Abrir nota interna",
@@ -67,7 +68,7 @@
           "takeControl": "Tomar control de la conversación"
         },
         "saveUpdate": {
-          "description": "Se usan al guardar o actualizar un ticket",
+          "description": "Se usan al guardar o actualizar una conversación",
           "saveCurrentState": "Guardar con el estado actual",
           "saveAsOpen": "Guardar como abierto",
           "saveAsPending": "Guardar como pendiente",

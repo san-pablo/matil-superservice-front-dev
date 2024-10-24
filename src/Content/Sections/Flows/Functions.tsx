@@ -1,5 +1,5 @@
 //REACT
-import { useEffect, useRef, useState, useMemo, Fragment } from "react"
+import { useEffect, useRef, useState, useMemo, Fragment, ReactNode, Dispatch, SetStateAction } from "react"
 import { useAuth } from "../../../AuthContext"
 import { useTranslation } from "react-i18next"
 import { useSession } from "../../../SessionContext"
@@ -8,7 +8,7 @@ import { useLocation, useNavigate } from "react-router-dom"
 import fetchData from "../../API/fetchData"
 //FRONT
 import { motion, isValidMotionProp, AnimatePresence } from 'framer-motion'
-import { Text, Box, Flex, Button, Textarea, Skeleton, Tooltip, IconButton, NumberInput, NumberInputField, chakra, shouldForwardProp, Icon } from "@chakra-ui/react"
+import { Text, Box, Flex, Button, Textarea, Skeleton, Tooltip, IconButton, NumberInput, NumberInputField, chakra, shouldForwardProp, Icon, Switch, Radio, Spinner } from "@chakra-ui/react"
 //PYTHON CODE EDITOR
 import CodeMirror from "@uiw/react-codemirror"
 import { python } from "@codemirror/lang-python"
@@ -20,31 +20,30 @@ import ConfirmBox from "../../Components/Reusable/ConfirmBox"
 import CustomSelect from "../../Components/Reusable/CustomSelect"
 import Table from "../../Components/Reusable/Table"
 import '../../Components/styles.css'
+
 //FUNCTIONS
 import copyToClipboard from "../../Functions/copyTextToClipboard"
 import useOutsideClick from "../../Functions/clickOutside"
 import parseMessageToBold from "../../Functions/parseToBold"
 //ICONS
-import { FaPlus, FaPlay } from "react-icons/fa6"
-import { FaCheckCircle, FaTimesCircle } from "react-icons/fa"
-import { IoIosArrowBack,IoIosArrowDown } from "react-icons/io"
+import { IconType } from "react-icons"
+import { FaPlus, FaCircleExclamation,FaCircleQuestion  } from "react-icons/fa6"
+import { FaCheckCircle, FaTimesCircle, FaEdit } from "react-icons/fa"
+import { IoIosArrowDown, IoIosArrowBack } from "react-icons/io"
 import { IoWarning } from "react-icons/io5"
 import { BsTrash3Fill, BsClipboard2Check } from "react-icons/bs"
 import { RxCross2 } from "react-icons/rx"
+import { PiSidebarSimpleBold } from "react-icons/pi"
+import { AiOutlineCheckCircle, AiOutlineCalendar } from "react-icons/ai"
+import { MdOutlineFormatListBulleted } from "react-icons/md"
+import { FiHash, FiType } from "react-icons/fi"
+import { TbMathFunction } from "react-icons/tb"
 //TYPING
-import { FunctionsData } from "../../Constants/typing"
+import { FunctionsData, logosMap, Channels } from "../../Constants/typing"
  
 //TYPING
-type variables = 'bool' | 'int' | 'float' | 'str' | 'timestamp'
-interface FunctionType { 
-    name: string
-    description: string
-    actions: {}
-    arguments: {name: string, type: string, default: any}[]
-    outputs: {name: string, type: string, default: any}[]
-    code: string
-    errors: {message: string, line: number, timestamp: string, arguments: {name: string, type: string, value: any}[]}[] 
-  }
+type variables = 'boolean' | 'integer' | 'float' | 'string' | 'timestamp'
+  
 interface FunctionResultType {
     run_successful:boolean
     result:{outputs:{[key:string]:string}, motherstructure_updates:{[key:string]:string}, errors:{message: string, line: number, timestamp: string, arguments: {name: string, type: string, value: any}[]}[]}
@@ -52,6 +51,7 @@ interface FunctionResultType {
     error_line:number
 }
   
+type parameterType = {confirm: boolean, description:string, name: string, required: boolean, type: string, default:any, enum:any[]}
 const CellStyle = ({ column, element }:{column:string, element:any}) => {
     return ( <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element}</Text>)
 }
@@ -66,17 +66,16 @@ const Functions = () => {
     const { t } = useTranslation('settings')
     const auth = useAuth()
     const session = useSession()
-    const location = useLocation().pathname
-    const functionsDataMap:{[key:string]:[string, number]} = {uuid:[t('Id'), 200], name:[t('name'), 200], description:[t('title'), 300], number_of_errors:[t('NumberErrors'), 140]} 
+    const functionsDataMap:{[key:string]:[string, number]} = { name:[t('name'), 200], description:[t('title'), 300],  is_active:[t('is_active'), 200], number_of_errors:[t('NumberErrors'), 140]} 
 
     //CREATE NEW FUNCTION OR EDITING ONE
-    const [editFunctionUuid, setEditFunctionUuid] = useState<string | null>(location.split('/')[3]?location.split('/')[3] :null)
+    const [editFunctionUuid, setEditFunctionUuid] = useState<string | null>(null)
 
-    //TICKETS DATA
+    //FUNCTIONS DATA
     const [functionsData, setFunctionsData] = useState<FunctionsData[] | null>(null)
 
     //FILTER LOGIC
-    const [text, setText]  =useState<string>('')
+    const [text, setText] = useState<string>('')
     const [filteredFunctions, setFilteredFunctions] = useState<FunctionsData[]>([])
     useEffect(() => {
     const filterUserData = () => {
@@ -95,34 +94,32 @@ const Functions = () => {
     //FETCH NEW DATA WHEN THE VIEW CHANGE
     useEffect(() => {        
         document.title = `${t('Functions')} - ${auth.authData.organizationName} - Matil`
+        localStorage.setItem('currentSection', 'functions')
         const fetchInitialData = async() => {
             if (session.sessionData.flowsFunctions.functions) setFunctionsData(session.sessionData.flowsFunctions.functions)
             else {
-                const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/functions`, setValue:setFunctionsData, auth})
+                const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions`, setValue:setFunctionsData, auth})
                 if (response?.status === 200) session.dispatch({type:'UPDATE_FUNCTIONS',payload:{data:response?.data}})
             }
         }
         fetchInitialData()
     }, [])
     
-    const onSaveFunction = async(action:'save' | 'go-back' | 'delete') => {
-        if (action === 'go-back') setEditFunctionUuid(null)
-        else {
-            const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/functions`, setValue:setFunctionsData, auth})
-            if (action === 'delete') setEditFunctionUuid(null)
-        }
+    const onSaveFunction = async(action: 'go-back' | 'delete') => {
+        setEditFunctionUuid(null)  
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions`, setValue:setFunctionsData, auth})
     }
 
    return(<>
     
     {editFunctionUuid ?<EditFunctionBox selectedUuid={editFunctionUuid} onSaveFunction={onSaveFunction}/>: 
-        <Box height={'100%'} width={'100%'} px='2vw'> 
+        <Box height={'100vh'} width={'calc(100vw - 55px)'}p='2vw'> 
 
             <Flex justifyContent={'space-between'} alignItems={'end'}> 
                 <Box> 
                     <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Functions')}</Text>
                 </Box>
-                <Button size='sm' variant={'common'} leftIcon={<FaPlus/>} _hover={{color:'blue.400'}} onClick={() => setEditFunctionUuid('-1')}>{t('CreateFunction')}</Button>
+                <Button size='sm' variant={'common'} leftIcon={<FaPlus/>} onClick={() => setEditFunctionUuid('-1')}>{t('CreateFunction')}</Button>
             </Flex>
 
             <Box mt='2vh' width={'350px'}> 
@@ -134,7 +131,7 @@ const Functions = () => {
             </Skeleton>
 
             <Skeleton isLoaded={functionsData !== null}> 
-                <Table data={filteredFunctions} CellStyle={CellStyle} noDataMessage={t('NoFunctions')} columnsMap={functionsDataMap} onClickRow={(value:any, index:number) => setEditFunctionUuid(value.uuid)}/>
+                <Table data={filteredFunctions} CellStyle={CellStyle} noDataMessage={t('NoFunctions')} excludedKeys={['uuid']} columnsMap={functionsDataMap} onClickRow={(value:any, index:number) => setEditFunctionUuid(value.uuid)}/>
             </Skeleton>
         </Box>
         }
@@ -145,54 +142,67 @@ export default Functions
 
 
  //BOX FOR ADDING, EDITING AND DELETE A FUNCTION
-const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, onSaveFunction:(action:'save' | 'go-back' | 'delete') => void}) => {   
+const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, onSaveFunction:(action: 'go-back' | 'delete') => void}) => {   
 
     //CONSTATNS
     const { t } = useTranslation('settings')
     const auth = useAuth()
-    const location = useLocation().pathname
-    const navigate = useNavigate()
-    const variablesMap:{[key in variables]:string} = {'bool':t('bool'), 'int':t('int'), 'float':t('float'), 'str':t('str'), 'timestamp':t('timestamp')}
-    const boolDict = {True:t('true'), False:t('false')}
-    const datesMap = {'{today}':t('today'), '{yesterday}':t('yesterday'), '{start_of_week}':t('start_of_week'),'{start_of_month}':t('start_of_month')}
- 
+
     //BUTTON REF
-    const testButtonRef = useRef<HTMLButtonElement>(null)
     const errorButtonRef = useRef<HTMLButtonElement>(null)
     const errorBoxRef = useRef<HTMLDivElement>(null)
-    const codeBoxRef = useRef<HTMLDivElement>(null) 
-    const newFunction:FunctionType = {
+
+    const newFunction:FunctionsData = {
+        uuid:'-1',
         name:t('NewFunction'),
+        is_active:false,
         description:'',
-        actions:{},
-        arguments:[],
-        outputs:[],
+        parameters:[],
         code:'',
-        errors:[]
+        errors:[],
+        channels_basic_data:[]
     }
 
     //SHOW NOT SAVED DATA WARNING
     const [showNoSaveWarning, setShowNoSaveWarning] = useState<boolean>(false)
+
     //SHOW TEST FUNCTION
     const [showTestFunction, setShowTestFunction] = useState<boolean>(false)
 
+    //SHOW TEST FUNCTION
+    const [channeslData, setChannelsData] = useState<any[] | null>(null)
+    const [showAddChannels, setShowAddChannels] = useState<boolean>(false)
+
+    //CODE BOX WIDHT
+    const [clientBoxWidth, setClientBoxWidth] = useState(500)
+     
     //SHOW ERRORS
     const [showErrors, setShowErrros] = useState<boolean>(false)
     useOutsideClick({ref1:errorButtonRef, ref2:errorBoxRef, onOutsideClick:setShowErrros})
 
     //SHOW MORE INFO BOX
-    const [showMoreInfo, setShowMoreInfo] = useState<boolean>(false)
+    const [sectionsExpanded, setSectionsExpanded] = useState<string[]>(['Parameters', 'TildaActive', 'ActiveChannels' ])
+
+    const onSectionExpand = (section: string) => {
+        setSectionsExpanded((prevSections) => {
+          if (prevSections.includes(section))return prevSections.filter((s) => s !== section)
+          else return [...prevSections, section]
+        })
+      }
 
     //FUNCTION DATA
-    const functionDataRef = useRef<FunctionType | null>(null)
-    const [functionData, setFunctionData] = useState<FunctionType | null>(null)
+    const functionDataRef = useRef<FunctionsData | null>(null)
+    const [functionData, setFunctionData] = useState<FunctionsData | null>(null)
+
+    const [selectedParameter, setSelectedParameter] = useState<number | null>(null)
 
     //FETCH FUNCTION DATA
-    useEffect(() => {        
+    useEffect(() => {      
+
         const fetchInitialData = async() => {
-            if (selectedUuid === '-1') setFunctionData(newFunction)
+            if (selectedUuid === '-1') {setFunctionData(newFunction);functionDataRef.current = newFunction}
             else {
-                const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/functions/${selectedUuid}`, setValue:setFunctionData, auth})
+                const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions/${selectedUuid}`, setValue:setFunctionData, auth})
                 if (response?.status === 200) functionDataRef.current = response?.data
             }
         }
@@ -207,53 +217,51 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
     //EDIT AND ADD NEW FUNCTION
     const handleEditFunctions = async() => {
         setWaitingEdit(true)
-        const isNew = selectedUuid === '-1' 
-        let response
-        console.log(functionData)
-        if (isNew) response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/functions`, setWaiting:setWaitingEdit, method:'post', requestForm:functionData as FunctionType, auth, toastMessages:{'works':t('CorrectAddedFunction'), 'failed':t('FailedAddedFunction')}})  
-        else response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/functions/${selectedUuid}`, setWaiting:setWaitingEdit, method:'put', requestForm:functionData as FunctionType, auth, toastMessages:{'works':t('CorrectEditedFunction'), 'failed':t('FailedEditedFunction')}})
-
-        if (response?.status == 200) onSaveFunction('save')          
+        const isNew = functionData?.uuid === '-1' 
+        if (isNew) {
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions`, setWaiting:setWaitingEdit, method:'post', requestForm:functionData as FunctionsData, auth, toastMessages:{'works':t('CorrectAddedFunction'), 'failed':t('FailedAddedFunction')}})  
+            if (response?.status === 200) {setFunctionData(prev => ({...prev as FunctionsData, uuid:response?.data?.uuid}));functionDataRef.current = {...functionData, uuid:response?.data?.uuid}  }          
+        }
+        else {
+            const response2 = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions/${functionData?.uuid}`, setWaiting:setWaitingEdit, method:'put', requestForm:functionData as FunctionsData, auth, toastMessages:{'works':t('CorrectEditedFunction'), 'failed':t('FailedEditedFunction')}})
+            if (response2?.status === 200) functionDataRef.current = functionData      
+        }   
     }
 
     //DELETE A FUNCTION
     const handleDeleteFunctions= async() => {
         setWaitingDelete(true)
-        const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/functions/${selectedUuid}`, setWaiting:setWaitingDelete, method:'delete', auth, toastMessages:{'works':t('CorrectDeletedFunctions'), 'failed':t('FailedDeletedFunctions')}})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions/${selectedUuid}`, setWaiting:setWaitingDelete, method:'delete', auth, toastMessages:{'works':t('CorrectDeletedFunctions'), 'failed':t('FailedDeletedFunctions')}})
         if (response?.status == 200) onSaveFunction('delete')   
     }
 
     //EDIT FUNCTION DATA
-    const editFunctionData = (keyToEdit:string ,value:any, type?:'add' | 'delete' | 'edit', index?:number, secondKey?:'name' | 'type' | 'default' ) => {
-        console.log(typeof(value))
+    const editFunctionData = (keyToEdit:string ,value:any, type?:'add' | 'delete' | 'edit', index?:number ) => {
+
         setFunctionData(prev => {
             if (!prev) return prev
-            const updatedFunction = { ...prev }
+            const updatedFunction = { ...prev as FunctionsData }
         
-            if (type === 'add' || type === 'edit') {
-                const listKey = keyToEdit as 'arguments' | 'outputs'
-                const list = updatedFunction[listKey]
-                if (index!== undefined && secondKey !== undefined && index >= 0 && index < list.length) list[index] = { ...list[index], [secondKey]: value }
-                else if (type === 'add') list.push({name: '', type: 'bool', default: true})
-                updatedFunction[listKey] = list
-            } 
-            else if (type === 'delete' && index !== undefined) {
-              const listKey = keyToEdit as 'arguments' | 'outputs'
-              const list = updatedFunction[listKey]
-              if (index >= 0 && index < list.length) {
-                list.splice(index, 1)
-                updatedFunction[listKey] = list
-              }
-            } 
-            else updatedFunction[keyToEdit as 'name' | 'description' | 'code'  ] = value
+            const list = updatedFunction[keyToEdit as 'parameters' | 'channels_basic_data']
             
+            if (keyToEdit === 'parameters' || keyToEdit === 'channels_basic_data') {
+                if (type === 'add') {
+                  list.push(value)
+                } else if (type === 'edit' && index !== undefined && index >= 0 && index < list.length) {
+                  list[index] = value
+                } else if (type === 'delete' && index !== undefined && index >= 0 && index < list.length) {
+                  list.splice(index, 1)
+                }
+                updatedFunction[keyToEdit] = list as any
+              }
+
             return updatedFunction
           })
     }
 
     //BOX FOR CONFIRMING THE DELETION OF A FUNCTION
     const memoizedDeleteBox = useMemo(() => (
-        <ConfirmBox setShowBox={setShowConfirmDelete} isSectionWithoutHeader={true}> 
+        <ConfirmBox setShowBox={setShowConfirmDelete}> 
                 <Box p='15px'> 
                     <Text fontSize={'1.2em'}   fontWeight={'medium'}>{t('DeleteFunction')}</Text>
                     <Box height={'1px'} width={'100%'} bg='gray.300' mt='1vh' mb='1vh'/>
@@ -267,43 +275,66 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
             </ConfirmBox>
     ), [showConfirmDelete])
 
+    //TEST BOX
     const TestFunction = () => {
-
-        //WAITNG FUNCTION EXECUTION AND RESPONSE
-        const [waitingTest, setWaitingTest] = useState<boolean>(false)
-
-        //SELCETED ARGS
-        const [selectedArgs, setSelectedArgs] = useState<{name: string, type: string, default: any}[]>(functionData?.arguments || [])
 
         //FUNCTION TESTED
         const [functionResult, setFunctionResult] = useState<FunctionResultType | null>(null)
 
-        //EDIT FUNCTION ARGS
-        const editSelectedArgs = (value:any, index:number) => {
-            setSelectedArgs(prev => {
-                const updatedArgs = [...prev]
-                updatedArgs[index] = {...updatedArgs[index], default:value}
-                return updatedArgs
-            }) 
-        }
+        const TestParameters = () => {
 
-        //SEND A FUNCTION TO TEST
-        const testFunction = async () => {
-            const requestDict = selectedArgs.reduce((acc: Record<string, any>, curr) => {
-                acc[curr.name] = curr.default
-                return acc  
-            }, {} as Record<string, any>)
-        
-            const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/functions/${selectedUuid}/run`, method:'post', setWaiting:setWaitingTest, setValue:setFunctionResult,  auth, requestForm:requestDict})
-            if (response?.status === 200) {
-                console.log(response.data)
-                setFunctionData(prev => ({...prev as FunctionType, errors: response.data.result.errors}))
+            //WAITNG FUNCTION EXECUTION AND RESPONSE
+            const [waitingTest, setWaitingTest] = useState<boolean>(false)
+
+            //SELCETED ARGS
+            const [selectedArgs, setSelectedArgs] = useState<{confirm: boolean, description:string, name: string, required: boolean, type: string, default:any, enum:any[]  }[]>(functionData?.parameters || [])
+
+
+            //EDIT FUNCTION ARGS
+            const editSelectedArgs = (value:any, index:number) => {
+                setSelectedArgs(prev => {
+                    const updatedArgs = [...prev]
+                    updatedArgs[index] = {...updatedArgs[index], default:value}
+                    return updatedArgs
+                }) 
             }
+
+            //SEND A FUNCTION TO TEST
+            const testFunction = async () => {
+                const requestDict = selectedArgs.reduce((acc: Record<string, any>, curr) => {
+                    acc[curr.name] = curr.default
+                    return acc  
+                }, {} as Record<string, any>)
+            
+                const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions/${selectedUuid}/run`, method:'post', setWaiting:setWaitingTest, setValue:setFunctionResult,  auth, requestForm:requestDict})
+                if (response?.status === 200) setFunctionData(prev => ({...prev as FunctionsData, errors: (response.data?.result?.errors || [])})) 
+            }
+
+            return(<>
+             <Box p='20px'> 
+                    <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('SelectFunctionArgs')}</Text>
+                    <Text color='gray.600' fontSize={'.9em'}>{t('SelectFunctionArgsDes')}</Text>
+
+                    <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
+
+                    {selectedArgs.map((arg, index) => (
+                    <Fragment key={`arg-${index}`}>
+                        <Text fontWeight={'medium'} mt='1vh' mb='.5vh'>{arg.name}</Text>
+                        <Box flex='2'>
+                            <InputType inputType={arg.type} value={arg.default} setValue={(value) => editSelectedArgs(value, index)}/>
+                        </Box>
+                    </Fragment>))}
+                </Box>
+                <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+                    <Button size='sm' variant={'main'} onClick={testFunction}>{waitingTest?<LoadingIconButton/>:t('Test')}</Button>
+                    <Button size='sm'  variant={'common'} onClick={() => setShowTestFunction(false)}>{t('Cancel')}</Button>
+                </Flex>
+            </>)
         }
 
         const memoizedFunctionResult = useMemo(() => (<> 
             {functionResult && 
-                <ConfirmBox  setShowBox={setShowTestFunction} isSectionWithoutHeader={true}> 
+                <ConfirmBox upPosition setShowBox={setShowTestFunction} > 
                     <Box p='15px'> 
                         <Text fontSize={'1.2em'}   fontWeight={'medium'}>{t('FunctionResult')}</Text>
                         <Box height={'1px'} width={'100%'} bg='gray.300' mt='1vh' mb='1vh'/>
@@ -313,9 +344,7 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
                                 <Text fontWeight={'medium'}>{t('RunSuccessefully')}</Text>
                             </Flex>
                             <Text fontWeight={'medium'}>{t('OutputsReturned')}</Text>
-                            {Object.keys(functionResult.result.outputs).map((out:string, index:number) => (
-                                <Text fontSize={'.8em'} mt='.5vh' key={`run-output-${index}`}><span style={{fontWeight:500}}>{out}:</span> {functionResult.result.outputs[out]}</Text>
-                            ))}
+                            <Text>{JSON.stringify(functionResult.result)}</Text>
                          
                         </>:<> 
                         <Flex gap='10px' alignItems={'center'} mb='1vh'> 
@@ -327,195 +356,192 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
                         </>}
                     </Box>
                  
-                    <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+                    <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
                         <Button size='sm' variant={'common'} onClick={() => setShowTestFunction(false)}>{t('Accept')}</Button>
                     </Flex>
                 </ConfirmBox>
                 }
             </>), [functionResult])
             
-        return (<> 
-            {memoizedFunctionResult}
-            <Box p='20px'> 
-                <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('SelectFunctionArgs')}</Text>
-                <Text color='gray.600' fontSize={'.9em'}>{t('SelectFunctionArgsDes')}</Text>
-
-                <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
-
-                {selectedArgs.map((arg, index) => (<Fragment key={`arg-${index}`}>
-                    <Text fontWeight={'medium'} mt='1vh' mb='.5vh'>{arg.name}</Text>
-                    <Box flex='2'>
-                        {(() => {switch(arg.type) {
-                            case 'bool':
-                                return <CustomSelect hide={false} selectedItem={arg.default} setSelectedItem={(value) => editSelectedArgs(value, index)}  options={Object.keys(boolDict)} labelsMap={boolDict}/>
-                            case 'int':
-                            case 'float': return (
-                                <NumberInput value={arg.default || undefined} onChange={(value) => editSelectedArgs(value, index)} clampValueOnBlur={false} >
-                                    <NumberInputField borderRadius='.5rem'  fontSize={'.9em'} height={'37px'}  borderColor={'gray.300'} _hover={{ border:'1px solid #CBD5E0'}} _focus={{ px:'11px', borderColor: "rgb(77, 144, 254)", borderWidth: "2px" }} px='12px' />
-                                </NumberInput>)              
-                            case 'str':
-                                    return <EditText placeholder={`${arg.name}...`} value={arg.default || undefined} setValue={(value) => editSelectedArgs(value, index)} hideInput={false} />
-                            case 'timestamp':
-                                return <CustomSelect hide={false} selectedItem={arg.default}  setSelectedItem={(value) => editSelectedArgs(value, index)}  options={Object.keys(datesMap)} labelsMap={datesMap}/>
-                        }})()}                                   
-                        </Box>
-                </Fragment>))}
-            </Box>
-            <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-                <Button  size='sm' variant={'main'} onClick={testFunction}>{waitingTest?<LoadingIconButton/>:t('Test')}</Button>
-                <Button size='sm'  variant={'common'} onClick={() => setShowConfirmDelete(false)}>{t('Cancel')}</Button>
-            </Flex>
-        </>)
+        const memoizedTest = useMemo(() => (
+            <ConfirmBox  setShowBox={setShowTestFunction}> 
+                <TestParameters/>
+            </ConfirmBox>
+                
+        ), [functionResult])
+            
+        return (<>{functionResult ? memoizedFunctionResult:memoizedTest}</>)
     }
    
+    //ADD CHANEL BOX
+    const AddChannels = () => {
+ 
+        const [internalChannelsData, setInternalChannelsData] = useState<any[] | null>(channeslData)
+
+        const fetchChannels = async() => {
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/all_channels_basic_data`, auth, setValue:setInternalChannelsData})
+            if (response?.status === 200) setChannelsData(response.data)
+        }
+        useEffect(() => {
+            if (!channeslData) fetchChannels()
+        },[])
+
+        const addChannel = async (channel:any) => {
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions/${functionData?.uuid}/${channel.id}`, method:'put', auth, toastMessages:{works:t('CorrectAddedChannel'), failed:t('FailedAddedChannel')}})
+            if (response?.status === 200) setFunctionData((prev) => ({...prev as FunctionsData, channels_basic_data:[...prev?.channels_basic_data || [], {...channel, is_active:true}]}))
+            setShowAddChannels(false)
+        }
+
+        const filteredChannels = (internalChannelsData || []).filter(internalChannel => {return !functionData?.channels_basic_data.some(basicChannel => basicChannel.id === internalChannel.id)})
+
+        return (<> 
+            <Box p='20px' > 
+                <Text  fontSize='1.4em' fontWeight={'medium'}>{t('AddChannel')}</Text>
+            </Box>
+            <Box p='20px'  overflow={'scroll'} flexDir={'row-reverse'}  borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+                {internalChannelsData === null? <Flex justifyContent={'center'}> <Spinner/></Flex>:
+                <Skeleton isLoaded={internalChannelsData !== null}> 
+                    {filteredChannels?.length === 0 ? <Text>{t('NoAvailableChannels')}</Text>:<>
+                    {filteredChannels.map((cha, index) => (
+                        <Box cursor={'pointer'} _hover={{bg:'brand.blue_hover'}} p='10px' borderRadius={'.7rem'} key={`add-channel-${index}`} onClick={() => addChannel(cha)} > 
+                        <Flex gap='10px' alignItems='center'> 
+                            <Text   minWidth={0}  fontWeight={'medium'}  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{cha.name}</Text>
+                            <Icon boxSize={'16px'} as={logosMap[cha.channel_type as Channels][0] || ''}/>
+                        </Flex> 
+                        <Text width={'190px'} color='gray.600'fontSize={'.9em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{cha.display_id}</Text>
+                        </Box>
+                    ))}</>}
+                </Skeleton>
+                }
+            </Box>
+        </>)
+    }
+ 
     //ACTION ON EXIT
     const onExitAction = () => {
         if (JSON.stringify(functionData) !== JSON.stringify(functionDataRef.current)) setShowNoSaveWarning(true)
-        else {
-            if (location.split('/')[3]) navigate(`/flows-functions/flows/flow/${location.split('/')[4]}`)
-            else onSaveFunction('go-back')
-        }
+        else onSaveFunction('go-back')
     }   
+
     const memoizedNoSavedWarning = useMemo(() => (<> 
-        {showNoSaveWarning && 
-                <ConfirmBox setShowBox={setShowNoSaveWarning} isSectionWithoutHeader> 
-                    <Box p='15px' > 
-                        <Text fontWeight={'medium'}>{t('NoSavedChanges')}</Text>
-                        <Text mt={'.5vh'}>{t('NoSavedChangeAnswer')}</Text>
-                    </Box>
-                    <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-                        <Button  size='sm' variant={'main'} onClick={() => {handleEditFunctions();if (location.split('/')[3]) navigate(`/flows-functions/flows/flow/${location.split('/')[4]}`);else onSaveFunction('go-back')}}>{waitingEdit?<LoadingIconButton/>:t('SaveAndExit')}</Button>
-                        <Button  size='sm'variant={'delete'} onClick={() => navigate('/flows-functions/flows')}>{t('NoSave')}</Button>
-                    </Flex>
-                </ConfirmBox>
-            }
-        </>), [showNoSaveWarning])
+        <ConfirmBox setShowBox={setShowNoSaveWarning} > 
+            <Box p='20px' > 
+                <Text fontWeight={'medium'}>{t('NoSavedChanges')}</Text>
+                <Text mt={'.5vh'}>{t('NoSavedChangeAnswer')}</Text>
+            </Box>
+            <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+                <Button  size='sm' variant={'main'} onClick={() => {handleEditFunctions();onSaveFunction('go-back')}}>{waitingEdit?<LoadingIconButton/>:t('SaveAndExit')}</Button>
+                <Button  size='sm'variant={'delete'} onClick={() => onSaveFunction('go-back')}>{t('NoSave')}</Button>
+            </Flex>
+        </ConfirmBox>    
+    </>), [showNoSaveWarning])
 
     //MEMOIZED TEST BOX COMPONENT
-    const memoizedTestFunction = useMemo(() => (<> 
-        {showTestFunction && 
-            <ConfirmBox  setShowBox={setShowTestFunction} isSectionWithoutHeader={true}> 
-                <TestFunction/>
-            </ConfirmBox>
-            }
-        </>), [showTestFunction])
+    const memoizedTestFunction = useMemo(() => (<>{showTestFunction && <TestFunction/>}</>), [showTestFunction])
 
+    //MEMOIZED ADD PARAMETER COMPONENT
+    const memoizedAddParameter= useMemo(() => (<> 
+        <ConfirmBox  setShowBox={(b:boolean) => setSelectedParameter(null)} > 
+            <CreateVariable variableData={functionData?.parameters?.[selectedParameter as number] as parameterType} index={selectedParameter as number} setIndex={setSelectedParameter} editFunctionData={editFunctionData}/>
+        </ConfirmBox>
+    </>), [selectedParameter])
 
-    const codeBoxHeight =  (window.innerHeight - window.innerWidth * 0.02) - (testButtonRef.current?.getBoundingClientRect().bottom || 1000 )
-    
+    //MEMOIZED ADD CHANNEL COMPONENT
+    const memoizedAddChannel= useMemo(() => (<> 
+        <ConfirmBox  setShowBox={setShowAddChannels} > 
+            <AddChannels/>
+        </ConfirmBox>
+    </>), [showAddChannels])
+
+    const codeBoxHeight =  (window.innerHeight * 0.99 - window.innerWidth * 0.04) - 70
+    const sendBoxWidth = `calc(100vw - 55px - ${clientBoxWidth}px)`
+
     //FRONT
     return(<>
-        {memoizedNoSavedWarning}
+        {selectedParameter !== null && memoizedAddParameter}
+        {showNoSaveWarning && memoizedNoSavedWarning}
         {showConfirmDelete && memoizedDeleteBox}
-        <Skeleton width={'calc(100vw - 55px)'} position='fixed' height={'100vh'} top={0} left={0} zIndex={50} p='2vw' isLoaded={functionData !== null}> 
-            <Box  bg='white' width={'100%'} height={'100%'}> 
+        {showAddChannels && memoizedAddChannel}
 
-                <Box minW={'500px'}  p='10px' left={'2vw'}  top='2vw' zIndex={100} position={'absolute'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} maxH={'calc(100vh - 10vw)'} overflow={'scroll'} bg='white' borderRadius={'.5rem'}  > 
-                    <Flex flex={1} gap='20px' alignItems={'center'}> 
-                        <Tooltip label={'Atrás'}  placement='bottom' hasArrow bg='black'  color='white'  borderRadius='.4rem' fontSize='.75em' p='4px'> 
-                            <IconButton aria-label='go-back' size='sm' bg='transparent' border='none' onClick={onExitAction} icon={<IoIosArrowBack size='20px'/>}/>
-                        </Tooltip>
-                        <Box flex={1}> 
-                            <EditText nameInput={true} size='md' value={functionData?.name} setValue={(value) => setFunctionData(prev => ({...prev as FunctionType, name:value}))}/>
-                        </Box>
-                        <Button leftIcon={<IoIosArrowDown className={!showMoreInfo ? "rotate-icon-up" : "rotate-icon-down"}/>} _hover={{bg:'brand.gray_1', color:'blue.400'}} size='sm' bg='transparent' borderColor={'transparent'} borderWidth={'1px'} onClick={() => setShowMoreInfo(!showMoreInfo)}>{t('SeeMoreData')}</Button>
-                    </Flex>
+        <Flex flex='1' position='absolute' width={'calc(100vw - 55px)'} height={'100vh'} top={0} left={0} bg='white'>
+        <MotionBox   initial={{ width: sendBoxWidth  }} animate={{ width: sendBoxWidth}} exit={{ width: sendBoxWidth }} transition={{ duration: '.2' }}  
+        width={sendBoxWidth} overflowY={'hidden'}  borderRightWidth={'1px'} borderRightColor='gray.200' >
+            <Flex px='2vw' gap='2vw' height={'70px'} alignItems={'center'} justifyContent={'space-between'}  borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
 
-                    {showMoreInfo && 
-                        <Box p='15px'>
-                            <Text  mt='3vh' mb='.5vh' fontWeight={'medium'}>{t('Description')}</Text>
-                            <Textarea maxW={'1000px'} resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('DescriptionPlaceholder')}...`}  value={functionData?.description} onChange={(e) => setFunctionData(prev => ({...prev as FunctionType, description:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
-                        </Box>}
-                </Box>
-
-                <Box flex='1' > 
-                    <Flex  gap='2vw' justifyContent={'space-between'} flexDir={'row-reverse'} alignItems={'center'}>     
-                        <Flex gap='20px'> 
-                            {selectedUuid !== '-1' && <Button size='sm'  variant={'common'} color='red' _hover={{color:'red.600'}} leftIcon={<BsTrash3Fill/>} onClick={() => setShowConfirmDelete(true)}>{t('DeleteFunction')}</Button>}
-                            <Button  size='sm' variant={'common'} isDisabled={functionData?.name=== '' || functionData?.code === '' || (JSON.stringify(functionDataRef.current) === JSON.stringify(functionData))} onClick={handleEditFunctions}>{waitingEdit?<LoadingIconButton/>:t('SaveChanges')}</Button>
-                         </Flex>
-                    </Flex>
-
-                    <Flex gap='2vw' mt='6vh'>    
-                        
-                        <Box  width='60%'> 
-                            <Flex justifyContent={'space-between'} alignItems={'center'}> 
-                                <Text  mb='.5vh' fontWeight={'medium'}>{t('Code')}</Text>
-                                <Button leftIcon={<FaPlay/>} ref={testButtonRef} size='sm' onClick={() => setShowTestFunction(true)} variant={'main'}> {t('Test')}</Button>
-                            </Flex>
-                            <Box  mt='1vh' width='100%' height={'100%'} ref={codeBoxRef}> 
-                                <CodeMirror value={functionData?.code} maxHeight={`${codeBoxHeight}px`} extensions={[python()]} onChange={(value) => setFunctionData(prev => ({...prev as FunctionType, code:value}))} theme={oneDark}/>
-                            </Box>
-                        </Box>
-                        <Box flex='1'> 
-                           
-                            <Text  mb='.5vh' fontWeight={'medium'}>{t('Arguments')}</Text>
-                            {functionData?.arguments.map((arg, index) => (
-                                <Flex mt='.5vh'  key={`argument-${index}`} alignItems='center' gap='10px'>
-                                    <Box flex='2'> 
-                                        <EditText hideInput={false} value={arg.name} setValue={(value) => editFunctionData('arguments', value, 'edit', index, 'name')}/>
-                                    </Box>
-                                    <Box flex='1'>
-                                        <CustomSelect hide={false} selectedItem={arg.type} setSelectedItem={(value) => editFunctionData('arguments', value, 'edit', index, 'type')} options={Object.keys(variablesMap)} labelsMap={variablesMap}/>
-                                    </Box>
-                                    <Box flex='2'>
-                                        {(() => {switch(arg.type) {
-                                            case 'bool':
-                                                return <CustomSelect hide={false} selectedItem={arg.default} setSelectedItem={(value) => editFunctionData('arguments', value === 'true'?true:false, 'edit', index, 'default')}  options={Object.keys(boolDict)} labelsMap={boolDict}/>
-                                            case 'int':
-                                            case 'float': return (
-                                                <NumberInput value={arg.default || undefined} onChange={(value) => editFunctionData('arguments', value, 'edit', index, 'default')}  clampValueOnBlur={false} >
-                                                    <NumberInputField borderRadius='.5rem'  fontSize={'.9em'} height={'37px'}  borderColor={'gray.300'} _hover={{ border:'1px solid #CBD5E0'}} _focus={{ px:'11px', borderColor: "rgb(77, 144, 254)", borderWidth: "2px" }} px='12px' />
-                                                </NumberInput>)              
-                                            case 'str':
-                                                    return <EditText value={arg.default || undefined} setValue={(value) => editFunctionData('arguments', value, 'edit', index, 'default')} hideInput={false} />
-                                            case 'timestamp':
-                                                return <CustomSelect hide={false} selectedItem={arg.default}  setSelectedItem={(value) => editFunctionData('arguments', value, 'edit', index, 'default')}  options={Object.keys(datesMap)} labelsMap={datesMap}/>
-                                        }})()}                                   
-                                    </Box>
-                                <IconButton bg='transaprent' border='none' size='sm' _hover={{bg:'gray.200'}} icon={<RxCross2/>} aria-label='delete-all-condition' onClick={() => editFunctionData('arguments', '', 'delete', index)}/>
-                            </Flex>
-                            ))}
-                            <Button variant={'common'} size='xs' mt='2vh' leftIcon={<FaPlus/>}  onClick={() => editFunctionData('arguments', '', 'add')}>{t('AddArgument')}</Button>
-                        
-                            
-                            <Text mt='3vh' mb='.5vh' fontWeight={'medium'}>{t('Outputs')}</Text>
-                            {functionData?.outputs.map((arg, index) => (
-                                <Flex mt='.5vh'  key={`output-${index}`} alignItems='center' gap='10px'>
-                                <Box flex='2'> 
-                                    <EditText hideInput={false} value={arg.name} setValue={(value) => editFunctionData('outputs', value, 'edit', index, 'name')}/>
-                                </Box>
-                                <Box flex='1'>
-                                        <CustomSelect hide={false} selectedItem={arg.type} setSelectedItem={(value) => editFunctionData('outputs', value, 'edit', index, 'type')} options={Object.keys(variablesMap)} labelsMap={variablesMap}/>
-                                </Box>
-                                <Box flex='2'>
-                                    {(() => {switch(arg.type) {
-                                        case 'bool':
-                                            return <CustomSelect hide={false} selectedItem={arg.default} setSelectedItem={(value) => editFunctionData('outputs', value, 'edit', index, 'default')}  options={Object.keys(boolDict)} labelsMap={boolDict}/>
-                                        case 'int':
-                                        case 'float': return (
-                                            <NumberInput value={arg.default || undefined} onChange={(value) => editFunctionData('outputs', value, 'edit', index, 'default')}  clampValueOnBlur={false} >
-                                                <NumberInputField borderRadius='.5rem'  fontSize={'.9em'} height={'37px'}  borderColor={'gray.300'} _hover={{ border:'1px solid #CBD5E0'}} _focus={{ px:'11px', borderColor: "rgb(77, 144, 254)", borderWidth: "2px" }} px='12px' />
-                                            </NumberInput>)              
-                                        case 'str':
-                                                return <EditText value={arg.default || undefined} setValue={(value) => editFunctionData('outputs', value, 'edit', index, 'default')} hideInput={false} />
-                                        case 'timestamp':
-                                            return <CustomSelect hide={false} selectedItem={arg.default}  setSelectedItem={(value) => editFunctionData('outputs', value, 'edit', index, 'default')}  options={Object.keys(datesMap)} labelsMap={datesMap}/>
-                                    }})()}                                   
-                                    </Box>
-                                <IconButton bg='transaprent' border='none' size='sm' _hover={{bg:'gray.200'}} icon={<RxCross2/>} aria-label='delete-all-condition' onClick={() => editFunctionData('outputs', '', 'delete', index)}/>
-                            </Flex>
-                            ))}
-                            <Button variant={'common'} size='xs' mt='2vh' leftIcon={<FaPlus/>}  onClick={() => editFunctionData('outputs', '', 'add')}>{t('AddOutput')}</Button>
-
-                        </Box>
-                        
-
-                    </Flex>    
+                <Flex flex={1} gap='20px' alignItems={'center'}> 
+                    <Tooltip label={t('GoBack')}  placement='bottom' hasArrow bg='black'  color='white'  borderRadius='.4rem' fontSize='.75em' p='4px'> 
+                        <IconButton aria-label='go-back' size='sm' variant={'common'} bg='transparent' onClick={onExitAction} icon={<IoIosArrowBack size='20px'/>}/>
+                    </Tooltip>
+                    <EditText fontSize={'1.4em'} value={functionData?.name} setValue={(value) => {setFunctionData(prev => ({...prev as FunctionsData, name:value}))}}/>
+                </Flex>
                 
-                </Box>       
+                <Flex gap='15px'>
+                    <Button leftIcon={<BsTrash3Fill/>} variant={'delete'} isDisabled={selectedUuid === '-1'} size='sm' onClick={() => setShowConfirmDelete(true)}>{t('Delete')}</Button>
+                    <Button variant={'common'} size='sm' onClick={() => setShowTestFunction(true)}>{t('Test')}</Button>
+                    <Button variant={'main'} size='sm' isDisabled={JSON.stringify(functionData) === JSON.stringify(functionDataRef.current)} onClick={handleEditFunctions}>{waitingEdit?<LoadingIconButton/>:t('SaveChanges')}</Button>
+                    {clientBoxWidth === 0 && <IconButton aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'20px'}/>} onClick={() =>setClientBoxWidth(400)}/>}
+                </Flex>
+            </Flex>
+            <Flex width={'100%'} height={'100%'} justifyContent={'center'} overflow={'scroll'} >
+                <Box p='2vw' width={'100%'} height={'100%'}  >
+                    <Skeleton isLoaded={functionData !== null}> 
+                     <CodeMirror value={functionData?.code} maxHeight={`${codeBoxHeight}px`} extensions={[python()]} onChange={(value) => setFunctionData(prev => ({...prev as FunctionsData, code:value}))} theme={oneDark}/>
+                    </Skeleton>
+                </Box>
+            </Flex>
+        </MotionBox>
+        <MotionBox width={clientBoxWidth + 'px'}  whiteSpace={'nowrap'} initial={{ width: clientBoxWidth + 'px' }} animate={{ width: clientBoxWidth + 'px' }} exit={{ width: clientBoxWidth + 'px' }} transition={{ duration: '.2'}}> 
+            <Flex p='2vh' height={'70px'} justifyContent={'space-between'} alignItems={'center'} borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
+                <Text fontSize={'1.5em'} fontWeight={'medium'}>{t('FunctionData')}</Text>
+                <IconButton aria-label="close-tab" variant={'common'} bg='transparent' size='sm' icon={<RxCross2 size={'20px'}/>} onClick={() =>setClientBoxWidth(0)}/>
+            </Flex>
+            <Box p='2vh' pb='10vh' height={'100%'} overflow={'scroll'}> 
+
+                <Text fontWeight={'semibold'}  fontSize={'.9em'}>{t('Description').toLocaleUpperCase()}</Text>
+                <Textarea maxW={'500px'} mt='.5vh' resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('Description')}...`} maxH='300px' value={functionData?.description} onChange={(e) => setFunctionData((prev) => ({...prev as FunctionsData, description:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(59, 90, 246)", borderWidth: "2px"}}/>
+
+                <CollapsableSection section={'Parameters'} isExpanded={sectionsExpanded.includes('Parameters')} onSectionExpand={onSectionExpand}> 
+                    <Skeleton isLoaded={functionData !== null}> 
+                        {(functionData?.parameters || []).map((param, index) => (<> 
+                            <ParameterBox variableData={param} index={index} setIndex={setSelectedParameter} editFunctionData={editFunctionData}/>
+                            {index !== (functionData?.parameters?.length || 0) - 1 && <Box height={'1px'} width={'100%'} bg='gray.200' mt='1vh' mb='1vh'/>}
+                            </>
+                        ))}
+                        <Button variant={'common'} leftIcon={<FaPlus/>} onClick={() => setSelectedParameter(-1)} size='sm' mt='2vh'>{t('AddParameter')}</Button>
+                    </Skeleton>
+
+                </CollapsableSection>
+
+                <CollapsableSection section={'TildaActive'} isExpanded={sectionsExpanded.includes('TildaActive')} onSectionExpand={onSectionExpand}> 
+                    <Flex gap='8px' mt='1vh'  alignItems={'center'}>
+                        <Switch isChecked={functionData?.is_active}  onChange={(e) => setFunctionData(prev => ({...prev as FunctionsData, is_active:e.target.checked}))} />
+                        <Text mt='.5vh' fontWeight={'medium'} >{t('AvailableTilda')}</Text>
+                    </Flex>
+                    <Text color='gray.600'whiteSpace='pre-wrap' fontSize={'.9em'}>{t('AvailableTildaDes')}</Text>
+                </CollapsableSection>
+
+                <CollapsableSection section={'ActiveChannels'} isExpanded={sectionsExpanded.includes('ActiveChannels')} onSectionExpand={onSectionExpand}> 
+                        {(functionData?.channels_basic_data || []).map((cha, index) => (
+                            <Flex  gap='10px' mt='12px' key={`channel-${index}`} alignItems={'start'}> 
+                                <Radio isChecked={cha.is_active} onClick={(value) => editFunctionData('channels_basic_data', {...cha, is_active:!cha.is_active}, 'edit', index)}/>
+                                <Box mt='-2px' flex='1' > 
+                                <Flex gap='10px' alignItems='center'> 
+                                    <Text   minWidth={0}  fontWeight={'medium'} fontSize={'.9em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{cha.name}</Text>
+                                    <Icon boxSize={'12px'} as={logosMap[cha.channel_type as Channels]?.[0] || ''}/>
+                                </Flex> 
+                                <Text width={'190px'} color='gray.600'fontSize={'.8em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{cha.display_id}</Text>
+                                </Box>
+                            </Flex>
+                        ))}
+                    <Button variant={'common'} isDisabled={functionData?.uuid === '-1'} leftIcon={<FaPlus/>} onClick={() => setShowAddChannels(true)} size='sm' mt='2vh'>{t('AddChannel')}</Button>
+                    {functionData?.uuid === '-1' && <Text mt='1vh' color='red' fontSize={'.8em'}>{t('SaveChannelsWarning')}</Text>}
+                </CollapsableSection>
+
             </Box>
-        </Skeleton>
+        </MotionBox>
+
+    </Flex>
+
         
         {(functionData?.errors?.length || 0) > 0 &&
             <Box position={'absolute'} right={'2vw'} bottom={'2vw'}  > 
@@ -543,7 +569,7 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
                                         </Flex>
                                     </Box>        
                                     <Tooltip label={t('CopyError')}  placement='top' hasArrow bg='black' color='white'  borderRadius='.4rem' fontSize='sm' p='6px'> 
-                                        <IconButton size='xs' onClick={() => copyToClipboard(error.message)}  aria-label={'copy-invitation-code'} icon={<BsClipboard2Check/>}/>
+                                        <IconButton size='xs' onClick={() => copyToClipboard(error.message, t('CorrectCopiedError'))}  aria-label={'copy-invitation-code'} icon={<BsClipboard2Check/>}/>
                                     </Tooltip>
                                 </Flex>
                             ))} 
@@ -556,3 +582,174 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
  
     </>)
 }  
+
+const CollapsableSection = ({ section, isExpanded, onSectionExpand, children}:{section:string, isExpanded:boolean, onSectionExpand:(key:string) => void ,children:ReactNode}) => {
+
+    const { t } = useTranslation('settings')
+ 
+    return (
+        <Box py='3vh' borderBottomColor={'gray.200'} borderBottomWidth={'1px'}> 
+            <Flex cursor={'pointer'} alignItems={'center'} justifyContent={'space-between'} onClick={() => onSectionExpand(section)}>
+                <Text fontWeight={'semibold'}  fontSize={'.9em'}>{t(section).toLocaleUpperCase()}</Text>
+                <IoIosArrowDown color={'gray.600'} className={isExpanded ? "rotate-icon-up" : "rotate-icon-down"}/>
+            </Flex>
+            <motion.div initial={false}  animate={{height:isExpanded?'auto':0, opacity:isExpanded?1:0 }} exit={{height:isExpanded?0:'auto',  opacity:isExpanded?0:1 }} transition={{duration:.2}} style={{overflow:isExpanded?'visible':'hidden'}}>           
+                {children}
+            </motion.div>
+        </Box>
+    )
+}
+ 
+//CREATING A VARIABLE
+ const CreateVariable = ({variableData,  index, setIndex, editFunctionData}:{variableData:parameterType | undefined, index:number, setIndex:Dispatch<SetStateAction<number | null>>, editFunctionData:(keyToEdit:string ,value:any, type?:'add' | 'delete' | 'edit', index?:number, secondKey?:'name' | 'type' | 'default' | 'required' | 'confirm' | 'is_active' | '' ) => void }) => {
+
+    const { t } = useTranslation('settings')
+    const variablesMap:{[key:string]:string} = {'boolean':t('bool'), 'integer':t('int'), 'float':t('float'), 'string':t('str'), 'timestamp':t('timestamp'), 'list':t('list')}
+
+    const [currentVariable, setCurrentVariable] = useState<parameterType>((index === -1 || variableData === undefined)?{name:'', type:'boolean', description:'', default:false, required:false, confirm:false, enum:[]}:variableData)
+    const [currentExample, setCurrentExample] = useState<any>('')
+
+    const editList = (action:'add' | 'delete', index?:number) => {
+        if (action === 'add') {
+            setCurrentVariable((prev) => ({...prev, enum:[...(prev?.enum || []), currentExample]}))
+            setCurrentExample('')
+        }
+        else if (action === 'delete' && index !== undefined) setCurrentVariable((prev) => ({...prev, enum: prev.enum.filter((_, i) => i !== index)}))
+        
+    }
+    const sendVariable = () => {
+        editFunctionData('parameters', currentVariable, index === -1 ? 'add':'edit', index)
+        setIndex(null)
+    }
+    return (<> 
+        <Box p='25px' minW={'600px'}>
+
+            <Text  fontWeight={'medium'} mb='.5vh'>{t('Name')}</Text>
+            <EditText  maxLength={70} hideInput={false}  value={currentVariable.name} placeholder={`${t('Name')}...`} setValue={(value) => setCurrentVariable((prev) => ({...prev, name:value})) }/>
+            
+            <Text mb='.5vh' mt='1.5vh' fontWeight={'medium'}>{t('Description')}</Text>
+            <Textarea maxLength={2000} height={'auto'} placeholder={`${t('Description')}...`} maxH='300px' value={currentVariable.description} onChange={(e) => setCurrentVariable((prev) => ({...prev, description:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
+            
+            <Text mb='.5vh' mt='1.5vh' fontWeight={'medium'}>{t('Type')}</Text>
+            <CustomSelect hide={false} selectedItem={currentVariable.type} setSelectedItem={(value) => setCurrentVariable((prev) => ({...prev, type:value, enum:[], default:null}))} options={Object.keys(variablesMap)} labelsMap={variablesMap}/>
+         
+            <Text  mt='1.5vh' mb='.5vh' fontWeight={'medium'}>{t('DefaultValue')}</Text>
+            <InputType inputType={currentVariable.type} value={currentVariable.default} setValue={(value) => setCurrentVariable((prev) => ({...prev, default:value}))}/>
+
+            <Text  mt='1.5vh' fontWeight={'medium'}>{t('AllowedValues')}</Text>
+            <Flex flexWrap="wrap" gap='5px' mt='.5vh' alignItems="center" >
+                {(!currentVariable?.enum || currentVariable?.enum?.length === 0)?<Text fontSize={'.9em'}>{t('NoValues')}</Text>:
+                currentVariable.enum.map((variable, index) => (
+                    <Flex key={`vallue-${index}`} borderRadius=".4rem" p='5px' fontSize={'.75em'} alignItems={'center'} m="1" bg='gray.100' shadow={'sm'} borderColor={'gray.300'} borderWidth={'1px'} gap='5px'>
+                        <Text>{t(variable)}</Text>
+                        <Icon as={RxCross2} onClick={() => editList('delete', index)} cursor={'pointer'} />
+                    </Flex>
+                ))}
+            </Flex>     
+            <Flex mt='1vh' gap='20px' alignItems={'center'}> 
+                <Box flex='1'> 
+                    <InputType inputType={currentVariable.type} value={currentExample} setValue={(value) => setCurrentExample(value)}/>
+                </Box>
+                <Button isDisabled={currentExample === ''} leftIcon={<FaPlus/>} variant={'common'} size='sm' onClick={() => editList('add')}>{t('Add')}</Button>
+            </Flex>
+
+            <Flex mt='3vh' gap='10px'alignItems={'center'}>
+                <Switch isChecked={currentVariable.required} onChange={(e) => setCurrentVariable((prev) => ({...prev, required:e.target.checked}))}/>
+                <Text fontWeight={'medium'}>{t('Required')}</Text>  
+            </Flex>  
+
+            <Flex mt='3vh' gap='10px'alignItems={'center'}>
+                <Switch isChecked={currentVariable.confirm} onChange={(e) => setCurrentVariable((prev) => ({...prev, confirm:e.target.checked}))}/>
+                <Text fontWeight={'medium'}>{t('AskConfirmation')}</Text>  
+            </Flex>  
+        </Box>
+ 
+        <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+            <Button variant={'main'}  isDisabled={currentVariable.name === '' || (index !== -1 && JSON.stringify(variableData) === JSON.stringify(currentVariable))} size='sm' onClick={sendVariable}>{index === -1 ? t('CreateParameter'): t('SaveParameter')}</Button>
+            <Button variant={'common'}  size='sm' onClick={() => setIndex(null)}>{t('Cancel')}</Button>
+        </Flex>
+        
+    </>)
+}
+ 
+//INPUT DEPENDING ON THE VARIABLE TYPE
+const InputType = ({inputType, value, setValue}:{inputType:string,value:string, setValue:(value:any) => void}) => {
+    
+    //USEFUL CONSTANTS
+    const { t } = useTranslation('settings')
+    const boolDict = {true:t('True'), false:t('False')}
+    const datesMap = {'{today}':t('today'), '{yesterday}':t('yesterday'), '{start_of_week}':t('start_of_week'),'{start_of_month}':t('start_of_month')}
+
+    const [currentValue, setCurrentValue] = useState<string | null>(value) 
+
+    switch(inputType) {
+        case 'boolean':
+            return <CustomSelect hide={false} selectedItem={value} setSelectedItem={(value) => setValue(value) }  options={Object.keys(boolDict)} labelsMap={boolDict}/>
+        case 'integer':
+        case 'float':  {  
+             const handleBlur = () => {
+                const normalizedValueString = currentValue?.replace(',', '.')
+                if (normalizedValueString) {
+                    if (!(normalizedValueString && isNaN((parseFloat(normalizedValueString)))) ) setValue(null)
+                    if (inputType === 'integer') setValue(parseInt(normalizedValueString))
+                    else if (inputType === 'float') return setValue(parseInt(normalizedValueString))
+                }
+            } 
+            return (
+            <NumberInput value={value || undefined} onBlur={handleBlur} onChange={(value) => setCurrentValue(value) } clampValueOnBlur={false} >
+                <NumberInputField borderRadius='.5rem'  fontSize={'.9em'} height={'37px'}  borderColor={'gray.300'} _hover={{ border:'1px solid #CBD5E0'}} _focus={{ px:'11px', borderColor: "rgb(77, 144, 254)", borderWidth: "2px" }} px='12px' />
+            </NumberInput>)
+        }           
+        case 'string':
+        case 'list':
+                return <EditText value={value} setValue={(value) => setValue(value) } hideInput={false} />
+        case 'timestamp':
+            return <CustomSelect hide={false} selectedItem={value}  setSelectedItem={(value) => setValue(value)}  options={Object.keys(datesMap)} labelsMap={datesMap}/>
+
+        default: 
+            return null
+    }
+} 
+
+const ParameterBox = ({variableData,  index, setIndex, editFunctionData}:{variableData:parameterType, index:number, setIndex:Dispatch<SetStateAction<number | null>>, editFunctionData:(keyToEdit:string ,value:any, type?:'add' | 'delete' | 'edit', index?:number, secondKey?:'name' | 'type' | 'default' | 'required' | 'confirm' | 'is_active' | '' ) => void }) => {
+    
+    //TRANSLATION
+    const { t }  = useTranslation('settings')
+
+    //MAPPING CONSTANTS
+    const variablesMap:{[key:string]:[string, IconType]} = {'boolean':[t('bool'),AiOutlineCheckCircle ], 'integer':[t('int'), FiHash], 'float':[t('float'), TbMathFunction], 'string':[t('str'), FiType], 'timestamp':[t('timestamp'), AiOutlineCalendar], 'list':[t('list'), MdOutlineFormatListBulleted]}
+ 
+    return (
+        <Box position={'relative'}  w={'100%'} cursor={'pointer'} mt={'1.5vh'} >
+            <Flex alignItems={'center'} justifyContent={'space-between'} gap='10px'> 
+                <Flex  gap='5px' alignItems={'center'} >
+                    <Text fontWeight={'medium'}  fontSize={'1em'} >{variableData.name} <span style={{fontSize:'.8em'}}>({variablesMap[variableData.type][0]})</span></Text>
+                    -
+                    <Flex gap='5px' fontSize={'.9em'} color={variableData?.required?'red':'orange'}justifyContent={'space-between'} alignItems={'center'}>
+                        <Text flex={1}>{variableData?.required?t('RequiredParam'):t('NoRequiredParam')}</Text>
+                        <Icon as={variableData.required?FaCircleExclamation:FaCircleQuestion} />
+                    </Flex>
+                </Flex>
+                <Flex gap='5px'> 
+                    <IconButton size='xs' variant={'common'} icon={<FaEdit/>}  onClick={() => setIndex(index)} aria-label="edit-param"/>
+                    <IconButton size='xs' variant={'delete'} onClick={() => editFunctionData('parameters', null, 'delete', index)} icon={<BsTrash3Fill/>} aria-label="delete-param"/>
+                </Flex>
+            </Flex>
+            
+            <Text flex={1} mt='.5vh' whiteSpace='pre-wrap'fontSize={'.8em'} color='gray.600'>{variableData.description === ''?t('NoDescription'):variableData.description }</Text>
+            <Text flex={1} mt='.5vh' fontSize={'.9em'} fontWeight={500} >{t('ConfirmRequest')}: <span > {(variableData.confirm?t('YES'):t('NO')).toLocaleUpperCase()}</span></Text>
+
+            <Text flex={1} mt='.5vh' fontSize={'.9em'} ><span style={{fontWeight:500}} > {t('DefaultValue')}:</span> {variableData.default?variableData.default:'-'}</Text>
+
+            {variableData.enum && 
+            <Flex  mt='.5vh' gap='5px' justifyContent={'space-between'}>
+                <Box flex='1'>
+                    <Text fontSize={'.8em'}  fontWeight={'medium'} flex={1}>{t('AllowedValues')}</Text>
+                    <Text color='gray.600' fontSize={'.8em'} flex={1}>{variableData.enum.length === 0?t('NoValues'):variableData.enum.map((value, index) => (<span key={`value-${index}`}>{t(value)} {index < (variableData?.enum || []).length - 1 && ' - '}</span>))}</Text>
+                </Box>
+            </Flex>}
+            
+        </Box>
+        )
+}
+

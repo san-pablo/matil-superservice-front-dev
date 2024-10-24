@@ -1,5 +1,5 @@
 /*
-    SETITNGS SECTION 
+    KNOWLEDGE SECTION 
 */
 
 //REACT
@@ -26,23 +26,22 @@ import { BsFillLayersFill, BsThreeDots, BsFillFolderSymlinkFill, BsTrash3Fill } 
 import { FaFolder, FaBox, FaPlus } from "react-icons/fa6"
 import { FiEdit } from "react-icons/fi"
 //TYPING
-import { ContentData, Folder } from "../../Constants/typing"
+import { Folder } from "../../Constants/typing"
 //SECTIONS
 const Content = lazy(() => import('./Content'))
 const Fonts = lazy(() => import('./Fonts'))
 const Article = lazy(() => import('./Article'))
 const Website = lazy(() => import('./Website'))
 const TextSection = lazy(() => import('./TextSection'))
-const FoldeSection = lazy(() => import('./Folder'))
 const Pdf = lazy(() => import('./Pdf'))
 
-
+//POSITION OF THE EDIT FOLDERS BOX
 type boxPosition = {top?:number, bottom?:number, left:number, id:string} | null
 
 //MOTION BOX
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
 
-
+//MOVE A SECTION TO A SELECTED FOLDER
 const MoveSection = ({folder, level, selectedFolder, setSelectedFolder}:{folder:Folder, level:number, selectedFolder:string, setSelectedFolder:Dispatch<SetStateAction<string>>,  }) => {
 
     return (<> 
@@ -59,6 +58,8 @@ const MoveSection = ({folder, level, selectedFolder, setSelectedFolder}:{folder:
          </>
     )
 }
+
+//FOLDER COMPONEN
 const Section = ({ folder, level, onFolderUpdate, handleFoldersDisabled}: { folder: Folder; level: number, onFolderUpdate:(type: 'edit' | 'add' | 'delete' | 'move', newFolderData: Folder, parentId: string | null) => void, handleFoldersDisabled:(folder:Folder) => Folder[]}) => {
     
     //CONSTANTS
@@ -89,7 +90,7 @@ const Section = ({ folder, level, onFolderUpdate, handleFoldersDisabled}: { fold
     //NAVIGATE TO A FOLDER
     const navigateToSection = (section: string) => {
         navigate(`folder/${section}`)
-        localStorage.setItem('currentSettingsSection', section)
+        localStorage.setItem('currentSectionContent', section)
     }
 
     //DETERMINE THE TOOLS BOX POSOTION
@@ -106,7 +107,7 @@ const Section = ({ folder, level, onFolderUpdate, handleFoldersDisabled}: { fold
 
         //FUNCTION FOR CREATE A NEW BUSINESS
         const deleteFolder= async () => {
-            const businessData = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/knowledge/folders/${folder.uuid}`, method:'delete', setWaiting:setWaitingDelete, auth, toastMessages:{'works': t('CorrectDeletedFolder'), 'failed':t('FailedDeletedFolder')}})
+            const businessData = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/folders/${folder.uuid}`, method:'delete', setWaiting:setWaitingDelete, auth, toastMessages:{'works': t('CorrectDeletedFolder'), 'failed':t('FailedDeletedFolder')}})
             if (businessData?.status === 200) onFolderUpdate('delete', folder, null)
             setShowCreate(false)
         }
@@ -131,7 +132,9 @@ const Section = ({ folder, level, onFolderUpdate, handleFoldersDisabled}: { fold
 
         //FUNCTION FOR CREATE A NEW BUSINESS
         const createFolder= async () => {
-            const businessData = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/knowledge/folders`, method:'post', setWaiting:setWaitingCreate, requestForm:{name:folder.name, parent_folders:[]}, auth, toastMessages:{'works': t('CorrectMovedFolder'), 'failed':t('FailedMovedFolder')}})
+
+            
+            const businessData = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/folders/${folder.uuid}/move/${selectedFolder}`, method:'put', setWaiting:setWaitingCreate, requestForm:{name:folder.name, parent_folders:[]}, auth, toastMessages:{'works': t('CorrectMovedFolder'), 'failed':t('FailedMovedFolder')}})
             if (businessData?.status === 200) onFolderUpdate('move', folder,selectedFolder )
             setShowCreate(false)
         }
@@ -154,28 +157,28 @@ const Section = ({ folder, level, onFolderUpdate, handleFoldersDisabled}: { fold
 
     //CREATE BOX
     const CreateBox = useMemo(() => (
-        <ConfirmBox isSectionWithoutHeader setShowBox={setShowCreate}> 
+        <ConfirmBox setShowBox={setShowCreate}> 
             <CreateFolder currentFolder={null} type='add' parentId={folder.uuid} setShowCreate={setShowCreate} onFolderUpdate={onFolderUpdate}/>
         </ConfirmBox>
     ), [showCreate])
 
     //EDIT BOX
     const EditBox = useMemo(() => (
-        <ConfirmBox isSectionWithoutHeader setShowBox={setShowEdit}> 
+        <ConfirmBox setShowBox={setShowEdit}> 
             <CreateFolder currentFolder={folder}  type='edit' parentId={folder.uuid}  setShowCreate={setShowEdit} onFolderUpdate={onFolderUpdate}/>
         </ConfirmBox>
     ), [showEdit])
 
     //EDIT BOX
     const DeleteBox = useMemo(() => (
-        <ConfirmBox isSectionWithoutHeader setShowBox={setShowDelete}> 
+        <ConfirmBox setShowBox={setShowDelete}> 
             <DeleteFolder/>
         </ConfirmBox>
     ), [showDelete])
 
     //MOVE BOX
     const MoveBox = useMemo(() => (
-        <ConfirmBox isSectionWithoutHeader setShowBox={setShowMove}> 
+        <ConfirmBox setShowBox={setShowMove}> 
             <MoveFolder/>
         </ConfirmBox>
     ), [showMove])
@@ -238,6 +241,7 @@ const Section = ({ folder, level, onFolderUpdate, handleFoldersDisabled}: { fold
     )
   }
 
+//MAIN FUNCTION
 function Knowledege () {
 
     //CONSTANTS
@@ -256,24 +260,14 @@ function Knowledege () {
     
     //FOLDERS STRUCTURE
     const [folders, setFolders] = useState<Folder[]>([])
-    
-
-    //FOLDERS STRUCTURE
-    const [contentData, setContentData] = useState<ContentData[] | null>([])
-
-    useEffect(() => {        
+    useEffect(() => {
         document.title = `${t('Knowledge')} - ${auth.authData.organizationId} - Matil`
         localStorage.setItem('currentSection', 'knowledge')
+
         navigate(localStorage.getItem('currentSectionContent') || 'fonts')
-
-        const fetchInitialData = async() => {
-            const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/knowledge/folders`, auth, setValue:setFolders})
-
-        }
-        fetchInitialData()
     }, [])
 
-      
+    //UPDATE FOLDERS LOGIC
     const updateFolders = (type: 'edit' | 'add' | 'delete' | 'move', folders: Folder[], updatedFolder: Folder, parentId: string | null  ): Folder[] => { 
         // Caso 1: Si estamos añadiendo una nueva carpeta
         if (type === 'add') {
@@ -322,7 +316,6 @@ function Knowledege () {
         return folders
     }
     const handleFolderUpdate = (type: 'edit' | 'add' | 'delete' | 'move', newFolderData: Folder, parentId: string | null) => {setFolders(prevFolders => updateFolders(type, prevFolders, newFolderData, parentId))}
-
     const getFoldersWithDisabled = (folders: Folder[], folderToMove: Folder): Folder[] => {
         const markDisabledFolders = (foldersList: Folder[], folderToExclude: Folder): Folder[] => {
           return foldersList.map(folder => {
@@ -336,63 +329,68 @@ function Knowledege () {
 
     //CREATE BOX
     const CreateBox = useMemo(() => (
-        <ConfirmBox isSectionWithoutHeader setShowBox={setShowCreate}> 
+        <ConfirmBox setShowBox={setShowCreate}> 
             <CreateFolder currentFolder={null} setShowCreate={setShowCreate} type={'add'} parentId={null} onFolderUpdate={handleFolderUpdate}/>
         </ConfirmBox>
     ), [showCreate])
 
-    return( <>
-    {showCreate && CreateBox}
+    //FRONT
+    return(<>
+        {showCreate && CreateBox}
  
-    <Flex>  
-        <Flex flexDir="column" height={'100vh'} py="5vh" px='15px'  bg='#f1f1f1' width='280px' borderRightWidth="1px" borderRightColor="gray.200">
-            <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('Knowledge')}</Text>
-            <Box height={'1px'} width={'100%'} bg='gray.300' mt='2vh' mb='2vh'/>
+        <Flex>  
+            <Flex flexDir="column" height={'100vh'} py="5vh" px='15px'  bg='#f1f1f1' width='280px' borderRightWidth="1px" borderRightColor="gray.200">
+                <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('Knowledge')}</Text>
+                <Box height={'1px'} width={'100%'} bg='gray.300' mt='2vh' mb='2vh'/>
 
-            <Flex mt="1vh" gap="10px" p="5px"  _hover={{ color: "black" }} color={location.split('/')[2] === 'fonts' ? "black" : "gray.600"}  bg={location.split('/')[2] === 'fonts' ?'white':'transparent'} fontWeight={location.split('/')[2] === 'fonts'? "medium" : "normal"} onClick={() => navigate('fonts')} cursor="pointer" alignItems="center" borderRadius=".5rem">
-                <Icon boxSize="16px" as={FaBox} />
-                <Text>{t('Fonts')}</Text>
-            </Flex>
-            <Flex onMouseEnter={() => setHoverMain(true)}  onMouseLeave={() => setHoverMain(false)} mt="1vh"  p="5px"  cursor="pointer" alignItems="center" borderRadius=".5rem" justifyContent={'space-between'}   _hover={{ color: "black" }} bg={location.split('/')[2] === 'content' ?'white':'transparent'} color={location.split('/')[2] === 'content' ? "black" : "gray.600"} fontWeight={location.split('/')[2] === 'fonts'? "medium" : "normal"} onClick={() => navigate('content')}>
-                <Flex gap="10px" alignItems={'center'}> 
-                    <Icon boxSize="16px" as={BsFillLayersFill} />
-                    <Text>{t('Content')}</Text>
+                <Flex mt="1vh" gap="10px" p="5px"  _hover={{ color: "black" }} color={location.split('/')[2] === 'fonts' ? "black" : "gray.600"}  bg={location.split('/')[2] === 'fonts' ?'white':'transparent'} fontWeight={location.split('/')[2] === 'fonts'? "medium" : "normal"} onClick={() => navigate('fonts')} cursor="pointer" alignItems="center" borderRadius=".5rem">
+                    <Icon boxSize="16px" as={FaBox} />
+                    <Text>{t('Fonts')}</Text>
                 </Flex>
-                <Flex gap="10px" alignContent={'center'}> 
-                    {hoverMain && <FaPlus onClick={() => setShowCreate(true)} />}
-                    <IoIosArrowDown onClick={() => setShowFolders(!showFolders)} className={showFolders ? "rotate-icon-up" : "rotate-icon-down"}/>
+                <Flex onMouseEnter={() => setHoverMain(true)}  onMouseLeave={() => setHoverMain(false)} mt="1vh"  p="5px"  cursor="pointer" alignItems="center" borderRadius=".5rem" justifyContent={'space-between'}   _hover={{ color: "black" }} bg={location.split('/')[2] === 'content' ?'white':'transparent'} color={location.split('/')[2] === 'content' ? "black" : "gray.600"} fontWeight={location.split('/')[2] === 'fonts'? "medium" : "normal"} onClick={() => navigate('content')}>
+                    <Flex gap="10px" alignItems={'center'}> 
+                        <Icon boxSize="16px" as={BsFillLayersFill} />
+                        <Text>{t('Content')}</Text>
+                    </Flex>
+                    <Flex gap="10px" alignContent={'center'}> 
+                        {hoverMain && <FaPlus onClick={() => setShowCreate(true)} />}
+                        <IoIosArrowDown onClick={() => setShowFolders(!showFolders)} className={showFolders ? "rotate-icon-up" : "rotate-icon-down"}/>
+                    </Flex>
+
                 </Flex>
 
+                <motion.div initial={{height:showFolders?'auto':0}} animate={{height:showFolders?0:'auto' }} exit={{height:showFolders?'auto':0 }} transition={{duration:.2}} style={{overflow:'hidden', maxHeight:1000}}>           
+                    <Skeleton isLoaded={folders !== null}>
+                        {folders.map((folder, index) => (
+                        <Fragment key={`settings-section-${folder.uuid}`}>
+                            <Section folder={folder} level={0} onFolderUpdate={handleFolderUpdate} handleFoldersDisabled={handleFoldersDisabled}/> 
+                        </Fragment>
+                        ))}
+                    </Skeleton>
+                </motion.div>
             </Flex>
 
-            <motion.div initial={{height:showFolders?'auto':0}} animate={{height:showFolders?0:'auto' }} exit={{height:showFolders?'auto':0 }} transition={{duration:.2}} style={{overflow:'hidden', maxHeight:1000}}>           
-                <Skeleton isLoaded={folders !== null}>
-                    {folders.map((folder, index) => (
-                    <Fragment key={`settings-section-${folder.uuid}`}>
-                        <Section folder={folder} level={0} onFolderUpdate={handleFolderUpdate} handleFoldersDisabled={handleFoldersDisabled}/> 
-                    </Fragment>
-                    ))}
-                </Skeleton>
-            </motion.div>
+            <Box width={'calc(100vw - 335px)'} position={'relative'} bg='white' px='2vw' height={'100vh'} ref={scrollRef}>
+                <Flex height={'100vh'}flexDir={'column'} justifyContent={'space-between'} py='3vh'> 
+                    <Suspense fallback={<></>}>    
+                        <Routes >
+                            <Route path="/content" element={<Content folders={folders} handleFolderUpdate={handleFolderUpdate} />} />
+                            <Route path="/fonts" element={<Fonts/>} />
+                            <Route path="/folder/*" element={<Content folders={folders} handleFolderUpdate={handleFolderUpdate} />}  />
+
+                            <Route path="/article/*" element={<Article />} />
+                            <Route path="/article/*" element={<Article />} />
+
+                            <Route path="/website/*" element={<Website/>} />
+                            
+                            <Route path="/pdf/*" element={<Pdf/>} />
+                            <Route path="/snippet/*" element={<TextSection/>} />
+                        </Routes>
+                    </Suspense>
+                </Flex>   
+            </Box>
+            
         </Flex>
-
-        <Box width={'calc(100vw - 335px)'} position={'relative'} bg='white' px='2vw' height={'100vh'} ref={scrollRef}>
-            <Flex height={'100vh'}flexDir={'column'} justifyContent={'space-between'} py='3vh'> 
-                <Suspense fallback={<></>}>    
-                    <Routes >
-                        <Route path="/content" element={<Content handleFolderUpdate={handleFolderUpdate} contentData={contentData} setContentData={setContentData}/>} />
-                        <Route path="/fonts" element={<Fonts contentData={contentData} setContentData={setContentData}/>} />
-                        <Route path="/article/*" element={<Article />} />
-                        <Route path="/folder/*" element={<FoldeSection handleFolderUpdate={handleFolderUpdate} />}  />
-                        <Route path="/website/*" element={<Website/>} />
-                        <Route path="/pdf/*" element={<Pdf/>} />
-                        <Route path="/text/*" element={<TextSection/>} />
-                    </Routes>
-                </Suspense>
-            </Flex>   
-        </Box>
-        
-    </Flex>
     </>)
 }
 

@@ -52,7 +52,7 @@ const CallBox = memo(({inCall, setInCall, setEntryCall, handleMouseDown}:{inCall
 
                 {inCall ? 
                 <Flex alignItems={'center'} justifyContent={'center'} gap='10px'> 
-                    <Flex alignItems={'center'} justifyContent={'center'} borderRadius={'full'} borderColor={isPaused?'orange':'red'} borderWidth={'1px'} height={'12px'} width={'12px'}>
+                    <Flex alignItems={'center'} justifyContent={'center'} borderRadius={'full'} borderColor={isPaused?'orange':'red'} borderWidth={'1px'} height={'13px'} width={'13px'}>
                         <Box borderRadius={'full'} bg={isPaused?'orange':'red'} height={'7px'} width={'7px'} />
                     </Flex>
                     <Text fontSize={'.9em'} >Llamada {isPaused?'pausada':'en curso:'} <Countdown time={-1} isPaused={isPaused}/></Text>
@@ -126,8 +126,8 @@ const CallWidget = () => {
         }
     }, [dragging])
     const handleMouseDown = useCallback((event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-        setDragging(true);
-      }, []);
+        setDragging(true)
+      }, [])
    
     return(<>
 

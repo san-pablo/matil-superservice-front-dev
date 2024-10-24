@@ -46,6 +46,8 @@ function Mail () {
     
     //LIST OF CHANNELS
     const [channelsList, setChannelsList] = useState<null | any[]>(null)
+    const matildaScrollRef = useRef<HTMLDivElement>(null)
+
 
     //WAITING BOOLEANS FOR CREATING AN ACCOUNT
     const [waitingSend, setWaitingSend] = useState<boolean>(false)
@@ -67,13 +69,13 @@ function Mail () {
       document.title = `${t('Channels')} - ${t('Mail')} - ${auth.authData.organizationName} - Matil`
 
       const fetchInitialData = async() => {
-          const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/all_channels_basic_data`, auth})
+          const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/all_channels_basic_data`, auth})
           if (response?.status === 200){
             let mailChannels:any[] = []
             response.data.map((cha:any) => {if (cha.channel_type === 'email')  mailChannels.push(cha)})
             if (mailChannels) {
                if (mailChannels.length === 1) {
-                const responseMail = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/${mailChannels[0].id}`,  setValue: setData, auth})
+                const responseMail = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${mailChannels[0].id}`,  setValue: setData, auth})
                 if (responseMail?.status === 200) {
                   setIntroducedName(true)
                   setMatildaConfig(responseMail.data.matilda_configuration)
@@ -97,7 +99,7 @@ function Mail () {
     }, [])
 
     const selectChannel = async (id:string) => {
-      const responseMail = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/${id}`,  setValue: setData, auth})
+      const responseMail = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${id}`,  setValue: setData, auth})
       if (responseMail?.status === 200) {
         setIntroducedName(true)
         setMatildaConfig(responseMail.data.matilda_configuration)
@@ -107,18 +109,18 @@ function Mail () {
     } 
 
     const sendFirstEmailVerification = async () => {
-      const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/email`, method:'post',setWaiting:setWaitingCreate, requestForm:{name:data?.display_id,email_address:data?.display_id}, auth, toastMessages:{works:t('CorrectCreatedMail'), failed:t('FailedCreatedMail')}})
+      const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/email`, method:'post',setWaiting:setWaitingCreate, requestForm:{name:data?.display_id,email_address:data?.display_id}, auth, toastMessages:{works:t('CorrectCreatedMail'), failed:t('FailedCreatedMail')}})
       if (response?.status === 200) setIntroducedName(true)
     }
 
     const sendEmailSes = async () => {
-      const responseMail = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/${data?.display_id}`, setWaiting:setWaitingSes, setValue: setData, auth})
+      const responseMail = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${data?.display_id}`, setWaiting:setWaitingSes, setValue: setData, auth})
       if (responseMail?.status === 200) showToast({message:t('CorectSes')})
       else showToast({message:t('FailedtSes'), type:'failed'})
     }
 
     const sendEmailForward = async () => {
-      const responseMail = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/${data?.display_id}`,  setValue: setData, auth, toastMessages:{works:t('CorrectCreatedMail'), failed:t('FailedCreatedMail')}})
+      const responseMail = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${data?.display_id}`,  setValue: setData, auth, toastMessages:{works:t('CorrectCreatedMail'), failed:t('FailedCreatedMail')}})
       if (responseMail?.status === 200) {
         setIntroducedName(true)
         setMatildaConfig(responseMail.data.matilda_configuration)
@@ -128,7 +130,7 @@ function Mail () {
     }
 
     const saveChanges = async () => {
-        const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/${dataRef.current.id}`, setValue:setWaitingSend, setWaiting:setWaitingSend, auth, method:'put', requestForm:{...data, matilda_configuration:matildaConfig}, toastMessages:{'works':t('CorrectUpdatedInfo'), 'failed':t('FailedUpdatedInfo')}})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${dataRef.current.id}`, setValue:setWaitingSend, setWaiting:setWaitingSend, auth, method:'put', requestForm:{...data, matilda_configuration:matildaConfig}, toastMessages:{'works':t('CorrectUpdatedInfo'), 'failed':t('FailedUpdatedInfo')}})
         if (response?.status === 200) {
           dataRef.current = data
           matildaConfigRef.current = matildaConfig
@@ -215,7 +217,7 @@ function Mail () {
                     <Flex alignItems={'center'} gap='10px'> 
                         <Text  fontSize={'.9em'} fontWeight={'medium'}>{`${data.uuid}@parse.matil.es`}</Text>
                         <Tooltip label={t('CopyMail')}  placement='top' hasArrow bg='black' color='white'  borderRadius='.4rem' fontSize='sm' p='6px'> 
-                            <IconButton size='xs' onClick={() => copyToClipboard(`${data.uuid}@parse.matil.es`)}  aria-label={'copy-invitation-code'} icon={<BsClipboard2Check/>}/>
+                            <IconButton size='xs' onClick={() => copyToClipboard(`${data.uuid}@parse.matil.es`, t('CorrectCopiedMail'))}  aria-label={'copy-invitation-code'} icon={<BsClipboard2Check/>}/>
                         </Tooltip>
                       </Flex>
                       <Text mt='.5vh' color={'gray.600'} fontSize={'.8em'}>{t('ForwardConfigDes1')}</Text>
@@ -245,7 +247,7 @@ function Mail () {
 
             <Box flex='1' pt='4vh' overflow={'scroll'}> 
               <Skeleton  isLoaded={data !== null && matildaConfig !== null}>
-                  <GetMatildaConfig configDict={matildaConfig} setConfigDict={setMatildaConfig}/>
+                  <GetMatildaConfig configDict={matildaConfig} setConfigDict={setMatildaConfig} scrollRef={matildaScrollRef}/>
                 </Skeleton>
             </Box>
         </Flex>

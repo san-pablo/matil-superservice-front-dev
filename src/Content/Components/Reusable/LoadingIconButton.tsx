@@ -15,5 +15,4 @@ const LoadingIconButton = () => {
         </div>
     )
 }
-
 export default LoadingIconButton
