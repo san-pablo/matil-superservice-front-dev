@@ -155,7 +155,7 @@ function Content ({userInfo}:{userInfo:userInfo}) {
         else navigate(window.location)
 
         socket.current = io('https://api.matil.ai/platform', {
-            path: '/v1/socket.io/',
+            path: '/v2/socket.io/',
             transports:['websocket'],
             query: {
                 access_token: auth.authData.accessToken,
