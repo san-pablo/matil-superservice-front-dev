@@ -23,7 +23,7 @@ import { FaPlus } from "react-icons/fa6"
 import { IoIosArrowForward } from "react-icons/io"
 import { HiTrash } from "react-icons/hi2"
 //TYPING
-import { MatildaConfigProps, FieldAction, Channels, logosMap } from "../../../Constants/typing"
+import { MatildaConfigProps, FieldAction, Channels, logosMap, FunctionTableData } from "../../../Constants/typing"
    
 //TYPING
 interface ConfigProps { 
@@ -157,11 +157,9 @@ function Configurations ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
                 </Box>
             </Flex>
             <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/>
-            
             <Box width={'350px'}> 
                 <EditText value={text} setValue={setText} searchInput={true}/>
             </Box>
-
             <Flex  mt='2vh' justifyContent={'space-between'} alignItems={'end'}>
                 <Skeleton isLoaded={configData !== null && channelsData !== null }> 
                     <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('ConfigCount', {count:configData?.length})}</Text>
@@ -219,17 +217,26 @@ const GetMatildaConfig = ({allConfigs, setAllConfigs, configIndex, setConfigInde
     //WAITING BOOLEAN
     const [waitingSend, setWaitingSend] = useState<boolean>(false)
     
-    //HELP`CENTER DATA
-    const [helpCentersData, setHelpCentersData] = useState<{id: string, name: string, is_live: boolean}[] | null>(null)
-
+   
     //CONFIG DATA
     const configDictRef = useRef<MatildaConfigProps | null>(null)
     const [configDict, setConfigDict] = useState<MatildaConfigProps | null>(null)
 
+    //FUNCTIONS AND HEP CENTERS DATA
+    const [showAddFunctions, setShowAddFunctions] = useState<boolean>(false)
+    const [showAddHelpCenters, setShowAddHelpCenters] = useState<boolean>(false)
+    const [functionsData, setFunctionsData] = useState<FunctionTableData[] | null>(null)
+    const [helpCentersData, setHelpCentersData] = useState<{id: string, name: string, is_live: boolean}[] | null>(null)
+    const [deleteFunctionIndex, setDeleteFunctionIndex] = useState<number | null>(null )
+    const [deleteHelpCenterIndex, setDeleteHelpCenterIndex] = useState<number | null>(null)
+
+
+
     //FETCH INITIAL DATA
     useEffect(() => {
         const fetchInitialData = async () => {
-            const helpCentersData = await fetchData({endpoint:`${auth.authData.organizationId}/admin/help_centers`, auth, setValue:setHelpCentersData})
+            await fetchData({endpoint:`${auth.authData.organizationId}/admin/help_centers`, auth, setValue:setHelpCentersData})
+            await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions`, auth, setValue:setFunctionsData})
 
             if (configIndex === -1) {
                 setConfigDict(newConfig)
@@ -255,32 +262,12 @@ const GetMatildaConfig = ({allConfigs, setAllConfigs, configIndex, setConfigInde
     const [boxStyle, setBoxStyle] = useState<CSSProperties>({})
     determineBoxStyle({buttonRef:emojiButtonRef, setBoxStyle, boxPosition:'right', changeVariable:emojiVisible})
 
-     const handleEmojiClick = (emojiObject: EmojiClickData, event: any) => {
-        if (!configDict?.allowed_emojis.includes(emojiObject.emoji)) {
-            setConfigDict(prev => ({...prev as MatildaConfigProps, allowed_emojis: [...prev?.allowed_emojis as string[], emojiObject.emoji]}))
-        }
+    const handleEmojiClick = (emojiObject: EmojiClickData, event: any) => {
+        if (!configDict?.allowed_emojis.includes(emojiObject.emoji)) setConfigDict(prev => ({...prev as MatildaConfigProps, allowed_emojis: [...prev?.allowed_emojis as string[], emojiObject.emoji]}))
     }
-    const deleteEmoji = (index: number) => {
-        setConfigDict(prev => ({...prev as MatildaConfigProps, allowed_emojis: (prev?.allowed_emojis || []).filter((_, i) => i !== index)}))
-    }
- 
-    const handleCheckboxChange = (key: any, value: boolean) => {
-        setConfigDict(prev => ({...prev as MatildaConfigProps, [key]: value}))
-    }
-    const handleNumberChange = (key:any,value: string) => {
-        setConfigDict(prev => ({ ...prev as MatildaConfigProps, [key]: parseInt(value)}))
-     }
- 
-    const handleTextChange = (key: any, value: string) => {
-        setConfigDict(prev => ({ ...prev as MatildaConfigProps, [key]: value }))
-    }
- 
-
-    const handleToggle = (channelId:string) => {
-        if (configDict?.help_centers_ids.includes(channelId)) setConfigDict(prev => ({...prev as MatildaConfigProps, help_centers_ids: (prev?.help_centers_ids || []).filter((channel) => channel !== channelId) }))
-        else setConfigDict(prev => ({...prev as MatildaConfigProps, help_centers_ids:[...(prev?.help_centers_ids || []), channelId]}))
-    }
-    
+    const deleteEmoji = (index: number) => {setConfigDict(prev => ({...prev as MatildaConfigProps, allowed_emojis: (prev?.allowed_emojis || []).filter((_, i) => i !== index)}))}
+    const handleCheckboxChange = (key: any, value: boolean) => {setConfigDict(prev => ({...prev as MatildaConfigProps, [key]: value}))}
+  
     const addElement = (type: 'all_conditions' | 'any_conditions') => {
         const newElement = {motherstructure:'contact', is_customizable:false, name:'name', op:'eq', value:''}
        setConfigDict((prev) => {
@@ -321,8 +308,9 @@ const GetMatildaConfig = ({allConfigs, setAllConfigs, configIndex, setConfigInde
             <Text fontSize={'1.5em'}>{emoji}</Text>
             }
         </Flex>)
-    }
+    } 
 
+    //SAVE CONFIG
     const saveConfig = async() => {
         setWaitingSend(true)
         if (configIndex === -1) {
@@ -342,9 +330,155 @@ const GetMatildaConfig = ({allConfigs, setAllConfigs, configIndex, setConfigInde
         setWaitingSend(false)
     }
 
-return(   
+    //ADD HELP CENTER BOX
+    const AddHelpCenter = () => {
+        const addHelpCenter = async (id:string) => {
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/matilda_configurations/${configDict?.uuid}/help_centers/${id}`, method:'post', auth, toastMessages:{works:t('CorrectAddedHelpCenter'), failed:t('FailedAddedHelpCenter')}})
+            if (response?.status === 200) setConfigDict((prev) => ({...prev as MatildaConfigProps, help_centers_ids:[...prev?.help_centers_ids || [], id]}))
+            setShowAddHelpCenters(false)
+        }
 
+        const filteredHelpCenters = (helpCentersData || []).filter(helpCenter => {return !configDict?.help_centers_ids.some(id => id === helpCenter.id)})
+        return (<> 
+            <Box p='20px' > 
+                <Text  fontSize='1.4em' fontWeight={'medium'}>{t('AddConfig')}</Text>
+            </Box>
+            <Box p='20px'  overflow={'scroll'} flexDir={'row-reverse'}  borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+                {filteredHelpCenters?.length === 0 ? <Text>{t('NoAvailableHelpCenters')}</Text>:<>
+                {filteredHelpCenters.map((cha, index) => (
+                    <Box cursor={'pointer'} _hover={{bg:'brand.blue_hover'}} p='10px' borderRadius={'.7rem'} key={`add-channel-${index}`} onClick={() => addHelpCenter(cha.id)} > 
+                        <Text   minWidth={0}  fontWeight={'medium'}  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{cha.name}</Text>
+                        <Text  color='gray.600'fontSize={'.9em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{cha.id}</Text>
+                    </Box>
+                ))}</>}
+            </Box>
+        </>)
+    }
+
+    //ADD HELP CENTER BOX
+    const AddFunctions = () => {
+        const addFunction= async (id:string) => {
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/matilda_configurations/${configDict?.uuid}/functions/${id}`, method:'post', auth, toastMessages:{works:t('CorrectAddedFunction'), failed:t('FailedAddedFunction')}})
+            if (response?.status === 200) setConfigDict((prev) => ({...prev as MatildaConfigProps, functions_uuids:[...prev?.functions_uuids || [], id]}))
+            setShowAddFunctions(false)
+        }
+
+        const filteredFunctions = (functionsData || []).filter(func => {return !configDict?.functions_uuids.some(id => id === func.uuid)})
+        return (<> 
+            <Box p='20px' > 
+                <Text  fontSize='1.4em' fontWeight={'medium'}>{t('AddConfig')}</Text>
+            </Box>
+            <Box p='20px'  overflow={'scroll'} flexDir={'row-reverse'}  borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+                {filteredFunctions?.length === 0 ? <Text>{t('NoFunctions')}</Text>:<>
+                {filteredFunctions.map((cha, index) => (
+                    <Box cursor={'pointer'} _hover={{bg:'brand.blue_hover'}} p='10px' borderRadius={'.7rem'} key={`add-channel-${index}`} onClick={() => addFunction(cha.uuid)} > 
+                        <Text   minWidth={0}  fontWeight={'medium'}  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{cha.name}</Text>
+                        <Text  color='gray.600'fontSize={'.9em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{cha.description}</Text>
+                    </Box>
+                ))}</>}
+            </Box>
+        </>)
+    }
+
+    //DELETE HELP CENTER COMPONENT
+    const DeleteHelpCenterComponent = () => {
+
+        //WAITING DELETION
+        const [waitingDelete, setWaitingDelete] = useState<boolean>(false)
+
+        //FUNCTION FOR DELETING AN AUTOMATION
+        const deleteComponent = async () => {
+            setWaitingDelete(true)
+            const newList = (configDict?.help_centers_ids || [])?.filter((_, index) => index !== deleteHelpCenterIndex)
+            const response = await fetchData({endpoint: `${auth.authData.organizationId}/admin/settings/matilda_configurations/${configDict?.uuid}/help_centers/${configDict?.help_centers_ids?.[deleteHelpCenterIndex as number]}`,  method: 'delete', setWaiting: setWaitingDelete, auth, toastMessages: {works: t('CorrectDeletedHelpCenter'), failed: t('FailedDeletedHelpCenter')}})
+            if (response?.status === 200) {
+                setConfigDict(prev => ({...prev as MatildaConfigProps, help_centers_ids:newList}))
+                setDeleteHelpCenterIndex(null)
+            }
+        }
+
+        //FRONT
+        return(<>
+            <Box p='20px' > 
+                <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('ConfirmDelete')}</Text>
+                <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
+                <Text >{parseMessageToBold(t('ConfirmDeleteHelpCenter', {name:helpCentersData?.find(element => element.id === configDict?.help_centers_ids?.[deleteHelpCenterIndex as number])?.name}))}</Text>
+            </Box>
+            <Flex bg='gray.50' p='20px' gap='10px' flexDir={'row-reverse'}>
+                <Button  size='sm' variant={'delete'} onClick={deleteComponent}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
+                <Button  size='sm' variant={'common'}onClick={() => setDeleteHelpCenterIndex(null)}>{t('Cancel')}</Button>
+            </Flex>
+        </>)
+    }
+
+    //DELETE FUNCTION COMPONENT
+    const DeleteFunctionComponent = () => {
+
+        //WAITING DELETION
+        const [waitingDelete, setWaitingDelete] = useState<boolean>(false)
+
+        //FUNCTION FOR DELETING AN AUTOMATION
+        const deleteComponent = async () => {
+            setWaitingDelete(true)
+            const newList = (configDict?.functions_uuids || [])?.filter((_, index) => index !== deleteFunctionIndex)
+            const response = await fetchData({endpoint: `${auth.authData.organizationId}/admin/settings/matilda_configurations/${configDict?.uuid}/functions/${configDict?.functions_uuids?.[deleteFunctionIndex as number]}`,  method: 'delete', setWaiting: setWaitingDelete, auth, toastMessages: {works: t('CorrectDeletedFunction'), failed: t('FailedDeletedFunction')}})
+            if (response?.status === 200) {
+                setConfigDict(prev => ({...prev as MatildaConfigProps, functions_uuids:newList}))
+                setDeleteFunctionIndex(null)
+            }
+        }
+
+        //FRONT
+        return(<>
+            <Box p='20px' > 
+                <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('ConfirmDelete')}</Text>
+                <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
+                <Text >{parseMessageToBold(t('ConfirmDeleteFunction', {name:functionsData?.find(element => element.uuid === configDict?.functions_uuids?.[deleteFunctionIndex as number])?.name}))}</Text>
+            </Box>
+            <Flex bg='gray.50' p='20px' gap='10px' flexDir={'row-reverse'}>
+                <Button  size='sm' variant={'delete'} onClick={deleteComponent}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
+                <Button  size='sm' variant={'common'}onClick={() => setDeleteHelpCenterIndex(null)}>{t('Cancel')}</Button>
+            </Flex>
+        </>)
+    }
+
+    //MEMOIZED ADD HELP CENTERS COMPONENT
+    const memoizedAddHelpCenter = useMemo(() => (<> 
+        <ConfirmBox  setShowBox={setShowAddHelpCenters} > 
+            <AddHelpCenter/>
+        </ConfirmBox>
+    </>), [showAddHelpCenters])
+
+      //MEMOIZED ADD FUNCTIONS COMPONENT
+      const memoizedAddFunctions= useMemo(() => (<> 
+        <ConfirmBox  setShowBox={setShowAddFunctions} > 
+            <AddFunctions/>
+        </ConfirmBox>
+    </>), [showAddFunctions])
+
+
+    //MEMOIZED ADD HELP CENTERS COMPONENT
+    const memoizedDeleteHelpCenter = useMemo(() => (<> 
+        <ConfirmBox  setShowBox={(b:boolean) => setDeleteHelpCenterIndex(null)} > 
+            <DeleteHelpCenterComponent/>
+        </ConfirmBox>
+    </>), [deleteHelpCenterIndex])
+
+
+    //MEMOIZED ADD HELP CENTERS COMPONENT
+    const memoizedDeleteFunction = useMemo(() => (<> 
+        <ConfirmBox  setShowBox={(b:boolean) => setDeleteFunctionIndex(null)} > 
+            <DeleteFunctionComponent/>
+        </ConfirmBox>
+    </>), [deleteFunctionIndex])
+
+return(   
     <>
+    {showAddHelpCenters && memoizedAddHelpCenter}
+    {showAddFunctions && memoizedAddFunctions}
+    {deleteHelpCenterIndex !== null && memoizedDeleteHelpCenter}
+    {deleteFunctionIndex !== null && memoizedDeleteFunction}
+    
         <Box> 
             <Flex fontWeight={'medium'} fontSize={'1.4em'} gap='10px' alignItems={'center'}> 
                 <Text onClick={() => setConfigIndex(-2)} color='brand.text_blue' cursor={'pointer'}>{t('MatildaConfigs')}</Text>
@@ -354,22 +488,22 @@ return(
             <Box width='100%' bg='gray.300' height='1px' mt='2vh'/>
         </Box>
 
-        <Box flex='1' overflow={'scroll'} pt='3vh' maxW={'1200px'}> 
-        <Skeleton isLoaded={configDict !== null && helpCentersData !== null}> 
-            <Text mb='.5vh' fontSize={'1.1em'}  fontWeight={'medium'}>{t('Name')}</Text>
+        <Flex flex='1' overflow={'scroll'} pt='3vh' gap='50px'> 
+            <Skeleton style={{flex:'1'}} isLoaded={configDict !== null && helpCentersData !== null}> 
+            <Text mb='.5vh' fontSize={'1.2em'}  fontWeight={'semibold'}>{t('Name')}</Text>
             <Box maxW='500px'> 
                 <EditText  value={configDict?.name || ''} setValue={(value) => {setConfigDict((prev) => ({...prev as MatildaConfigProps, name:value}))}} hideInput={false}/>
             </Box>
 
-            <Text fontSize={'1.1em'} mt='2vh' mb='.5vh'  fontWeight={'medium'}>{t('Description')}</Text>
+            <Text fontSize={'1.2em'} mt='2vh' mb='.5vh'  fontWeight={'semibold'}>{t('Description')}</Text>
             <Textarea maxW={'500px'} resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('Description')}...`} maxH='300px' value={configDict?.description} onChange={(e) => setConfigDict((prev) => ({...prev as MatildaConfigProps, description:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "brand.text_blue", borderWidth: "2px"}}/>
 
-            <Text fontSize={'1.1em'} mt='3vh'  fontWeight={'medium'}>{t('TildaMood')}</Text>
+            <Text fontSize={'1.2em'} mt='3vh'  fontWeight={'semibold'}>{t('TildaMood')}</Text>
 
             <Text fontSize={'.9em'} mt='1vh' fontWeight={'medium'}>{t('Tone')}</Text>
             <Text fontSize={'.8em'} mb='.5vh' color='gray.600'>{t('ToneDes')}</Text>
             <Box maxW='500px'> 
-                <EditText placeholder={`${t('Tone')}...`} hideInput={false} value={configDict?.tone}  setValue={(value) => handleTextChange('tone', value)}/>
+                <EditText placeholder={`${t('Tone')}...`} hideInput={false} value={configDict?.tone}  setValue={(value) => setConfigDict(prev => ({ ...prev as MatildaConfigProps, 'tone': value }))}/>
             </Box>
             <Text fontSize={'.9em'} mt='2vh' fontWeight={'medium'}>{t('Prompt')}</Text>
             <Text fontSize={'.8em'} mb='.5vh' color='gray.600'>{t('PromptDes')}</Text>
@@ -387,7 +521,7 @@ return(
                 <EmojiPicker onEmojiClick={handleEmojiClick}  open={emojiVisible} allowExpandReactions={false}/>
             </Box>
 
-            <Text fontSize={'1.1em'} mt='3vh'  fontWeight={'medium'}>{t('Instructions')}</Text>
+            <Text fontSize={'1.2em'} mt='3vh'  fontWeight={'semibold'}>{t('Instructions')}</Text>
             <Flex gap='10px' mt='1vh' alignItems={'center'}>
                 <Switch isChecked={configDict?.allow_agent_transfer} onChange={(e) => handleCheckboxChange('allow_agent_transfer', e.target.checked)}/>
                 <Text fontWeight={'medium'}>{t('AllowAgentTransfer')}</Text>
@@ -395,9 +529,9 @@ return(
             {configDict?.allow_agent_transfer && 
             <Box maxW={'500px'}>
                 <Text mb='.5vh' fontSize={'.9em'} mt='1vh' fontWeight={'medium'}>{t('BusinessHourMessage')}</Text>
-                <EditText placeholder={`${t('Message')}...`} hideInput={false} value={configDict?.business_hours_agent_transfer_message}  setValue={(value) => handleTextChange('business_hours_agent_transfer_message', value)}/>
+                <EditText placeholder={`${t('Message')}...`} hideInput={false} value={configDict?.business_hours_agent_transfer_message} setValue={(value) => setConfigDict(prev => ({ ...prev as MatildaConfigProps, 'business_hours_agent_transfer_message': value }))} />
                 <Text mb='.5vh' fontSize={'.9em'} mt='1vh' fontWeight={'medium'}>{t('NotBusinessHourMessage')}</Text>
-                <EditText placeholder={`${t('Message')}...`} hideInput={false} value={configDict?.non_business_hours_agent_transfer_message}  setValue={(value) => handleTextChange('non_business_hours_agent_transfer_message', value)}/>
+                <EditText placeholder={`${t('Message')}...`} hideInput={false} value={configDict?.non_business_hours_agent_transfer_message} setValue={(value) => setConfigDict(prev => ({ ...prev as MatildaConfigProps, 'non_business_hours_agent_transfer_message': value }))} />
             </Box>}
 
             <Flex gap='10px' mt='2vh' alignItems={'center'}>
@@ -410,13 +544,13 @@ return(
                 <Flex gap='20px' mt='1vh'> 
                     <Box> 
                         <Text fontWeight={'medium'} fontSize={'.9em'}>{t('minimum_seconds_to_respond')}</Text>
-                        <NumberInput size='sm' mt='.5vh' value={configDict?.minimum_seconds_to_respond || 0} onChange={(valueString) => handleNumberChange('minimum_seconds_to_respond', valueString)} min={0} max={configDict.maximum_seconds_to_respond}>
+                        <NumberInput size='sm' mt='.5vh' value={configDict?.minimum_seconds_to_respond || 0}  onChange={(valueString) => setConfigDict(prev => ({ ...prev as MatildaConfigProps, 'minimum_seconds_to_respond': parseInt(valueString)}))} min={0} max={configDict.maximum_seconds_to_respond}>
                             <NumberInputField  fontSize={'.9em'} borderRadius='.5rem'   borderColor={'gray.300'} _hover={{ border: '1px solid #CBD5E0' }} _focus={{ borderColor: 'brand.text_blue', borderWidth: '2px', px:'6px' }} px='7px' />
                         </NumberInput>
                     </Box>
                     <Box>
                         <Text fontSize={'.9em'} fontWeight={'medium'}  >{t('maximum_seconds_to_respond')}</Text>
-                        <NumberInput size='sm' mt='.5vh' value={configDict?.maximum_seconds_to_respond || 0} onChange={(valueString) => handleNumberChange('maximum_seconds_to_respond', valueString)} min={configDict.minimum_seconds_to_respond} max={14400}>
+                        <NumberInput size='sm' mt='.5vh' value={configDict?.maximum_seconds_to_respond || 0} onChange={(valueString) => setConfigDict(prev => ({ ...prev as MatildaConfigProps, 'maximum_seconds_to_respond': parseInt(valueString)}))}  min={configDict.minimum_seconds_to_respond} max={14400}>
                             <NumberInputField fontSize={'.9em'} borderRadius='.5rem'   borderColor={'gray.300'} _hover={{ border: '1px solid #CBD5E0' }} _focus={{ borderColor: 'brand.text_blue', borderWidth: '2px', px:'6px' }} px='7px' />
                         </NumberInput>
                     </Box>
@@ -424,7 +558,6 @@ return(
                     
 
             <Text mt='2vh' fontWeight={'medium'} >{t('ContactConditions')}</Text>
-            <Flex gap='30px' mt='1.5vh'> 
                 <Box flex='1'> 
                     <Text mt='1vh' fontWeight={'medium'}  fontSize={'.9em'}>{t('contact_all_conditions')}</Text>
                     {(configDict?.all_conditions || []).map((condition, index) => (
@@ -438,7 +571,7 @@ return(
                     <Button mt='1vh' variant={'common'}  leftIcon={<FaPlus/>} size='xs'  onClick={() => addElement('all_conditions')}>{t('AddCondition')}</Button>
                 </Box>
                 <Box flex='1'> 
-                    <Text mt='1vh' fontWeight={'medium'}  fontSize={'.9em'}>{t('contact_any_conditions')}</Text>
+                    <Text mt='2vh' fontWeight={'medium'}  fontSize={'.9em'}>{t('contact_any_conditions')}</Text>
                     {(configDict?.any_conditions || []).map((condition, index) => (
                             <Flex  key={`all-automation-${index}`} mt='1vh' gap='10px'>
                                 <Box flex={'1'}> 
@@ -449,31 +582,49 @@ return(
                     ))}
                     <Button mt='1vh' variant={'common'}  leftIcon={<FaPlus/>} size='xs'  onClick={() => addElement('any_conditions')}>{t('AddCondition')}</Button>  
                 </Box>
-            </Flex>
-
-            <Text fontSize={'1.1em'} mt='3vh'  fontWeight={'medium'}>{t('Knowledge')}</Text>
-            <Flex gap='10px' mt='2vh' alignItems={'center'}>
-                <Switch isChecked={configDict?.allow_sources} onChange={(e) => handleCheckboxChange('allow_sources', e.target.checked)}/>
-                <Text fontWeight={'medium'}>{t('UseHelpCenter')}</Text>
-            </Flex>
-            <Text fontSize={'.8em'} color='gray.600'>{t('UseHelpCenterDes')}</Text>
-            <Text  mt='2vh' fontWeight={'medium'}  >{t('HelpCentersToUse')}</Text>
-            {helpCentersData?.length === 0 ? <Text>{t('NoHelpCenters')}</Text> : 
-            <>
-               {helpCentersData?.map((center, index) => (
-                <Flex  gap='10px' mt='12px' key={`help-${index}`} alignItems={'start'}> 
-                    <Radio isChecked={configDict?.help_centers_ids.includes(center.id)} onClick={() => handleToggle(center.id)}/>
-                    <Box mt='-2px' flex='1' > 
-                         <Text   minWidth={0} maxW={'calc(100% - 37px)'} fontWeight={'medium'}  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{center.name}</Text>
-                        <Text width={'190px'} color='gray.600'fontSize={'.9em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{center.id}</Text>
-                    </Box>
+ 
+            </Skeleton>
+            <Skeleton style={{flex:'1'}} isLoaded={configDict !== null && helpCentersData !== null}>
+                <Text fontSize={'1.2em'}  fontWeight={'semibold'}>{t('Knowledge')}</Text>
+                <Flex gap='10px' mt='2vh' alignItems={'center'}>
+                    <Switch isChecked={configDict?.allow_sources} onChange={(e) => handleCheckboxChange('allow_sources', e.target.checked)}/>
+                    <Text fontWeight={'medium'}>{t('UseHelpCenter')}</Text>
                 </Flex>
-               ))} 
-            </>
-            }
+                <Text fontSize={'.8em'} color='gray.600'>{t('UseHelpCenterDes')}</Text>
+                <Text  mt='2vh' mb='2vh' fontWeight={'medium'}  >{t('HelpCentersToUse')}</Text>
+                    {helpCentersData?.length === 0 ? <Text>{t('NoHelpCenters')}</Text> : 
+                    <>
+                    {configDict?.help_centers_ids?.map((center, index) => (
+                        <Flex alignItems={'center'} key={`help-center-${index}`} py='10px' borderBottomColor={'gray.200'} borderBottomWidth={'1px'} borderTopColor={'gray.200'} borderTopWidth={index === 0 ?'1px':''} justifyContent={'space-between'}> 
+                            <Box flex='1' > 
+                                <Text  fontSize={'.9em'}  fontWeight={'medium'}  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{helpCentersData?.find(element => element.id === center)?.name}</Text>
+                                <Text color='gray.600'fontSize={'.8em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{center}</Text>
+                            </Box>
+                            <IconButton size={'sm'} color={'red.600'} bg='transparent' variant={'delete'} _hover={{bg:'red.100'}} icon={<HiTrash size={'20px'}/>} aria-label="delete-row" onClick={() => setDeleteHelpCenterIndex(index)}/>
+                        </Flex>
+                    ))} 
+                </>
+                }
+                <Button variant={'common'} leftIcon={<FaPlus/>} isDisabled={configDict?.help_centers_ids.length === helpCentersData?.length}  onClick={() => setShowAddHelpCenters(true)} size='sm' mt='2vh'>{t('AddHelpCenters')}</Button>
+
+                <Text mt='3vh' mb='2vh' fontWeight={'medium'} >{t('AvailableFunctions')}</Text>
+                {configDict?.functions_uuids?.length === 0 ? <Text>{t('NoFunctions')}</Text> : 
+                    <>
+                    {configDict?.functions_uuids?.map((id, index) => (
+                        <Flex alignItems={'center'} key={`funciton-${index}`} py='10px' borderBottomColor={'gray.200'} borderBottomWidth={'1px'} borderTopColor={'gray.200'} borderTopWidth={index === 0 ?'1px':''} justifyContent={'space-between'}> 
+                            <Box  flex='1' > 
+                                <Text fontSize={'.9em'} fontWeight={'medium'}  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{functionsData?.find(element => element.uuid === id)?.name}</Text>
+                                <Text color='gray.600'fontSize={'.8em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{functionsData?.find(element => element.uuid === id)?.description}</Text>
+                            </Box>
+                            <IconButton size={'sm'} color={'red.600'} bg='transparent' variant={'delete'} _hover={{bg:'red.100'}} icon={<HiTrash size={'20px'}/>} aria-label="delete-row" onClick={() => setDeleteFunctionIndex(index)}/>
+                        </Flex>
+                    ))} 
+                </>}
+                <Button variant={'common'} leftIcon={<FaPlus/>} isDisabled={configDict?.functions_uuids.length === functionsData?.length} onClick={() => setShowAddFunctions(true)} size='sm' mt='2vh'>{t('AddFunctions')}</Button>
 
             </Skeleton>
-        </Box>
+
+        </Flex>
 
         <Box> 
             <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='2vh'/>
