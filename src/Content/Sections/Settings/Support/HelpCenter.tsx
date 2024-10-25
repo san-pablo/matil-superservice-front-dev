@@ -381,7 +381,6 @@ function HelpCenter ({scrollRef, helpCenterId, setHelpCenterId, setHelpCentersDa
     const [collectionsData, setCollectionsData] = useState<CollectionsData[] | null>(null)
     const [publicArticlesData, setPublicArticlesData] = useState<ArticleData[] | null>(null)
 
-    console.log(helpCenterData)
     //FETCH NEW DATA WHEN THE VIEEW CHANGE
     useEffect(() => {
         document.title = `${t('Settings')} - ${t('HelpCenter')} - ${auth.authData.organizationName} - Matil`

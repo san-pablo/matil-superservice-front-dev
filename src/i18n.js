@@ -1,6 +1,6 @@
-import i18n from 'i18next';
-import { initReactI18next } from 'react-i18next';
-import Backend from 'i18next-http-backend';
+import i18n from 'i18next'
+import { initReactI18next } from 'react-i18next'
+import Backend from 'i18next-http-backend'
 
 i18n
   .use(Backend)
@@ -8,7 +8,7 @@ i18n
   .init({
     lng: 'es',
     fallbackLng: 'en',
-    ns: ['login', 'main', 'tickets', 'clients', 'businesses', 'flows', 'settings'],
+    ns: ['bussinesses', 'clients', 'conversations', 'formats', 'knowledge', 'login', 'main', , 'settings', 'stats'],
     defaultNS: 'main',
     backend: {
       loadPath: '/locales/{{lng}}/{{ns}}.json',
@@ -16,6 +16,6 @@ i18n
     interpolation: {
       escapeValue: false,
     },
-  });
+  })
 
 export default i18n

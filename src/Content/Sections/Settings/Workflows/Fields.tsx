@@ -61,7 +61,7 @@ const Fields = () => {
     //CONSTANTS
     const { t } = useTranslation('settings')
     const auth = useAuth()
-    const structuresMap:{[key in 'conversation' | 'contact' | 'contact_business']:string} = {'conversation':t('Conversations'), 'contact':t('Clients'), 'contact_business':t('Contact_business')}
+    const structuresMap:{[key in 'conversation' | 'contact' | 'contact_business']:string} = {'conversation':t('Conversations'), 'contact':t('Contacts'), 'contact_business':t('Contact_business')}
     const variablesMap:{[key in variables]:string} = {'bool':t('bool'), 'int':t('int'), 'float':t('float'), 'str':t('str'), 'timestamp':t('timestamp')}
     const columnsFieldsMap:{[key:string]:[string, number]} = {'name':[t('Name'), 250],  'motherstructure':[t('Structure'), 200], 'type': [t('Type'), 200], 'default':[t('Default'), 300]}
 
@@ -128,7 +128,6 @@ const Fields = () => {
 
     const EditFieldBox = ({fieldData}:{fieldData:{data:FieldsType, index:number}}) => {
 
-    
         //NEW FIELD DATA
         const [newFieldData, setNewFieldData] = useState<FieldsType>(fieldData.data)
     
@@ -143,9 +142,9 @@ const Fields = () => {
             
             <Text mt='3vh' mb='.5vh' fontWeight={'medium'}>{t('Structure')}</Text>
             <Flex gap='20px' mt='.5vh' >
-                <Button leftIcon={<FaTicket/>} bg={newFieldData.motherstructure === 'conversation'?'brand.black_button':'brand.gray_2'} color={newFieldData.motherstructure === 'conversation'?'white':'black'} size='xs' _hover={{bg:newFieldData.motherstructure === 'conversation'?'brand.black_button_hover':'brand.gray_1'}}  onClick={() => setNewFieldData((prev) => ({...prev, motherstructure:'conversation'}))}>{t('Conversations')}</Button>
-                <Button leftIcon={<IoPeopleSharp/>} bg={newFieldData.motherstructure === 'contact'?'brand.black_button':'brand.gray_2'} color={newFieldData.motherstructure === 'contact'?'white':'black'} size='xs' _hover={{bg:newFieldData.motherstructure === 'contact'?'brand.black_button_hover':'brand.gray_1'}} onClick={() => setNewFieldData((prev) => ({...prev, motherstructure:'contact'}))}>{t('Clients')}</Button>
-                <Button leftIcon={<FaBuilding/>} bg={newFieldData.motherstructure === 'contact_business'?'brand.black_button':'brand.gray_2'} color={newFieldData.motherstructure === 'contact_business'?'white':'black'} size='xs' _hover={{bg:newFieldData.motherstructure === 'contact_business'?'brand.black_button_hover':'brand.gray_1'}} onClick={() => setNewFieldData((prev) => ({...prev, motherstructure:'contact_business'}))} >{t('Businesses')}</Button>           
+                <Button fontWeight={'medium'} leftIcon={<FaTicket/>} variant={newFieldData.motherstructure === 'conversation'?'main':'common'} size='sm'  onClick={() => setNewFieldData((prev) => ({...prev, motherstructure:'conversation'}))}>{t('Conversations')}</Button>
+                <Button fontWeight={'medium'}leftIcon={<IoPeopleSharp/>} variant={newFieldData.motherstructure === 'contact'?'main':'common'} size='sm'  onClick={() => setNewFieldData((prev) => ({...prev, motherstructure:'contact'}))}>{t('Contacts')}</Button>
+                <Button fontWeight={'medium'} leftIcon={<FaBuilding/>} variant={newFieldData.motherstructure === 'contact_business'?'main':'common'} size='sm'  onClick={() => setNewFieldData((prev) => ({...prev, motherstructure:'contact_business'}))} >{t('Businesses')}</Button>           
             </Flex> 
 
             <Text mt='3vh' mb='.5vh' fontWeight={'medium'}>{t('Type')}</Text>
@@ -166,7 +165,6 @@ const Fields = () => {
             <Box p='20px'> 
                 <Text width={'400px'}>{parseMessageToBold(t('DeleteAllFields', {name:fieldToDelete?.name, structure:structuresMap[fieldToDelete?.motherstructure || 'conversation'].toLowerCase()}))}</Text>
             </Box>
-            
             <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
                 <Button  size='sm' variant={'delete'} onClick={handleDeleteFields}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
                 <Button  size='sm' variant={'common'} onClick={()=> setFieldToDelete(null)}>{t('Cancel')}</Button>

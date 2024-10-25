@@ -20,7 +20,6 @@ import ConfirmBox from "../../Components/Reusable/ConfirmBox"
 import CustomSelect from "../../Components/Reusable/CustomSelect"
 import Table from "../../Components/Reusable/Table"
 import '../../Components/styles.css'
-
 //FUNCTIONS
 import copyToClipboard from "../../Functions/copyTextToClipboard"
 import useOutsideClick from "../../Functions/clickOutside"
@@ -39,11 +38,9 @@ import { MdOutlineFormatListBulleted } from "react-icons/md"
 import { FiHash, FiType } from "react-icons/fi"
 import { TbMathFunction } from "react-icons/tb"
 //TYPING
-import { FunctionsData, logosMap, Channels } from "../../Constants/typing"
+import { FunctionsData, logosMap, Channels, ConfigProps } from "../../Constants/typing"
  
-//TYPING
-type variables = 'boolean' | 'integer' | 'float' | 'string' | 'timestamp'
-  
+//TYPING  
 interface FunctionResultType {
     run_successful:boolean
     result:{outputs:{[key:string]:string}, motherstructure_updates:{[key:string]:string}, errors:{message: string, line: number, timestamp: string, arguments: {name: string, type: string, value: any}[]}[]}
@@ -160,7 +157,7 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
         parameters:[],
         code:'',
         errors:[],
-        channels_basic_data:[]
+        matilda_configurations_uuids:[]
     }
 
     //SHOW NOT SAVED DATA WARNING
@@ -193,8 +190,10 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
     //FUNCTION DATA
     const functionDataRef = useRef<FunctionsData | null>(null)
     const [functionData, setFunctionData] = useState<FunctionsData | null>(null)
-
     const [selectedParameter, setSelectedParameter] = useState<number | null>(null)
+
+    //CONFIGURATIONS DATA
+    const [internalChannelsData, setInternalChannelsData] = useState<ConfigProps[] | null>(channeslData)
 
     //FETCH FUNCTION DATA
     useEffect(() => {      
@@ -205,6 +204,8 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
                 const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions/${selectedUuid}`, setValue:setFunctionData, auth})
                 if (response?.status === 200) functionDataRef.current = response?.data
             }
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/matilda_configurations`, auth, setValue:setInternalChannelsData})
+
         }
         fetchInitialData()
     }, [])
@@ -236,13 +237,13 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
     }
 
     //EDIT FUNCTION DATA
-    const editFunctionData = (keyToEdit:string ,value:any, type?:'add' | 'delete' | 'edit', index?:number ) => {
+    const editFunctionData = (keyToEdit:'parameters' ,value:any, type?:'add' | 'delete' | 'edit', index?:number ) => {
 
         setFunctionData(prev => {
             if (!prev) return prev
             const updatedFunction = { ...prev as FunctionsData }
         
-            const list = updatedFunction[keyToEdit as 'parameters' | 'channels_basic_data']
+            const list = updatedFunction[keyToEdit as 'parameters']
             
             if (keyToEdit === 'parameters' || keyToEdit === 'channels_basic_data') {
                 if (type === 'add') {
@@ -311,12 +312,10 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
             }
 
             return(<>
-             <Box p='20px'> 
+                <Box p='20px'> 
                     <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('SelectFunctionArgs')}</Text>
                     <Text color='gray.600' fontSize={'.9em'}>{t('SelectFunctionArgsDes')}</Text>
-
                     <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
-
                     {selectedArgs.map((arg, index) => (
                     <Fragment key={`arg-${index}`}>
                         <Text fontWeight={'medium'} mt='1vh' mb='.5vh'>{arg.name}</Text>
@@ -375,40 +374,27 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
    
     //ADD CHANEL BOX
     const AddChannels = () => {
- 
-        const [internalChannelsData, setInternalChannelsData] = useState<any[] | null>(channeslData)
-
-        const fetchChannels = async() => {
-            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/all_channels_basic_data`, auth, setValue:setInternalChannelsData})
-            if (response?.status === 200) setChannelsData(response.data)
-        }
-        useEffect(() => {
-            if (!channeslData) fetchChannels()
-        },[])
-
+       
         const addChannel = async (channel:any) => {
-            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions/${functionData?.uuid}/${channel.id}`, method:'put', auth, toastMessages:{works:t('CorrectAddedChannel'), failed:t('FailedAddedChannel')}})
-            if (response?.status === 200) setFunctionData((prev) => ({...prev as FunctionsData, channels_basic_data:[...prev?.channels_basic_data || [], {...channel, is_active:true}]}))
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/matilda_configurations/${channel.uuid}/functions/${functionData?.uuid}`, method:'post', auth, toastMessages:{works:t('CorrectAddedChannel'), failed:t('FailedAddedChannel')}})
+            if (response?.status === 200) setFunctionData((prev) => ({...prev as FunctionsData, matilda_configurations_uuids:[...prev?.matilda_configurations_uuids || [], channel.uuid]}))
             setShowAddChannels(false)
         }
 
-        const filteredChannels = (internalChannelsData || []).filter(internalChannel => {return !functionData?.channels_basic_data.some(basicChannel => basicChannel.id === internalChannel.id)})
+        const filteredChannels = (internalChannelsData || []).filter(internalChannel => {return !functionData?.matilda_configurations_uuids.some(basicChannel => basicChannel === internalChannel.uuid)})
 
         return (<> 
             <Box p='20px' > 
-                <Text  fontSize='1.4em' fontWeight={'medium'}>{t('AddChannel')}</Text>
+                <Text  fontSize='1.4em' fontWeight={'medium'}>{t('AddConfig')}</Text>
             </Box>
             <Box p='20px'  overflow={'scroll'} flexDir={'row-reverse'}  borderTopWidth={'1px'} borderTopColor={'gray.200'}>
                 {internalChannelsData === null? <Flex justifyContent={'center'}> <Spinner/></Flex>:
                 <Skeleton isLoaded={internalChannelsData !== null}> 
-                    {filteredChannels?.length === 0 ? <Text>{t('NoAvailableChannels')}</Text>:<>
+                    {filteredChannels?.length === 0 ? <Text>{t('NoAvailableConfigs')}</Text>:<>
                     {filteredChannels.map((cha, index) => (
                         <Box cursor={'pointer'} _hover={{bg:'brand.blue_hover'}} p='10px' borderRadius={'.7rem'} key={`add-channel-${index}`} onClick={() => addChannel(cha)} > 
-                        <Flex gap='10px' alignItems='center'> 
                             <Text   minWidth={0}  fontWeight={'medium'}  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{cha.name}</Text>
-                            <Icon boxSize={'16px'} as={logosMap[cha.channel_type as Channels][0] || ''}/>
-                        </Flex> 
-                        <Text width={'190px'} color='gray.600'fontSize={'.9em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{cha.display_id}</Text>
+                            <Text  color='gray.600'fontSize={'.9em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{cha.description}</Text>
                         </Box>
                     ))}</>}
                 </Skeleton>
@@ -483,9 +469,9 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
                 </Flex>
             </Flex>
             <Flex width={'100%'} height={'100%'} justifyContent={'center'} overflow={'scroll'} >
-                <Box p='2vw' width={'100%'} height={'100%'}  >
-                    <Skeleton isLoaded={functionData !== null}> 
-                     <CodeMirror value={functionData?.code} maxHeight={`${codeBoxHeight}px`} extensions={[python()]} onChange={(value) => setFunctionData(prev => ({...prev as FunctionsData, code:value}))} theme={oneDark}/>
+                <Box p='2vw'  width={'100%'} height={'100%'}  >
+                    <Skeleton isLoaded={functionData !== null} style={{overflow:'hidden'}}> 
+                        <CodeMirror value={functionData?.code} maxHeight={`${codeBoxHeight}px`} extensions={[python()]} onChange={(value) => setFunctionData(prev => ({...prev as FunctionsData, code:value}))} theme={oneDark}/>
                     </Skeleton>
                 </Box>
             </Flex>
@@ -496,16 +482,15 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
                 <IconButton aria-label="close-tab" variant={'common'} bg='transparent' size='sm' icon={<RxCross2 size={'20px'}/>} onClick={() =>setClientBoxWidth(0)}/>
             </Flex>
             <Box p='2vh' pb='10vh' height={'100%'} overflow={'scroll'}> 
-
                 <Text fontWeight={'semibold'}  fontSize={'.9em'}>{t('Description').toLocaleUpperCase()}</Text>
                 <Textarea maxW={'500px'} mt='.5vh' resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('Description')}...`} maxH='300px' value={functionData?.description} onChange={(e) => setFunctionData((prev) => ({...prev as FunctionsData, description:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(59, 90, 246)", borderWidth: "2px"}}/>
-
                 <CollapsableSection section={'Parameters'} isExpanded={sectionsExpanded.includes('Parameters')} onSectionExpand={onSectionExpand}> 
                     <Skeleton isLoaded={functionData !== null}> 
-                        {(functionData?.parameters || []).map((param, index) => (<> 
-                            <ParameterBox variableData={param} index={index} setIndex={setSelectedParameter} editFunctionData={editFunctionData}/>
-                            {index !== (functionData?.parameters?.length || 0) - 1 && <Box height={'1px'} width={'100%'} bg='gray.200' mt='1vh' mb='1vh'/>}
-                            </>
+                        {(functionData?.parameters || []).map((param, index) => (
+                            <Fragment key={`parameter-${index}`}> 
+                                <ParameterBox variableData={param} index={index} setIndex={setSelectedParameter} editFunctionData={editFunctionData}/>
+                                {index !== (functionData?.parameters?.length || 0) - 1 && <Box height={'1px'} width={'100%'} bg='gray.200' mt='1vh' mb='1vh'/>}
+                            </Fragment>
                         ))}
                         <Button variant={'common'} leftIcon={<FaPlus/>} onClick={() => setSelectedParameter(-1)} size='sm' mt='2vh'>{t('AddParameter')}</Button>
                     </Skeleton>
@@ -521,22 +506,22 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
                 </CollapsableSection>
 
                 <CollapsableSection section={'ActiveChannels'} isExpanded={sectionsExpanded.includes('ActiveChannels')} onSectionExpand={onSectionExpand}> 
-                        {(functionData?.channels_basic_data || []).map((cha, index) => (
+                    <Skeleton isLoaded={functionData !== null && internalChannelsData !== null}> 
+                        {(functionData?.matilda_configurations_uuids || []).map((cha, index) => (
                             <Flex  gap='10px' mt='12px' key={`channel-${index}`} alignItems={'start'}> 
-                                <Radio isChecked={cha.is_active} onClick={(value) => editFunctionData('channels_basic_data', {...cha, is_active:!cha.is_active}, 'edit', index)}/>
                                 <Box mt='-2px' flex='1' > 
-                                <Flex gap='10px' alignItems='center'> 
-                                    <Text   minWidth={0}  fontWeight={'medium'} fontSize={'.9em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{cha.name}</Text>
-                                    <Icon boxSize={'12px'} as={logosMap[cha.channel_type as Channels]?.[0] || ''}/>
-                                </Flex> 
-                                <Text width={'190px'} color='gray.600'fontSize={'.8em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{cha.display_id}</Text>
+                                    <Flex gap='10px' alignItems='center'> 
+                                        <Text   minWidth={0}  fontWeight={'medium'} fontSize={'.9em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{internalChannelsData?.find(element => element.uuid === cha)?.name}</Text>
+                                    </Flex> 
+                                    <Text width={'190px'} color='gray.600'fontSize={'.8em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{cha}</Text>
                                 </Box>
                             </Flex>
                         ))}
-                    <Button variant={'common'} isDisabled={functionData?.uuid === '-1'} leftIcon={<FaPlus/>} onClick={() => setShowAddChannels(true)} size='sm' mt='2vh'>{t('AddChannel')}</Button>
+                    </Skeleton>
+                    <Button variant={'common'} isDisabled={functionData?.uuid === '-1'} leftIcon={<FaPlus/>} onClick={() => setShowAddChannels(true)} size='sm' mt='2vh'>{t('AddConfig')}</Button>
                     {functionData?.uuid === '-1' && <Text mt='1vh' color='red' fontSize={'.8em'}>{t('SaveChannelsWarning')}</Text>}
                 </CollapsableSection>
-
+ 
             </Box>
         </MotionBox>
 
@@ -601,7 +586,7 @@ const CollapsableSection = ({ section, isExpanded, onSectionExpand, children}:{s
 }
  
 //CREATING A VARIABLE
- const CreateVariable = ({variableData,  index, setIndex, editFunctionData}:{variableData:parameterType | undefined, index:number, setIndex:Dispatch<SetStateAction<number | null>>, editFunctionData:(keyToEdit:string ,value:any, type?:'add' | 'delete' | 'edit', index?:number, secondKey?:'name' | 'type' | 'default' | 'required' | 'confirm' | 'is_active' | '' ) => void }) => {
+ const CreateVariable = ({variableData,  index, setIndex, editFunctionData}:{variableData:parameterType | undefined, index:number, setIndex:Dispatch<SetStateAction<number | null>>, editFunctionData:(keyToEdit:'parameters' ,value:any, type?:'add' | 'delete' | 'edit', index?:number, secondKey?:'name' | 'type' | 'default' | 'required' | 'confirm' | 'is_active' | '' ) => void }) => {
 
     const { t } = useTranslation('settings')
     const variablesMap:{[key:string]:string} = {'boolean':t('bool'), 'integer':t('int'), 'float':t('float'), 'string':t('str'), 'timestamp':t('timestamp'), 'list':t('list')}
@@ -711,7 +696,7 @@ const InputType = ({inputType, value, setValue}:{inputType:string,value:string, 
     }
 } 
 
-const ParameterBox = ({variableData,  index, setIndex, editFunctionData}:{variableData:parameterType, index:number, setIndex:Dispatch<SetStateAction<number | null>>, editFunctionData:(keyToEdit:string ,value:any, type?:'add' | 'delete' | 'edit', index?:number, secondKey?:'name' | 'type' | 'default' | 'required' | 'confirm' | 'is_active' | '' ) => void }) => {
+const ParameterBox = ({variableData,  index, setIndex, editFunctionData}:{variableData:parameterType, index:number, setIndex:Dispatch<SetStateAction<number | null>>, editFunctionData:(keyToEdit:'parameters' ,value:any, type?:'add' | 'delete' | 'edit', index?:number, secondKey?:'name' | 'type' | 'default' | 'required' | 'confirm' | 'is_active' | '' ) => void }) => {
     
     //TRANSLATION
     const { t }  = useTranslation('settings')
@@ -744,7 +729,7 @@ const ParameterBox = ({variableData,  index, setIndex, editFunctionData}:{variab
             {variableData.enum && 
             <Flex  mt='.5vh' gap='5px' justifyContent={'space-between'}>
                 <Box flex='1'>
-                    <Text fontSize={'.8em'}  fontWeight={'medium'} flex={1}>{t('AllowedValues')}</Text>
+                    <Text fontSize={'.9em'}  fontWeight={'medium'} flex={1}>{t('AllowedValues')}</Text>
                     <Text color='gray.600' fontSize={'.8em'} flex={1}>{variableData.enum.length === 0?t('NoValues'):variableData.enum.map((value, index) => (<span key={`value-${index}`}>{t(value)} {index < (variableData?.enum || []).length - 1 && ' - '}</span>))}</Text>
                 </Box>
             </Flex>}

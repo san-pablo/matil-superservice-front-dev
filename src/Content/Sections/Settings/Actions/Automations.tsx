@@ -104,7 +104,7 @@ function Automations ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
                 <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
                 <Text >{parseMessageToBold(t('ConfirmDeleteTrigger', {name:automationData?.[automationToDeleteIndex as number].name}))}</Text>
             </Box>
-            <Flex bg='brand.gray_2' p='20px' gap='10px' flexDir={'row-reverse'}>
+            <Flex bg='gray.50' p='20px' gap='10px' flexDir={'row-reverse'}>
                 <Button  size='sm' variant={'delete'} onClick={deleteTrigger}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
                 <Button  size='sm' variant={'common'}onClick={() => setAutomationToDeleteIndex(null)}>{t('Cancel')}</Button>
             </Flex>
@@ -117,7 +117,6 @@ function Automations ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
             <DeleteComponent/>
         </ConfirmBox>
     ), [automationToDeleteIndex])
-
 
     //FRONT
     return(<>
@@ -206,7 +205,6 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
         })
     }
     const editActions = (index:number, actionType:ActionsType, actionKey?:string, value?:any) => {
-        
         const getDefaultContent = (selectedAction:ActionsType) => {
             switch (selectedAction) {
                 case 'email_csat':
@@ -251,7 +249,7 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
             <Flex fontWeight={'medium'} fontSize={'1.4em'} gap='10px' alignItems={'center'}> 
                 <Text onClick={() => setSelectedIndex(-2)} color='brand.text_blue' cursor={'pointer'}>{t('Automations')}</Text>
                 <Icon as={IoIosArrowForward}/>
-                <Text>{triggerData.name}</Text>
+                <Text>{currentAutomationData.name}</Text>
             </Flex>
             <Box width='100%' bg='gray.300' height='1px' mt='2vh'/>
         </Box>
@@ -268,8 +266,8 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
             <Text fontWeight={'medium'} fontSize={'1.1em'} mt='3vh'>{t('Conditions')}</Text>
             <Text fontSize={'.8em'} color='gray.600'>{t('ConditionsDes')}</Text>
 
-            <Flex gap='30px' mt='1.5vh'> 
-                <Box flex='1'> 
+        <Flex gap='30px' mt='1.5vh'> 
+                <Box flex='1'>     
                     <Text fontSize={'.9em'} fontWeight={'medium'}>{t('AllConditionsAut')}</Text>
                     <Text fontSize={'.8em'} color='gray.600'>{t('AllConditionsAutDes')}</Text>
 
@@ -308,7 +306,7 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
 
                     <Flex alignItems={'center'} justifyContent={'space-between'}> 
                         <Text mb='.3vh' fontSize={'.9em'} fontWeight={'medium'}>{t('ActionType')}</Text>
-                        <Button size='xs' leftIcon={<BsTrash3Fill/>} colorScheme='red'  onClick={() => removeElement('actions', index)}>{t('Delete')}</Button>
+                        <Button size='xs' leftIcon={<BsTrash3Fill/>} variant={'delete'} onClick={() => removeElement('actions', index)}>{t('Delete')}</Button>
                     </Flex>
                     <Box maxW='350px' mb='2vh'> 
                         <CustomSelect containerRef={scrollRef} hide={false} selectedItem={action.type} setSelectedItem={(value) => {editActions(index, value)}} options={actionsList} labelsMap={actionsMap} />
@@ -321,7 +319,7 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
                                     <CodeMirror value={action.arguments.content} height="100%" maxHeight={`300px`} extensions={[html()]} onChange={(value) => editActions(index, 'email_csat', 'content', value)} theme={oneDark}/>
                                     <Text mt='3vh' mb='.5vh' fontSize={'.9em'} fontWeight={'medium'}>{t('CSATProbability')}</Text>
                                     <Text fontSize={'.8em'} color='gray.600'>{t('CSATProbabilityDes')}</Text>
-                                    <Slider defaultValue={action.arguments.probability} mb='1vh' mt='5vh' aria-label='slider-ex' onChange={(value) => editActions(index, 'email_csat', 'probability', value)}>
+                                    <Slider value={action.arguments.probability} mb='1vh' mt='5vh' aria-label='slider-ex' onChange={(value) => editActions(index, 'email_csat', 'probability', value)}>
                                         <SliderMark ml='-4' value={25} mt='1vh' fontWeight={'medium'}>25%</SliderMark>
                                         <SliderMark ml='-4'value={50}  mt='1vh'  fontWeight={'medium'}>50%</SliderMark>
                                         <SliderMark ml='-4' value={75 }mt='1vh'  fontWeight={'medium'}>75%</SliderMark>
@@ -329,13 +327,14 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
                                             {action.arguments.probability} %
                                         </SliderMark>
                                         <SliderTrack>
-                                            <SliderFilledTrack />
+                                            <SliderFilledTrack  bg="brand.text_blue" />
                                         </SliderTrack>
                                         <SliderThumb />
                                     </Slider>
                                 </>)
                             case 'whatsapp_csat':
-                                return <Box maxW={'600px'}>
+                                return (<> 
+                                <Box maxW={'600px'}>
                                     <Text fontSize={'.9em'} fontWeight={'medium'}>{t('Header')}</Text>
                                     <EditText placeholder={t('HeaderPlaceholder')} value={action.arguments.header} setValue={(value) => editActions( index, 'whatsapp_csat', 'header', value)} hideInput={false}/>
                                     <Text mt='1vh' fontSize={'.9em'} fontWeight={'medium'}>{t('Body')}</Text>
@@ -344,9 +343,10 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
                                     <EditText placeholder={t('FooterPlaceholder')}  value={action.arguments.footer}setValue={(value) => editActions( index, 'whatsapp_csat', 'footer', value)}hideInput={false}/>
                                     <Text mt='1vh'  fontSize={'.9em'} fontWeight={'medium'}>{t('CTA')}</Text>
                                     <EditText placeholder={t('CTAPlaceholder')}  value={action.arguments.cta} setValue={(value) => editActions( index, 'whatsapp_csat', 'cta', value)} hideInput={false}/>
-                                
+                                </Box>
+                                    <Text mt='3vh' mb='.5vh' fontSize={'.9em'} fontWeight={'medium'}>{t('CSATProbability')}</Text>
                                     <Text fontSize={'.8em'} color='gray.600'>{t('CSATProbabilityDes')}</Text>
-                                    <Slider  defaultValue={action.arguments.probability} mb='1vh' mt='5vh' aria-label='slider-ex-1' onChange={(value) => editActions(index, 'whatsapp_csat', 'probability', value)}>
+                                    <Slider  value={action.arguments.probability} width={'100%'}  mb='1vh' mt='5vh' aria-label='slider-ex-1' onChange={(value) => editActions(index, 'whatsapp_csat', 'probability', value)}>
                                         <SliderMark ml='-4' value={25} mt='1vh' fontWeight={'medium'}>25%</SliderMark>
                                         <SliderMark ml='-4'value={50} mt='1vh'  fontWeight={'medium'}>50%</SliderMark>
                                         <SliderMark ml='-4'value={75}mt='1vh'  fontWeight={'medium'}>75%</SliderMark>
@@ -354,15 +354,16 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
                                             {action.arguments.probability} %
                                         </SliderMark>
                                         <SliderTrack>
-                                            <SliderFilledTrack />
+                                            <SliderFilledTrack  bg="brand.text_blue"/>
                                         </SliderTrack>
                                         <SliderThumb />
                                     </Slider>
-                                    </Box>
+                                    </>)
                             case 'webchat_csat':
                                 return <>
+                                    <Text mt='3vh' mb='.5vh' fontSize={'.9em'} fontWeight={'medium'}>{t('CSATProbability')}</Text>
                                     <Text fontSize={'.8em'} color='gray.600'>{t('CSATProbabilityDes')}</Text>
-                                    <Slider  defaultValue={action.arguments.probability} mb='1vh' mt='5vh' aria-label='slider-ex-2' onChange={(value) => editActions(index, 'webchat_csat', 'probability', value)}>
+                                    <Slider  value={action.arguments.probability} mb='1vh' mt='5vh' aria-label='slider-ex-2' onChange={(value) => editActions(index, 'webchat_csat', 'probability', value)}>
                                         <SliderMark ml='-4'value={25} mt='1vh' fontWeight={'medium'}>25%</SliderMark>
                                         <SliderMark ml='-4'value={50} mt='1vh'  fontWeight={'medium'}>50%</SliderMark>
                                         <SliderMark ml='-4'value={75}mt='1vh'  fontWeight={'medium'}>75%</SliderMark>
@@ -370,7 +371,7 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
                                             {action.arguments.probability} %
                                         </SliderMark>
                                         <SliderTrack>
-                                            <SliderFilledTrack />
+                                            <SliderFilledTrack  bg="brand.text_blue"/>
                                         </SliderTrack>
                                         <SliderThumb />
                                     </Slider>

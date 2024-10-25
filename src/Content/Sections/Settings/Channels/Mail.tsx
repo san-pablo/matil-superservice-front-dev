@@ -10,7 +10,6 @@ import { Text, Box, Skeleton, Flex, Button, Icon, Tooltip, IconButton } from "@c
 import CodeMirror from "@uiw/react-codemirror"
 import { html } from "@codemirror/lang-html"
 import { oneDark } from "@codemirror/theme-one-dark"
-import GetMatildaConfig from "./GetMatildaConfig"
 import LoadingIconButton from "../../../Components/Reusable/LoadingIconButton"
 import EditText from "../../../Components/Reusable/EditText"
 import showToast from "../../../Components/Reusable/ToastNotification"
@@ -20,11 +19,10 @@ import copyToClipboard from "../../../Functions/copyTextToClipboard"
 //ICONS
 import { Bs1CircleFill, Bs2CircleFill, Bs3CircleFill,  BsClipboard2Check, BsTrash3Fill } from "react-icons/bs"
 import { IoIosArrowBack } from "react-icons/io"
-
-//TYPING
-import { configProps } from "../../../Constants/typing"
 import { FaPlus } from "react-icons/fa6"
-  
+//TYPING
+import { ConfigProps } from "../../../Constants/typing"
+   
 interface MailProps { 
   id:string
   uuid:string
@@ -60,16 +58,18 @@ function Mail () {
     const [data, setData] = useState<MailProps | null>(null)
     const dataRef = useRef<any>(null)
 
-    //MATILDA CONFIG 
-    const [matildaConfig, setMatildaConfig] = useState<configProps | null>(null)
-    const matildaConfigRef = useRef<configProps| null>(null)
+    //MATILDA CONFIGURATION+
+    const configIdRef = useRef<string>('')
+    const [selectedConfigId, setSelectedConfigId] = useState<string>('')
+    const [configData, setConfigData] = useState<ConfigProps[] | null>(null)
 
     //FETCH DATA
     useEffect(() => {
       document.title = `${t('Channels')} - ${t('Mail')} - ${auth.authData.organizationName} - Matil`
 
       const fetchInitialData = async() => {
-          const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/all_channels_basic_data`, auth})
+        await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/matilda_configurations`, setValue:setConfigData, auth})
+          const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels`, auth})
           if (response?.status === 200){
             let mailChannels:any[] = []
             response.data.map((cha:any) => {if (cha.channel_type === 'email')  mailChannels.push(cha)})
@@ -78,9 +78,10 @@ function Mail () {
                 const responseMail = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${mailChannels[0].id}`,  setValue: setData, auth})
                 if (responseMail?.status === 200) {
                   setIntroducedName(true)
-                  setMatildaConfig(responseMail.data.matilda_configuration)
-                  matildaConfigRef.current = responseMail.data.matilda_configuration
-                  dataRef.current = responseMail.data
+                  setData(responseMail.data.configuration)
+                  dataRef.current = responseMail.data.configuration
+                  setSelectedConfigId(responseMail.data.matilda_configuration_uuid)
+                  configIdRef.current = responseMail.data.matilda_configuration_uuid
                 }
               }
               else {
@@ -102,8 +103,6 @@ function Mail () {
       const responseMail = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${id}`,  setValue: setData, auth})
       if (responseMail?.status === 200) {
         setIntroducedName(true)
-        setMatildaConfig(responseMail.data.matilda_configuration)
-        matildaConfigRef.current = responseMail.data.matilda_configuration
         dataRef.current = responseMail.data
       }
     } 
@@ -123,19 +122,17 @@ function Mail () {
       const responseMail = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${data?.display_id}`,  setValue: setData, auth, toastMessages:{works:t('CorrectCreatedMail'), failed:t('FailedCreatedMail')}})
       if (responseMail?.status === 200) {
         setIntroducedName(true)
-        setMatildaConfig(responseMail.data.matilda_configuration)
-        matildaConfigRef.current = responseMail.data.matilda_configuration
         dataRef.current = responseMail.data
       }
     }
 
     const saveChanges = async () => {
-        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${dataRef.current.id}`, setValue:setWaitingSend, setWaiting:setWaitingSend, auth, method:'put', requestForm:{...data, matilda_configuration:matildaConfig}, toastMessages:{'works':t('CorrectUpdatedInfo'), 'failed':t('FailedUpdatedInfo')}})
-        if (response?.status === 200) {
+      const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${dataRef.current.id}`, setValue:setWaitingSend, setWaiting:setWaitingSend, auth, method:'put', requestForm:{...data, matilda_configuration_uuid:selectedConfigId}, toastMessages:{'works':t('CorrectUpdatedInfo'), 'failed':t('FailedUpdatedInfo')}})
+      if (response?.status === 200) {
+          configIdRef.current = selectedConfigId
           dataRef.current = data
-          matildaConfigRef.current = matildaConfig
-        }
-    }
+      }
+  }
     
     //FRONT 
     return(
@@ -234,7 +231,7 @@ function Mail () {
         <Flex flex='1' overflow={'hidden'} width={'100%'} gap='5vw'> 
           <Box flex='1' pt='4vh' overflow={'scroll'}> 
 
-            <Skeleton  isLoaded={data !== null && matildaConfig !== null}>
+            <Skeleton  isLoaded={data !== null}>
               <Text fontSize={'1.1em'} mb='.5vh' fontWeight={'medium'}>{t('Mail')}</Text>
               <EditText value={data.display_id} setValue={(value) => setData(prev => ({...prev as MailProps, display_id:value}))} isDisabled/>
               <Text fontSize={'1.1em'} mt='3vh' fontWeight={'medium'}>{t('Template')}</Text>
@@ -246,15 +243,21 @@ function Mail () {
           </Box>
 
             <Box flex='1' pt='4vh' overflow={'scroll'}> 
-              <Skeleton  isLoaded={data !== null && matildaConfig !== null}>
-                  <GetMatildaConfig configDict={matildaConfig} setConfigDict={setMatildaConfig} scrollRef={matildaScrollRef}/>
-                </Skeleton>
+               <Skeleton isLoaded={configData !== null}> 
+                  <Text  fontWeight={'medium'}>{t('SelectedConfig')}</Text>
+                          {configData?.map((config, index) => (
+                              <Box transition={'box-shadow 0.3s ease-in-out'} _hover={{shadow:'md'}}  mt='2vh' key={`config-${index}`} bg={selectedConfigId === config.uuid?'rgba(59, 90, 246, 0.25)':'gray.50'} onClick={() => setSelectedConfigId(config.uuid)} borderColor={'gray.200'} borderWidth={'1px'} borderRadius={'.5rem'} p='15px' cursor={'pointer'}>
+                                  <Text fontSize={'.9em'} fontWeight={'medium'}>{config.name}</Text>
+                                  <Text fontSize={'.8em'} color='gray.600'>{config.description}</Text>
+                              </Box> 
+                          ))}
+              </Skeleton>
             </Box>
         </Flex>
           <Box> 
               <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='2vh'/>
               <Flex flexDir={'row-reverse'}> 
-                <Button  variant={'common'}  isDisabled={(JSON.stringify(dataRef.current) === JSON.stringify(data)) && (JSON.stringify(matildaConfigRef.current) === JSON.stringify(matildaConfig))} onClick={saveChanges}>{waitingSend?<LoadingIconButton/>:t('SaveChanges')}</Button>
+                <Button  variant={'common'}  isDisabled={JSON.stringify(dataRef.current) === JSON.stringify(data) && selectedConfigId !== configIdRef.current} onClick={saveChanges}>{waitingSend?<LoadingIconButton/>:t('SaveChanges')}</Button>
               </Flex>
           </Box>
         </>}

@@ -43,7 +43,6 @@ function Conversations ({data, waitingFilters}:ConversationsProps) {
         return index !== -1 ? data?.avg_conversations_per_hour_of_day.Y[index] : 0
     })
     
-    console.log(data)
     return(<>
     <Skeleton flex='1' isLoaded={data !== null && !waitingFilters}> 
         <Flex mt='2vw' width='100%' gap='1vw' justifyContent={'space-between'}>

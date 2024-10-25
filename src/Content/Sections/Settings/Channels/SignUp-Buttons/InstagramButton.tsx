@@ -1,13 +1,15 @@
 //REACT
-import { Dispatch, SetStateAction } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 //FRONT
 import { Button } from '@chakra-ui/react'
 //ICONS
 import { FaInstagram } from "react-icons/fa"
- 
-  const InstagramButton = () => {
   
+//MAIN FUNCTION
+const InstagramButton = () => {
+  
+    const { t } = useTranslation('settings')
     const navigate = useNavigate()
     const handleAuth = async () => {
       try {
@@ -21,7 +23,7 @@ import { FaInstagram } from "react-icons/fa"
 
   return (<>
     <Button onClick={handleAuth} size='lg' leftIcon={<FaInstagram/>} bg={'linear-gradient(to right, #833ab4,#fd1d1d,#fcb045)'} _hover={{bg:'linear-gradient(to right, #833ab4,#fd1d1d,#fcb045)'}} opacity={0.8} color='#fff'>
-      Registrarse con Instagram
+      {t('RegisterWithInstagram')}
     </Button>
     </>)
 }

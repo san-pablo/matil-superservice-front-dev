@@ -82,7 +82,6 @@ function Content ({userInfo}:{userInfo:userInfo}) {
  
     //SOCKET
     const socket = useRef<any>(null)
-    const { colorMode, toggleColorMode } = useColorMode()
 
     //TRANSLATION
     const { t } = useTranslation('main')
@@ -433,7 +432,7 @@ function Content ({userInfo}:{userInfo:userInfo}) {
         
             <Flex alignItems='center' flexDir='column' >
                 <Box  width='100%'> 
-                    <Flex width={'100%'} onClick={toggleColorMode} justifyContent={'center'} mb='5vh'> 
+                    <Flex width={'100%'} justifyContent={'center'} mb='5vh'> 
                         <Image src='/images/matil-simple-2.svg' width={'22px'} height={'22px'} />
                     </Flex>
                     <NavBarItem ref={conversationsRef} icon={IoFileTrayFull} section={'conversations'}/>
@@ -566,7 +565,7 @@ function Content ({userInfo}:{userInfo:userInfo}) {
                         <Routes >
                             <Route path="/conversations" element={<ConversationsTable socket={socket}/>}/>
                             <Route path="/conversations/conversation/:n/*" element={<Conversation socket={socket} addHeaderSection={addHeaderSection} deleteHeaderSection={deleteHeaderSection} />} />
-                            <Route path="/clients" element={<ClientsTable addHeaderSection={addHeaderSection}/>}  />
+                            <Route path="/clients" element={<ClientsTable/>}  />
                             <Route path="/clients/client/:n" element={<Client socket={socket} comesFromConversation={false}  addHeaderSection={addHeaderSection} deleteHeaderSection={deleteHeaderSection}/>}/>
                             <Route path="/contact-businesses" element={<ContactBusinessesTable  addHeaderSection={addHeaderSection}/>}/>
                             <Route path="/contact-businesses/business/:n" element={<Business socket={socket} comesFromConversation={false} addHeaderSection={addHeaderSection}/>}/>
@@ -679,7 +678,7 @@ const LogoutBox = ({ userInfoApp, auth }:{userInfoApp:userInfo, auth:any}) => {
                             <MotionBox initial={{ opacity: 0, top: -10}} animate={{ opacity: 1, top: 0 }}  exit={{ opacity: 0, top: -10}} transition={{ duration: '0.2', ease: 'easeOut'}} 
                             overflow={'hidden'} ml={'calc(100% + 5px)'} width={'100%'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={1000}   position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
                             {['connected', 'out', 'disconnected'].map((status, index) => (
-                                <Flex key={`status-list-${index}`} bg={status === userStatus?'blue.50':''} color={phoneMap[status][2]} p='7px' gap='10px' alignItems='center' cursor='pointer' _hover={{ bg: status === userStatus?'blue.100':'brand.hover_gray' }} onClick={() => {setUserStatus(status);setShowStatusList(!showStatusList)}}>
+                                <Flex key={`status-list-${index}`} bg={status === userStatus?'brand.blue_hover':''} color={phoneMap[status][2]} p='7px' gap='10px' alignItems='center' cursor='pointer' _hover={{ bg: status === userStatus?'brand.blue_hover':'brand.hover_gray' }} onClick={() => {setUserStatus(status);setShowStatusList(!showStatusList)}}>
                                     <Icon height={'12px'} width={'12px'} as={phoneMap[status][1]} />
                                     <Text fontWeight={'medium'} fontSize='.8em' whiteSpace='nowrap'>{phoneMap[status][0]}</Text>
                                 </Flex>
@@ -745,7 +744,7 @@ const OrganizationsBox = ({ userInfoApp, isAdmin, setUserInfoApp, auth, session,
             </Box>
             <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
                 <Button  size='sm' variant={'main'} isDisabled={invitationCode === ''} onClick={() => addOrganization({invitationCode, setInvitationCode})}>{waitingNewOrganization?<LoadingIconButton/>:t('Join')}</Button>
-                <Button  size='sm' onClick={()=>setShowAddOrganization(false)}>{t('Cancel')}</Button>
+                <Button  size='sm' variant={'common'} onClick={()=>setShowAddOrganization(false)}>{t('Cancel')}</Button>
             </Flex>
         </>)
     }
@@ -851,7 +850,7 @@ const OrganizationsBox = ({ userInfoApp, isAdmin, setUserInfoApp, auth, session,
                         <Text fontSize='.8em' fontWeight='normal'>{t('NoOrganizations')}</Text>
                     ) : (
                         userInfoApp.organizations.map((org) => (
-                        <Flex key={`organization-${org.id}`} cursor={'pointer'} bg={auth.authData.organizationId === org.id ? 'blue.50':'transparent'} alignItems='center' p='7px' fontSize='.8em' _hover={{ bg:auth.authData.organizationId === org.id ?'blue.50': 'brand.hover_gray' }} borderRadius='.7rem' onClick={() => changeOrganization(org)}>
+                        <Flex key={`organization-${org.id}`} cursor={'pointer'} bg={auth.authData.organizationId === org.id ? 'brand.blue_hover':'transparent'} alignItems='center' p='7px' fontSize='.8em' _hover={{ bg:auth.authData.organizationId === org.id ?'brand.blue_hover': 'brand.hover_gray' }} borderRadius='.7rem' onClick={() => changeOrganization(org)}>
                             {org.name}
                         </Flex>
                         ))

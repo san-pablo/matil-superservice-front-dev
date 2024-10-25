@@ -54,7 +54,6 @@ const User = () => {
         }
     }   
     const phoneMap:{[key:string]:[string, IconType, string]} = {'connected':[t('Connected'), BsFillTelephoneInboundFill, 'green.400'], 'out':[t('Out'), BsFillTelephoneMinusFill, 'orange.400'], 'disconnected':[t('Disconnected'), BsFillTelephoneXFill, 'gray.400']}
-  
 
     //BOOLEAN FOR WAITING THE UPLOAD
     const [waitingSend, setWaitingSend] = useState<boolean>(false)

@@ -14,7 +14,7 @@ import { RxCross2 } from 'react-icons/rx'
 //FUNCTIONS
 import useOutsideClick from '../../../Functions/clickOutside'
 //TYPING
-import { View, ConversationColumn } from '../../../Constants/typing'
+import { View, ConversationColumn, FieldAction } from '../../../Constants/typing'
    
 //MAIN FUNCTION
 function EditViewComponent ({scrollRef, viewData, editViewData}:{scrollRef:RefObject<HTMLDivElement>, viewData:View, editViewData:(view:View) => void}) {
@@ -152,17 +152,16 @@ function EditViewComponent ({scrollRef, viewData, editViewData}:{scrollRef:RefOb
                 return <EditText value={condition.value} setValue={(value) => handleConditionChange(index, 'value', value, type)} hideInput={false} />
         }
     }
-          
+    
     return(<>
     <Flex height={'100%'}   width={'100%'} flexDir={'column'}> 
         <Box flex='1' overflow={'scroll'} py='2px'> 
              
                 <Text fontWeight={'medium'} fontSize={'1.1em'}>{t('Conditions')}</Text>
-
                 <Text mt='1vh' mb='1vh' color='gray.600' >{t('AllConditions')}</Text>
                 {selectedView.all_conditions && selectedView.all_conditions.map((condition, index) => (
-                    <Flex mt='.5vh'  key={`all-conditions-${index}`} alignItems='center' gap='20px'>
-                        <Box flex='2'> 
+                    <Flex mt='.5vh' maxW={'1000px'}  key={`all-conditions-${index}`} alignItems='center' gap='20px'>
+                       <Box flex='2'> 
                             <CustomSelect containerRef={scrollRef} hide={false} selectedItem={columnsMap[condition.column][0] as ConversationColumn} setSelectedItem={(value:ConversationColumn) => handleConditionChange(index, 'column', value, 'all_conditions')} options={columns.filter(column => column !== 'id')}iconsMap={columnsMap}/>
                         </Box>
                         <Box flex='1'>
@@ -171,16 +170,16 @@ function EditViewComponent ({scrollRef, viewData, editViewData}:{scrollRef:RefOb
                         <Box flex='2'>
                             {GetInputComponent({condition, index, type:'all_conditions', scrollRef})}
                         </Box>
-                        <IconButton bg='transaprent' border='none' size='sm' _hover={{bg:'gray.200'}} icon={<RxCross2/>} aria-label='delete-all-condition' onClick={() => removeCondition(index, 'all_conditions')}/>
+                        <IconButton bg='transparent' variant={'delete'} size='sm'  icon={<RxCross2 size='18px'/>} aria-label='delete-all-condition' onClick={() => removeCondition(index, 'all_conditions')}/>
                     </Flex>
                 ))}
                 <Button variant={'common'} size='sm' mt='2vh' leftIcon={<FaPlus/>}  isDisabled={selectedView.all_conditions.length === columns.length}   onClick={() => addCondition('all_conditions')}>{t('AddCondition')}</Button>
 
                 <Text mt='3vh' mb='1vh'color='gray.600'>{t('AnyConditions')}</Text>
                 {selectedView.any_conditions &&selectedView.any_conditions.map((condition, index) => (
-                    <Flex mt='.5vh' key={`any-conditions-${index}`}  alignItems='center' gap='20px'>
+                    <Flex mt='.5vh'  maxW={'1000px'} key={`any-conditions-${index}`}  alignItems='center' gap='20px'>
                         <Box flex='2'> 
-                            <CustomSelect  containerRef={scrollRef} hide={false} selectedItem={columnsMap[condition.column][0] as ConversationColumn} setSelectedItem={(value:ConversationColumn) => handleConditionChange(index, 'column', value, 'any_conditions')} options={columns} iconsMap={columnsMap}/>
+                            <CustomSelect  containerRef={scrollRef} hide={false} selectedItem={columnsMap[condition.column][0] as ConversationColumn} setSelectedItem={(value:ConversationColumn) => handleConditionChange(index, 'column', value, 'any_conditions')} options={columns.filter(column => column !== 'id')} iconsMap={columnsMap}/>
                         </Box>
                         <Box flex='1'>
                             <CustomSelect containerRef={scrollRef} labelsMap={inequialitiesMap} hide={false} selectedItem={condition.operation_type} setSelectedItem={(value:string) => handleConditionChange(index, 'operation_type', value, 'any_conditions')} options={columnInequalities[condition.column]}/>
@@ -188,7 +187,7 @@ function EditViewComponent ({scrollRef, viewData, editViewData}:{scrollRef:RefOb
                         <Box flex='2'>
                             {GetInputComponent({condition, index, type:'any_conditions', scrollRef})}
                         </Box>
-                        <IconButton bg='transparent' border='none' size='sm' _hover={{bg:'gray.200'}} icon={<RxCross2/>} aria-label='delete-all-condition' onClick={() => removeCondition(index, 'any_conditions')}/>
+                        <IconButton  bg='transparent' variant={'delete'} size='sm' icon={<RxCross2 size='18px'/>} aria-label='delete-all-condition' onClick={() => removeCondition(index, 'any_conditions')}/>
                     </Flex>
                 ))}
                 <Button variant={'common'} mt='2vh'  leftIcon={<FaPlus/>} size='sm' isDisabled={(selectedView.any_conditions && selectedView.any_conditions.length === columns.length)} onClick={() => addCondition('any_conditions')}>{t('AddCondition')}</Button>
@@ -202,11 +201,11 @@ function EditViewComponent ({scrollRef, viewData, editViewData}:{scrollRef:RefOb
                                 {selectedView.columns.map((column, index) => (
                                     <Draggable  key={`column-view-${index}`} draggableId={`column-view-${index}`} index={index}>
                                         {(provided, snapshot) => (
-                                            <Flex ref={provided.innerRef} alignItems="center" gap='20px'  {...provided.draggableProps} {...provided.dragHandleProps}   boxShadow={snapshot.isDragging?'0 4px 8px rgba(0, 0, 0, 0.3)':'none'}  flex='1' minW='300px' justifyContent={'space-between'}  mt='.5vh' bg='brand.gray_2' borderRadius={'.5rem'} borderColor='gray.200' borderWidth={'1px'} p='5px'>
+                                            <Flex maxW={'600px'} ref={provided.innerRef} alignItems="center" gap='20px'  {...provided.draggableProps} {...provided.dragHandleProps}   boxShadow={snapshot.isDragging?'0 4px 8px rgba(0, 0, 0, 0.3)':'none'}  flex='1' minW='300px' justifyContent={'space-between'}  mt='.5vh' bg='brand.gray_2' borderRadius={'.5rem'} borderColor='gray.200' borderWidth={'1px'} p='5px'>
                                                 <Flex gap='10px'> 
                                                     <Text fontWeight={'medium'} fontSize={'.9em'}>{columnsMap[column][0]}</Text>
                                                 </Flex>
-                                                <IconButton bg='transaprent' border='none' color='red.600' size='xs' _hover={{bg:'gray.200', color:'red.700'}} icon={<RxCross2/>} aria-label='delete-all-condition' onClick={() => removeColumn(index)}/>
+                                                <IconButton bg='transaprent' variant={'delete'} size='xs'  icon={<RxCross2/>} aria-label='delete-all-condition' onClick={() => removeColumn(index)}/>
                                          </Flex>)}
                                     </Draggable>
                                 ))}  
@@ -224,7 +223,7 @@ function EditViewComponent ({scrollRef, viewData, editViewData}:{scrollRef:RefOb
                     </Box>
                     <Flex gap='5px'>
                         <Button size='sm' variant={selectedView.order_by.order === 'asc'?'main':'common'}  onClick={() => handleOrderChange('asc', 'order')}>{t('Up')}</Button>
-                        <Button size='sm'   variant={selectedView.order_by.order  !== 'asc'?'main':'common'}  onClick={() => handleOrderChange('desc', 'order')}>{t('Down')}</Button>
+                        <Button size='sm' variant={selectedView.order_by.order  !== 'asc'?'main':'common'}  onClick={() => handleOrderChange('desc', 'order')}>{t('Down')}</Button>
                     </Flex>
                 </Flex>
         </Box>

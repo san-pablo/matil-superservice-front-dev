@@ -11,8 +11,7 @@ import '../styles.css'
 import CustomCheckbox from "./CheckBox"
 //ICONS
 import { IoMdArrowDropdown, IoMdArrowDropup } from 'react-icons/io'
-import { BsTrash3Fill } from "react-icons/bs"
- 
+import { HiTrash } from "react-icons/hi2" 
 //TYPING
 interface TableProps{
     data: any[]
@@ -209,7 +208,8 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
                                         </Fragment>))}
                                 {deletableFunction && 
                                     <Flex width={'60px'}  onClick={(e) => e.stopPropagation()}>
-                                        <IconButton size={'sm'} color={'red.600'} bg='transparent' _hover={{bg:'red.100'}} icon={<BsTrash3Fill/>} aria-label="delete-row" onClick={() => deletableFunction(row, index)}/>
+                                        <IconButton size={'sm'} color={'red.600'} bg='transparent' variant={'delete'} _hover={{bg:'red.100'}} icon={<HiTrash size={'20px'}/>} aria-label="delete-row" onClick={() => deletableFunction(row, index)}/>
+
                                     </Flex>
                                 }
                             </Flex>)

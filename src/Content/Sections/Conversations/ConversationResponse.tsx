@@ -33,9 +33,8 @@ import timeStampToDate from "../../Functions/timeStampToString"
 import { IoIosArrowDown } from "react-icons/io"
 import { BsPersonFill, BsThreeDotsVertical,  } from "react-icons/bs"
 import { MdFileDownload, } from 'react-icons/md'
-import { HiTrash, HiDatabase, HiMenuAlt1 } from "react-icons/hi"
+import { HiTrash, HiMenuAlt1 } from "react-icons/hi"
 import { TbArrowMerge } from "react-icons/tb"
-
 import { FaClockRotateLeft } from "react-icons/fa6"
 import { HiOutlinePaperClip } from "react-icons/hi"
 //TYPING

@@ -15,6 +15,7 @@ import { FaHeadset, FaCreditCard, FaDatabase, FaShopify, FaUserGroup,FaPhone,  F
 import { HiViewColumns } from "react-icons/hi2"
 import { MdKeyboardCommandKey, MdWebhook } from "react-icons/md"
 import { SiGooglemybusiness } from "react-icons/si"
+import { BsStars } from 'react-icons/bs'
 //TYPING
 import { IconKey, SubSectionProps } from "../../Constants/typing"
  
@@ -37,7 +38,7 @@ function Main ({subSections, sectionsList}:MainProps) {
     //SUBSECTIONS MAP
     const subSectionsMap: {[key:string]:[string, IconType]} = {
         'data':[t('DataDes'), FaDatabase],
-        'tilda':[t('TildaDes'), FaRobot],
+        'tilda':[t('TildaDes'), BsStars],
         'payments':[t('PaymentsDes'), FaCreditCard],
         'admin-users':[t('UsersDes'), FaUserGroup],
         'groups':[t('GroupsDes'), FaPeopleGroup],
@@ -51,8 +52,9 @@ function Main ({subSections, sectionsList}:MainProps) {
         'surveys':[t('SurveysDes'), FaRectangleList],
         'automations':[t('AutomationsDes'), FaArrowsSplitUpAndLeft],
         'triggers':[t('TriggersDes'), MdWebhook],
+        'configurations':[t('MatildaConfigsDes'), FaRobot],
         'web':[t('WebDes'), IoChatboxEllipses],
-        'whatsapp':[t('WhastappDes'), IoLogoWhatsapp],
+        'whatsapp':[t('WhatsappDes'), IoLogoWhatsapp],
         'instagram':[t('InstagramDes'), RiInstagramFill],
         'google-business':[t('GoogleDes'), SiGooglemybusiness],
         'mail':[t('MailDes'), IoMail],

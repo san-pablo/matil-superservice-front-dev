@@ -1,5 +1,5 @@
 //REACT
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { useAuth } from "../../../../AuthContext"
 import { useTranslation } from "react-i18next"
 //FETCH DATA
@@ -8,27 +8,26 @@ import fetchData from "../../../API/fetchData"
 import { Text, Box, Skeleton, Flex, Button } from "@chakra-ui/react"
 //COMPONENTS
 import ChannelInfo from "./Components/Channelnfo"
-import GoogleLoginButton from "./SignUp-Buttons/GoogleLoginButton"
-import GetMatildaConfig from "./GetMatildaConfig"
-import EditText from "../../../Components/Reusable/EditText"
-import LoadingIconButton from "../../../Components/Reusable/LoadingIconButton" 
+import FacebookLoginButton from "./SignUp-Buttons/FacebookLoginButton"
+import LoadingIconButton from "../../../Components/Reusable/LoadingIconButton"
+//ICONS
+import { BsTrash3Fill } from "react-icons/bs"
 //TYPING
-import { configProps } from "../../../Constants/typing"
+import { ConfigProps } from '../../../Constants/typing'
 
 interface WhatsappProps { 
     id:string
     uuid:string
     display_id:string
-    credentials:{google_business_account_id:string,  access_token:string  }
+    credentials:{phone_number:string,   waba_id:string, access_token:string  }
 }
 
 //MAIN FUNCTION
 function Phone () {
-
+ 
     //AUTH CONSTANT
     const auth = useAuth()
     const  { t } = useTranslation('settings')
-    const matildaScrollRef = useRef<HTMLDivElement>(null)
 
     //WAITING BOOLEANS FOR CREATING AN ACCOUNT
     const [waitingSend, setWaitingSend] = useState<boolean>(false)
@@ -37,83 +36,94 @@ function Phone () {
     const [data, setData]  =useState<WhatsappProps | null>(null)
     const dataRef = useRef<any>(null)
       
-    //MATILDA CONFIG 
-    const [matildaConfig, setMatildaConfig] = useState<configProps | null>(null)
-    const matildaConfigRef = useRef<configProps| null>(null)
+    //MATILDA CONFIGURATION+
+    const configIdRef = useRef<string>('')
+    const [selectedConfigId, setSelectedConfigId] = useState<string>('')
+    const [configData, setConfigData] = useState<ConfigProps[] | null>(null)
 
     //FETCH DATA
     const fetchInitialData = async() => {
-        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/all_channels_basic_data`, auth})
-         if (response?.status === 200){
-          let phoneChannel 
-          response.data.map((cha:any) => {if (cha.channel_type === 'phone')  phoneChannel = cha.id})
-          if (phoneChannel) {
-            const responseMail = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${phoneChannel}`,  setValue: setData, auth})
+        await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/matilda_configurations`, setValue:setConfigData, auth})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels`, auth})
+        if (response?.status === 200){
+          let wasChannel 
+          response.data.map((cha:any) => {if (cha.channel_type === 'whatsapp')  wasChannel = cha.id})
+          if (wasChannel) {
+            const responseMail = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${wasChannel}`,  setValue: setData, auth})
             if (responseMail?.status === 200) {
-            console.log(responseMail.data)
-              setMatildaConfig(responseMail.data.matilda_configuraion)
-              matildaConfigRef.current = responseMail.data.matilda_configuraion
-              dataRef.current = responseMail.data
+                    setData(responseMail.data.configuration)
+                    dataRef.current = responseMail.data.configuration
+                    setSelectedConfigId(responseMail.data.matilda_configuration_uuid)
+                    configIdRef.current = responseMail.data.matilda_configuration_uuid
             }
           }
           else {
-            setData({display_id:'', uuid:'', id:'', credentials:{ access_token:'', google_business_account_id:''}})
+            setData({display_id:'', uuid:'', id:'', credentials:{phone_number:'', access_token:'', waba_id:''}})
           }
         }
     }
     useEffect(() => {
-        document.title = `${t('Channels')} - Google Business - ${auth.authData.organizationName} - Matil`
+        document.title = `${t('Channels')} - Whatsapp - ${auth.authData.organizationName} - Matil`
         fetchInitialData()
       }, [])
   
 
-      const saveChanges = async () => {
-            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${dataRef.current.id}`, setValue:setWaitingSend, setWaiting:setWaitingSend, auth, method:'put', requestForm:{...data, matilda_configuration:matildaConfig}, toastMessages:{'works':t('CorrectUpdatedInfo'), 'failed':t('FailedUpdatedInfo')}})
-            if (response?.status === 200) {
+    const saveChanges = async () => {
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${dataRef.current.id}`, setValue:setWaitingSend, setWaiting:setWaitingSend, auth, method:'put', requestForm:{...data, matilda_configuration_uuid:selectedConfigId}, toastMessages:{'works':t('CorrectUpdatedInfo'), 'failed':t('FailedUpdatedInfo')}})
+        if (response?.status === 200) {
+            configIdRef.current = selectedConfigId
             dataRef.current = data
-            matildaConfigRef.current = matildaConfig
-            }
         }
+    }
     return(<>
 
-        <Flex justifyContent={'space-between'}> 
-            <Text fontSize={'1.4em'} fontWeight={'medium'}>Google Business</Text>
-            {!(data?.display_id === '') && <Button size='sm'  variant={'common'} isDisabled={(JSON.stringify(dataRef.current) === JSON.stringify(data)) && (JSON.stringify(matildaConfigRef.current) === JSON.stringify(matildaConfig))} onClick={saveChanges}>{waitingSend?<LoadingIconButton/>:t('SaveChanges')}</Button>}
-        </Flex>            
-        <Box height={'1px'} width={'100%'} bg='gray.300' mt='1vh' mb='5vh'/>
-    
-
-        <Skeleton isLoaded={ data !== null}> 
-
-        {data?.display_id === '' ?
-        <Flex height={'100%'} top={0} left={0} width={'100%'} position={'absolute'} alignItems={'center'} justifyContent={'center'}> 
-            <Box maxW={'580px'} textAlign={'center'}> 
-                <Text fontWeight={'medium'} fontSize={'2em'} mb='2vh'>{t('IntegrateGoogle')}</Text>               
-                <Text fontSize={'1em'} color={'gray.600'} mb='2vh'>{t('IntegrateGoogleDes')}</Text>               
-                <GoogleLoginButton/>
-            </Box>
-        </Flex>
+        <Box>
+            <Flex justifyContent={'space-between'}> 
+                <Text fontSize={'1.4em'} fontWeight={'medium'}>Whatsapp</Text>
+                {!(data?.display_id === '') && <Button color='red'   variant={'delete_section'}leftIcon={<BsTrash3Fill/>} size='sm'>{t('DeleteAccount')}</Button>}
+            </Flex>            
+            <Box height={'1px'} width={'100%'} bg='gray.300' mt='2vh' />
+        </Box>
+       
+        {(data === null || data?.display_id === '') ?
+            <Skeleton isLoaded={ data !== null}>
+                <Flex height={'100%'} top={0} left={0} width={'100%'} position={'absolute'} alignItems={'center'} justifyContent={'center'}> 
+                    <Box maxW={'580px'} textAlign={'center'}> 
+                        <Text fontWeight={'medium'} fontSize={'2em'} mb='2vh'>{t('IntegrateWhatsapp')}</Text>               
+                        <Text fontSize={'1em'} color={'gray.600'} mb='2vh'>{t('IntegrateWhatsappDes')}</Text>               
+                        <FacebookLoginButton name={'whatsapp-account'} loadDataFunc={() => fetchInitialData()}/>
+                    </Box>
+                </Flex>
+            </Skeleton>
         :
         <>
-            <Box bg='white' p='1vw' borderRadius={'.7rem'}  boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.1)'} > 
-                <Flex justifyContent={'space-between'} > 
-                    <Box width={'100%'} maxWidth={'600px'}> 
-                        <EditText value={data?.display_id} maxLength={100} nameInput={true} size='md'fontSize='1.5em'  setValue={(value:string) => setData(prev => ({...prev as WhatsappProps, display_id:value}))}/>
-                    </Box>
-                </Flex>
-                <Box height={'1px'} mt='2vh'mb='2vh' width={'100%'} bg='gray.300'/>
-                <Flex px='7px'  width={'100%'} gap='5vw'> 
-                    <Box flex='1'> 
-                        <ChannelInfo value={data?.credentials.google_business_account_id || ''} title={t('AccountId')} description={t('AccountIdDes')}/>
+            <Flex flex='1' overflow={'hidden'} width={'100%'} gap='5vw'> 
+                <Box flex='1' pt='4vh' overflow={'scroll'}> 
+                    <Skeleton isLoaded={data !== null}> 
+                        <ChannelInfo value={data?.credentials.phone_number || ''} title={t('Phone')} description={t('PhoneDes')}/>
+                        <ChannelInfo value={data?.credentials.waba_id || ''} title={t('AccountId')} description={t('AccountIdDes')}/>
                         <ChannelInfo hide={true}  value={data?.credentials.access_token || ''} title={t('AccessToken')} description={t('AccessTokenDes')}/>
-                    </Box>
-                    <Box flex='1'> 
-                        <GetMatildaConfig configDict={matildaConfig} setConfigDict={setMatildaConfig} scrollRef={matildaScrollRef}/>
-                    </Box>                        
-                </Flex>
+                    </Skeleton>
                 </Box>
+                <Box flex='1' pt='4vh' overflow={'scroll'}> 
+                    <Skeleton isLoaded={configData !== null}> 
+                        <Text  fontWeight={'medium'}>{t('SelectedConfig')}</Text>
+                        {configData?.map((config, index) => (
+                            <Box transition={'box-shadow 0.3s ease-in-out'} _hover={{shadow:'md'}}  mt='2vh' key={`config-${index}`} bg={selectedConfigId === config.uuid?'rgba(59, 90, 246, 0.25)':'gray.50'} onClick={() => setSelectedConfigId(config.uuid)} borderColor={'gray.200'} borderWidth={'1px'} borderRadius={'.5rem'} p='15px' cursor={'pointer'}>
+                                <Text fontSize={'.9em'} fontWeight={'medium'}>{config.name}</Text>
+                                <Text fontSize={'.8em'} color='gray.600'>{config.description}</Text>
+                            </Box> 
+                        ))}
+                    </Skeleton>
+                </Box>                        
+            </Flex>  
+            <Box> 
+               <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='2vh'/>
+               <Flex flexDir={'row-reverse'}> 
+                   <Button variant={'common'} isDisabled={(JSON.stringify(dataRef.current) === JSON.stringify(data))  && selectedConfigId !== configIdRef.current} onClick={saveChanges}>{waitingSend?<LoadingIconButton/>:t('SaveChanges')}</Button>
+               </Flex>
+           </Box>   
         </>}
-    </Skeleton>
     </>)
 }
 

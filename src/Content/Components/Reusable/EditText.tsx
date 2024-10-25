@@ -69,6 +69,7 @@ const EditText  = ({ value = '', setValue, hideInput = true, maxLength, regex, t
                 placeholder={placeholder}
                 type={type?type:'text'}
                 size={size}
+                height={'37px'}
                 borderColor={(regex && value !== undefined) && !regex.test(value) && value !== '' ? 'red':hideInput?'transparent':'gray.200'}
                 _hover={{ border: ((regex && value) ? regex.test(value) : true)?'1px solid #CBD5E0':'2px solid red' }}
                 _focus={{ px:'6px', borderColor: "brand.text_blue", borderWidth: "2px" }}

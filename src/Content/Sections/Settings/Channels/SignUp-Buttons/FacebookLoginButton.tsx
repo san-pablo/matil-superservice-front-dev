@@ -1,45 +1,51 @@
-import {useEffect, useState } from 'react'
-import { Button } from '@chakra-ui/react'
-import { FaFacebookSquare } from "react-icons/fa"
-import fetchData from '../../../../API/fetchData'
+//REACT
+import { useEffect, useState } from 'react'
 import { useAuth } from '../../../../../AuthContext'
+//FETCH DATA
+import fetchData from '../../../../API/fetchData'
+//FRONT
+import { Button } from '@chakra-ui/react'
+//COMPONENTS
 import LoadingIconButton from '../../../../Components/Reusable/LoadingIconButton'
+//ICONS
+import { FaFacebookSquare } from "react-icons/fa"
+
+//TYPING
 declare global {
-    interface Window {
-      FB: any
-      fbAsyncInit: () => void
-    }
+  interface Window {
+    FB: any
+    fbAsyncInit: () => void
   }
+}
   
-  const FacebookLoginButton = ({ name, loadDataFunc }: { name: string, loadDataFunc:() => void }) => {
-   
-    const auth = useAuth()
-    const [waitingInfo, setWaitingInfo] = useState<boolean>(false)
+//MAIN FUNCTINO
+const FacebookLoginButton = ({ name, loadDataFunc }: { name: string, loadDataFunc:() => void }) => {
+  
+  const auth = useAuth()
+  const [waitingInfo, setWaitingInfo] = useState<boolean>(false)
+  const handleSendNewChannel = async (data: any) => {
+      data['name'] = name
+      const response = await fetchData({
+        endpoint: `${auth.authData.organizationId}/admin/settings/channels/whatsapp`,
+        requestForm: data,
+        method: 'post',
+        setWaiting: setWaitingInfo,
+        auth: auth
+      })
+      
+      loadDataFunc()
+  }
 
-    const handleSendNewChannel = async (data: any) => {
-        data['name'] = name
-        const response = await fetchData({
-          endpoint: `${auth.authData.organizationId}/admin/settings/channels/whatsapp`,
-          requestForm: data,
-          method: 'post',
-          setWaiting: setWaitingInfo,
-          auth: auth
-        })
-        
-        loadDataFunc()
-    }
-
-    useEffect(() => {
-      // Dynamically load the Facebook SDK
+  useEffect(() => {
       (function (d, s, id) {
-        let js, fjs = d.getElementsByTagName(s)[0] as HTMLScriptElement;
-        if (d.getElementById(id)) return;
-        js = d.createElement(s) as HTMLScriptElement;
-        js.id = id;
-        js.src = "https://connect.facebook.net/en_US/sdk.js";
-        js.async = true; js.defer = true; js.crossOrigin = "anonymous";
-        fjs.parentNode?.insertBefore(js, fjs);
-      }(document, 'script', 'facebook-jssdk'));
+        let js, fjs = d.getElementsByTagName(s)[0] as HTMLScriptElement
+        if (d.getElementById(id)) return
+        js = d.createElement(s) as HTMLScriptElement
+        js.id = id
+        js.src = "https://connect.facebook.net/en_US/sdk.js"
+        js.async = true; js.defer = true; js.crossOrigin = "anonymous"
+        fjs.parentNode?.insertBefore(js, fjs)
+      }(document, 'script', 'facebook-jssdk'))
   
       // Initialize the SDK
       window.fbAsyncInit = function () {
@@ -48,13 +54,11 @@ declare global {
           autoLogAppEvents: true,
           xfbml: true,
           version: 'v19.0'
-        });
+        })
+      }
+    }, [])
   
- 
-      };
-    }, []);
-  
-    const launchWhatsAppSignup = () => {
+  const launchWhatsAppSignup = () => {
       window.FB.login((response: any) => {
         if (response.authResponse) {
           console.log(response.authResponse)
@@ -69,9 +73,8 @@ declare global {
           feature: 'whatsapp_embedded_signup',
           sessionInfoVersion: 2
         }
-      });
-    };
-
+      })
+    }
   return (
     <Button isDisabled={name === ''} onClick={launchWhatsAppSignup} size='lg' bg='#1877f2' leftIcon={<FaFacebookSquare/>} _hover={{bg:'#0F6AE0'}} color='#fff'>
       {waitingInfo?<LoadingIconButton/>:'Registrarse con Facebook'}
