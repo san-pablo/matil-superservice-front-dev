@@ -74,8 +74,12 @@ const fetchData = async ({endpoint, setValue, setWaiting, auth, requestForm = {}
         else config.params = {...config.params, ...requestForm}
   
         //RESPONSE
+        console.log(endpoint)
+        console.log(requestForm)
+
         const response = await axios(config)
 
+        console.log(response.data)
         //ACTIONS ON A SUCCESSFUL CALL
         if (setValue) setValue(response.data)
         if (setWaiting) setWaiting(false)

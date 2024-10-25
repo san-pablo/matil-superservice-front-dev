@@ -26,7 +26,7 @@ import { IoChatboxEllipses, IoLogoGoogle } from "react-icons/io5"
 import { AiFillInstagram } from "react-icons/ai"
 import { FaPhone } from "react-icons/fa"
 //TYPING
-import { Clients, Channels,  ClientColumn, HeaderSectionType, languagesFlags } from "../../Constants/typing"
+import { Clients, Channels,  ClientColumn, languagesFlags } from "../../Constants/typing"
   
 interface ClientsFilters {
     page_index:number
@@ -76,7 +76,7 @@ const CellStyle = ({ column, element }:{column:string, element:any}) => {
 
 
 //MAIN FUNCTION
-function ClientsTable ({addHeaderSection}:{addHeaderSection:HeaderSectionType}) {
+function ClientsTable () {
 
     //AUTH CONSTANT
     const auth = useAuth()

@@ -66,7 +66,7 @@ function Themes () {
                 <Text  fontWeight={'medium'} fontSize={'.9em'} mt='2vh' mb='.5vh'>{t('Description')}</Text>
                 <Textarea resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('Description')}...`} maxH='300px' value={newOption.description} onChange={(e) => setNewOption((prev) => ({...prev, description:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(59, 90, 246)", borderWidth: "2px"}}/>
             </Box>
-            <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='brand.gray_2' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+            <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'}bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
                 <Button  size='sm' variant={'main'} onClick={addTheme}>{waitingAdd?<LoadingIconButton/>:t('AddTheme')}</Button>
                 <Button  size='sm' variant={'common'} onClick={()=> setAddThemeIndex(null)}>{t('Cancel')}</Button>
             </Flex>  
@@ -122,19 +122,17 @@ function Themes () {
         <Box flex='1' width={'60%'} mt='2vh' minW={'500px'} pb='2vh'  overflow={'scroll'}> 
             <Skeleton isLoaded={currentThemes !== null}> 
                 {currentThemes?.map((theme, index) => (
-                    <Box cursor={'pointer'} key={`option-${index}`} mt={index === 0?'0':'1vh'} shadow='sm' p='15px' borderRadius='.5rem' borderColor="gray.200" borderWidth="1px"  bg='brand.gray_2'> 
+                    <Box cursor={'pointer'} key={`option-${index}`} mt={index === 0?'0':'1vh'} shadow='sm' p='15px' borderRadius='.5rem' borderColor="gray.200" borderWidth="1px"  bg='gray.50'> 
                         <Flex justifyContent={'space-between'} alignItems={'center'} >
                             <Text fontWeight={'medium'} fontSize={'1.1em'}>{theme.name}</Text>
                             <Flex gap='5px'> 
                                 <IconButton size='xs' variant={'common'} icon={<FaEdit/>}  onClick={() => setAddThemeIndex(index)} aria-label="edit-param"/>
                                 <IconButton size='xs' bg='transparent' variant={'delete'} onClick={() => setDeleteThemeIndex(index)} icon={<BsTrash3Fill/>} aria-label="delete-param"/>
                             </Flex>
-                 
                         </Flex>
                         <Text mt='1vh' fontSize={'.9em'}>{theme.description}</Text>
                     </Box>
                 ))}
-                 
             </Skeleton>
         </Box>
        

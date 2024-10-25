@@ -46,6 +46,7 @@ const ConversationsData = lazy(() => import('./Workflows/ConversationsData'))
 const Triggers = lazy(() => import('./Actions/Triggers'))
 const Automations = lazy(() => import('./Actions/Automations'))
 //CHANNELS
+const Configurations = lazy(() => import('./Channels/Configurations'))
 const Chatbot = lazy(() => import('./Channels/Chatbot'))
 const Google = lazy(() => import('./Channels/Google'))
 const Mail = lazy(() => import('./Channels/Mail'))
@@ -116,7 +117,7 @@ function Settings () {
         [[t('HelpCenter'), 'help-center'], [t('Surveys'), 'surveys']],
         [[t('Views'), 'edit-views'], [t('Themes'), 'themes'], [t('Fields'), 'fields'], [t('Shortcuts'), 'shortcuts'], [t('Conversations'), 'conversations']],
         [[t('Triggers'), 'triggers'], [t('Automations'), 'automations']],
-        [[t('Web'),'web'], ['Whatsapp','whatsapp'],['Instagram','instagram'], ['Google Business','google-business'], [t('Mail'),'mail']],
+        [[t('MatildaConfigs'),'configurations'], [t('Web'),'web'], ['Whatsapp','whatsapp'],['Instagram','instagram'], ['Google Business','google-business'], [t('Mail'),'mail']],
         [['Shopify','shopify']]
     ] 
  
@@ -173,6 +174,7 @@ function Settings () {
                         <Route path="/actions/triggers" element={<Triggers scrollRef={scrollRef}/>} />
                         <Route path="/actions/automations" element={<Automations scrollRef={scrollRef}/>} />
 
+                        <Route path="/channels/configurations" element={<Configurations scrollRef={scrollRef} />} />
                         <Route path="/channels/web" element={<Chatbot />} />
                         <Route path="/channels/whatsapp" element={<Whatsapp />} />
                         <Route path="/channels/phone" element={<Phone />} />

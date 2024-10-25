@@ -1,5 +1,5 @@
 //REACT
-import  { useState, useEffect, RefObject, useRef } from 'react'
+import { useState, useEffect, RefObject, useRef } from 'react'
 import { useAuth } from '../../../../AuthContext'
 import DOMPurify from 'dompurify'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -7,16 +7,17 @@ import { useTranslation } from 'react-i18next'
 //FETCH DATA
 import fetchData from "../../../API/fetchData"
 //FRONT
-import { Flex, Text, Box, Tooltip, Input, IconButton, Button, Skeleton } from "@chakra-ui/react"
+import { Flex, Text, Box, Tooltip, Input, IconButton, Button } from "@chakra-ui/react"
 //COMPONENTS
 import LoadingIconButton from '../../../Components/Reusable/LoadingIconButton'
 import EditViewComponent from './EditViewsComponent'
+import EditText from '../../../Components/Reusable/EditText'
 //ICONS
-import {  FaUnlock, FaLock  } from 'react-icons/fa6'
-import { IoIosArrowBack} from 'react-icons/io'
+import { FaUnlock, FaLock } from 'react-icons/fa6'
+import { IoIosArrowBack } from 'react-icons/io'
 //TYPING
 import { View, Views } from '../../../Constants/typing'
-   
+    
 //MAIN FUNCTION
 function EditView ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
 
@@ -44,8 +45,6 @@ function EditView ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
     const currentViewsRef = useRef<View | null>(null)
     const [selectedView, setSelectedView] = useState<View | null>(null)  
 
-    console.log(currentViewsRef.current)
-    console.log(selectedView)
     useEffect(() => {
         let selectedViewSelection:View = {
             'name': t('NewView'),
@@ -96,6 +95,7 @@ function EditView ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
     //CHANGE DOCUMENT TITLE
     useEffect (() => {document.title = `${t('Settings')} - ${t('Views')} - ${selectedView?.name} - ${auth.authData.organizationName} - Matil`}, [])
 
+    //FRONT
     return(
         <Flex height={'100%'} minH={'90vh'} width={'100%'} flexDir={'column'}> 
          {selectedView && <>
@@ -104,13 +104,15 @@ function EditView ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
                     <Tooltip label={'Atrás'}  placement='bottom' hasArrow bg='black'  color='white'  borderRadius='.4rem' fontSize='.75em' p='4px'> 
                         <IconButton aria-label='go-back' size='sm' bg='transparent' border='none' onClick={() => navigate('/settings/workflows/edit-views')} icon={<IoIosArrowBack size='20px'/>}/>
                     </Tooltip>
-                    <Input maxW='700px' maxLength={100}  borderColor={'transparent'} _hover={{ border:'1px solid #CBD5E0'}} px='13px' _focus={{ px:'12px', borderColor: "rgb(77, 144, 254)", borderWidth: "2px" }} fontSize={'1.4em'} fontWeight={'medium'}  borderRadius='.5rem' value={selectedView?.name} onChange={(e) => {setSelectedView({...selectedView as View,name:DOMPurify.sanitize(e.target.value)})}}/>
+                    <Box maxW='1000px'> 
+                        <EditText nameInput fontSize={'1.5em'} size='md'  value={selectedView?.name || ''} setValue={(value:string) => setSelectedView(prev => ({...prev as View, name:value}))}/>
+                    </Box>
                 </Flex>
             
                 <Text mt='3vh' fontWeight={'medium'} fontSize={'1.1em'}>{t('ViewType')}</Text>
                 <Flex mb='3vh' gap='20px' mt='1vh'>
-                    <Button leftIcon={<FaLock/>} size='sm' bg={viewType === 'private'?'brand.black_button':'none'} color={viewType === 'private'?'white':'black'} _hover={{bg:viewType === 'private'?'brand.black_button_hover':'brand.gray_1'}}  onClick={() => setViewType('private')}>{t('Private')}</Button>
-                    <Button  leftIcon={<FaUnlock/>} isDisabled={!isAdmin} size='sm' bg={viewType !== 'private'?'brand.black_button':'none'} color={viewType !== 'private'?'white':'black'} _hover={{bg:viewType !== 'private'?'brand.black_button_hover':'brand.gray_1'}}  onClick={() => setViewType('shared')}>{t('Shared')}</Button>
+                    <Button leftIcon={<FaLock/>} size='sm' fontWeight={'medium'} variant={viewType === 'private'?'main':'common'}  onClick={() => setViewType('private')}>{t('Private')}</Button>
+                    <Button  leftIcon={<FaUnlock/>}  fontWeight={'medium'} isDisabled={!isAdmin} size='sm'variant={viewType === 'shared'?'main':'common'} onClick={() => setViewType('shared')}>{t('Shared')}</Button>
                 </Flex>
                 <EditViewComponent scrollRef={scrollRef}  viewData={selectedView as View} editViewData={setSelectedView}/>
             </Box>

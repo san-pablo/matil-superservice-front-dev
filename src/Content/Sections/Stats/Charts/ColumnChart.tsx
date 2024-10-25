@@ -8,9 +8,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { BarChart } from '@mui/x-charts/BarChart'
 import { axisClasses } from '@mui/x-charts/ChartsAxis'
 import { chartsGridClasses } from '@mui/x-charts/ChartsGrid'
-//TYPING
-import { logosMap, Channels } from '../../../Constants/typing'
- 
+import { chartsTooltipClasses } from '@mui/x-charts'
 //TYPING
 interface ColumnChartProps {
   xaxis: string[]
@@ -35,6 +33,25 @@ const useSize = (target: RefObject<HTMLElement>) => {
   return size
 }
 
+import React from 'react';
+import { Paper } from '@mui/material';
+
+const CustomItemTooltipContent = ({ itemData, series }:{ itemData:any, series:any }) => {
+  const item = series.data[itemData.dataIndex]; // Access all item properties here
+  
+  return (
+    <Paper sx={{ padding: 2, backgroundColor: series.color }}>
+      <p>{series.label}</p>
+      <p>x: {item.x}</p>
+      <p>y: {item.y}</p>
+      <p>Additional value: {item.other}</p>
+      <p>Another value: {item.other2}</p>
+    </Paper>
+  );
+};
+
+
+
 //COLUMN CHART 
 const ColumnChart = ({ xaxis, yaxis1, yaxis2 = [], ytitle1, ytitle2 = '', type = '', isChannels = false}: ColumnChartProps) => {
   
@@ -48,6 +65,7 @@ const ColumnChart = ({ xaxis, yaxis1, yaxis2 = [], ytitle1, ytitle2 = '', type =
   //MAP WEEKDAYS
   const WeekDaysList = [t('Day_1'), t('Day_2'), t('Day_3'), t('Day_4'), t('Day_5'), t('Day_6'), t('Day_7')]
  
+  const colors = ['rgba(0, 102, 204, 1)', '']
   //FRONT
   return (
     <ThemeProvider theme={muiTheme}>
@@ -61,7 +79,6 @@ const ColumnChart = ({ xaxis, yaxis1, yaxis2 = [], ytitle1, ytitle2 = '', type =
               <stop offset="0%" stopColor="rgba(102, 204, 255, 1)" />
               <stop offset="100%" stopColor="rgba(153, 204, 255, 1" />
             </linearGradient>
- 
           </defs>
         </svg>
       <div ref={target} style={{ display:'flex', alignItems:'center', justifyContent:'center', width: '100%', height: '100%' }}>
@@ -82,7 +99,8 @@ const ColumnChart = ({ xaxis, yaxis1, yaxis2 = [], ytitle1, ytitle2 = '', type =
               }
             ]}
             //YAXIS DATA
-            series={[
+            series={
+              [
               {
                 id: 'values',
                 data: yaxis1,
@@ -109,6 +127,7 @@ const ColumnChart = ({ xaxis, yaxis1, yaxis2 = [], ytitle1, ytitle2 = '', type =
               top: 20,
               bottom: 20,
             }}
+            
             //XAXIS CONFIGURATION
             bottomAxis={{
               tickSize: 0,
@@ -117,29 +136,23 @@ const ColumnChart = ({ xaxis, yaxis1, yaxis2 = [], ytitle1, ytitle2 = '', type =
                 fontSize: 12,
               }
             }}
-            //YAXIS CONFIGURATION
+             //YAXIS CONFIGURATION
             leftAxis={{
               tickSize: 0,
             }}
-            //ADITIONAL STYLES (HORIZONTAL GRID AND AXIS COLORS)
-            sx={{
-              [`.${axisClasses.root}`]: {
-                [`.${axisClasses.tick}, .${axisClasses.line}`]: {
-                  stroke: '#A0AEC0',
-                  strokeWidth: 2,
+            tooltip={{itemContent: (params) => <CustomItemTooltipContent {...params} />}}            
+            slotProps={{ legend: { hidden: true },  popper: {
+              sx: {
+                [`& .${chartsTooltipClasses.mark}`]: {
+                  display: 'none',
+                  width:'0px !important',
+                  color: 'black',
                 },
-                [`.${axisClasses.tickLabel}`]: {
-                  fill: '#718096',
-                  fontWeight: 500,
-                },
+                [`& .${chartsTooltipClasses.markCell}`]: {
+                  width:'0px !important',
+                }
               },
-              [`& .${axisClasses.left} .${axisClasses.label}`]: {
-                transform: 'translateX(-10px)',
-              },
-              [`& .${chartsGridClasses.line}`]: { strokeDasharray: '5 3', strokeWidth: 1 }
-            }}
-            
-            slotProps={{ legend: { hidden: true } }}
+            },}}
           />    
         )}
         </>}
@@ -148,4 +161,4 @@ const ColumnChart = ({ xaxis, yaxis1, yaxis2 = [], ytitle1, ytitle2 = '', type =
   )
 }
 
-export default ColumnChart;
+export default ColumnChart

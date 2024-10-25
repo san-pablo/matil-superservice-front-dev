@@ -13,11 +13,12 @@ import LoadingIconButton from "../../../Components/Reusable/LoadingIconButton"
 import ChannelInfo from "../Channels/Components/Channelnfo"
 //ICONS
 import { FaPlus } from "react-icons/fa6"
+import { ConfigProps } from "../../../Constants/typing"
 //TYPING
-import { configProps } from "../../../Constants/typing"
  
+
 //MAIN FUNCTION
-function Whatsapp () {
+function Shopify () {
 
     //AUTH CONSTANT
     const auth = useAuth()
@@ -72,7 +73,7 @@ function Whatsapp () {
         setData(updatedData)
     }
  
-    const updateData = (newConfig:configProps, index:number) => {
+    const updateData = (newConfig:ConfigProps, index:number) => {
         setData(prevData => {
             const newData = [...prevData]
             newData[index] = {...newData[index], matilda_configuration: newConfig}
@@ -81,7 +82,9 @@ function Whatsapp () {
     }
 
 
+
     return(<>
+{/*
     {showCreateAccount && 
         <ConfirmBox setShowBox={setShowCreateAccount} >
            <CreateNewAccount/>
@@ -116,8 +119,9 @@ function Whatsapp () {
                 </>}
       
         </Skeleton>
+                */}
        
     </>)
 }
 
-export default Whatsapp
+export default Shopify

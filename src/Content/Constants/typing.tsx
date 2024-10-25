@@ -292,7 +292,7 @@ export const columnsFlowsMap: ColumnsMap = {
     code:string
     is_active:boolean
     parameters:{confirm: boolean, description:string, name: string, required: boolean, type: string, default:any, enum:any[]}[]
-    channels_basic_data:{channel_type: string, display_id: string, id: string, is_active: boolean, name: string, uuid: string}[]
+    matilda_configurations_uuids:string[]
     errors: {message: string, line: number, timestamp: string, arguments: {name: string, type: string, value: any}[]}[] 
 }
 
@@ -386,25 +386,38 @@ export interface ActionDataType  {
 }
  
 //MATILDA CONFIGURATION PROPS
-export interface configProps {
-    is_matilda_enabled: boolean
-    tone: "professional"
-    ask_if_intention_is_not_clear: boolean
+export interface ConfigProps { 
+    uuid:string 
+    name:string 
+    description:string 
+    channels_ids:string[]
+}
+export interface MatildaConfigProps {
+    uuid:string 
+
+    name:string 
+    description:string
+
+    base_system_prompt:string 
+    tone: string
     allowed_emojis: string[]
-    answer_inmediately: boolean
+    allow_sources:boolean 
+    help_center_id:string 
+
+    allow_agent_transfer:boolean
+    business_hours_agent_transfer_message:string
+    non_business_hours_agent_transfer_message:string
+
+    delay_response:boolean
     minimum_seconds_to_respond: number
     maximum_seconds_to_respond: number
-    is_restricted_to_business_days: boolean
-    business_days: number[]
-    business_day_start: number
-    business_day_end: number
-    notify_about_agent_transfer: boolean
-    agent_transfer_message: string
-    out_of_business_agent_transfer_message: string
-    allow_variable_confirmation: boolean
-    contact_all_conditions: FieldAction[]
-    contact_any_conditions: FieldAction[]
 
+    all_conditions: FieldAction[]
+    any_conditions: FieldAction[]
+
+    channel_ids:string[]
+    functions_uuids:string[]
+    help_centers_ids:string[]
  }
 
 //CONDITIONS TYPES

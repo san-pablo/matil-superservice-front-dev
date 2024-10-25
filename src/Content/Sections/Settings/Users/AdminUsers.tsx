@@ -74,8 +74,8 @@ const NewUserBox = ({userData, setUserData, setShowCreateNewUser}:NewUserBoxProp
             <EditText  regex={emailRegex} maxLength={100} placeholder={`${t('User').toLocaleLowerCase()}@${t('Company')}.com`} hideInput={false} value={newUserInfo.email} setValue={(value) => setNewUserInfo({...newUserInfo, email:value})}/>
             <Text mt='2vh' mb='.5vh' fontWeight={'medium'}>{t('Rol')}</Text>
             <Flex gap='10px'>
-                <Button size='xs' bg={newUserInfo.is_admin?'brand.black_button':'gray.200'} color={newUserInfo.is_admin?'white':'none'} _hover={{bg:newUserInfo.is_admin?'brand.black_button_hover':'gray.300'}}  onClick={() => setNewUserInfo({...newUserInfo, is_admin: true})}>{t('Admin')}</Button>
-                <Button size='xs' bg={!newUserInfo.is_admin?'brand.black_button':'gray.200'} color={!newUserInfo.is_admin?'white':'none'} _hover={{bg:!newUserInfo.is_admin?'brand.black_button_hover':'gray.300'}}  onClick={() => setNewUserInfo({...newUserInfo, is_admin:false})}>{t('Basic')}</Button>
+                <Button fontWeight={'medium'} size='xs' variant={newUserInfo.is_admin?'main':'common'} onClick={() => setNewUserInfo({...newUserInfo, is_admin: true})}>{t('Admin')}</Button>
+                <Button fontWeight={'medium'} size='xs' variant={!newUserInfo.is_admin?'main':'common'}  onClick={() => setNewUserInfo({...newUserInfo, is_admin:false})}>{t('Basic')}</Button>
             </Flex>
             {showError !== '' && <Text mt='2vh' fontSize={'.85em'} color='red'>{showError}</Text>}
          </Box>
@@ -180,7 +180,7 @@ function AdminUsers () {
                 <Text>{parseMessageToBold(t('DeleteUserMessage', {user:(userData && userToDelete) ? userToDelete.name +  ' ' + userToDelete.surname:''}))}</Text>
             </Box>
             <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-                <Button  size='sm' variant='delete'onClick={handleDeleteUsers}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
+                <Button  size='sm' variant='delete' onClick={handleDeleteUsers}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
                 <Button  size='sm' variant='common'onClick={()=> setUserToDelete(null)}>{t('Cancel')}</Button>
             </Flex>
         </ConfirmBox>
@@ -193,20 +193,15 @@ function AdminUsers () {
 
         <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('UsersTable')}</Text>
         <Text color='gray.600' fontSize={'.9em'}>{t('UsersDes')}</Text>
-
         <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/>
-      
         <Box width={'350px'}> 
             <EditText value={text} setValue={setText} searchInput={true}/>
         </Box>
-
         <Flex  mt='2vh'justifyContent={'space-between'} alignItems={'end'}>
             <Skeleton isLoaded={!waitingInfo}> 
                 <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('UsersCount', {count:userData.length})}</Text>
             </Skeleton>
-        
             <Button leftIcon={<FaPlus/>} size='sm' variant={'common'} onClick={() => {setShowCreateNewUser(!showCreateNewUser)}}>{t('CreateUser')}</Button>
-        
         </Flex>
 
          <Skeleton  isLoaded={!waitingInfo}> 

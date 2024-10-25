@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next'
 //FETCH DATA
 import fetchData from "../../../API/fetchData"
 //FRONT
-import { Flex, Text, Box, Button, Skeleton, Tooltip, IconButton, Textarea, Avatar, chakra, shouldForwardProp } from "@chakra-ui/react"
+import { Flex, Text, Box, Button, Skeleton, IconButton, Textarea, Avatar, chakra, shouldForwardProp } from "@chakra-ui/react"
 import { AnimatePresence, motion, isValidMotionProp } from 'framer-motion'
 //COMPONENTS
 import EditText from '../../../Components/Reusable/EditText'
@@ -15,12 +15,9 @@ import useOutsideClick from '../../../Functions/clickOutside'
 import ConfirmBox from '../../../Components/Reusable/ConfirmBox'
 import showToast from '../../../Components/Reusable/ToastNotification'
 import Table from '../../../Components/Reusable/Table'
-//FUCNTIONS
-import parseMessageToBold from '../../../Functions/parseToBold'
 //ICONS
 import { BsTrash3Fill } from "react-icons/bs"
 import { FaPlus } from 'react-icons/fa6'
-import { IoIosArrowBack } from 'react-icons/io'
 
 
 //TYPING
@@ -52,9 +49,10 @@ function Groups () {
         description: '',
         users: []
     }
-    
+
+     
     //GROUPS DATA
-    const [groupsData, setGroupsData] = useState<GroupData[] | null>(null)
+    const [groupsData, setGroupsData] = useState<GroupData[] | null>(null) 
 
     //SELECTED GROUP
     const [selectedGroup, setSelectedGroup] = useState<GroupData | null>(null)
@@ -141,13 +139,10 @@ function Groups () {
                 <Text color='gray.600' fontSize={'.9em'}>{t('GroupsDescription')}</Text>
             </Box>
         </Flex>
-        <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/>
- 
- 
+        <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/> 
         <Box width={'350px'}> 
             <EditText value={text} setValue={setText} searchInput={true}/>
         </Box>
- 
         <Flex  mt='2vh' justifyContent={'space-between'} alignItems={'end'}>
             <Skeleton isLoaded={groupsData !== null}> 
                 <Text  fontWeight={'medium'} fontSize={'1.2em'}>{t('GroupsCount', {count:groupsData?.length})}</Text>
@@ -156,7 +151,7 @@ function Groups () {
         </Flex>
 
         <Skeleton isLoaded={groupsData !== null}> 
-            <Table data={filteredGroupsData || []} CellStyle={CellStyle} noDataMessage={t('NoGroups')} columnsMap={groupsMapDict} onClickRow={(row:any, index:number) => setSelectedGroup(row)} deletableFunction={(row:any, index) => setGroupToDelete(row)}/>
+            <Table data={filteredGroupsData || []} CellStyle={CellStyle} excludedKeys={['id']} noDataMessage={t('NoGroups')} columnsMap={groupsMapDict} onClickRow={(row:any, index:number) => setSelectedGroup(row)} deletableFunction={(row:any, index) => setGroupToDelete(row)}/>
         </Skeleton>
     </Box>)
 }
@@ -172,9 +167,6 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
 
     //BOOLEAN FOR WAIT TO THE SEND GROUP
     const [waitingSend, setWaitingSend] = useState<boolean>(false)
-
-    //BOOLEAN SHOWING DELETE BOX
-    const [showConfirmDelete, setShowConfirmDelete] = useState<boolean>(false)
 
     //GROUP DATA
     const groupDataRef = useRef<GroupData>(groupData)
@@ -198,12 +190,10 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
                 })
             }
         }
-        else {
-            setCurrentGroupData(prev => {return {...prev, users:[...prev.users, user ]}})
-        }
+        else setCurrentGroupData(prev => {return {...prev, users:[...prev.users, user ]}})
     }
 
-    //DELETE A USER FROM A GROUP
+     //DELETE A USER FROM A GROUP
     const deleteUser = async(index:number, userId:number) => {
 
         if (groupData.id !== -1) {
@@ -234,13 +224,13 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
         }
     }
     
-    //EDIT AND CREATE A   GROUP
+    //EDIT AND CREATE A GROUP
     const sendEditGroup = async () => {
         setWaitingSend(true)    
 
         if (groupData.id === -1) {
             const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/groups`, requestForm:{name:currentGroupData.name, description:currentGroupData.description}, method:'post', auth})
-            if (response?.status === 200) {
+             if (response?.status === 200) {
                 const assignUserPromises = currentGroupData.users.map(async (user) => {
                     const userResponse = await fetchData({endpoint: `${auth.authData.organizationId}/admin/settings/groups/${response?.data.id}/${user.id}`, method: 'post',auth})
                     if (userResponse?.status !== 200) throw new Error(`Failed to add user ${user.id}`)
@@ -250,7 +240,7 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
                     await Promise.all(assignUserPromises)
                     showToast({ message: t('CorrectAddedGroup'), type: 'works' })
                     setGroupsData(prev => {
-                        if (prev) return [...prev, currentGroupData]
+                        if (prev) return [...prev, {...currentGroupData, id:response.data.id}]
                         else return null
                     })
                     setGroupData(null)
@@ -261,6 +251,7 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
         } 
         else {
             const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/groups/${groupData.id}`, requestForm:{name:currentGroupData.name, description:currentGroupData.description}, method:'put', auth, toastMessages:{'works':t('CorrectEditedGroup'),'failed':t('FailedEditedGroup')}})
+            
             if (response?.status === 200) {
                 setGroupsData(prev => {
                     if (prev) {
@@ -345,11 +336,9 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
     return (
     <Box>    
         <Box p='20px'> 
-            
             <Box minW='500px'> 
                 <EditText nameInput={true} size='md' value={currentGroupData.name} setValue={(value) => {setCurrentGroupData((prev) => ({...prev, name:value}))}}/>
             </Box>
-            
             <Text  mt='2vh' mb='.5vh'  fontWeight={'medium'}>{t('Description')}</Text>
             <Textarea resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('Description')}...`} maxH='300px' value={currentGroupData.description} onChange={(e) => setCurrentGroupData((prev) => ({...prev, description:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
 
@@ -374,8 +363,8 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
             </Box>
         </Box>
         <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-            <Button size='sm' bg={'blackAlpha.800'} color='white' _hover={{bg:'blackAlpha.900'}} onClick={sendEditGroup} isDisabled={currentGroupData.name === ''  || currentGroupData.users.length === 0 || ((JSON.stringify(currentGroupData) === JSON.stringify(groupDataRef.current)))}>{waitingSend?<LoadingIconButton/>:groupData.id === -1?t('CreateGroup'):t('SaveChanges')}</Button>
-            <Button  size='sm'_hover={{color:'blue.400'}}  onClick={() => setGroupData(null)}>{t('Cancel')}</Button>
+            <Button size='sm' variant={'main'} onClick={sendEditGroup} isDisabled={currentGroupData.name === ''  || currentGroupData.users.length === 0 || ((JSON.stringify(currentGroupData) === JSON.stringify(groupDataRef.current)))}>{waitingSend?<LoadingIconButton/>:groupData.id === -1?t('CreateGroup'):t('SaveChanges')}</Button>
+            <Button size='sm' variant={'common'} onClick={() => setGroupData(null)}>{t('Cancel')}</Button>
         </Flex>
     </Box>)
 }

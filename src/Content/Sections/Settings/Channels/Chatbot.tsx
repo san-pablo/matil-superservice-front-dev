@@ -14,7 +14,7 @@ import EditText from '../../../Components/Reusable/EditText'
 import ImageUpload from '../../../Components/Reusable/ImageUpload'
 import LoadingIconButton from '../../../Components/Reusable/LoadingIconButton'
 import ColorPicker from '../../../Components/Once/ColorPicker'
-import GetMatildaConfig from './GetMatildaConfig'
+import GetMatildaConfig from './Configurations'
 import ConfirmBox from '../../../Components/Reusable/ConfirmBox'
 //FUNCTIONS
 import timeStampToDate from '../../../Functions/timeStampToString'
@@ -25,10 +25,9 @@ import { IoIosArrowDown, IoMdArrowRoundForward } from 'react-icons/io'
 import { PiChatsBold } from "react-icons/pi"
 import { FaPlus , FaCode} from 'react-icons/fa6'
 import { MdContentCopy } from "react-icons/md"
-
 //TYPING
-import { configProps } from '../../../Constants/typing'
- 
+import { ConfigProps } from '../../../Constants/typing'
+
 //TYPING
 interface ChatBotData  {
     'welcome_message':string
@@ -42,7 +41,8 @@ interface ChatBotData  {
     'client_color': string
     'options': string[]
   }
-
+ 
+//MOTION BOX
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
 
 //MAIN FUNCTION
@@ -64,12 +64,10 @@ function Chatbot () {
     const chatbotDataRef = useRef<ChatBotData | null>(null)
     const [chatBotData, setChatBotData] = useState<ChatBotData | null>(null)
 
-    //MATILDA CONFIGURATION
-    const matildaConfigRef = useRef<configProps | null>(null)
-    const [matildaConfig, setMatildaConfig] = useState<configProps | null>(null)
-
-     //BOOLEAN FOR WAIT THE DATA
-    const [waitingInfo, setWaitingInfo] = useState<boolean>(true)
+    //MATILDA CONFIGURATION+
+    const configIdRef = useRef<string>('')
+    const [selectedConfigId, setSelectedConfigId] = useState<string>('')
+    const [configData, setConfigData] = useState<ConfigProps[] | null>(null)
 
     //BOOLEAN FOR WAIT THE NEW INFO  message.sender_type !== 0 ? (isNextMessageBot && isLastMessageBot)? '.2rem .7rem .7rem .2rem' : isNextMessageBot?'.7rem .7rem .7rem .2rem': isLastMessageBot ? '.2rem .7rem .7rem .7rem':'.7rem' : (!isNextMessageBot && !isLastMessageBot && !isLastMessage)? '.7rem .2rem .2rem .7rem' : (isNextMessageBot || isLastMessage)?'.7rem .2rem .7rem .7rem':'.7rem .7rem .2rem .7rem'}}SEND
     const [waitingSend, setWaitingSend] = useState<boolean>(false)
@@ -125,30 +123,31 @@ function Chatbot () {
     }
 
     //FETCH NEW DATA WHEN THE VIEW CHANGE
-     useEffect(() => {
-        document.title = `${t('Channels')} - ${t('Web')} - ${auth.authData.organizationName} - Matil`
-  
-        const fetchInitialData = async() => {
-            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/all_channels_basic_data`, auth})
-             if (response?.status === 200){
-              let chatChannel:any 
-              response.data.map((cha:any) => {if (cha.channel_type === 'webchat')  chatChannel = cha})
-              if (chatChannel) {
+    useEffect(() => {
+    document.title = `${t('Channels')} - ${t('Web')} - ${auth.authData.organizationName} - Matil`
+
+    const fetchInitialData = async() => {
+        await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/matilda_configurations`, setValue:setConfigData, auth})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels`, auth})
+
+            if (response?.status === 200){
+                let chatChannel:any 
+                response.data.map((cha:any) => {if (cha.channel_type === 'webchat')  chatChannel = cha})
+                if (chatChannel) {
                 channelDict.current = chatChannel
                 const responseChat = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${chatChannel?.id}`, auth})
                 if (responseChat?.status === 200) {
                     setChatBotData(responseChat.data.configuration)
                     chatbotDataRef.current = responseChat.data.configuration
-                    setMatildaConfig(responseChat.data.matilda_configuration)
-                    matildaConfigRef.current = responseChat.data.matilda_configuration
-                    setWaitingInfo(false)
+                    setSelectedConfigId(responseChat.data.matilda_configuration_uuid)
+                    configIdRef.current = responseChat.data.matilda_configuration_uuid
                 }
-              }
-            
             }
+        
         }
-        fetchInitialData()
-      }, [])
+    }
+    fetchInitialData()
+    }, [])
 
 
     // SEND THE CHATBOT CONFIGURATION
@@ -157,9 +156,11 @@ function Chatbot () {
         let chatAvatar = chatbotDataRef.current?.chat_avatar 
         if (logoFile) companyLogo = await getPreSignedUrl(logoFile)
         if (avatarFile) chatAvatar = await getPreSignedUrl(avatarFile)
-        fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${channelDict.current.id}`, setValue:setWaitingSend, setWaiting:setWaitingSend, auth, method:'put', requestForm:{...channelDict.current, configuration:{...chatBotData, company_logo:companyLogo, chat_avatar:chatAvatar}, matilda_configuration:matildaConfig}, toastMessages:{'works':t('CorrectUpdatedInfo'), 'failed':t('FailedUpdatedInfo')}})
-        chatbotDataRef.current = chatBotData
-        matildaConfigRef.current = matildaConfig
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${channelDict.current.id}`, setWaiting:setWaitingSend, auth, method:'put', requestForm:{...channelDict.current, configuration:{...chatBotData, company_logo:companyLogo, chat_avatar:chatAvatar}, matilda_configuration_uuid:selectedConfigId}, toastMessages:{'works':t('CorrectUpdatedInfo'), 'failed':t('FailedUpdatedInfo')}})
+        if (response?.status === 200) {
+            configIdRef.current = selectedConfigId
+            chatbotDataRef.current = chatBotData
+        }
     }
 
     //SHIOW CODE BOX
@@ -298,9 +299,15 @@ function Chatbot () {
                         </Skeleton>
                     </Box>
                     <Box flex='1' pt='4vh' ref={matildaScrollRef}  overflow={'scroll'}> 
-                        <Skeleton isLoaded={matildaConfig !== null}> 
-                            <GetMatildaConfig configDict={matildaConfig} setConfigDict={setMatildaConfig}  scrollRef={matildaScrollRef}/>
-                        </Skeleton>
+                        <Skeleton isLoaded={configData !== null}> 
+                            <Text  fontWeight={'medium'}>{t('SelectedConfig')}</Text>
+                            {configData?.map((config, index) => (
+                                <Box transition={'box-shadow 0.3s ease-in-out'} _hover={{shadow:'md'}}  mt='2vh' key={`config-${index}`} bg={selectedConfigId === config.uuid?'rgba(59, 90, 246, 0.25)':'gray.50'} onClick={() => setSelectedConfigId(config.uuid)} borderColor={'gray.200'} borderWidth={'1px'} borderRadius={'.5rem'} p='15px' cursor={'pointer'}>
+                                    <Text fontSize={'.9em'} fontWeight={'medium'}>{config.name}</Text>
+                                    <Text fontSize={'.8em'} color='gray.600'>{config.description}</Text>
+                                </Box> 
+                            ))}
+                         </Skeleton>
                     </Box>
                 
             </Flex>        
@@ -309,12 +316,12 @@ function Chatbot () {
         <Box> 
             <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='2vh'/>
             <Flex flexDir={'row-reverse'}> 
-                <Button variant={'common'}   isDisabled={(JSON.stringify(chatbotDataRef.current) === JSON.stringify(chatBotData)) && (JSON.stringify(matildaConfigRef.current) === JSON.stringify(matildaConfig))} onClick={sendChatBotCofig}>{waitingSend?<LoadingIconButton/>:t('SaveChanges')}</Button>
+                <Button variant={'common'}   isDisabled={(JSON.stringify(chatbotDataRef.current) === JSON.stringify(chatBotData))} onClick={sendChatBotCofig}>{waitingSend?<LoadingIconButton/>:t('SaveChanges')}</Button>
             </Flex>
         </Box>
 
 
-        {!waitingInfo &&<>
+        {(chatBotData !== null) &&<>
          <Flex zIndex={1000} style={showChat ? { animation: 'bounceButton 0.6s forwards' } : {}} onClick={() => setShowChat(!showChat)} alignItems={'center'} height={'67px'} width={'67px'} justifyContent={'center'} borderRadius={'full'} bg={`linear-gradient(to right, ${chatBotData?.header_background[0]},${chatBotData?.header_background[1]})`} color={chatBotData?.header_color} position={'fixed'} bottom='2vh' right='2vh' boxShadow={'2px 4px 10px rgba(0, 0, 0, 0.35)'}>
          
             <Box position="relative" width="27px" height="27px">

@@ -103,8 +103,6 @@ const App: React.FC = () => {
     //USER CONFIGURATIONS AND WAIT BOOLEAN
     const [waitingInfo, setWaitingInfo] = useState<boolean>(true)
     const currentOrganizationName = localStorage.getItem('currentOrganization')
-    
-  
     const [userInfo, setUserInfo] = useState<userInfo>({name:'',surname:'', organizations:[]})
 
     //REGISTER VARIABLES
@@ -149,6 +147,7 @@ const App: React.FC = () => {
 
         const fetchInitialOrgData = async (user:{id:number, name:string, surname:string, organizations:Organization[]}, accessToken:string) => {
           let organization
+          console.log()
           if (currentOrganizationName) {organization = user.organizations.find((org: Organization) =>  org.id === parseInt(currentOrganizationName))}
           if (!organization) {organization = user.organizations[0]}
           if (organization) {
