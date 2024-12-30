@@ -20,13 +20,15 @@ import timeAgo from "../../Functions/timeAgo"
 import { IconType } from "react-icons"
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io"
 import { PiDesktopTowerFill } from "react-icons/pi"
-import { FaFilter } from "react-icons/fa"
+import { FaFilter, FaPhone } from "react-icons/fa"
 import { IoMdMail, IoLogoWhatsapp } from "react-icons/io"
 import { IoChatboxEllipses, IoLogoGoogle } from "react-icons/io5"
 import { AiFillInstagram } from "react-icons/ai"
-import { FaPhone } from "react-icons/fa"
+import { FaCloud } from "react-icons/fa6"
+
 //TYPING
 import { Clients, Channels,  ClientColumn, languagesFlags } from "../../Constants/typing"
+import { useAuth0 } from "@auth0/auth0-react"
   
 interface ClientsFilters {
     page_index:number
@@ -54,7 +56,7 @@ const CellStyle = ({ column, element }:{column:string, element:any}) => {
         {element === ''? <Text>-</Text>:
             <Flex gap='5px' flexWrap={'wrap'}>
                 {element.split(',').map((label:string, index:number) => (
-                    <Flex bg='gray.200' borderColor={'gray.300'} borderWidth={'1px'} p='4px' borderRadius={'.5rem'} fontSize={'.8em'} key={`client-label-${index}`}>
+                    <Flex  bg='brand.gray_2'borderColor={'gray.300'} borderWidth={'1px'} p='4px' borderRadius={'.5rem'} fontSize={'.8em'} key={`client-label-${index}`}>
                         <Text>{label}</Text>
                     </Flex>
                 ))}
@@ -80,12 +82,14 @@ function ClientsTable () {
 
     //AUTH CONSTANT
     const auth = useAuth()
+    const { getAccessTokenSilently } = useAuth0()
     const session = useSession()
     const navigate = useNavigate()
     const { t } = useTranslation('clients')
     const columnsClientsMap:{[key:string]:[string, number]} = {name: [t('name'), 200], contact: [t('contact'), 150], labels: [t('labels'), 350], last_interaction_at: [t('last_interaction_at'), 180], created_at: [t('created_at'), 150], rating: [t('rating'), 60], language: [t('language'), 150], notes: [t('notes'), 350],  is_blocked: [t('is_blocked'), 150]}
     const logosMap:{[key in Channels]: [string, IconType]} = { 
         'email':[ t('email'), IoMdMail],
+        'voip':[ t('voip'), FaCloud],
         'whatsapp':[ t('whatsapp'), IoLogoWhatsapp ], 
         'webchat':[ t('webchat'), IoChatboxEllipses], 
         'google_business':[ t('google_business'), IoLogoGoogle],
@@ -114,7 +118,7 @@ function ClientsTable () {
                 setWaitingInfo(false)
             }
             else {
-                const clientResponse = await fetchData({endpoint:`${auth.authData.organizationId}/contacts`, setValue:setClients, setWaiting:setWaitingInfo, params:{page_index:1},auth:auth})
+                const clientResponse = await fetchData({endpoint:`${auth.authData.organizationId}/contacts`, setValue:setClients,getAccessTokenSilently, setWaiting:setWaitingInfo, params:{page_index:1},auth:auth})
                 if (clientResponse?.status === 200) session.dispatch({type:'UPDATE_CLIENTS_TABLE',payload:{data:clientResponse?.data, filters, selectedIndex:-1}})
             }
         }    
@@ -145,7 +149,7 @@ function ClientsTable () {
     //FETCH NEW DATA ON FILTERS CHANGE
     const fetchClientDataWithFilter = async (filters:{page_index:number, channel_types:Channels[], sort_by?:ClientColumn, search?:string, order?:'asc' | 'desc'}) => {
         setFilters(filters)
-        const response = await fetchData({endpoint:`${auth.authData.organizationId}/contacts`, setValue:setClients, setWaiting:setWaitingInfo, params:filters, auth})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/contacts`, getAccessTokenSilently,setValue:setClients, setWaiting:setWaitingInfo, params:filters, auth})
         if (response?.status === 200) {            
             session.dispatch({ type: 'UPDATE_CLIENTS_TABLE', payload: {data:response.data, filters:filters, selectedIndex} })
          }
@@ -170,7 +174,7 @@ function ClientsTable () {
     
             <Flex gap='15px' mt='2vh' > 
                 <Box width={'350px'}> 
-                    <EditText value={filters?.search} setValue={(value) => setFilters(prev => ({...prev, search:value}))} searchInput={true}/>
+                    <EditText filterData={(text:string) => {fetchClientDataWithFilter({...filters, search:text})}} value={filters?.search} setValue={(value) => setFilters(prev => ({...prev, search:value}))} searchInput={true}/>
                 </Box>
                 <FilterButton selectList={Object.keys(logosMap)} itemsMap={logosMap} selectedElements={filters?.channel_types} setSelectedElements={(element) => toggleChannelsList(element as Channels)} icon={PiDesktopTowerFill} initialMessage={t('ClientsFilterMessage')}/>
                 <Button leftIcon={<FaFilter/>} size='sm' variant={'common'}  onClick={() => fetchClientDataWithFilter({...filters, page_index:1})}>{t('ApplyFilters')}</Button>

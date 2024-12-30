@@ -9,6 +9,7 @@ import { Button } from '@chakra-ui/react'
 import LoadingIconButton from '../../../../Components/Reusable/LoadingIconButton'
 //ICONS
 import { FaFacebookSquare } from "react-icons/fa"
+import { useAuth0 } from '@auth0/auth0-react'
 
 //TYPING
 declare global {
@@ -22,6 +23,7 @@ declare global {
 const FacebookLoginButton = ({ name, loadDataFunc }: { name: string, loadDataFunc:() => void }) => {
   
   const auth = useAuth()
+  const { getAccessTokenSilently } = useAuth0()
   const [waitingInfo, setWaitingInfo] = useState<boolean>(false)
   const handleSendNewChannel = async (data: any) => {
       data['name'] = name
@@ -30,7 +32,8 @@ const FacebookLoginButton = ({ name, loadDataFunc }: { name: string, loadDataFun
         requestForm: data,
         method: 'post',
         setWaiting: setWaitingInfo,
-        auth: auth
+        auth,
+        getAccessTokenSilently
       })
       
       loadDataFunc()

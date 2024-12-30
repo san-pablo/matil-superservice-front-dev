@@ -1,65 +1,107 @@
 
-{/*  
+
 //REACT
-import { useEffect, useState, useRef, MutableRefObject, Dispatch, SetStateAction } from 'react'
+import { useState, useRef, Fragment, useEffect } from 'react'
 import { useAuth } from '../../../AuthContext'
 import { useTranslation } from 'react-i18next'
+import { useAuth0 } from '@auth0/auth0-react'
 //FETCH DATA
 import fetchData from '../../API/fetchData'
 //FRONT
-import { Flex, Box, Icon, Text, Tooltip, IconButton, Button } from '@chakra-ui/react'
-//ICONS
-import { IoIosArrowBack } from 'react-icons/io'
-//TYPING
-import { logosMap, Channels } from '../../Constants/typing'
+import { Flex, Box, Text,} from '@chakra-ui/react'
+//FUNCTIONS
+import formatFileSize from '../../Functions/formatFileSize'
+import '../../Components/styles.css'
  
-interface TestFlowData {
-  flowId:string
-  channelIds:string[]
-  flowName:string
-  channelsList:{id:string, display_id:string, name:string, channel_type:string, is_active:boolean}[]
-  currentChannelId:MutableRefObject<string | null>
-  currentMessages:MutableRefObject<{type:string, content:any, sent_by:'business' | 'client'}[]>
-  currentFlowIndex:MutableRefObject<number>
-  setShowTest:Dispatch<SetStateAction<boolean>>
-}
-
-
-const TestChat = ({flowId, channelIds, flowName, channelsList, currentChannelId, currentMessages, currentFlowIndex, setShowTest }:TestFlowData) => {
+const TestChat = ({configurationId, configurationName}:{configurationId:string, configurationName:string}) => {
 
   //CONSTANTS
   const auth = useAuth()
   const { t } = useTranslation('flows')
+  const { getAccessTokenSilently } = useAuth0()
+
   //MESSAGES
+  const conversationRef = useRef<any>(null)
   const [waitingMessage, setWaitingMessage] = useState<boolean>(false)
-  const [messages, setMessages] = useState<{type:string, content:any, sent_by:'business' | 'client'}[]>(currentMessages.current ? currentMessages.current:[])
-  useEffect(() => {currentMessages.current = messages},[messages])
+  const [messages, setMessages] = useState<{type:string, content:any, sent_by:'business' | 'client'}[]>([])
 
-  const [flowState, setFlowState] = useState<any>({})
-  const [motherStructureUpdates, setMotherStructureUpdates] = useState<any>({})
 
-  //SELECTED CHANNEL
-  const [selectedChannelId, setSelectedChannelId] = useState<string | null>(currentChannelId.current ? currentChannelId.current:channelIds.length === 1 ?channelIds[0] :null)
-  useEffect(() => {currentChannelId.current = selectedChannelId},[selectedChannelId])
-
+  
   //EDIT TEXT
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (scrollRef.current) {
+        const scrollableElement = scrollRef.current
+        scrollableElement.scrollTo({ top: scrollableElement.scrollHeight, behavior: 'smooth' })
+    }
+  }, [messages])
 
   //SEND A MESSAGE
-  const sendMessage = async (text:string, type:string) => {
+  const sendMessage = async (content:string | File, type:string) => {
 
-    setMessages(prev => [...prev, {type:'plain', content:{text}, sent_by:'client' }])
+      //GET PRESINGED URL
+      const getPreSignedUrl = async (file: File) => {
+        const url = `https://api.matil.ai/v1/${auth.authData.organizationId}/chatbot/s3_pre_signed_url`
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({file_name: file.name})
+            })
+            const responseData = await response.json()
+            if (response.ok) {
+              const responseUpload = await fetch(responseData.upload_url, {method: "PUT", headers: {}, body: file})
+              if (responseUpload.ok) return {url: responseData.access_url, file_name: file.name, file_size:file.size}
+            }
+          else  new Error('Failed to upload file.')
+          }
+      catch (error) {return null}}
+    
+      
+    let file_content:any
+    if (type === 'plain') {
+      file_content = {text:content}
+      setMessages(prev => [...prev, { sent_by: 'client', type, content:file_content }])
+    }
+
+    else if (typeof(content) !== 'string') {
+        file_content = await getPreSignedUrl(content)
+        setMessages(prev => [...prev, { sent_by: 'client', type, content:file_content }])
+      }
+
     setWaitingMessage(true)
-    const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/flows/${flowId}/test`, method:'post', auth, setWaiting:setWaitingMessage, requestForm:{channel_id:selectedChannelId, flow_state:flowState, conversation_messages:[{type, content:{text}, sent_by:'client' }] }})
+    console.log({conversation:conversationRef.current, message:{type, content:file_content}} )
+    const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/matilda_configurations/${configurationId}/try`, method:'post', auth,  getAccessTokenSilently,setWaiting:setWaitingMessage, requestForm:{conversation:conversationRef.current, message:{type, content:file_content}} })
     if (response?.status === 200) {
-      console.log(response.data)
-      currentFlowIndex.current = response.data.flow_state_data.node_index + 1 
-      setMessages(prev => [...prev, ...response.data.messages])
-      setFlowState(response.data.flow_state_data)
-      setMotherStructureUpdates(response.data.motherstructure_updates)
+      conversationRef.current = response.data.conversation
+      setMessages(prev => [...prev, ...response.data.messages.map((msg:any) => {return {...msg, sent_by:'business'}})])
     } 
    } 
    
+
+  //SELECT A FILE
+  const handleFileSelect = async (e: any) => {
+    const files = e.target.files
+    const maxFileSize = 2 * 1024 * 1024
+
+     if (files) {
+      const selectedFilesArray = Array.from(files)
+      const file = selectedFilesArray[0] as File
+
+      if (file.size > maxFileSize) return
+
+      const fileExtension = file.name.split('.').pop()?.toLowerCase()
+      let messageType = 'file'
+
+      if (fileExtension === 'pdf') messageType = 'pdf'
+      else if (fileExtension === 'jpg' || fileExtension === 'jpeg' || fileExtension === 'png' || fileExtension === 'gif') messageType = 'image'
+
+      sendMessage(file, messageType)
+    }
+  }
+
    //TEXT AREA CONTAINER
    const TextAreaContainer = () => {
     const [inputValue, setInputValue] = useState<string>('')
@@ -78,7 +120,9 @@ const TestChat = ({flowId, channelIds, flowName, channelsList, currentChannelId,
         }
       }}
 
-    return (          
+    return (      <>   
+    <input id='selectFile' type="file" style={{display:'none'}}  onChange={(e)=>{handleFileSelect(e)}} accept=".pdf, .doc, .docx, image/*" />
+
     <div style={{height:'100px', padding:'10px 20px 10px 20px', gap:'10px', display:'flex', alignItems:'center'}}  >
 
         <div style={{display:'flex', position:'relative',flexGrow:'1', alignItems:'center', minHeight:'40px'}} > 
@@ -94,47 +138,140 @@ const TestChat = ({flowId, channelIds, flowName, channelsList, currentChannelId,
         </div>
       
       
-      </div>)
+      </div>
+      </> )
   }
+
+  
+  const ShowMessage = ({type, content}:{type:string, content:any}) => {
+ 
+    // Regular expressions for emails and URLs
+    if (type === 'plain' ) {
+        
+      const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/
+      const urlRegex = /\[(.*?)\]\((https?:\/\/[^\s/$.?#].[^\s]*)\)/
+      const boldRegex = /\*\*(.*?)\*\*/
+      
+      // Creamos una nueva expresión regular combinada
+      const combinedRegex = new RegExp(`(${emailRegex.source}|${urlRegex.source}|${boldRegex.source})`, 'gi');
+      
+      // Dividimos el contenido del texto utilizando la expresión regular combinada
+      const cleanedText = content.text.replace(/{>>\s*(.*?)\s*<<}/, '$1')
+      let parts = cleanedText.split(combinedRegex)
+  
+      // Filtramos los elementos undefined de la lista resultante
+      parts = parts.filter((part:any) => part !== undefined && part !== '')
+      
+      parts = parts.reduce((acc:any, part:string, index:number, array:any) => {
+        if (boldRegex.test(part) && index < array.length - 1 && part.replace(/\*\*/g, '') === array[index + 1]) {
+          acc.push(part)
+          array.splice(index + 1, 1)
+        } 
+        else acc.push(part)
+        return acc
+      }, [])
+
+      let skipCount = 0
+        return (<> 
+            <span style={{ wordBreak: 'break-word'}}>
+                {parts.map((part:string, index:number) => {
+
+                    if (skipCount > 0) {
+                      skipCount--
+                      return null
+                    }
+
+                    if (emailRegex.test(part)) {
+                        return (
+                            <a key={index} href={`mailto:${part}`} style={{ color: '#1a73e8', wordBreak: 'break-all', whiteSpace: 'pre-line' }}>{part}</a>)
+                    } else if (urlRegex.test(part)) {
+                        const match = part.match(/\[(.*?)\]\((https?:\/\/[^\s/$.?#].[^\s]*)\)/);
+                        if (match) {
+                          const displayText = match[1]
+                          const url = match[2]
+                          skipCount = 2
+                          return (
+                            <a key={index} href={url} target="_blank" rel="noopener noreferrer" style={{ color: '#1a73e8', wordBreak: 'break-all', whiteSpace: 'pre-line' }}>
+                              {displayText}
+                            </a>
+                          )
+                        }
+                    }
+                     else if (boldRegex.test(part)) {
+                      const boldText = part.replace(/\*\*/g, '')
+                      return <span style={{fontWeight:500}} key={index}>{boldText}</span>
+                    } else return <span key={index}>
+                      {part.split('\n').map((line, i) => (
+                          <Fragment key={i}>
+                              {i > 0 && <br />}
+                              {line.startsWith('#')?<><span style={{fontWeight:'500'}}>{line.replace(/^#+\s*/, '')}</span> <br /></>:line}
+                          </Fragment>
+                      ))}
+                  </span>
+              })}
+            </span>
+            {(content?.sources && content?.sources.length > 0) && 
+            <div style={{marginTop:'10px'}}>
+            <span style={{fontWeight:'500'}} >{t('Sources')}</span>
+              {content.sources.map((source:{title:string, uuid:string, help_center_id:string}, index:number) => (
+                  <Flex key={`source-${index}`} cursor={'pointer'} alignItems={'center'} justifyContent={'space-between'} p='5px' borderRadius={'.5rem'} _hover={{bg:'brand.gray_1'}} onClick={() => window.open(`https://www.help.matil.ai/${source.help_center_id}/article/${source.uuid}`, '_blank')} >
+                      <span>{source.title}</span>
+                      <svg viewBox="0 0 512 512"width="12"  height="12" style={{transform:'rotate(-90deg)'}}  fill="currentColor" ><path d="M201.4 342.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 274.7 86.6 137.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z"></path></svg>
+                  </Flex>
+              ))}
+            </div>}
+        </>)
+  }
+    //DOC LINK (PDF, FILE, VIDEO)
+    else if (type === 'pdf' || type === 'file' || type === 'video') {
+        
+      let path = 'M0 64C0 28.7 28.7 0 64 0H224V128c0 17.7 14.3 32 32 32H384V304H176c-35.3 0-64 28.7-64 64V512H64c-35.3 0-64-28.7-64-64V64zm384 64H256V0L384 128zM176 352h32c30.9 0 56 25.1 56 56s-25.1 56-56 56H192v32c0 8.8-7.2 16-16 16s-16-7.2-16-16V448 368c0-8.8 7.2-16 16-16zm32 80c13.3 0 24-10.7 24-24s-10.7-24-24-24H192v48h16zm96-80h32c26.5 0 48 21.5 48 48v64c0 26.5-21.5 48-48 48H304c-8.8 0-16-7.2-16-16V368c0-8.8 7.2-16 16-16zm32 128c8.8 0 16-7.2 16-16V400c0-8.8-7.2-16-16-16H320v96h16zm80-112c0-8.8 7.2-16 16-16h48c8.8 0 16 7.2 16 16s-7.2 16-16 16H448v32h32c8.8 0 16 7.2 16 16s-7.2 16-16 16H448v48c0 8.8-7.2 16-16 16s-16-7.2-16-16V432 368z'
+      if (type === 'file') path = 'M0 64C0 28.7 28.7 0 64 0H224V128c0 17.7 14.3 32 32 32H384V448c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V64zm384 64H256V0L384 128z'
+      if (type === 'video') path = 'M64 0C28.7 0 0 28.7 0 64V448c0 35.3 28.7 64 64 64H320c35.3 0 64-28.7 64-64V160H256c-17.7 0-32-14.3-32-32V0H64zM256 0V128H384L256 0zM64 288c0-17.7 14.3-32 32-32h96c17.7 0 32 14.3 32 32v96c0 17.7-14.3 32-32 32H96c-17.7 0-32-14.3-32-32V288zM300.9 397.9L256 368V304l44.9-29.9c2-1.3 4.4-2.1 6.8-2.1c6.8 0 12.3 5.5 12.3 12.3V387.7c0 6.8-5.5 12.3-12.3 12.3c-2.4 0-4.8-.7-6.8-2.1z'
+
+    return (
+        <div onClick={() => downloadFile(content.url)}  style={{flexDirection:'row', display:'flex', gap:'10px', padding:'10px', borderColor:'white', borderWidth:'1px', borderRadius:'.5rem', color:'white',  cursor:'pointer'}}>
+          <svg viewBox="0 0 512 512" width="20" height="20" style={{fill: 'white'}}>
+              <path d={path}/>
+          </svg>
+          <div style={{ display: 'flex', flexDirection: 'column', marginTop:'-4px' }}> 
+            <span style={{ fontSize:'.95em'}}  >{content.file_name}</span>
+            <span style={{ fontWeight:300, fontSize:'.85em'}} >{formatFileSize(content.file_size)}</span>
+          </div>
+        </div>
+       )
+    }
+     else return null
+  }
+
+  
 
   return(<>  
 
-   <Flex height='90vh'  width='100%'  flexDir='column' >  
-        {selectedChannelId ?<> 
-        <Flex borderBottomWidth={'1px'} width={'100%'}  height={'80px'}  justifyContent={'space-between'} alignItems={'center'} borderBottomColor={'gray.300'} bg='brand.gray_2' p='10px 20px 10px 10px'> 
-          <Flex fontSize={'.9em'} alignItems={'center'}  gap='10px'>
-            <Tooltip label={t('GoBack')}  placement='bottom' hasArrow bg='white'  color='black'  borderRadius='.4rem' fontSize='.75em' p='4px'> 
-                <IconButton aria-label='go-back' size='sm' bg='transparent' _hover={{bg:'brand.gray_1'}} border='none' onClick={() => setShowTest(false)} icon={<IoIosArrowBack size='20px'/>}/>
-            </Tooltip>
-            <Box> 
-              <Text><span style={{fontWeight:500}}>{flowName}</span> {currentFlowIndex.current === -1 ?'':<span style={{fontSize:'.9em'}}> ({t('Node')} {currentFlowIndex.current})</span>}</Text>
-              <Text mt='.5vh'><span style={{fontWeight:500}}> {t('Channel')}:</span> {selectedChannelId}</Text>
-            </Box>
-          </Flex>
-          <Button  colorScheme='red' size='sm' onClick={() => {setMessages([]); setSelectedChannelId(null)} }>{t('ResetChat')}</Button>
-        </Flex>
-    
-        <Box width={'100%'} p='20px' overflow={'scroll'} flex='1'>
+   <Flex height='100%' borderRadius={'2rem'}  width='100%'  flexDir='column' >  
+        <div style={{height:'10%', background:`linear-gradient(to right, #3399ff,#0066cc)`, display:'flex', alignItems:'center', padding:'0 4%', justifyContent:'space-between', zIndex:10}} > 
+              <Text fontWeight={'medium'} color={'white'} fontSize={'1.2em'}>{configurationName}</Text>
+          </div>    
+        <Box ref={scrollRef} width={'100%'}overflow={'scroll'} flex='1'>
+            <Box p='20px' > 
             {messages.map((message, index)=>{
     
               const isNextMessageBot = messages[index + 1] ? messages[index + 1].sent_by === 'business' : false 
               const isLastMessageBot = messages[index - 1] ? messages[index - 1].sent_by === 'business' : false 
               const isLastMessage = index === messages.length - 1 
-        
-    
-              return(<div key={`message-${index}`}>
+
+              return(
+              <div key={`message-${index}`}>
                 <div style={{ marginTop: index === 0 ? '0px' : (message.sent_by === messages[index - 1].sent_by? '3px':'15px')}}> 
-                
-                <div style={{gap:'10px', fontSize:'.9em', display:'flex', width:'100%', alignItems:'end', flexDirection:message.sent_by === 'business' ? 'row':'row-reverse'}}  key={`message-${index}`}  >
-                    {(message.sent_by === 'business' && !isNextMessageBot)&& 
-                    <div style={{marginBottom:index > 1?'18px':'0'}}><img alt='chatLogo' src={'/images/matil.svg'} width='20px'/></div>}
+                  <div style={{gap:'10px', fontSize:'.9em', display:'flex', width:'100%', alignItems:'end', flexDirection:message.sent_by === 'business' ? 'row':'row-reverse'}}  key={`message-${index}`}  >
+                      {(message.sent_by === 'business' && !isNextMessageBot)&& <div style={{marginBottom:'0'}}><img alt='chatLogo' src={'/images/matil.svg'} width='20px'/></div>}
                           <div style={{maxWidth:'82%',display:'flex',flexDirection:'column',alignItems:'end', animation:index > 1 ?message.sent_by === 'business'? 'expandFromLeft 0.5s ease-out' : 'expandFromRight 0.5s ease-out':'none'}}> 
                               <div style={{ marginLeft:(message.sent_by === 'business' && !isNextMessageBot)?'0':'30px', background:message.sent_by === 'business'?'#EDF2F7':'linear-gradient(to right, rgba(0, 102, 204, 1),rgba(51, 153, 255, 1))', color:message.sent_by === 'business'?'black':'white',  padding:'8px', borderRadius: message.sent_by === 'business'? (isNextMessageBot && isLastMessageBot)? '.2rem .7rem .7rem .2rem' : isNextMessageBot?'.7rem .7rem .7rem .2rem': isLastMessageBot ? '.2rem .7rem .7rem .7rem':'.7rem' : (!isNextMessageBot && !isLastMessageBot && !isLastMessage)? '.7rem .2rem .2rem .7rem' : (isNextMessageBot || isLastMessage)?'.7rem .2rem .7rem .7rem':'.7rem .7rem .2rem .7rem'}}>
-                                  {message.content.text}
+                              <ShowMessage type={message.type} content={message.content}/>
                               </div>
                           </div>
                       </div>
-              </div>
+                </div>
               </div>)
               })}
             {waitingMessage &&<div> 
@@ -149,32 +286,24 @@ const TestChat = ({flowId, channelIds, flowName, channelsList, currentChannelId,
                     </div>
                   </div>
               </div>}
+              </Box>
         </Box>
 
         <TextAreaContainer/>
      
-        </>:<Box p='20px'>
-            <Text fontWeight={'medium'}>{t('SelectChannel')}</Text>
-            <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='2vh'/>
-
-            {channelsList.map((channel, index) => (<> 
-              {channelIds.includes(channel.id) && 
-                <Flex mt='.5vh' cursor={'pointer'} key={`channels-id-${index}`} p='7px' borderRadius={'.5em'} _hover={{bg:'brand.hover_gray'}} onClick={() => setSelectedChannelId(channel.id)}>
-                  <Box mt='-2px'> 
-                    <Flex gap='10px' alignItems={'center'}> 
-                      <Text fontWeight={'medium'} key={`variable-${index}`} fontSize={'.9em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{channel.name}</Text>
-                      <Icon boxSize={'14px'} as={logosMap[channel.channel_type as Channels][0]}/>
-                    </Flex>
-                    <Text color='gray.600' key={`variable-${index}`} fontSize={'.8em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{channel.id}</Text>
-                  </Box>
-                </Flex>
-              } 
-            </>))}
-        </Box>}
       </Flex>
 
    </>)
 }
 
 export default TestChat
-*/}
+
+function downloadFile(url:string) {
+  const link = document.createElement('a')
+  link.href = url
+  link.target = '_blank'
+  link.download = ''
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}

@@ -1,21 +1,29 @@
 //REACT
-import  { useState, useRef, useEffect, RefObject } from 'react'
+import  { useState, useRef, useEffect, RefObject, CSSProperties } from 'react'
 import { useAuth } from '../../../../AuthContext'
 import { useTranslation } from 'react-i18next'
+import { useSession } from '../../../../SessionContext'
 //FRONT
-import { Flex, Text, Box, IconButton, Button, NumberInput, NumberInputField } from "@chakra-ui/react"
+import { Flex, Text, Box, IconButton, Button, chakra, shouldForwardProp, Icon, Portal, Radio } from "@chakra-ui/react"
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
+import { motion, isValidMotionProp, AnimatePresence } from 'framer-motion'
 //COMPONENTS
-import EditText from '../../../Components/Reusable/EditText'
 import CustomSelect from '../../../Components/Reusable/CustomSelect'
-//ICONS
-import { FaPlus } from 'react-icons/fa6'
-import { RxCross2 } from 'react-icons/rx'
+import VariableTypeChanger from '../../../Components/Reusable/VariableTypeChanger'
 //FUNCTIONS
 import useOutsideClick from '../../../Functions/clickOutside'
+import determineBoxStyle from '../../../Functions/determineBoxStyle'
+//ICONS
+import { RxCross2 } from 'react-icons/rx'
+import { FaPlus, FaArrowDown, FaArrowUp } from 'react-icons/fa6'
+import { HiTrash } from 'react-icons/hi2'
 //TYPING
-import { View, ConversationColumn, FieldAction } from '../../../Constants/typing'
-   
+import { View, ConversationColumn, Condition } from '../../../Constants/typing'
+
+//MOTION BOX
+const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)}) 
+
+
 //MAIN FUNCTION
 function EditViewComponent ({scrollRef, viewData, editViewData}:{scrollRef:RefObject<HTMLDivElement>, viewData:View, editViewData:(view:View) => void}) {
 
@@ -37,29 +45,32 @@ function EditViewComponent ({scrollRef, viewData, editViewData}:{scrollRef:RefOb
         theme: [t('theme'), "📚"],
         urgency_rating: [t('urgency_rating'), "⚠️"],
         status: [t('status'), "📊"],
-        deletion_date: [t('deletion_date'), "❌"],
-        unseen_changes: [t('unseen_changes'), "👀"]
+        deletion_scheduled_at: [t('deletion_date'), "❌"],
+        unseen_changes: [t('unseen_changes'), "👀"],
+        call_status: [t('call_status'), "📞"],
+        call_duration: [t('call_duration'), "⏳"],
+
       }
-      
+       
     let usersMap:{[key:string]:string} = {}
     for (let key in auth.authData.users) {if (auth.authData.users.hasOwnProperty(key)) usersMap[key] = auth.authData.users[key].name + ' ' +  auth.authData.users[key].surname}
-    usersMap['0'] = t('NoAgent')
-    usersMap['-1'] = 'Matilda'
-    usersMap['{user_id}'] = usersMap[auth.authData?.userId || '-1']
+    usersMap['no_user'] = t('NoAgent')
+    usersMap['matilda'] = 'Matilda'
+    usersMap['{user_id}'] = usersMap[auth.authData?.userId || 'matilda']
     delete usersMap[auth.authData?.userId || '-1']
     const datesMap = {'{today}':t('Today'), '{yesterday}':t('Yesterday'), '{start_of_week}':t('WeekStart'),'{start_of_month}':t('StartMonth')}
     const columns: ConversationColumn[] = Object.keys(columnsMap) as ConversationColumn[]
 
      //SELECTED VIEW
     const [selectedView, setSelectedView] = useState<View>(viewData)  
-    useEffect(() => editViewData(selectedView) , [selectedView])
+    useEffect(() => {editViewData(selectedView)} , [selectedView])
+    useEffect(() => {if (viewData !== selectedView) setSelectedView(viewData)}, [viewData])
 
 
      //ADD CONDITIONS LOGIC
-    function handleConditionChange(index: number, key: 'column' | 'operation_type' | 'value', value: any, type: 'all_conditions' | 'any_conditions'): void {
-        if (key === 'column') {const columnValue = value as ConversationColumn}
+    function handleConditionChange(index: number, value: Condition, type: 'all_conditions' | 'any_conditions'): void {
         const newConditions = [...selectedView[type]]
-        newConditions[index][key] = value
+        newConditions[index] = value
         setSelectedView({ ...selectedView, [type]: newConditions })
     }
 
@@ -116,81 +127,56 @@ function EditViewComponent ({scrollRef, viewData, editViewData}:{scrollRef:RefOb
         }
     }
 
-    //INEQUALITY TYPE DEPENDING ON THE COLUMN
-    const columnInequalities = {'id':['leq', 'geq'], 'local_id':['leq', 'geq'], 'user_id':['eq', 'neq'], 'channel_type':['eq', 'neq'], 'created_at':['geq', 'leq', 'eq'], 'deletion_date':['geq', 'leq', 'eq'], 'updated_at':['geq', 'leq', 'eq'], 'solved_at':['geq', 'leq', 'eq'], 'urgency_rating': ['geq', 'leq', 'eq'], 'status': ['neq', 'eq'], 'theme':['eq', 'neq'], 'closed_at':['geq', 'leq', 'eq'], 'language':['eq', 'neq'], 'title':['geq', 'leq'], 'unseen_changes':['geq', 'leq'],}
-    const inequialitiesMap = {'geq':'Mayor que', 'leq':'Menor que', 'eq':'Igual que', 'neq':'Distinto de'}
-    
-    //SELECTOR COMPONENTE, DEPENDING ON THR COLUMN
-    const GetInputComponent = ({ condition, index, type, scrollRef }:{condition:{column:ConversationColumn, value:any, operation_type:'geq'|'leq'|'eq'}, index:number,type: 'all_conditions' | 'any_conditions', scrollRef:RefObject<HTMLDivElement> }) => {
-        
-        const channelsMap = {'whatsapp':'Whatsapp', 'mail':t('Mail'), 'webchat':t('Web'),'instagram':'Instagram','google-business':'Google Business'}
-        const urgencyMap:{[key:number]:string} = {0:`${t('Low')} (0)`, 1:`${t('Medium')} (0)`, 2:`${t('High')} (0)`, 3:`${t('VeryHigh')} (0)`, 4:`${t('Urgent')} (0)`}
-        const statesMap = {'new':t('new'), 'open':t('open'),'pending':t('pending'),'solved':t('solved'), 'closed':t('closed')}
- 
-        switch(condition.column) {
-            case 'id':
-            case 'local_id':
-                return <NumberInput value={condition.value} onChange={(value) => handleConditionChange(index, 'value', parseInt(value), type)} min={1} max={1000000} clampValueOnBlur={false} >
-                            <NumberInputField borderRadius='.5rem'  fontSize={'.9em'} height={'37px'}  borderColor={'gray.300'} _hover={{ border:'1px solid #CBD5E0'}} _focus={{ px:'11px', borderColor: "brand.text_blue", borderWidth: "2px" }} px='12px' />
-                        </NumberInput>
-            case 'user_id':
-                return <CustomSelect containerRef={scrollRef} hide={false} selectedItem={condition.value} setSelectedItem={(value) => handleConditionChange(index, 'value', value, type)} options={Object.keys(usersMap)} labelsMap={usersMap}/>
-            case 'channel_type':
-                return <CustomSelect containerRef={scrollRef} hide={false} selectedItem={condition.value} setSelectedItem={(value) => handleConditionChange(index, 'value', value, type)} options={Object.keys(channelsMap)} labelsMap={channelsMap}/>
-            case 'created_at':
-            case 'deletion_date':
-            case 'updated_at':
-            case 'solved_at':
-                return <CustomSelect containerRef={scrollRef} hide={false} selectedItem={condition.value} setSelectedItem={(value) => handleConditionChange(index, 'value', value, type)} options={Object.keys(datesMap)} labelsMap={datesMap}/>
-            case 'theme':
-                return <CustomSelect containerRef={scrollRef} hide={false} selectedItem={condition.value} setSelectedItem={(value) => handleConditionChange(index, 'value', value, type)} options={auth?.authData?.conversation_themes || []}/>
-            case 'urgency_rating':
-                return <CustomSelect containerRef={scrollRef} hide={false} selectedItem={condition.value} setSelectedItem={(value) => handleConditionChange(index, 'value', value, type)} options={Object.keys(urgencyMap)} labelsMap={urgencyMap}/>
-            case 'status':
-                return <CustomSelect containerRef={scrollRef} hide={false} selectedItem={condition.value} setSelectedItem={(value) => handleConditionChange(index, 'value', value, type)} options={['new', 'open', 'pending', 'solved', 'closed']} labelsMap={statesMap}/>
-            default:
-                return <EditText value={condition.value} setValue={(value) => handleConditionChange(index, 'value', value, type)} hideInput={false} />
-        }
-    }
+    console.log(selectedView)
+
     
     return(<>
     <Flex height={'100%'}   width={'100%'} flexDir={'column'}> 
         <Box flex='1' overflow={'scroll'} py='2px'> 
              
-                <Text fontWeight={'medium'} fontSize={'1.1em'}>{t('Conditions')}</Text>
-                <Text mt='1vh' mb='1vh' color='gray.600' >{t('AllConditions')}</Text>
-                {selectedView.all_conditions && selectedView.all_conditions.map((condition, index) => (
-                    <Flex mt='.5vh' maxW={'1000px'}  key={`all-conditions-${index}`} alignItems='center' gap='20px'>
-                       <Box flex='2'> 
-                            <CustomSelect containerRef={scrollRef} hide={false} selectedItem={columnsMap[condition.column][0] as ConversationColumn} setSelectedItem={(value:ConversationColumn) => handleConditionChange(index, 'column', value, 'all_conditions')} options={columns.filter(column => column !== 'id')}iconsMap={columnsMap}/>
-                        </Box>
-                        <Box flex='1'>
-                            <CustomSelect containerRef={scrollRef} labelsMap={inequialitiesMap} hide={false} selectedItem={condition.operation_type} setSelectedItem={(value:string) => handleConditionChange(index, 'operation_type', value, 'all_conditions')} options={columnInequalities[condition.column]}/>
-                        </Box>
-                        <Box flex='2'>
-                            {GetInputComponent({condition, index, type:'all_conditions', scrollRef})}
-                        </Box>
-                        <IconButton bg='transparent' variant={'delete'} size='sm'  icon={<RxCross2 size='18px'/>} aria-label='delete-all-condition' onClick={() => removeCondition(index, 'all_conditions')}/>
-                    </Flex>
-                ))}
-                <Button variant={'common'} size='sm' mt='2vh' leftIcon={<FaPlus/>}  isDisabled={selectedView.all_conditions.length === columns.length}   onClick={() => addCondition('all_conditions')}>{t('AddCondition')}</Button>
+               
+            <Text fontWeight={'medium'} fontSize={'1.1em'} >{t('Conditions')}</Text>
 
-                <Text mt='3vh' mb='1vh'color='gray.600'>{t('AnyConditions')}</Text>
-                {selectedView.any_conditions &&selectedView.any_conditions.map((condition, index) => (
-                    <Flex mt='.5vh'  maxW={'1000px'} key={`any-conditions-${index}`}  alignItems='center' gap='20px'>
-                        <Box flex='2'> 
-                            <CustomSelect  containerRef={scrollRef} hide={false} selectedItem={columnsMap[condition.column][0] as ConversationColumn} setSelectedItem={(value:ConversationColumn) => handleConditionChange(index, 'column', value, 'any_conditions')} options={columns.filter(column => column !== 'id')} iconsMap={columnsMap}/>
-                        </Box>
-                        <Box flex='1'>
-                            <CustomSelect containerRef={scrollRef} labelsMap={inequialitiesMap} hide={false} selectedItem={condition.operation_type} setSelectedItem={(value:string) => handleConditionChange(index, 'operation_type', value, 'any_conditions')} options={columnInequalities[condition.column]}/>
-                        </Box>
-                        <Box flex='2'>
-                            {GetInputComponent({condition, index, type:'any_conditions', scrollRef})}
-                        </Box>
-                        <IconButton  bg='transparent' variant={'delete'} size='sm' icon={<RxCross2 size='18px'/>} aria-label='delete-all-condition' onClick={() => removeCondition(index, 'any_conditions')}/>
+            <Flex gap='30px' mt='1.5vh'> 
+                <Box flex='1'> 
+                    <Text fontSize={'.9em'} fontWeight={'medium'}>{t('AllConditionsAut')}</Text>
+                    <Text fontSize={'.8em'} color='gray.600'>{t('AllConditionsAutDes')}</Text>
+
+                    <Flex flexWrap={'wrap'} gap='10px' mt='2vh'> 
+                        {(selectedView?.all_conditions || []).map((condition, index) => (<> 
+                            <Flex alignItems={'center'}  key={`all-automation-${index}`}  gap='10px'>
+                                <Box flex={'1'}> 
+                                    <EditCondition deleteFunc={() => removeCondition(index, 'all_conditions')}  scrollRef={scrollRef}  typesMap={columnsMap} data={condition} setData={(newCondition) => {handleConditionChange(index, newCondition, 'all_conditions')}} />
+                                </Box>
+                            </Flex>
+                            {index < selectedView.all_conditions.length -1 && <Flex bg='brand.gray_2' p='7px' borderRadius={'.5rem'} fontWeight={'medium'}>{t('AND')}</Flex>}
+                        </>))}
+                        <IconButton variant={'common'} aria-label='add' icon={<FaPlus/>} size='sm'  onClick={() => addCondition('all_conditions')}/>
+
                     </Flex>
-                ))}
-                <Button variant={'common'} mt='2vh'  leftIcon={<FaPlus/>} size='sm' isDisabled={(selectedView.any_conditions && selectedView.any_conditions.length === columns.length)} onClick={() => addCondition('any_conditions')}>{t('AddCondition')}</Button>
+                 </Box>
+
+                <Box flex='1'> 
+                    <Text fontSize={'.9em'}  fontWeight={'medium'}>{t('AnyConditionsAut')}</Text>
+                    <Text fontSize={'.8em'} color='gray.600'>{t('AnyConditionsAutDes')}</Text>
+
+                    <Flex flexWrap={'wrap'} gap='10px' mt='2vh'> 
+
+                    {(selectedView?.any_conditions || []).map((condition, index) => (<> 
+                        <Flex  alignItems={'center'} key={`any-automation-${index}`} gap='10px'>
+                            <Box flex={'1'}> 
+                                <EditCondition deleteFunc={() => removeCondition(index, 'any_conditions')}  scrollRef={scrollRef} typesMap={columnsMap} data={condition} setData={(newCondition) => {handleConditionChange(index, newCondition, 'any_conditions')}}  />
+                            </Box>
+                         </Flex>
+                        {index < selectedView.any_conditions.length -1 && <Flex bg='brand.gray_2' p='7px' borderRadius={'.5rem'} fontWeight={'medium'}>{t('OR')}</Flex>}
+                        </>
+                    ))}
+                    <IconButton variant={'common'} aria-label='add' icon={<FaPlus/>} size='sm'  onClick={() => addCondition('any_conditions')}/>
+                    </Flex>
+
+                </Box>
+            </Flex>
+
 
                 <Text mt='3vh' mb='1vh' fontWeight={'medium'}>{t('VisibleColumns')}</Text>
                
@@ -201,11 +187,11 @@ function EditViewComponent ({scrollRef, viewData, editViewData}:{scrollRef:RefOb
                                 {selectedView.columns.map((column, index) => (
                                     <Draggable  key={`column-view-${index}`} draggableId={`column-view-${index}`} index={index}>
                                         {(provided, snapshot) => (
-                                            <Flex maxW={'600px'} ref={provided.innerRef} alignItems="center" gap='20px'  {...provided.draggableProps} {...provided.dragHandleProps}   boxShadow={snapshot.isDragging?'0 4px 8px rgba(0, 0, 0, 0.3)':'none'}  flex='1' minW='300px' justifyContent={'space-between'}  mt='.5vh' bg='brand.gray_2' borderRadius={'.5rem'} borderColor='gray.200' borderWidth={'1px'} p='5px'>
+                                            <Flex maxW={'500px'} ref={provided.innerRef} alignItems="center" gap='20px'  {...provided.draggableProps} {...provided.dragHandleProps}   boxShadow={snapshot.isDragging?'0 4px 8px rgba(0, 0, 0, 0.3)':'none'}  flex='1' minW='300px' justifyContent={'space-between'}  mt='.8vh' bg='brand.gray_2' borderRadius={'.5rem'}  p='6px'>
                                                 <Flex gap='10px'> 
                                                     <Text fontWeight={'medium'} fontSize={'.9em'}>{columnsMap[column][0]}</Text>
                                                 </Flex>
-                                                <IconButton bg='transaprent' variant={'delete'} size='xs'  icon={<RxCross2/>} aria-label='delete-all-condition' onClick={() => removeColumn(index)}/>
+                                                <IconButton bg='transaprent' variant={'delete'} size='xs'  icon={<HiTrash/>} aria-label='delete-all-condition' onClick={() => removeColumn(index)}/>
                                          </Flex>)}
                                     </Draggable>
                                 ))}  
@@ -214,16 +200,17 @@ function EditViewComponent ({scrollRef, viewData, editViewData}:{scrollRef:RefOb
                         )}
                     </Droppable>
                 </DragDropContext>
-                <Button variant={'common'} ref={columnButtonRef} size='sm' mt='2vh' leftIcon={<FaPlus/>} isDisabled={columns.length === selectedView.columns.length} onClick={handleShowColumnBox}>{t('AddColumn')}</Button>
-
+                <Flex flexDir={'row-reverse'} maxW={'500px'}> 
+                    <Button variant={'common'} ref={columnButtonRef} size='xs' mt='2vh' leftIcon={<FaPlus/>} isDisabled={columns.length === selectedView.columns.length} onClick={handleShowColumnBox}>{t('AddColumn')}</Button>
+                </Flex>
                 <Text mt='3vh' mb='1vh' fontWeight={'medium'}>{t('SortBy')}</Text>
-                <Flex gap='40px' width={'60%'} minW={'600px'}> 
-                    <Box flex='1'> 
-                        <CustomSelect containerRef={scrollRef} hide={false} selectedItem={columnsMap[selectedView.order_by.column][0] as ConversationColumn} setSelectedItem={(value:ConversationColumn) => handleOrderChange(value, 'column')} options={columns.filter(column => column !== 'local_id')} iconsMap={columnsMap}/>
+                <Flex gap='40px' alignItems={'end'}> 
+                    <Box flex='1' maxW={'500px'}> 
+                        <CustomSelect variant='styled' containerRef={scrollRef} hide={false} selectedItem={columnsMap[selectedView.order_by.column][0] as ConversationColumn} setSelectedItem={(value:ConversationColumn) => handleOrderChange(value, 'column')} options={columns.filter(column => column !== 'local_id')} iconsMap={columnsMap}/>
                     </Box>
-                    <Flex gap='5px'>
-                        <Button size='sm' variant={selectedView.order_by.order === 'asc'?'main':'common'}  onClick={() => handleOrderChange('asc', 'order')}>{t('Up')}</Button>
-                        <Button size='sm' variant={selectedView.order_by.order  !== 'asc'?'main':'common'}  onClick={() => handleOrderChange('desc', 'order')}>{t('Down')}</Button>
+                    <Flex gap='15px'>
+                        <Button leftIcon={<FaArrowUp/>} size='sm' variant={selectedView.order_by.order === 'asc'?'main':'common'}  onClick={() => handleOrderChange('asc', 'order')}>{t('Up')}</Button>
+                        <Button leftIcon={<FaArrowDown/>} size='sm' variant={selectedView.order_by.order  !== 'asc'?'main':'common'}  onClick={() => handleOrderChange('desc', 'order')}>{t('Down')}</Button>
                     </Flex>
                 </Flex>
         </Box>
@@ -244,4 +231,142 @@ function EditViewComponent ({scrollRef, viewData, editViewData}:{scrollRef:RefOb
 export default EditViewComponent
 
 
- 
+const EditCondition = ({data, setData, typesMap, scrollRef, deleteFunc}:{data:Condition, setData:(newData:Condition) => void, typesMap:{[key:string]:string[]}, scrollRef:RefObject<HTMLDivElement> ,  deleteFunc?:() => void}) => {
+
+    //TRANSLATION
+    const auth = useAuth()
+    const session = useSession()
+    const t_con = useTranslation('conversations').t
+   
+    const operationTypesDict:{[key:string]:string[]} = {'id':['leq', 'geq'], 'local_id':['leq', 'geq'], 'user_id':['eq', 'neq'], 'channel_type':['eq', 'neq'], 'created_at':['geq', 'leq', 'eq'], 'deletion_date':['geq', 'leq', 'eq'], 'updated_at':['geq', 'leq', 'eq'], 'solved_at':['geq', 'leq', 'eq'], 'urgency_rating': ['geq', 'leq', 'eq'], 'status': ['neq', 'eq'], 'theme':['eq', 'neq'], 'closed_at':['geq', 'leq', 'eq'], 'language':['eq', 'neq'], 'title':['geq', 'leq'], 'unseen_changes':['eq'],}
+    
+    //TRANSLATION
+    const { t } = useTranslation('settings')
+    const operationLabelsMap = {'set':t('set'), 'add':t('add'), 'substract':t('substract'), 'concatenate':t('concatenate'), 'append':t('append'), 'remove':t('remove'), 'eq':t('eq'), 'exists':t('exists'), 'neq':t('neq'), 'leq':t('leq'), 'geq':t('geq'), 'in':t('in'), 'nin':t('nin'), 'contains':t('contains'), 'ncontains':t('ncontains')}
+    const columnsTypes =  Object.keys(operationTypesDict)
+    let labelsMap:{[key:string]:string} = {}
+    columnsTypes.map((column) => {labelsMap[column] = t(column)})
+    
+    //GET CUSTOM ATTRIBUTES
+    const getOperationsByType = (type:string) => {
+        switch (type) {
+            case 'bool':
+                return ['eq', 'neq']
+            case 'int':
+            case 'float':
+            case 'timestamp':
+                return ['geq', 'leq', 'eq'];
+            case 'str':
+                return ['eq', 'neq', 'contains', 'ncontains'];
+            default:
+                return []
+        }
+    }
+
+     //GET CUSTOM ATTRIBUTES
+    ((auth.authData?.customAttributes as any).conversation  || []).map((attribute:any) => {
+        const { name, type } = attribute
+        const operations = getOperationsByType(type)
+        if (operations.length > 0) {
+            operationTypesDict[name] = operations
+            labelsMap[name] = name
+        }
+    })
+    
+    //IS HOVERING
+    const [isHovering, setIsHovering] = useState<boolean>(false)
+
+    //BOOLEAN TO CONTROL THE VISIBILITY OF THE LIST AND CLOSE ON OUTSIDE CLICK
+    const buttonRef = useRef<HTMLDivElement>(null)
+    const boxRef = useRef<HTMLDivElement>(null)
+    const [showList, setShowList] = useState<boolean>(false)
+    useOutsideClick({ref1:buttonRef, ref2:boxRef, containerRef:scrollRef, onOutsideClick:setShowList})
+
+    //BOX POSITION LOGIC, TO SHOW IT UP OR DOWN OF THE INPUT, DEPENDING ON THE POSITION
+    const [boxStyle, setBoxStyle] = useState<CSSProperties>({})
+    determineBoxStyle({buttonRef, setBoxStyle, boxPosition:'none', changeVariable:showList})
+
+    const getValue = (inputType:string, value:any) => {
+        switch(inputType) {
+            case 'user_id':
+                {
+                    let usersDict:{[key:string]:string} = {}
+                    if (auth.authData.users) Object.keys(auth.authData?.users).map((key:any) => {if (auth?.authData?.users) usersDict[key] = auth?.authData?.users[key].name})
+                    usersDict['no_user'] = t('NoAgent')
+                    usersDict['matilda'] = 'Matilda'
+                    return usersDict[value]
+                }
+       
+            case 'channel_id':
+                const channels = session?.sessionData?.additionalData?.channels || []
+                return channels?.find(channel => channel?.id === value)?.name || ''
+    
+            case 'urgency_rating':
+                const ratingMapDic = {0:`${t('Priority_0')} (0)`, 1:`${t('Priority_1')} (1)`, 2:`${t('Priority_2')} (2)`, 3:`${t('Priority_3')} (3)`, 4:`${t('Priority_4')} (4)`}
+                return (ratingMapDic as any)[value]
+            
+            case 'status':
+                const statusMapDic = {'new':t_con('new'), 'open':t_con('open'), solved:t_con('solved'), 'pending':t_con('pending'), 'closed':t_con('closed')}
+                return (statusMapDic as any)[value] 
+            case 'unseen_changes':
+                return value?t('true'):t('false')
+
+            case 'created_at':
+            case 'updated_at':
+            case 'solved_at':
+            case 'deletion_date':
+            case 'closed_at':
+            case 'channel_type':
+                return t(value)
+            default: 
+                {   
+                    const attributeType =  (auth.authData?.customAttributes as any).conversation.find((attr:any) => attr.name === data.column)?.type
+                    if (attributeType === 'bool') return value?t('true'):t('false')
+                    else if (attributeType === 'timestamp') return t(value)
+                    else return value
+                }
+             }
+        }
+
+   return(
+        <>
+            <Flex display={'inline-flex'} position={'relative'} ref={buttonRef} p='7px' borderRadius={'.5rem'} bg='brand.gray_2' cursor={'pointer'} alignItems={'center'} justifyContent={'space-between'} _hover={{color:'brand.text_blue'}} onClick={()=> setShowList(true)} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
+               
+                <Text fontWeight={'medium'} fontSize={'.9em'}>{labelsMap[data?.column]} {(operationLabelsMap as any)[data.operation_type as string]?.toLocaleLowerCase()} {getValue(data?.column, data?.value)}</Text>
+                {isHovering && 
+                    <Flex alignItems={'center'} justifyContent={'center'} bg={'brand.gray_2'} backdropFilter="blur(1px)"  px='5px' position={'absolute'} right={'7px'} > 
+                    <Icon boxSize={'16px'} as={RxCross2} onClick={(e) => {e.stopPropagation(); if (deleteFunc) deleteFunc()}}/>
+                </Flex>}
+
+            </Flex>
+            <AnimatePresence> 
+                {showList && 
+                    <Portal>
+                        <MotionBox initial={{ opacity: 0, marginTop:-10, marginBottom:-10 }} animate={{ opacity: 1, marginTop: 0,marginBottom:0 }}  exit={{ opacity: 0,marginTop:-10,marginBottom:-10}} transition={{ duration: '.2', ease: 'easeOut'}}
+                        top={boxStyle.top}  onClick={(e) => e.stopPropagation()}  bottom={boxStyle.bottom} marginTop='10px' marginBottom='10px' left={boxStyle.left} width={boxStyle.width} minW={'300px'} maxW={'500px'} maxH='40vh' overflow={'scroll'} gap='10px' ref={boxRef} fontSize={'.9em'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000}   position={'absolute'} borderRadius={'.5rem'} >
+                            <Box p='15px' alignItems={'center'} gap='10px' >
+                                <Box mb='2vh' flex='1'> 
+                    
+                                <CustomSelect  containerRef={scrollRef} hide={false} selectedItem={data.column} setSelectedItem={(value:ConversationColumn) => setData({...data, column:value, is_customizable:!columnsTypes.includes(value)})} options={Object.keys(operationTypesDict).filter(column => column !== 'id') as ConversationColumn[]} labelsMap={labelsMap as any}/>
+                                </Box>
+                                {((operationTypesDict[data.column as keyof typeof operationTypesDict] || [])).map((op, opIndex) => (
+                                    <Box mt='1vh' key={`operation-${opIndex}`}>
+                                        <Flex mb='.5vh'   gap='10px' alignItems={'center'}>
+                                            <Radio isChecked={data.operation_type === op}  onClick={() => setData({...data, 'operation_type':op})}/>
+                                            <Text fontWeight={'medium'} color='gray.600' fontSize={'.9em'}>{(operationLabelsMap as any)[op as string]}</Text>
+                                        </Flex>
+                                        {data.operation_type === op && 
+                                        <Box ml='30px'>
+                                            <VariableTypeChanger customType={!columnsTypes.includes(data.column)} inputType={columnsTypes.includes(data.column)? data.column : (auth.authData?.customAttributes as any).conversation.find((attr:any) => attr.name === data.column)?.type || 'default'} value={data.value} setValue={(value) => setData({...data, 'value':value})} operation={data.operation_type}/>
+                                        </Box>}
+                                    </Box>
+                                ))}
+                            </Box>
+                            <Flex py='10px' justifyContent={'center'} borderTopColor={'gray.200'} borderTopWidth={'1px'}>
+                                <Text cursor={'pointer'} _hover={{color:'rgb(59, 90, 246, 0.9)'}} onClick={() => setShowList(false)} fontWeight={'medium'} color='brand.text_blue'>{t('Ready')}</Text>
+                            </Flex>
+                        </MotionBox>
+                    </Portal>}
+            </AnimatePresence> 
+        </>)
+}

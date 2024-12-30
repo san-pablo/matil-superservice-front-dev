@@ -8,61 +8,26 @@ import { useTranslation } from 'react-i18next'
 import { Flex, Text, Box, Icon, Grid } from "@chakra-ui/react"
 //ICONS
 import { IconType } from "react-icons"
-import { IoLogoWhatsapp } from "react-icons/io"
-import { IoChatboxEllipses, IoMail } from "react-icons/io5";
-import { RiInstagramFill } from "react-icons/ri";
-import { FaHeadset, FaCreditCard, FaDatabase, FaShopify, FaUserGroup,FaPhone,  FaPeopleGroup, FaUser, FaTicket, FaRectangleList, FaArrowsSplitUpAndLeft, FaShapes, FaBookmark, FaRobot} from "react-icons/fa6"
-import { HiViewColumns } from "react-icons/hi2"
-import { MdKeyboardCommandKey, MdWebhook } from "react-icons/md"
-import { SiGooglemybusiness } from "react-icons/si"
-import { BsStars } from 'react-icons/bs'
 //TYPING
 import { IconKey, SubSectionProps } from "../../Constants/typing"
  
 interface MainProps {
     subSections: SubSectionProps[]
     sectionsList: (IconKey | '')[] 
+    subSectionsMap:{[key:string]: [string, IconType]}
 }
 interface SectionBoxProps {
     section: IconKey
     subSections: SubSectionProps
-}
+ }
 export type SectionsListProps = {[key in IconKey]: [string, string]}
 
 //MAIN FUNCTION
-function Main ({subSections, sectionsList}:MainProps) {
+function Main ({subSections, sectionsList, subSectionsMap}:MainProps) {
    
     //TRANSLATION
     const { t } = useTranslation('settings')
     
-    //SUBSECTIONS MAP
-    const subSectionsMap: {[key:string]:[string, IconType]} = {
-        'data':[t('DataDes'), FaDatabase],
-        'tilda':[t('TildaDes'), BsStars],
-        'payments':[t('PaymentsDes'), FaCreditCard],
-        'admin-users':[t('UsersDes'), FaUserGroup],
-        'groups':[t('GroupsDes'), FaPeopleGroup],
-        'user':[t('UserDes'), FaUser],
-        'edit-views':[t('ViewsDes'), HiViewColumns],
-        'help-center':[t('HelpCenterDes'), FaHeadset],
-        'shortcuts':[t('ShortcutsDes'), MdKeyboardCommandKey],
-        'conversations':[t('ConversationsDes'), FaTicket],
-        'fields':[t('FieldsDes'),  FaShapes],
-        'themes':[t('ThemesDes'),  FaBookmark],
-        'surveys':[t('SurveysDes'), FaRectangleList],
-        'automations':[t('AutomationsDes'), FaArrowsSplitUpAndLeft],
-        'triggers':[t('TriggersDes'), MdWebhook],
-        'configurations':[t('MatildaConfigsDes'), FaRobot],
-        'web':[t('WebDes'), IoChatboxEllipses],
-        'whatsapp':[t('WhatsappDes'), IoLogoWhatsapp],
-        'instagram':[t('InstagramDes'), RiInstagramFill],
-        'google-business':[t('GoogleDes'), SiGooglemybusiness],
-        'mail':[t('MailDes'), IoMail],
-        'phone':[t('PhoneDes'), FaPhone],
-        'shopify':[t('ShopifyDes'), FaShopify]
-    }
-    
-
     const auth = useAuth()
     useEffect (() => {
         document.title = `${t('Settings')} - ${t('Main')} - ${auth.authData.organizationName} - Matil`

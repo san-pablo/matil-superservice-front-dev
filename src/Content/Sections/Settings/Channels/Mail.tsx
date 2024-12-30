@@ -1,5 +1,5 @@
 //REACT
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { useAuth } from "../../../../AuthContext"
 import { useTranslation } from "react-i18next"
 //FETCH DATA
@@ -14,14 +14,20 @@ import LoadingIconButton from "../../../Components/Reusable/LoadingIconButton"
 import EditText from "../../../Components/Reusable/EditText"
 import showToast from "../../../Components/Reusable/ToastNotification"
 import Table from "../../../Components/Reusable/Table"
+import ConfirmBox from "../../../Components/Reusable/ConfirmBox"
+import SaveChanges from "../../../Components/Reusable/SaveChanges"
 //FUCNTIONS
 import copyToClipboard from "../../../Functions/copyTextToClipboard"
+import parseMessageToBold from "../../../Functions/parseToBold"
 //ICONS
-import { Bs1CircleFill, Bs2CircleFill, Bs3CircleFill,  BsClipboard2Check, BsTrash3Fill } from "react-icons/bs"
+import { Bs1CircleFill, Bs2CircleFill, Bs3CircleFill,  BsClipboard2Check } from "react-icons/bs"
 import { IoIosArrowBack } from "react-icons/io"
+import { HiTrash } from "react-icons/hi2"
+
 import { FaPlus } from "react-icons/fa6"
 //TYPING
 import { ConfigProps } from "../../../Constants/typing"
+import { useAuth0 } from "@auth0/auth0-react"
    
 interface MailProps { 
   id:string
@@ -41,11 +47,13 @@ function Mail () {
     const auth = useAuth()
     const { t } = useTranslation('settings')
     const explanationTemplateText = useRef<HTMLParagraphElement>(null)
-    
+    const { getAccessTokenSilently } = useAuth0()
     //LIST OF CHANNELS
     const [channelsList, setChannelsList] = useState<null | any[]>(null)
     const matildaScrollRef = useRef<HTMLDivElement>(null)
 
+    //DELETE AN ACCOUNT
+    const [showDelete, setShowDelete] = useState<boolean>(false)
 
     //WAITING BOOLEANS FOR CREATING AN ACCOUNT
     const [waitingSend, setWaitingSend] = useState<boolean>(false)
@@ -68,17 +76,16 @@ function Mail () {
       document.title = `${t('Channels')} - ${t('Mail')} - ${auth.authData.organizationName} - Matil`
 
       const fetchInitialData = async() => {
-        await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/matilda_configurations`, setValue:setConfigData, auth})
-          const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels`, auth})
+        await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/matilda_configurations`, setValue:setConfigData, auth, getAccessTokenSilently})
+          const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels`, auth, getAccessTokenSilently})
           if (response?.status === 200){
             let mailChannels:any[] = []
             response.data.map((cha:any) => {if (cha.channel_type === 'email')  mailChannels.push(cha)})
             if (mailChannels) {
                if (mailChannels.length === 1) {
-                const responseMail = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${mailChannels[0].id}`,  setValue: setData, auth})
+                const responseMail = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${mailChannels[0].id}`,  setValue: setData, auth, getAccessTokenSilently})
                 if (responseMail?.status === 200) {
                   setIntroducedName(true)
-                  setData(responseMail.data.configuration)
                   dataRef.current = responseMail.data.configuration
                   setSelectedConfigId(responseMail.data.matilda_configuration_uuid)
                   configIdRef.current = responseMail.data.matilda_configuration_uuid
@@ -100,7 +107,7 @@ function Mail () {
     }, [])
 
     const selectChannel = async (id:string) => {
-      const responseMail = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${id}`,  setValue: setData, auth})
+      const responseMail = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${id}`,  setValue: setData, auth, getAccessTokenSilently})
       if (responseMail?.status === 200) {
         setIntroducedName(true)
         dataRef.current = responseMail.data
@@ -108,18 +115,18 @@ function Mail () {
     } 
 
     const sendFirstEmailVerification = async () => {
-      const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/email`, method:'post',setWaiting:setWaitingCreate, requestForm:{name:data?.display_id,email_address:data?.display_id}, auth, toastMessages:{works:t('CorrectCreatedMail'), failed:t('FailedCreatedMail')}})
+      const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/email`, method:'post',setWaiting:setWaitingCreate,getAccessTokenSilently, requestForm:{name:data?.display_id,email_address:data?.display_id}, auth, toastMessages:{works:t('CorrectCreatedMail'), failed:t('FailedCreatedMail')}})
       if (response?.status === 200) setIntroducedName(true)
     }
 
     const sendEmailSes = async () => {
-      const responseMail = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${data?.display_id}`, setWaiting:setWaitingSes, setValue: setData, auth})
+      const responseMail = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${data?.display_id}`, setWaiting:setWaitingSes,getAccessTokenSilently, setValue: setData, auth})
       if (responseMail?.status === 200) showToast({message:t('CorectSes')})
       else showToast({message:t('FailedtSes'), type:'failed'})
     }
 
     const sendEmailForward = async () => {
-      const responseMail = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${data?.display_id}`,  setValue: setData, auth, toastMessages:{works:t('CorrectCreatedMail'), failed:t('FailedCreatedMail')}})
+      const responseMail = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${data?.display_id}`,  setValue: setData, auth,getAccessTokenSilently, toastMessages:{works:t('CorrectCreatedMail'), failed:t('FailedCreatedMail')}})
       if (responseMail?.status === 200) {
         setIntroducedName(true)
         dataRef.current = responseMail.data
@@ -127,16 +134,53 @@ function Mail () {
     }
 
     const saveChanges = async () => {
-      const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${dataRef.current.id}`, setValue:setWaitingSend, setWaiting:setWaitingSend, auth, method:'put', requestForm:{...data, matilda_configuration_uuid:selectedConfigId}, toastMessages:{'works':t('CorrectUpdatedInfo'), 'failed':t('FailedUpdatedInfo')}})
+      const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${dataRef.current.id}`, setValue:setWaitingSend, getAccessTokenSilently,setWaiting:setWaitingSend, auth, method:'put', requestForm:{...data, matilda_configuration_uuid:selectedConfigId}, toastMessages:{'works':t('CorrectUpdatedInfo'), 'failed':t('FailedUpdatedInfo')}})
       if (response?.status === 200) {
           configIdRef.current = selectedConfigId
           dataRef.current = data
       }
   }
+
+
+    //FUNCTION FOR DELETING THE TRIGGER
+    const DeleteComponent = () => {
+
+      //WAITING DELETION
+      const [waitingDelete, setWaitingDelete] = useState<boolean>(false)
+
+      //FUNCTION FOR DELETING AN AUTOMATION
+      const deleteMail= async () => {
+          const response = await fetchData({endpoint: `${auth.authData.organizationId}/admin/settings/channels/${data?.id}`,getAccessTokenSilently,  method: 'delete', setWaiting: setWaitingDelete, auth, toastMessages: {works: t('CorrectDeletedmMail'), failed: t('FailedDeletedMail')}})
+          setShowDelete(false)
+        }
+
+      //FRONT
+      return(<>
+          <Box p='20px' > 
+              <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('ConfirmDelete')}</Text>
+              <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
+              <Text >{parseMessageToBold(t('ConfirmDeleteMail', {name:data?.display_id}))}</Text>
+          </Box>
+          <Flex bg='gray.50' p='20px' gap='10px' flexDir={'row-reverse'}>
+              <Button  size='sm' variant={'delete'} onClick={deleteMail}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
+              <Button  size='sm' variant={'common'}onClick={() => setShowDelete(false)}>{t('Cancel')}</Button>
+          </Flex>
+      </>)
+  }
+
+
+    //DELETE BOX
+    const memoizedDeleteBox = useMemo(() => (
+      <ConfirmBox setShowBox={setShowDelete}> 
+          <DeleteComponent/>
+      </ConfirmBox>
+  ), [showDelete])
+
     
     //FRONT 
     return(
     <>
+    {showDelete && memoizedDeleteBox}
       <Box> 
         <Flex justifyContent={'space-between'}> 
           <Flex gap='20px' alignItems={'center'}> 
@@ -145,7 +189,7 @@ function Mail () {
             </Tooltip>}
             <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Mail')}</Text>
           </Flex>
-          {(channelsList !== null && channelsList.length > 0 && data !== null) && <Button variant={'delete_section'} leftIcon={<BsTrash3Fill/>} size='sm'>{t('DeleteAccount')}</Button>}
+          {(channelsList !== null && channelsList.length > 0 && data !== null) && <Button variant={'delete_section'} leftIcon={<HiTrash/>} size='sm' onClick={() => setShowDelete(true)}>{t('DeleteAccount')}</Button>}
         </Flex>       
         <Box height={'1px'} width={'100%'} bg='gray.300' mt='1vh' />
       </Box>
@@ -228,6 +272,9 @@ function Mail () {
         </Skeleton>
         </Box>
         :<>
+
+    <SaveChanges  onSaveFunc={saveChanges} data={selectedConfigId} dataRef={configIdRef} setData={setSelectedConfigId} areNullEnabled/>
+
         <Flex flex='1' overflow={'hidden'} width={'100%'} gap='5vw'> 
           <Box flex='1' pt='4vh' overflow={'scroll'}> 
 
@@ -254,12 +301,7 @@ function Mail () {
               </Skeleton>
             </Box>
         </Flex>
-          <Box> 
-              <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='2vh'/>
-              <Flex flexDir={'row-reverse'}> 
-                <Button  variant={'common'}  isDisabled={JSON.stringify(dataRef.current) === JSON.stringify(data) && selectedConfigId !== configIdRef.current} onClick={saveChanges}>{waitingSend?<LoadingIconButton/>:t('SaveChanges')}</Button>
-              </Flex>
-          </Box>
+          
         </>}
     </>}
  

@@ -13,10 +13,11 @@ interface SectionSelectorProps<T extends string | number>  {
     sections: T[]
     sectionsMap: { [key: string] : [string, ReactElement] }
     onChange: (section: T) => void 
+    size?:string
 }
 
 //MAIN FUNCTION
-const SectionSelector =  <T extends string | number>({ selectedSection, sections, sectionsMap, onChange }: SectionSelectorProps<T>) => {
+const SectionSelector =  <T extends string | number>({ selectedSection, sections, sectionsMap, onChange, size = 'sm' }: SectionSelectorProps<T>) => {
 
     //GET THE SIZE OF EACH COMPONENT
     const [indicatorStyle, setIndicatorStyle] = useState<{ width: number, left: number }>({ width: 0, left: 0 })
@@ -36,7 +37,7 @@ const SectionSelector =  <T extends string | number>({ selectedSection, sections
                 const isSelected = selectedSection === section;
                 return (
                     <Flex alignItems={'center'} color={'black'} key={`secciones-${index}`} id={`section-btn-${section}`} onClick={() => { onChange(section) }}>
-                        <Button size='sm' border='none' fontWeight={'medium'} bg='transparent' color={isSelected ? 'black' : 'gray.600'} _hover={{ color: 'black' }} leftIcon={sectionsMap[section][1]}>
+                        <Button size={size} border='none' fontWeight={'medium'} bg='transparent' color={isSelected ? 'brand.text_blue' : 'gray.600'} _hover={{ color: 'brand.text_blue' }} leftIcon={sectionsMap[section][1]}>
                             {sectionsMap[section][0]}
                         </Button>
                     </Flex>

@@ -3,17 +3,18 @@
 */
 
 //REACT
-import { useRef, useState, useEffect, useLayoutEffect, ElementType, Suspense, lazy, SetStateAction, Dispatch, useMemo, forwardRef } from 'react'
+import { useRef, useState, useEffect, useLayoutEffect, ElementType, Suspense, lazy, SetStateAction, Dispatch, useMemo, forwardRef, MutableRefObject } from 'react'
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom"
 import { useAuth } from '../AuthContext'
 import { useSession } from '../SessionContext'
 import { useTranslation } from 'react-i18next'
 import { t } from 'i18next'
+import { useAuth0 } from "@auth0/auth0-react"
 //FETCH DATA
 import fetchData from './API/fetchData'
 import io from 'socket.io-client' 
 //FRONT
-import { Flex, Box, Icon, Avatar, Text, Tooltip, Button, chakra, shouldForwardProp, Image, Portal, useColorMode } from '@chakra-ui/react'
+import { Flex, Box, Icon, Avatar, Text, Tooltip, Button, chakra, shouldForwardProp, Image, Portal } from '@chakra-ui/react'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import './Components/styles.css'
 import { motion, AnimatePresence, isValidMotionProp } from 'framer-motion' 
@@ -29,7 +30,6 @@ import SendFeedBack from './Components/Once/SendFeedback'
 //FUNCTIONS
 import useOutsideClick from './Functions/clickOutside'
 import DetermineConversationViews from './MangeData/DetermineConversationViews'
-import determineBoxStyle from './Functions/determineBoxStyle'
 //ICONS
 import { IconType } from 'react-icons'
 import { IoFileTrayFull, IoChatboxOutline, IoPersonOutline } from "react-icons/io5" 
@@ -47,12 +47,13 @@ import { Organization, ConversationsData, userInfo, Views } from './Constants/ty
 //MAIN SECTIONS
 const ConversationsTable = lazy(() => import('./Sections/Conversations/ConversationsTable'))
 const ClientsTable = lazy(() => import('./Sections/Clients/ClientsTable'))
-const Functions = lazy(() => import('./Sections/Flows/Functions'))
+const TildaMain = lazy(() => import('./Sections/Flows/TildaMain'))
 const ContactBusinessesTable = lazy(() => import('./Sections/Businesses/BusinessesTable'))
 const Conversation = lazy(() => import('./Sections/Conversations/Conversation'))
 const Client = lazy(() => import('./Sections/Clients/Client'))
 const Business = lazy(() => import('./Sections/Businesses/Business'))
-const Stats = lazy(() => import('./Sections/Stats/Stats'))
+const ReportsTable = lazy(() => import('./Sections/Stats/ReportsTable'))
+const Report = lazy(() => import('./Sections/Stats/Report'))
 const Settings = lazy(() => import('./Sections/Settings/Settings'))
 const Knowledge = lazy(() => import('./Sections/Knowledge/Knowledge'))
 const NotFound = lazy(() => import('./Components/Once/NotFound'))
@@ -82,7 +83,7 @@ function Content ({userInfo}:{userInfo:userInfo}) {
  
     //SOCKET
     const socket = useRef<any>(null)
-
+ 
     //TRANSLATION
     const { t } = useTranslation('main')
 
@@ -109,8 +110,8 @@ function Content ({userInfo}:{userInfo:userInfo}) {
         isProcessingConversation.current = true
         
         //EDIT VIEWS LOGIC
-        const previousViews = DetermineConversationViews(data?.previous_data, views, auth.authData?.userId || -1)
-        const newViews = DetermineConversationViews(data?.new_data, views, auth.authData?.userId || -1)
+        const previousViews = DetermineConversationViews(data?.previous_data, views, auth.authData?.userId || '')
+        const newViews = DetermineConversationViews(data?.new_data, views, auth.authData?.userId || '')
 
         //VIEWS TO ADD AND REMOVE
         const viewsToRemove = previousViews.filter(pv => !newViews.some(nv => nv.view_index === pv.view_index && nv.view_type === pv.view_type))
@@ -154,7 +155,7 @@ function Content ({userInfo}:{userInfo:userInfo}) {
         else navigate(window.location)
 
         socket.current = io('https://api.matil.ai/platform', {
-            path: '/v2/socket.io/',
+            path: '/v1/socket.io/',
             transports:['websocket'],
             query: {
                 access_token: auth.authData.accessToken,
@@ -168,7 +169,8 @@ function Content ({userInfo}:{userInfo:userInfo}) {
         //RECEIVE A CONVERSATIONS
         socket.current.on('conversation', (data:any) => {
             session.dispatch({type: 'EDIT_HEADER_SECTION_CONVERSATION', payload: {...data, auth}})
-            if (data?.is_new) showToast({message:t('NewConversationCreated',{id:data.new_data.local_id}), type:'conversation', id:data.new_data.id, linkPath:true, navigate, isDesktop:true})
+
+            if (data?.is_new) showToast({message:t('NewConversationCreated', {id:data.new_data.local_id}), type:'conversation', id:data.new_data.id, linkPath:true, navigate, isDesktop:true})
             
             function waitForProcessing() {
                 const startTime = Date.now()              
@@ -391,7 +393,7 @@ function Content ({userInfo}:{userInfo:userInfo}) {
     }
 
     //SHOW INTRODUCE CODE BOX WHEN THERE IS NO ORGANIZATION
-    if (!auth.authData.organizationId) return (<OrganizationsBox userInfoApp={userInfoApp} isAdmin={false}  setUserInfoApp={setUserInfoApp} auth={auth}  session={session} setHeaderSections={setHeaderSections}/>)
+    if (!auth.authData.organizationId) return (<OrganizationsBox userInfoApp={userInfoApp} isAdmin={false}  setUserInfoApp={setUserInfoApp} auth={auth}  session={session} setHeaderSections={setHeaderSections} authDataRef={authDataRef}/>)
     
     //MEMOIZED CALL WIDGET
     const memoizedCallWidget = useMemo(() => <CallWidget />, [])
@@ -401,39 +403,43 @@ function Content ({userInfo}:{userInfo:userInfo}) {
     
     const barRef = useRef<HTMLDivElement>(null)
 
-    const NavBar = () => {
+    //REFS
+    const conversationsRef = useRef<HTMLDivElement>(null)
+    const clientsRef = useRef<HTMLDivElement>(null)
+    const businessesRef = useRef<HTMLDivElement>(null)
+    const flowsRef = useRef<HTMLDivElement>(null)
+    const knowledgeRef = useRef<HTMLDivElement>(null)
+    const statsRef = useRef<HTMLDivElement>(null)
+    const settingsRef = useRef<HTMLDivElement>(null)
+    const sectionsRefs = {conversations:conversationsRef, clients:clientsRef, 'contact-businesses':businessesRef, 'knowledge':knowledgeRef, 'functions':flowsRef, 'stats':statsRef, 'settings':settingsRef}
 
-        //REFS
-        const conversationsRef = useRef<HTMLDivElement>(null)
-        const clientsRef = useRef<HTMLDivElement>(null)
-        const businessesRef = useRef<HTMLDivElement>(null)
-        const flowsRef = useRef<HTMLDivElement>(null)
-        const knowledgeRef = useRef<HTMLDivElement>(null)
-        const statsRef = useRef<HTMLDivElement>(null)
-        const settingsRef = useRef<HTMLDivElement>(null)
-        const sectionsRefs = {conversations:conversationsRef, clients:clientsRef, 'contact-businesses':businessesRef, 'knowledge':knowledgeRef, 'functions':flowsRef, 'stats':statsRef, 'settings':settingsRef}
+    useEffect(() => {
+        const updateBarPosition = () => {
+            const currentSection = location.split('/')[1] as 'conversations' | 'clients' | 'contact-businesses' | 'knowledge' | 'functions' | 'stats' | 'settings';
+            if (sectionsRefs[currentSection]?.current && barRef.current) {
+                isFirstSection.current = false
+                const sectionTop = sectionsRefs[currentSection]?.current?.getBoundingClientRect().top || 0
+                localStorage.setItem('currentSectionTop', String(sectionTop))
+                barRef.current.style.transform = `translateY(${sectionTop}px)`
+            }
+        }    
+        updateBarPosition()
+        window.addEventListener('resize', updateBarPosition)
+        return () => {window.removeEventListener('resize', updateBarPosition)}
+    }, [location, sectionsRefs, barRef])
+    
+
+    const NavBar = () => {
  
-        useEffect(() => {
-            const updateBarPosition = () => {
-                const currentSection = location.split('/')[1] as 'conversations' | 'clients' | 'contact-businesses' | 'knowledge' | 'functions' | 'stats' | 'settings';
-                if (sectionsRefs[currentSection].current && barRef.current) {
-                    isFirstSection.current = false
-                    const sectionTop = sectionsRefs[currentSection]?.current?.getBoundingClientRect().top || 0
-                    localStorage.setItem('currentSectionTop', String(sectionTop))
-                    barRef.current.style.transform = `translateY(${sectionTop}px)`
-                }
-            }    
-            updateBarPosition()
-            window.addEventListener('resize', updateBarPosition)
-            return () => {window.removeEventListener('resize', updateBarPosition)}
-        }, [location, sectionsRefs, barRef])
+
+        const MatilImage = useMemo(() => (<Image src='/images/matil-simple-2.svg' width={'22px'} height={'22px'} />), [])
         
-         return (<>
+        return (<>
         
             <Flex alignItems='center' flexDir='column' >
                 <Box  width='100%'> 
                     <Flex width={'100%'} justifyContent={'center'} mb='5vh'> 
-                        <Image src='/images/matil-simple-2.svg' width={'22px'} height={'22px'} />
+                        {MatilImage}
                     </Flex>
                     <NavBarItem ref={conversationsRef} icon={IoFileTrayFull} section={'conversations'}/>
                     <NavBarItem ref={clientsRef} icon={BsFillPersonLinesFill} section={'clients'}/>
@@ -452,7 +458,7 @@ function Content ({userInfo}:{userInfo:userInfo}) {
         </>
         )
     }
-    const memoizedNavbar = useMemo(() => <NavBar />, [location])
+    const memoizedNavbar = useMemo(() => <NavBar />, [])
 
     //FRONT 
     return(<> 
@@ -465,118 +471,29 @@ function Content ({userInfo}:{userInfo:userInfo}) {
             {memoizedCallWidget}
         
             {/*SIDEBAR*/}
-            <Flex flexDir='column'  alignItems='center'  borderRightColor={'gray.300'} borderRightWidth={'1px'} justifyContent='space-between' height={'100vh'} width='55px' py='3vh' bg='#e8e8e8' >
+            <Flex flexDir='column'  alignItems='center'  borderRightColor={'gray.300'} borderRightWidth={'1px'} justifyContent='space-between' height={'100vh'} width='55px' py='3vh' bg='brand.gray_2' >
                 {memoizedNavbar}
             </Flex>
 
             {/*CONTENT OF THE SECTIONS*/}
-            <Box  height={'calc(100vh + 60px)'}>
- 
-                {/*HEADER ELEMENTS*/}
-                <motion.div initial={{ y: !isHeaderSection ? -60 : 0 }} animate={{ y: !isHeaderSection ? -60 : 0 }} exit={{ y: !isHeaderSection ? -60 : 0 }} transition={{ duration: 0.2 }}
-                    style={{  height: '60px', display: 'flex', width:'calc(100vw - 55px)', alignItems: 'center', justifyContent: 'space-between', zIndex:1000, background:'#f1f1f1'}}>
-                    <Flex height='100%' minW={0} flex='1' overflow={'scroll'} ref={containerRef} > 
-                        <DragDropContext onDragEnd={onDragEnd}>
-                            <Droppable droppableId="sections" direction="horizontal">
-                                {(provided) => (
-                                <Flex width='100%' ref={provided.innerRef} {...provided.droppableProps} height="100%">
-                                    {headerSections.length === 0?
-                                        <Flex height="100%" bg='#f1f1f1' justifyContent={'space-between'} alignItems='center' minW='120px' maxW='280px'  borderColor='gray.200' borderBottomWidth={'1px'}  px='15px'cursor='pointer' >
-                                            <Text fontSize={'.8em'} fontWeight={'medium'}>{t('NoSections')}</Text>
-                                        </Flex>
-                                        :
-                                    <>
-                                        {headerSections.slice(0, visibleSectionsIndex).map((element, index) => {
-                                            const sectionToSelect = element.type === 'conversation' ? 'conversations/conversation/' + element.code :  element.type === 'client' ? 'clients/client/' + element.code:'contact-businesses/business/' + element.code
-                                            const isSectionSelected = location.startsWith(`/${sectionToSelect}/`) || location === `/${sectionToSelect}`;
-                                            const width = `calc(${(containerRef.current?.getBoundingClientRect().width || 0) / visibleSectionsIndex}% - 10px)`;
-                                            return (
-                                                <Draggable  key={`section-${element.type}-${element.code}`} draggableId={`${element.type}-${element.code}`} index={index}>
-                                                {(provided, snapshot) => (
-                                                    <Flex  boxShadow={snapshot.isDragging?'0 4px 8px rgba(0, 0, 0, 0.3)':'none'}  height="100%" ref={provided.innerRef}  {...provided.draggableProps} {...provided.dragHandleProps} justifyContent={'space-between'} alignItems='center' w={width} minW='120px' maxW='280px' bg={isSectionSelected ? '#e8e8e8' :'#f1f1f1'} _hover={{ bg: isSectionSelected ? '#e8e8e8' : 'brand.hover_gray' }} borderColor='gray.200' borderBottomWidth={isSectionSelected?'0':'1px'} borderRightWidth='1px' px='15px'cursor='pointer' onClick={() => {navigate(sectionToSelect)}}>
-                                                        <Flex flex='1' minW='0' gap='10px' alignItems={'center'}>
-                                                            <Icon as={element.type === 'conversation' ? IoChatboxOutline : element.type === 'client' ? IoPersonOutline:BsBuildings } />
-                                                            <Box flex='1' minW='0'>
-                                                                <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'} fontSize='xs' >{element.description}</Text>
-                                                                <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'} fontSize='2xs'>#{element.local_id?element.local_id:element.code}</Text>
-                                                            </Box>
-                                                        </Flex>
-                                                        <Flex width={'20px'} justifyContent='center' alignItems='center' p='2px' borderRadius='.4rem' color={'gray.500'} _hover={{ bg: 'gray.200', color: 'black' }} cursor='pointer' onClick={(e) => {e.stopPropagation();deleteHeaderSection(element, index) }}>
-                                                            <Icon as={RxCross2} boxSize='15px' />
-                                                        </Flex>
-                                                    </Flex>
-                                                )}
-                                                </Draggable>
-                                            )
-                                        })}
-                                            {showMoreHeaderSections && (
-                                                <Box height='100%'  px='10px' borderColor='gray.200' borderBottomWidth='1px'>
-                                                    <Flex height='100%' alignItems='center' >
-                                                        <Flex ref={showMoreHeaderSectionsButtonRef} justifyContent='center' onClick={() => setShowMoreHeaderSectionsBox(!showMoreHeaderSectionsBox)} alignItems='center' gap='5px' p='4px' fontSize='sm' borderRadius='.4rem' _hover={{ bg: 'gray.200' }} cursor='pointer'>
-                                                            <Text fontSize={'sm'}>{t('More')}</Text>
-                                                            <Icon as={IoIosArrowDown} className={showMoreHeaderSectionsBox ? "rotate-icon-up" : "rotate-icon-down"}/>
-                                                        </Flex>
-                                                    </Flex>
-                                                    <AnimatePresence> 
-
-                                                    {showMoreHeaderSectionsBox &&
-                                                    <Portal> 
-                                                        <MotionBox transition={{ duration: '0.2',  ease: 'easeOut'}} initial={{ opacity: 0, marginTop: 0 }} animate={{ opacity: 1, marginTop: 10 }} exit={{opacity: 0, marginTop: 0 }} right={window.innerWidth - (showMoreHeaderSectionsButtonRef.current?.getBoundingClientRect()?.right || 0)} top={`${showMoreHeaderSectionsButtonRef.current?.getBoundingClientRect().bottom}px`}  mt='3px' maxH='80vh' overflowY='scroll'  ref={showMoreHeaderSectionsBoxRef}  position='fixed'  bg='white' zIndex={1000} boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.15)'}  borderColor={'gray.300'} borderWidth={'1px'} borderRadius={'.5rem'}> 
-                                                        {headerSections.slice(visibleSectionsIndex).map((element, index) => {
-                                                            const sectionToSelect = element.type === 'conversation' ? 'conversations/conversation/' + element.code :  element.type === 'client' ? 'clients/client/' + element.code:'contact-businesses/business/' + element.code
-                                                            const isSectionSelected = location.startsWith(`/${sectionToSelect}/`) || location ===  `/${sectionToSelect}`
-                                                                            
-                                                            return(
-                                                                <Flex height='100%' key={`visible-header-${index}`}  justifyContent={'space-between'} alignItems='center' width={'200px'} bg={isSectionSelected?'#e8e8e8':'transparent'} gap='10px' p='15px' cursor='pointer' _hover={{bg:isSectionSelected?'#e8e8e8':'brand.hover_gray'}}  onClick={()=>{navigate(sectionToSelect)}}> 
-                                                                    <Flex flex='1'minW='0'  gap='10px' alignItems={'center'} >
-                                                                    <Icon as={element.type === 'conversation' ? IoChatboxOutline : element.type === 'client' ? IoPersonOutline:BsBuildings } />
-                                                                        <Box  flex='1' minW='0'   > 
-                                                                            <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}  fontSize='xs' fontWeight={'medium'}>{element.description}</Text>
-                                                                            <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'} fontSize='2xs'>#{element.local_id?element.local_id:element.code}</Text>
-                                                                        </Box>
-                                                                    </Flex>
-                                                                    <Flex width={'20px'} justifyContent='center' alignItems='center' p='2px' borderRadius='.4rem' color={'gray.500'} _hover={{bg:'gray.200', color:'black'}} cursor='pointer' onClick={(e) => {e.stopPropagation();deleteHeaderSection(element, visibleSectionsIndex + index)}}>
-                                                                        <Icon as={RxCross2} boxSize='15px'/>
-                                                                    </Flex>
-                                                                </Flex>
-                                                            )
-                                                        })}
-                                                        </MotionBox>
-                                                        </Portal>
-                                                    }
-                                                   </AnimatePresence> 
-
-                                                </Box>
-                                        )}
-                                            {provided.placeholder}
-                                    </>}
-                                    <Box height='100%' flex='1' px='10px' borderColor='gray.200' borderBottomWidth='1px'/> 
-                                </Flex>
-                                )}
-                            </Droppable>
-                        </DragDropContext>
-                    </Flex>
-                    <OrganizationsBox userInfoApp={userInfoApp} isAdmin={isAdmin}  setUserInfoApp={setUserInfoApp} auth={auth} session={session} setHeaderSections={setHeaderSections}/>
-                </motion.div>
-            
-                {/*SECTIONS*/}
-                <motion.div initial={{ y: !isHeaderSection ? -60 : 0 }} animate={{ y: !isHeaderSection ? -60 : 0 }} exit={{ y: !isHeaderSection ? -60 : 0 }} transition={{ duration: 0.2 }}>
+            <Box  height={'100vh'} >
+                <Box>
                     <Suspense fallback={<></>}>    
                         <Routes >
-                            <Route path="/conversations" element={<ConversationsTable socket={socket}/>}/>
-                            <Route path="/conversations/conversation/:n/*" element={<Conversation socket={socket} addHeaderSection={addHeaderSection} deleteHeaderSection={deleteHeaderSection} />} />
+                            <Route path="/conversations/*" element={<ConversationsTable socket={socket}/>}/>
                             <Route path="/clients" element={<ClientsTable/>}  />
                             <Route path="/clients/client/:n" element={<Client socket={socket} comesFromConversation={false}  addHeaderSection={addHeaderSection} deleteHeaderSection={deleteHeaderSection}/>}/>
                             <Route path="/contact-businesses" element={<ContactBusinessesTable  addHeaderSection={addHeaderSection}/>}/>
                             <Route path="/contact-businesses/business/:n" element={<Business socket={socket} comesFromConversation={false} addHeaderSection={addHeaderSection}/>}/>
-                            <Route path="/functions/*" element={<Functions/>}/>
+                            <Route path="/functions/*" element={<TildaMain/>}/>
                             <Route path="/knowledge/*" element={<Knowledge/>}/>
-                            <Route path="/stats/*" element={<Stats/>}/>
+                            <Route path="/stats" element={<ReportsTable/>}/>
+                            <Route path="/stats/*" element={<Report/>}/>
                             <Route path="/settings/*" element={<Settings />}/>
                             <Route path="*" element={<NotFound />} />
                         </Routes>
                     </Suspense>
-                </motion.div>
+                </Box>
             </Box>
  
         </Flex>:
@@ -594,7 +511,7 @@ const NavBarItem = forwardRef<HTMLDivElement, NavBarItemProps>(({icon, section }
     //NAVIGATE CONSTANT
     const navigate = useNavigate()
     const location = useLocation().pathname
-    const sectionsMap = {conversations: t('Conversations'), clients: t('Clients'), stats: t('Stats'), 'functions':t('FlowsFunctions'),'knowledge':t('Knowledge'), 'contact-businesses':t('Businesses'), settings: t('Settings')}
+    const sectionsMap = {conversations: t('Conversations'), clients: t('Clients'), stats: t('Stats'), 'functions':t('Tilda'),'knowledge':t('Knowledge'), 'contact-businesses':t('Businesses'), settings: t('Settings')}
  
     //HOVER AND SELECT LOGIC
     const [isHovered, setIsHovered] = useState(false)
@@ -608,7 +525,7 @@ const NavBarItem = forwardRef<HTMLDivElement, NavBarItemProps>(({icon, section }
     //FRONT
     return (
         <Tooltip isOpen={isHovered} label={sectionsMap[section]} placement='right' color={'black'} bg='white' boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.15)'} borderWidth={'1px'} borderColor={'gray.200'} borderRadius='.4rem' fontSize='sm' fontWeight={'medium'} p='6px'>
-            <Flex ref={ref} justifyContent='center' alignItems='center' py='15px' width={'55px'} cursor='pointer'  bg={(isSelected) ? '#f1f1f1': isHovered ? '#f1f1f1':'transparent'} color={(isSelected) ? 'rgba(59, 90, 246)' : 'gray.600'} onClick={handleClick} onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
+            <Flex ref={ref} justifyContent='center' alignItems='center' py='15px' width={'55px'} cursor='pointer'  bg={(isSelected) ? 'white': isHovered ? 'white':'transparent'} color={(isSelected) ? 'rgba(59, 90, 246)' : 'gray.600'} onClick={handleClick} onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
                 <Icon as={icon} boxSize='21px'/>
             </Flex>
         </Tooltip>
@@ -617,6 +534,8 @@ const NavBarItem = forwardRef<HTMLDivElement, NavBarItemProps>(({icon, section }
   
 //LOGOUT BOX 
 const LogoutBox = ({ userInfoApp, auth }:{userInfoApp:userInfo, auth:any}) => {
+
+    const { logout } = useAuth0()
 
     //SHOW AND HIDE LOGOUT ON HOVER LOGIC
     const [showLogout, setShowLogout] = useState(false)
@@ -710,7 +629,7 @@ const LogoutBox = ({ userInfoApp, auth }:{userInfoApp:userInfo, auth:any}) => {
                            
                     <Box bg='gray.200' height='1px' width='100%' mb='7px' mt='10px' />
 
-                    <Flex p='7px' gap='10px'  justifyContent={'space-between'} alignItems='center' color='red.500' cursor='pointer' _hover={{ bg: 'red.50', color:'red.600' }} borderRadius='.4rem' onClick={() => auth.signOut()}>
+                    <Flex p='7px' gap='10px'  justifyContent={'space-between'} alignItems='center' color='red.500' cursor='pointer' _hover={{ bg: 'red.50', color:'red.600' }} borderRadius='.4rem' onClick={() =>{logout({ logoutParams: { returnTo: window.location.origin } });auth.signOut()}}>
                          <Text fontSize='.9em' whiteSpace='nowrap'>{t('SignOut')}</Text>
                          <Icon boxSize={'13px'} as={FaArrowRightToBracket} />
                     </Flex>
@@ -728,9 +647,12 @@ interface OrganizationsBoxProps {
     auth:any
     session:any
     setHeaderSections:Dispatch<SetStateAction<Section[]>>
+    authDataRef:MutableRefObject<Views>
 }
 //CHANGE AND ACCESS TO AN ORGANIZATION BOX. IT RENDERS THE JOIN ORGANIZATION FULL SCREEN, WHERE THERE IS NOT ORGANIZATION
-const OrganizationsBox = ({ userInfoApp, isAdmin, setUserInfoApp, auth, session, setHeaderSections }:OrganizationsBoxProps) => {    
+const OrganizationsBox = ({ userInfoApp, isAdmin, setUserInfoApp, auth, session, setHeaderSections, authDataRef }:OrganizationsBoxProps) => {    
+
+    const { logout, getAccessTokenSilently } = useAuth0()
 
     //JOIN ORGANIZATION WHEN THERE IS MORE ORGANIZATIONS
     const JoinOrganizationBox = () => {
@@ -777,23 +699,18 @@ const OrganizationsBox = ({ userInfoApp, isAdmin, setUserInfoApp, auth, session,
         setWaitingOrganization(true)
         navigate('/conversations')
 
-        const response = await fetchData({endpoint:`user/join/${invitationCode}`, method:'put', auth:auth})
+        const response = await fetchData({endpoint:`user/join/${invitationCode}`, method:'put', getAccessTokenSilently, auth:auth})
 
         if (response?.status === 200) {
-            const response2 = await fetchData({endpoint:`user`, setValue:setUserInfoApp, auth:auth})
+            const response2 = await fetchData({endpoint:`user`, setValue:setUserInfoApp, getAccessTokenSilently, auth:auth})
             if (response2?.status === 200){
-                const response3 = await fetchData({endpoint:`${response2.data.organizations[response2.data.organizations.length - 1].id}/user`,  auth:auth})
-                    
-                    if (response3?.status === 200){
-                        auth.setAuthData({views:response3.data, organizationId:response2.data.organizations[response2.data.organizations.length - 1].id})
-                        setWaitingOrganization(false)
-                    }
-                    else {setWaitingOrganization(false);showToast({message:t('Join_Failed'), type:'failed'})}
+                changeOrganization(response2.data.organizations[response2.data.organizations.length - 1])
             }
             else {setWaitingOrganization(false);showToast({message:t('Join_Failed'), type:'failed'})}
         }
         else {setWaitingOrganization(false);showToast({message:t('Join_Failed'), type:'failed'})}
     }
+
 
     //CHANGE ORGANIZATION LOGIC
     const changeOrganization = async (org:Organization) => {
@@ -801,16 +718,14 @@ const OrganizationsBox = ({ userInfoApp, isAdmin, setUserInfoApp, auth, session,
         localStorage.removeItem('currentView')
         localStorage.removeItem('currentSection')
         localStorage.removeItem('currentSectionTop')
-       
-
-        console.log(localStorage)
         localStorage.setItem('currentOrganization', String(org.id))
-        console.log(localStorage.getItem('currentOrganization'))
-
         
         session.dispatch({type:'DELETE_ALL_SESSION'})
         setHeaderSections([])
-        const responseOrg = await fetchData({endpoint:`${org.id}/user`, auth})
+        const responseOrg = await fetchData({endpoint:`${org.id}/user`, auth, getAccessTokenSilently})
+        const responseChannels = await  fetchData({endpoint:`${org.id}/admin/settings/channels`, auth, getAccessTokenSilently})
+        const responseThemes= await  fetchData({endpoint:`${org.id}/admin/settings/themes`, auth, getAccessTokenSilently})
+        session.dispatch({type:'ADD_CHANNELS', payload:responseChannels?.data})
         if (responseOrg?.status === 200) {
             const viewsToAdd = {
             number_of_conversations_in_bin:responseOrg.data.number_of_conversations_in_bin, 
@@ -819,8 +734,10 @@ const OrganizationsBox = ({ userInfoApp, isAdmin, setUserInfoApp, auth, session,
             shared_views:responseOrg.data.shared_views, 
             number_of_conversations_per_shared_view:responseOrg.data.number_of_conversations_per_shared_view
           }
-          auth.setAuthData({views: viewsToAdd, users:responseOrg.data.users, shortcuts:responseOrg.data.shortcuts, conversation_themes:responseOrg.data.conversation_themes, organizationId:org.id, organizationName:org.name})
+          authDataRef.current = viewsToAdd
+          auth.setAuthData({views: viewsToAdd, users:responseOrg.data.users, shortcuts:responseOrg.data.shortcuts, conversation_themes:responseThemes?.data.map((theme:{name:string, description:string}) => theme.name), organizationId:org.id, organizationName:org.name})
         }
+        
         navigate('/conversations')
      }
 
@@ -836,14 +753,14 @@ const OrganizationsBox = ({ userInfoApp, isAdmin, setUserInfoApp, auth, session,
       <Flex zIndex={1000} height='100%'gap='1vw' width={'250px'} justifyContent='end' alignItems='center' borderColor='gray.200' borderBottomWidth='1px' > 
         <Flex  zIndex={1000}  paddingLeft='20px'  onMouseEnter={handleMouseEnter}  onMouseLeave={handleMouseLeave} height={'100%'} alignItems={'center'}> 
             <Text cursor={'pointer'} onClick={() => setShowOrganizations(!showAddOrganization)} _hover={{color:'gray.600'}} whiteSpace={'nowrap'}  mr='2vw' fontWeight='medium'>
-                {auth.authData.organizationName}
+            {auth.authData.organizationName}
             </Text>
-            <Portal> 
+       
             <AnimatePresence>     
             {showOrganizations && (
-                
+                <Portal> 
                 <MotionBox initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.9 }}  transition={{ duration: '0.1', ease: 'easeOut'}}
-                style={{ transformOrigin: 'top' }} position='fixed' bg='white' p='15px' right='2vw' top='50px' boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.300' borderWidth='1px' borderRadius='.5rem' >
+                style={{ transformOrigin: 'top' }}position='fixed' bg='white' p='15px' right='2vw' top='50px' zIndex={1000000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.300' borderWidth='1px' borderRadius='.5rem' >
                     <Box>
                     <Text fontSize='.9em' fontWeight='medium' whiteSpace='nowrap' mb='1vh'>{t('Organizations')}</Text>
                     {userInfoApp.organizations.length === 0 ? (
@@ -867,9 +784,10 @@ const OrganizationsBox = ({ userInfoApp, isAdmin, setUserInfoApp, auth, session,
                         <Icon as={BiSolidBuildings}/>
                     </Flex>}
                 </MotionBox>
+                </Portal>
             )}
             </AnimatePresence>
-            </Portal>
+    
         </Flex>
       </Flex>: 
       
@@ -880,7 +798,7 @@ const OrganizationsBox = ({ userInfoApp, isAdmin, setUserInfoApp, auth, session,
                 <EditText value={firstInvitationCode} setValue={setFirstInvitationCode} placeholder='xxxxxxxx-xxxx-xxxx-xxxxxxxxxxxx' hideInput={false}/>
                 <Button variant={'main'} size='sm' leftIcon={waitingNewOrganization?<></>:<FaPlus />} mt='2vh' isDisabled={firstInvitationCode === ''} width='100%' onClick={() => addOrganization({invitationCode:firstInvitationCode, setInvitationCode:setFirstInvitationCode})}>{waitingNewOrganization?<LoadingIconButton/>:t('Join')}</Button>
             </Box>
-            <Button onClick={() => auth.signOut()} position='fixed' bottom='2vh' left='2vh' size='sm' variant={'main'} leftIcon={<TbArrowBack/>}>{t('Return')}</Button>
+            <Button onClick={() => {logout({ logoutParams: { returnTo: window.location.origin } });auth.signOut()}} position='fixed' bottom='2vh' left='2vh' size='sm' variant={'main'} leftIcon={<TbArrowBack/>}>{t('Return')}</Button>
         </Flex>}
         </>
     )

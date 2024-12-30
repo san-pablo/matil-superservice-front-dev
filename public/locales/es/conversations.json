@@ -24,8 +24,13 @@
     "WebClient":"Cliente de la Web",
     "id":"ID",
     "local_id":"ID",
+
     "status":"Estado",
+    "call_status":"Estado Llamada",
+    "call_duration":"Duración Llamada",
+
     "channel_type": "Canal",
+    
     "theme": "Tema",
     "user_id": "Agente asignado",
     "created_at": "Creado",
@@ -36,6 +41,10 @@
     "urgency_rating": "Prioridad",
     "deletion_date": "Fecha de eliminación",
     "unseen_changes":"Mensajes no leídos",
+    "time":"Tiempo",
+    "channel_id":"Canal",
+    
+
     "NotRead":"No leídos",
     "Any":"Ninguno",
     "NoAgent":"Sin agente",
@@ -50,6 +59,12 @@
     "solved":"Resuelta",
     "pending":"Pendiente",
     "closed":"Cerrada",
+    "completed":"Completada",
+    "ongoing":"En curso",
+    "Duration":"{{seconds}} s",
+    "Audio":"Reproducir audio",
+    "voip":"VOIP",
+
     "Priority_0":"Baja",
     "Priority_1":"Media",
     "Priority_2":"Alta",
@@ -59,7 +74,7 @@
     "NoData":"No se ha extraído ninguna información relevante de la conversación",
     "ReturnConversation":"Volver a la conversación",
     "Merge":"Fusionar",
-    "MergeConversation":"Fusionar con otra conversación",
+    "MergeConversation":"Fusionar",
     "Delete":"Eliminar",
     "ExtractedData":"Datos extraídos",
     "InternalNote":"Nota Interna",
@@ -105,7 +120,7 @@
     "NoSystemMessage":"Mensaje del sistema no reconocido.",
     "ConversationByMatilda":"Matilda está gestionando la conversación",
     "ConversationClosed":"La conversación está cerrada",
-    "ExportConversation":"Exportar conversación",
+    "ExportConversation":"Exportar",
     "OptionsMessage":"[MOSTRAR OPCIONES]",
     "ImageMessage":"[IMAGEN]",
     "FileMessage":"[ARCHIVO]",
@@ -117,7 +132,11 @@
     "false":"Falso",
     "any":"cualquiera",
     "And":"y",
-    "NoDescription":"Sin descripción"
+    "NoDescription":"Sin descripción",
+    "Arguments":"Argumentos",
+    "Output":"Resultado",
+    "FunctionCall":"Llamada a la función:",
+    "PlaceholderShortcuts":"Pulsa / para ver los atajos"
 
 
 }

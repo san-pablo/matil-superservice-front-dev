@@ -2,14 +2,15 @@
 import { useEffect, useRef, useState } from "react"
 import { useAuth } from "../../../../AuthContext"
 import { useTranslation } from "react-i18next"
+import { useAuth0 } from "@auth0/auth0-react"
 //FETCH DATA
 import fetchData from "../../../API/fetchData"
 import VariableTypeChanger from "../../../Components/Reusable/VariableTypeChanger"
 //FRONT
-import { Text, Box, Flex, Button, NumberInput, NumberInputField, Skeleton, Switch } from "@chakra-ui/react"
+import { Text, Box, Flex, Skeleton, Switch } from "@chakra-ui/react"
+
 //COMPONENTS
-import LoadingIconButton from "../../../Components/Reusable/LoadingIconButton"
-  
+import SaveChanges from "../../../Components/Reusable/SaveChanges"
 interface ConversationsConfigProps {
     solved_to_closed_days: 0
     no_activity_to_closed_days: number
@@ -24,6 +25,7 @@ const ConversationsData = () => {
     //CONSTANTS
     const auth = useAuth()
     const { t } = useTranslation('settings')
+    const {  getAccessTokenSilently }  = useAuth0()
 
     //BOOLEAN FOR WAITING THE UPLOAD
     const [waitingSend, setWaitingSend] = useState<boolean>(false)
@@ -36,8 +38,7 @@ const ConversationsData = () => {
     useEffect(() => {        
         document.title = `${t('Settings')} - ${t('Conversations')} - ${auth.authData.organizationId} - Matil`
         const fetchInitialData = async() => {
-            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/data`, setValue:setConversationsData, auth})
-            if (response?.status === 200) conversationsDataRef.current = response.data
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/data`, setRef:conversationsDataRef, getAccessTokenSilently,setValue:setConversationsData, auth})
         }
         fetchInitialData()
      }, [])
@@ -47,20 +48,24 @@ const ConversationsData = () => {
 
     //FUNCTION FOR SEND A NEW CONFIGURATION
     const sendNewConversationData = async() => {
-        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/data`, method:'put', requestForm:conversationsData as ConversationsConfigProps, setValue:setConversationsData, setWaiting:setWaitingSend, auth, toastMessages:{works:t('CorrectEditedConversation'), failed:t('FailedEditedConversation')}})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/data`, method:'put',  getAccessTokenSilently, requestForm:conversationsData as ConversationsConfigProps, setValue:setConversationsData, setWaiting:setWaitingSend, auth, toastMessages:{works:t('CorrectEditedConversation'), failed:t('FailedEditedConversation')}})
         if (response?.status === 200) conversationsDataRef.current = conversationsData
     }
     
  
 return(<>
+    <SaveChanges data={conversationsData} setData={setConversationsData} dataRef={conversationsDataRef} onSaveFunc={sendNewConversationData}/>
 
-    <Box> 
-        <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Conversations')}</Text>
-        <Text color='gray.600' fontSize={'.9em'}>{t('ConversationsDes')}</Text>
-        <Box width='100%' bg='gray.300' height='1px' mt='2vh'  maxW={'1000px'}/>
-    </Box>
+    <Flex justifyContent={'space-between'} alignItems={'end'}> 
+        <Box> 
+            <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Conversations')}</Text>
+            <Text color='gray.600' fontSize={'.9em'}>{t('ConversationsDes')}</Text>
+        </Box>
+     </Flex>
+    <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/>
+    
    
-    <Box overflow={'scroll'} flex='1' pb='2vh'  pt='3vh'> 
+    <Box overflow={'scroll'} flex='1' pb='2vh' > 
         <Skeleton   isLoaded={conversationsData !== null} width={'100%'} maxW={'1000px'} minW={'500px'}> 
             <Text fontWeight={'medium'}>{t('DaysToClose')}</Text>
             <Text mb='.5vh' fontSize={'.8em'} color='gray.600'>{t('DaysToCloseDes')}</Text>
@@ -104,12 +109,7 @@ return(<>
             </>}   
         </Skeleton>
     </Box>
-    <Box> 
-        <Box width={'100%'} mt='2vh' mb='2vh' height={'1px'} bg='gray.300'  maxW={'1000px'}/>
-        <Flex flexDir={'row-reverse'}  maxW={'1000px'}> 
-            <Button variant={'common'} onClick={sendNewConversationData} isDisabled={JSON.stringify(conversationsData) === JSON.stringify(conversationsDataRef.current)}>{waitingSend?<LoadingIconButton/>:t('SaveChanges')}</Button>
-        </Flex>
-    </Box>
+ 
     </>)
 }
 

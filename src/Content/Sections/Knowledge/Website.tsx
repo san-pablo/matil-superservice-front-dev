@@ -20,16 +20,18 @@ import parseMessageToBold from "../../Functions/parseToBold"
 //ICONS
 import { RxCross2, RxCheck } from "react-icons/rx"
 import { BiWorld } from "react-icons/bi"
-import { BsTrash3Fill } from "react-icons/bs"
+import { HiTrash } from "react-icons/hi2"
 import { PiSidebarSimpleBold } from "react-icons/pi"
 //TYPING
-import { ContentData, languagesFlags } from "../../Constants/typing"
+import { ContentData, languagesFlags, Folder } from "../../Constants/typing"
+import { useAuth0 } from "@auth0/auth0-react"
 
 //GET THE CELL STYLES
 const CellStyle = ({ column, element }:{column:string, element:any}) => {
      
     //TRANSLATION
     const { t } = useTranslation('knowledge')
+    const  { getAccessTokenSilently } = useAuth0()
 
     if (column === 'tags' || column === 'public_article_help_center_collections') {
         return(<> 
@@ -74,10 +76,11 @@ const CellStyle = ({ column, element }:{column:string, element:any}) => {
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)}) 
  
 
-const Website = () => {
+const Website = ({folders}:{folders:Folder[]}) => {
 
      //CONSTANTS
     const { t } = useTranslation('knowledge')
+    const { getAccessTokenSilently } = useAuth0()
     const auth = useAuth()
     const location = useLocation().pathname
     const columnsContentMap:{ [key: string]: [string, number] } = {content:[t('Url'), 300],type: [t('type'), 150], language: [t('language'), 150], is_available_to_tilda:[t('is_available_to_tilda'), 150]}
@@ -91,8 +94,11 @@ const Website = () => {
         const webId = location.split('/')[3]
         
         const fetchInitialData = async() => {
-            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`, params:{page_index:1, website_uuid:webId}, auth, setValue:setWebData})
-            if (response?.status === 200) webDataRef.current = response?.data
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`,getAccessTokenSilently, params:{page_index:1, website_uuid:webId}, auth})
+            if (response?.status === 200) {
+                setWebData(response?.data.page_data)
+                webDataRef.current = response?.data.page_data
+            }
         }
 
         fetchInitialData()
@@ -100,7 +106,7 @@ const Website = () => {
 
 
     return (<>
-        {selectedWebsite ? <SubWebsite selectedWebsite={selectedWebsite}/> :
+        {selectedWebsite ? <SubWebsite folders={folders} selectedWebsite={selectedWebsite}/> :
         <Box> 
             <Flex justifyContent={'space-between'} alignItems={'end'}> 
                 <Skeleton isLoaded={webData !== null}> 
@@ -130,12 +136,11 @@ const Website = () => {
 
 export default Website
 
-
- 
-const SubWebsite = ({selectedWebsite}:{selectedWebsite:ContentData}) => {
+const SubWebsite = ({folders, selectedWebsite}:{folders:Folder[], selectedWebsite:ContentData}) => {
  
      //CONSTANTS
      const { t } = useTranslation('knowledge')
+     const { getAccessTokenSilently } = useAuth0()
      const auth = useAuth()
      const location = useLocation().pathname
      const navigate = useNavigate()
@@ -151,8 +156,8 @@ const SubWebsite = ({selectedWebsite}:{selectedWebsite:ContentData}) => {
      const saveChanges = async () => {
          const articleId = location.split('/')[3]
          let response
-         if (articleId.startsWith('create') && firstSendedRef.current) response =  await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`, method:'post', setWaiting:setWaitingSave, requestForm:articleData  as ContentData, auth, toastMessages:{works:t('CorrectSavedInfo'), failed:t('FailedSavedInfo')} }) 
-         else response = response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources/${articleData?.uuid}`, method:'put', setWaiting:setWaitingSave, requestForm:articleData as ContentData, auth, toastMessages:{works:t('CorrectSavedInfo'), failed:t('FailedSavedInfo')} })
+         if (articleId.startsWith('create') && firstSendedRef.current) response =  await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`, method:'post',getAccessTokenSilently, setWaiting:setWaitingSave, requestForm:articleData  as ContentData, auth, toastMessages:{works:t('CorrectSavedInfo'), failed:t('FailedSavedInfo')} }) 
+         else response = response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources/${articleData?.uuid}`, method:'put', setWaiting:setWaitingSave,getAccessTokenSilently, requestForm:articleData as ContentData, auth, toastMessages:{works:t('CorrectSavedInfo'), failed:t('FailedSavedInfo')} })
  
          if (response?.status === 200) articleDataRef.current = articleData
          firstSendedRef.current = false
@@ -172,7 +177,7 @@ const SubWebsite = ({selectedWebsite}:{selectedWebsite:ContentData}) => {
          //FUNCTION FOR CREATE A NEW BUSINESS
          const deleteArticle= async () => {
              const articleId = location.split('/')[3]
-             const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources/${articleId}`, method:'delete',  auth, toastMessages:{works:t('CorrectSavedInfo'), failed:t('FailedSavedInfo')} })
+             const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources/${articleId}`, getAccessTokenSilently, method:'delete',  auth, toastMessages:{works:t('CorrectSavedInfo'), failed:t('FailedSavedInfo')} })
              if (response?.status === 200) navigate('/knowledge/content')
          }
          return(<> 
@@ -204,7 +209,7 @@ const SubWebsite = ({selectedWebsite}:{selectedWebsite:ContentData}) => {
                      <Text fontSize={'1.5em'} fontWeight={'medium'}>{t('subwebsite')}</Text>
                  </Skeleton>
                  <Flex gap='15px'>
-                     <Button leftIcon={<BsTrash3Fill/>} variant={'delete'} isDisabled={location.split('/')[3].startsWith('create')} size='sm' onClick={() => setShowDeleteBox(true)}>{t('Delete')}</Button>
+                     <Button leftIcon={<HiTrash/>} variant={'delete'} isDisabled={location.split('/')[3].startsWith('create')} size='sm' onClick={() => setShowDeleteBox(true)}>{t('Delete')}</Button>
                      <Button variant={'main'} size='sm' isDisabled={JSON.stringify(articleData) === JSON.stringify(articleDataRef.current)} onClick={saveChanges}>{waitingSave?<LoadingIconButton/>:t('SaveChanges')}</Button>
                      {clientBoxWidth === 0 && <IconButton aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'20px'}/>} onClick={() =>setClientBoxWidth(400)}/>}
                  </Flex>
@@ -217,41 +222,41 @@ const SubWebsite = ({selectedWebsite}:{selectedWebsite:ContentData}) => {
                   </Box>
              </Flex>
          </MotionBox>
-         <SourceSideBar clientBoxWidth={clientBoxWidth} setClientBoxWidth={setClientBoxWidth} sourceData={articleData} setSourceData={setArticleData}/>
+         <SourceSideBar clientBoxWidth={clientBoxWidth} setClientBoxWidth={setClientBoxWidth} sourceData={articleData} setSourceData={setArticleData} folders={folders}/>
      </Flex>
      </>)
  }
  
  
- const EditorComponent = ({articleData, setArticleData}:{articleData:ContentData | null, setArticleData:Dispatch<SetStateAction<ContentData | null>>}) => {
- 
-     //CONSTANTS
-     const  { t } = useTranslation('knowledge')
+const EditorComponent = ({articleData, setArticleData}:{articleData:ContentData | null, setArticleData:Dispatch<SetStateAction<ContentData | null>>}) => {
 
-     //TEXTAREAS LOGIC
-     const textAreaTitleRef = useRef<HTMLTextAreaElement>(null)
-     const adjustTextareaHeight = (textarea:any) => {
-         if (!textarea) return
-         textarea.style.height = 'auto'
-         textarea.style.height = textarea.scrollHeight + 'px'
-     }
-     useEffect(() =>{adjustTextareaHeight(textAreaTitleRef.current)}, [articleData?.title])
- 
-     return (
-        <Flex height={'calc(100vh - 70px - 4vw)'}   flexDir={'column'}>
+    //CONSTANTS
+    const  { t } = useTranslation('knowledge')
 
-        <Box  px='20px' position={'relative'}> 
-            <textarea ref={textAreaTitleRef} value={articleData?.title} className="title-textarea"  onChange={(e) => {setArticleData(prev => ({...prev as ContentData, title:e.target.value}))}}  placeholder={t('NoTitleText')} rows={1}  />
-        </Box>
-        <Flex flex='1' mt='30px' px='20px' overflow={'scroll'}  flexDir={'column'} position='relative' alignItems={'center'}> 
-            <Text>
-                {(articleData?.content.text || '').split('\n').map((line:string, index:number) => (
-                    <Text key={index}>
-                    {line}
-                    {'\n'}
-                    </Text>
-                ))}
+    //TEXTAREAS LOGIC
+    const textAreaTitleRef = useRef<HTMLTextAreaElement>(null)
+    const adjustTextareaHeight = (textarea:any) => {
+        if (!textarea) return
+        textarea.style.height = 'auto'
+        textarea.style.height = textarea.scrollHeight + 'px'
+    }
+    useEffect(() =>{adjustTextareaHeight(textAreaTitleRef.current)}, [articleData?.title])
+
+    return (
+    <Flex height={'calc(100vh - 70px - 4vw)'}   flexDir={'column'}>
+
+    <Box  px='20px' position={'relative'}> 
+        <textarea ref={textAreaTitleRef} value={articleData?.title} className="title-textarea"  onChange={(e) => {setArticleData(prev => ({...prev as ContentData, title:e.target.value}))}}  placeholder={t('NoTitleText')} rows={1}  />
+    </Box>
+    <Flex flex='1' mt='30px' px='20px' overflow={'scroll'}  flexDir={'column'} position='relative' alignItems={'center'}> 
+        <Text>
+            {(articleData?.content.text || '').split('\n').map((line:string, index:number) => (
+                <Text key={index}>
+                {line}
+                {'\n'}
                 </Text>
-          </Flex>
-     </Flex>)
- }
+            ))}
+            </Text>
+        </Flex>
+    </Flex>)
+}

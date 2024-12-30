@@ -18,10 +18,11 @@ import Table from '../../../Components/Reusable/Table'
 //ICONS
 import { BsTrash3Fill } from "react-icons/bs"
 import { FaPlus } from 'react-icons/fa6'
+import { useAuth0 } from '@auth0/auth0-react'
 
 
 //TYPING
-type UserType = {id:number, name:string, surname:string, email:string, is_admin:boolean, is_active:boolean}
+type UserType = {id:string, name:string, surname:string, email:string, is_admin:boolean, is_active:boolean}
 interface GroupData  {
     id: number,
     name: string,
@@ -41,6 +42,7 @@ function Groups () {
 
     //AUTH CONSTANT
     const auth = useAuth()
+    const {  getAccessTokenSilently } = useAuth0()
     const { t } = useTranslation('settings')
     const groupsMapDict:{[key:string]:[string, number]} = {name:[t('Name'), 150], description: [t('Description'), 350], users:[t('Users'), 500]}
     const newGroup:GroupData = {
@@ -79,7 +81,7 @@ function Groups () {
 
     //FETCH INITIAL DATA
     useEffect(() => {
-        fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/groups`, setValue:setGroupsData, auth})
+        fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/groups`, setValue:setGroupsData, getAccessTokenSilently, auth})
         document.title = `${t('Settings')} - ${t('Groups')} - ${auth.authData.organizationName} - Matil`
     }, [])
 
@@ -92,7 +94,7 @@ function Groups () {
         //FUNCTION FOR DELETING AN AUTOMATION
         const deleteGroup = async () => {
             setWaitingDelete(true)
-            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/groups/${groupToDelete?.id}`, setWaiting:setWaitingDelete, method:'delete', auth, toastMessages:{works:t('CorrectDeletedGroup'), failed:t('FailedDeletedGroup')}})
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/groups/${groupToDelete?.id}`, setWaiting:setWaitingDelete, method:'delete', auth, getAccessTokenSilently, toastMessages:{works:t('CorrectDeletedGroup'), failed:t('FailedDeletedGroup')}})
             if (response?.status == 200) {
                 setGroupToDelete(null)
                 setGroupsData(prev => {
@@ -138,6 +140,8 @@ function Groups () {
                 <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('GroupsTable')}</Text>
                 <Text color='gray.600' fontSize={'.9em'}>{t('GroupsDescription')}</Text>
             </Box>
+            <Button  variant={'main'}size='sm' leftIcon={<FaPlus/>} onClick={() => setSelectedGroup(newGroup)}>{t('CreateGroup')}</Button>
+
         </Flex>
         <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/> 
         <Box width={'350px'}> 
@@ -147,8 +151,7 @@ function Groups () {
             <Skeleton isLoaded={groupsData !== null}> 
                 <Text  fontWeight={'medium'} fontSize={'1.2em'}>{t('GroupsCount', {count:groupsData?.length})}</Text>
             </Skeleton>
-            <Button  variant={'common'}size='sm' leftIcon={<FaPlus/>} onClick={() => setSelectedGroup(newGroup)}>{t('CreateGroup')}</Button>
-        </Flex>
+         </Flex>
 
         <Skeleton isLoaded={groupsData !== null}> 
             <Table data={filteredGroupsData || []} CellStyle={CellStyle} excludedKeys={['id']} noDataMessage={t('NoGroups')} columnsMap={groupsMapDict} onClickRow={(row:any, index:number) => setSelectedGroup(row)} deletableFunction={(row:any, index) => setGroupToDelete(row)}/>
@@ -160,6 +163,7 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
 
     //CONSTANTS
     const auth = useAuth()
+    const {  getAccessTokenSilently } = useAuth0()
     const { t } = useTranslation('settings')
 
     //BOX SCROLL REF
@@ -176,7 +180,7 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
     const addUser = async(user:UserType) => {
 
         if (groupData.id !== -1) {
-            const userResponse = await fetchData({endpoint: `${auth.authData.organizationId}/admin/settings/groups/${groupData.id}/${user.id}`, method: 'post', auth})
+            const userResponse = await fetchData({endpoint: `${auth.authData.organizationId}/admin/settings/groups/${groupData.id}/${user.id}`, getAccessTokenSilently,  method: 'post', auth})
             if (userResponse?.status === 200) {
                 setCurrentGroupData(prev => {return {...prev, users:[...prev.users, user ]}})
                 setGroupsData(prev => {
@@ -193,11 +197,11 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
         else setCurrentGroupData(prev => {return {...prev, users:[...prev.users, user ]}})
     }
 
-     //DELETE A USER FROM A GROUP
-    const deleteUser = async(index:number, userId:number) => {
+    //DELETE A USER FROM A GROUP
+    const deleteUser = async(index:number, userId:string) => {
 
         if (groupData.id !== -1) {
-            const userResponse = await fetchData({endpoint: `${auth.authData.organizationId}/admin/settings/groups/${groupData.id}/${userId}`, method: 'delete', auth})
+            const userResponse = await fetchData({endpoint: `${auth.authData.organizationId}/admin/settings/groups/${groupData.id}/${userId}`,  getAccessTokenSilently,method: 'delete', auth})
             if (userResponse?.status === 200) {
                 setCurrentGroupData(prev => {
                     const newUsers = [...prev.users]
@@ -229,10 +233,10 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
         setWaitingSend(true)    
 
         if (groupData.id === -1) {
-            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/groups`, requestForm:{name:currentGroupData.name, description:currentGroupData.description}, method:'post', auth})
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/groups`, requestForm:{name:currentGroupData.name, description:currentGroupData.description}, getAccessTokenSilently, method:'post', auth})
              if (response?.status === 200) {
                 const assignUserPromises = currentGroupData.users.map(async (user) => {
-                    const userResponse = await fetchData({endpoint: `${auth.authData.organizationId}/admin/settings/groups/${response?.data.id}/${user.id}`, method: 'post',auth})
+                    const userResponse = await fetchData({endpoint: `${auth.authData.organizationId}/admin/settings/groups/${response?.data.id}/${user.id}`,  getAccessTokenSilently,method: 'post',auth})
                     if (userResponse?.status !== 200) throw new Error(`Failed to add user ${user.id}`)
                     return userResponse
                 })
@@ -250,7 +254,7 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
             else showToast({message:t('FailedAddedGroup'), type:'failed'})
         } 
         else {
-            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/groups/${groupData.id}`, requestForm:{name:currentGroupData.name, description:currentGroupData.description}, method:'put', auth, toastMessages:{'works':t('CorrectEditedGroup'),'failed':t('FailedEditedGroup')}})
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/groups/${groupData.id}`, getAccessTokenSilently, requestForm:{name:currentGroupData.name, description:currentGroupData.description}, method:'put', auth, toastMessages:{'works':t('CorrectEditedGroup'),'failed':t('FailedEditedGroup')}})
             
             if (response?.status === 200) {
                 setGroupsData(prev => {
@@ -274,7 +278,7 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
     const FindUser = () => {
 
         //OBTAINING A LIST WITH ALL
-        const userList = Object.entries(auth?.authData?.users || {}).map(([id, user]) => {return {id: Number(id),  name: user.name, surname: user.surname, email: user.email_address, is_admin: user.is_admin, is_active: !!user.last_login}})
+        const userList = Object.entries(auth?.authData?.users || {}).map(([id, user]) => {return {id: id,  name: user.name, surname: user.surname, email: user.email_address, is_admin: user.is_admin, is_active: !!user.last_login}})
   
         //REFS
         const buttonRef = useRef<HTMLDivElement>(null)
@@ -336,11 +340,13 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
     return (
     <Box>    
         <Box p='20px'> 
+             <Text mb='.5vh'  fontWeight={'medium'}>{t('Name')}</Text>
+
             <Box minW='500px'> 
-                <EditText nameInput={true} size='md' value={currentGroupData.name} setValue={(value) => {setCurrentGroupData((prev) => ({...prev, name:value}))}}/>
+                <EditText hideInput={false} value={currentGroupData.name} setValue={(value) => {setCurrentGroupData((prev) => ({...prev, name:value}))}}/>
             </Box>
             <Text  mt='2vh' mb='.5vh'  fontWeight={'medium'}>{t('Description')}</Text>
-            <Textarea resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('Description')}...`} maxH='300px' value={currentGroupData.description} onChange={(e) => setCurrentGroupData((prev) => ({...prev, description:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
+            <Textarea resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('Description')}...`} maxH='300px' value={currentGroupData.description} onChange={(e) => setCurrentGroupData((prev) => ({...prev, description:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "brand.text_blue", borderWidth: "2px"}}/>
 
             <Box mt='3vh' flex={1} >
                 <Text mb='1vh' fontWeight={'medium'}>{t('AddUsersGroup')}</Text>

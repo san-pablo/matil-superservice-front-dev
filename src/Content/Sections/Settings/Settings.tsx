@@ -3,30 +3,35 @@
 */
 
 //REACT
-import  { Suspense, useEffect, lazy, useRef, Fragment } from "react"
+import  React, { Suspense, useEffect, lazy, useRef, Fragment, useState, Dispatch, SetStateAction } from "react"
 import { Routes, Route,  useNavigate, useLocation } from "react-router-dom" 
 import { useAuth } from "../../../AuthContext"
 import { useTranslation } from 'react-i18next'
 //FRONT
 import { Box, Flex, Text, Icon } from '@chakra-ui/react'
 import '../../Components/styles.css'
+import { motion } from 'framer-motion'
 //ICONS
 import { IconType } from "react-icons"
-import { IoPerson } from "react-icons/io5"
-import { BsLightningFill } from "react-icons/bs"
-import { BiSolidBuildings } from "react-icons/bi"
-import { FaDoorOpen, FaPlug } from "react-icons/fa"
-import { HiChatAlt2 } from "react-icons/hi"
-import { PiDesktopTowerFill, PiChatsFill } from "react-icons/pi"
+
+import { IoLogoWhatsapp, IoIosArrowDown } from "react-icons/io"
+import {  IoChatboxEllipses, IoMail } from "react-icons/io5";
+import { RiInstagramFill } from "react-icons/ri";
+import { FaHeadset, FaCartShopping, FaCreditCard,FaCloud, FaShopify, FaDatabase, FaBars, FaUserGroup,FaPhone,  FaPeopleGroup, FaUser, FaTicket, FaRectangleList, FaArrowsSplitUpAndLeft, FaShapes, FaBookmark, FaClock } from "react-icons/fa6"
+import { HiViewColumns } from "react-icons/hi2"
+import { MdKeyboardCommandKey, MdWebhook } from "react-icons/md"
+import { SiGooglemybusiness } from "react-icons/si"
 
 //TYPING
 import { IconKey, SubSectionProps, SectionsListProps } from "../../Constants/typing"
-
+ 
+  
 //MAIN
 const Main = lazy (() => import('./Main')) 
 //ORGANIZATION
+const General = lazy(() => import('./Organization/General'))
 const Data = lazy(() => import('./Organization/Data'))
-const Tilda = lazy(() => import('./Organization/Tilda'))
+const BussinessHours = lazy(() => import('./Organization/BussinessHours'))
 //const Payments = lazy(() => import('./Organization/Payments'))
 //USERS
 const User = lazy(() => import('./Users/User'))
@@ -46,56 +51,83 @@ const ConversationsData = lazy(() => import('./Workflows/ConversationsData'))
 const Triggers = lazy(() => import('./Actions/Triggers'))
 const Automations = lazy(() => import('./Actions/Automations'))
 //CHANNELS
-const Configurations = lazy(() => import('./Channels/Configurations'))
 const Chatbot = lazy(() => import('./Channels/Chatbot'))
 const Google = lazy(() => import('./Channels/Google'))
 const Mail = lazy(() => import('./Channels/Mail'))
 const Instagram = lazy(() => import('./Channels/Instagram'))
 const Whatsapp = lazy(() => import('./Channels/Whatsapp'))
 const Phone = lazy(() => import('./Channels/Phone'))
+const Voip = lazy(() => import('./Channels/Voip'))
 //INTEGRATIOSN
+const IntegrationsStore = lazy(() => import('./Integrations/IntegrationsStore'))
 const Shopify = lazy(() => import('./Integrations/Shopify'))
 
 //TYPING
 interface ExpandableSectionProps {
     section: IconKey
     subSections: SubSectionProps
+    expandedSections:IconKey[]
+    setExpandedSections:Dispatch<SetStateAction<IconKey[]>>
+    subSectionsMap:{[key:string]: [string, IconType]}
   }
   
+  
 //SECTION COMPONENT
-const Section = ({ section, subSections }: ExpandableSectionProps) => {
+const Section = ({ section, subSections, expandedSections, setExpandedSections, subSectionsMap }: ExpandableSectionProps) => {
     
     //TRANSLATION
     const { t } = useTranslation('settings')
 
+    
     //CONSTANTS
+    const isExpanded = expandedSections.includes(section)
     const navigate = useNavigate()
     const selectedSection = useLocation().pathname.split('/')[2]
     const selectedSubSection = useLocation().pathname.split('/')[3]
-    const sectionsList: SectionsListProps = {'organization':t('Organization'), 'users':t('Users'), 'support':t('Support'),  'workflows':t('BusinessRules'),  'actions':t('Actions'),  'channels': t('Channels'), 'integrations':t('Integrations'),'main':t('Main')}
-    const iconsMap: Record<IconKey, IconType> = {organization: BiSolidBuildings, users: IoPerson, support:PiChatsFill, workflows:PiDesktopTowerFill, actions:BsLightningFill, channels: HiChatAlt2, integrations:FaPlug, main:FaDoorOpen}
+    //onst sectionsList: SectionsListProps = {'organization':t('Organization'), 'users':t('Users'), 'support':t('Support'),  'workflows':t('BusinessRules'),  'actions':t('Actions'),  'channels': t('Channels'), 'integrations':t('Integrations'),'main':t('Main')}
+    const sectionsList: any = {'organization':t('Organization'), 'users':t('Users'), 'support':t('Support'),  'workflows':t('BusinessRules'),  'actions':t('Actions'),  'channels': t('Channels'), 'main':t('Main')}
+
 
     //NAVIGATE
-    const navigateToSection = (section:string) => {
-        navigate(section)
-        localStorage.setItem('currentSettingsSection',section)
+    const navigateToSection = (sectionPath:string) => {
+        navigate(sectionPath)
+        localStorage.setItem('currentSettingsSection',sectionPath)
+        setExpandedSections((prevSections) => {
+            if (prevSections.includes(section)) return prevSections
+            else return [...prevSections, section]
+          })
     }
+
+    //CHANGE SECTION EXPANDED
+    const toggleSection = (e:any) => {
+        e.stopPropagation()
+        setExpandedSections((prevSections) => {
+            if (prevSections.includes(section)) return prevSections.filter((s) => s !== section)
+            else return [...prevSections, section]
+          })
+    }
+
+   
     return(<> 
         {section === 'main' ? 
-         <Flex gap='10px' p='5px' _hover={{ color:'black'}} color={selectedSection === 'main'?'black':'gray.600'}  fontWeight={selectedSection === 'main'?'medium':'normal'}  onClick={() => {navigateToSection('main')}}  bg={selectedSection === 'main'?'white':'transparent'} cursor={'pointer'} alignItems={'center'} borderRadius={'.5rem'}>
-            <Icon boxSize={'15px'} as={iconsMap[section]}/>
-            <Text >{sectionsList[section]}</Text>
+         <Flex gap='10px' p='5px' _hover={{ color:'black'}} transition={'box-shadow 0.3s ease-out'}  boxShadow={selectedSection === 'main'?'rgb(228, 229, 225) 0px 0px 0px 1px, rgba(20, 20, 20, 0.15) 0px 1px 4px 0px':''}  color={selectedSection === 'main'?'black':'gray.600'}  fontWeight={selectedSection === 'main'?'medium':'normal'}  onClick={() => {navigateToSection('main')}}  bg={selectedSection === 'main'?'white':'transparent'} cursor={'pointer'} alignItems={'center'} borderRadius={'.5rem'}>
+             <Text >{sectionsList[section]}</Text>
         </Flex>:
-       <Flex mt='1vh' gap='10px' p='5px' _hover={{ color:'black'}} color={selectedSection === section?'black':'gray.600'}  fontWeight={selectedSection === section?'medium':'normal'}  onClick={() => {navigateToSection(`${section}/${subSections[0][1]}`)}}  cursor={'pointer'}  alignItems={'center'} borderRadius={'.5rem'}>
-            <Icon boxSize={'16px'} as={iconsMap[section]}/>
-            <Text >{sectionsList[section]}</Text>
+       <Flex mt='1vh' justifyContent={'space-between'}  p='5px' _hover={{ color:'black'}} color={selectedSection === section?'black':'gray.600'}  fontWeight={selectedSection === section?'medium':'normal'}  onClick={() => {navigateToSection(`${section}/${subSections[0][1]}`)}}  cursor={'pointer'}  alignItems={'center'} borderRadius={'.5rem'}>
+            <Flex gap='10px' alignItems={'center'}> 
+                 <Text >{sectionsList[section]}</Text>
+            </Flex>
+            <IoIosArrowDown color={'gray.600'} onClick={toggleSection} className={expandedSections.includes(section) ? "rotate-icon-up" : "rotate-icon-down"}/>
         </Flex>}
  
-        {subSections.map((sec, index) => (
-            <Flex  key={`${section}-${sec}-${index}`} p='4px'  color={selectedSubSection === sec[1]?'black':'gray.600'} fontWeight={selectedSubSection === sec[1]?'medium':'normal'}  bg={selectedSubSection === sec[1]?'white':'transparent'} _hover={{color:'black'}} onClick={() => navigateToSection(`${section}/${sec[1]}`)} alignItems={'center'} cursor={'pointer'} borderRadius='.3rem'fontSize={'.9em'}   justifyContent={'space-between'}    >
-                <Text fontSize={'.95em'} ml='25px'  >{sec[0]}</Text>
-            </Flex>  
-        ))}
+        <motion.div initial={false} animate={{height:isExpanded?'auto':0, opacity:isExpanded?1:0 }} exit={{height:isExpanded?0:'auto',  opacity:isExpanded?0:1 }} transition={{duration:.2}} style={{overflow:isExpanded?'visible':'hidden'}}>           
+            {subSections.map((sec, index) => (
+                <Flex ml='15px' gap='10px'   key={`${section}-${sec}-${index}`} mt='2px' py='4px' pl='8px' transition={'box-shadow 0.3s ease-out'}  boxShadow={selectedSubSection === sec[1]?'rgb(228, 229, 225) 0px 0px 0px 1px, rgba(20, 20, 20, 0.15) 0px 1px 4px 0px':''} color={selectedSubSection === sec[1]?'black':'gray.600'} fontWeight={selectedSubSection === sec[1]?'medium':'normal'}  bg={selectedSubSection === sec[1]?'white':'transparent'} _hover={{color:'black'}} onClick={() => navigateToSection(`${section}/${sec[1]}`)} alignItems={'center'} cursor={'pointer'} borderRadius='.3rem'fontSize={'.9em'}     >
+                    <Icon as={subSectionsMap[sec[1]][1]}/>
+                    <Text fontSize={'.95em'} >{sec[0]}</Text>
+                </Flex>  
+            ))}
+        </motion.div>
     </>)
     }
 
@@ -108,17 +140,52 @@ function Settings () {
     //SECTIONS
     const auth = useAuth()
     const isAdmin = auth.authData.users?.[auth.authData?.userId || '']?.is_admin
+    const subSectionsMap: {[key:string]:[string, IconType]} = {
+        'general':[t('GeneralDes'), FaBars],
+        'data':[t('DataDes'), FaDatabase],
+        'hours':[t('HoursDes'), FaClock],
+        'payments':[t('PaymentsDes'), FaCreditCard],
+        'admin-users':[t('UsersDes'), FaUserGroup],
+        'groups':[t('GroupsDes'), FaPeopleGroup],
+        'user':[t('UserDes'), FaUser],
+        'edit-views':[t('ViewsDes'), HiViewColumns],
+        'help-center':[t('HelpCenterDes'), FaHeadset],
+        'shortcuts':[t('ShortcutsDes'), MdKeyboardCommandKey],
+        'conversations':[t('ConversationsDes'), FaTicket],
+        'fields':[t('FieldsDes'),  FaShapes],
+        'themes':[t('ThemesDes'),  FaBookmark],
+        'surveys':[t('SurveysDes'), FaRectangleList],
+        'automations':[t('AutomationsDes'), FaArrowsSplitUpAndLeft],
+        'triggers':[t('TriggersDes'), MdWebhook],
+        'web':[t('WebDes'), IoChatboxEllipses],
+        'whatsapp':[t('WhatsappDes'), IoLogoWhatsapp],
+        'instagram':[t('InstagramDes'), RiInstagramFill],
+        'google-business':[t('GoogleDes'), SiGooglemybusiness],
+        'mail':[t('MailDes'), IoMail],
+        'phone':[t('PhoneDes'), FaPhone],
+        'voip':[t('VoipDes'), FaCloud],
+        'store':[t('StoreDes'), FaCartShopping],
+
+        'shopify':[t('ShopifyDes'), FaShopify]
+    }
+    
+
 
     //SECTIONS MAP
-    const sectionsList: (IconKey | '')[] = isAdmin ? ['organization', 'users', 'support', 'workflows', 'actions', 'channels', 'integrations'] : ['users']
+    const [expandedSections, setExpandedSections] =  useState<IconKey[]>(localStorage.getItem('currentSettingsSection')?[localStorage.getItem('currentSettingsSection')?.split('/')[0] as IconKey] :[])
+
+    //const sectionsList: (IconKey | '')[] = isAdmin ? ['organization', 'users', 'support', 'workflows', 'actions', 'channels', 'integrations'] : ['users']
+    const sectionsList: (IconKey | '')[] = isAdmin ? ['organization', 'users', 'support', 'workflows', 'actions', 'channels'] : ['users']
+    
+    const integrationsList = auth.authData.active_integrations.map((integration) => {return[t(integration), integration]})
     const subSections: SubSectionProps[] = [
-        [[t('Data'), 'data'], [t('Tilda'), 'tilda']],
+        [[t('General'), 'general'],[t('Data'), 'data'], [t('Hours'), 'hours']],
         [[t('Profile'), 'user'], [t('Users'),'admin-users'], [t('Groups'),'groups']],
         [[t('HelpCenter'), 'help-center'], [t('Surveys'), 'surveys']],
         [[t('Views'), 'edit-views'], [t('Themes'), 'themes'], [t('Fields'), 'fields'], [t('Shortcuts'), 'shortcuts'], [t('Conversations'), 'conversations']],
         [[t('Triggers'), 'triggers'], [t('Automations'), 'automations']],
-        [[t('MatildaConfigs'),'configurations'], [t('Web'),'web'], ['Whatsapp','whatsapp'],['Instagram','instagram'], ['Google Business','google-business'], [t('Mail'),'mail']],
-        [['Shopify','shopify']]
+        [ [t('Web'),'web'], ['Whatsapp','whatsapp'],['Instagram','instagram'], ['Google Business','google-business'], [t('Mail'),'mail'], [t('voip'), 'voip']],
+        //[[t('Store'), 'store'], ...integrationsList]
     ] 
  
     //CONSTANTS
@@ -137,13 +204,16 @@ function Settings () {
    
     return( 
     <Flex>  
-        <Flex flexDir="column" height={'100vh'} py="5vh" px='15px'  bg='#f1f1f1' width='220px' borderRightWidth="1px" borderRightColor="gray.200">
-            <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('Settings')}</Text>
+        <Flex flexDir="column" height={'100vh'} py="5vh"   bg='#f1f1f1' width='220px' borderRightWidth="1px" borderRightColor="gray.200">
+            <Text px='15px' fontSize={'1.2em'} fontWeight={'medium'}>{t('Settings')}</Text>
             <Box height={'1px'} width={'100%'} bg='gray.300' mt='2vh' mb='2vh'/>
-            <Section  section={'main'} subSections={[]}  />
-            <Box overflowY="auto" flex="1">
-                {sectionsList.map((section, index) => (<Fragment  key={`settings-section-${index}`} > 
-                    {section !== '' &&<Section section={section} subSections={subSections[index]}/>}
+            <Box  px='15px'>
+                <Section  section={'main'} expandedSections={expandedSections} setExpandedSections={setExpandedSections} subSections={[]} subSectionsMap={subSectionsMap}  />
+            </Box>
+            <Box overflowY="auto" flex="1" px='15px'>
+                {sectionsList.map((section, index) => (
+                <Fragment  key={`settings-section-${index}`} > 
+                    {section !== '' &&<Section section={section} expandedSections={expandedSections} setExpandedSections={setExpandedSections}  subSections={subSections[index]} subSectionsMap={subSectionsMap}/>}
                 </Fragment>))}
             </Box>
         </Flex>
@@ -152,10 +222,11 @@ function Settings () {
             <Flex height={'100vh'}flexDir={'column'} justifyContent={'space-between'} py='3vh'> 
                 <Suspense fallback={<></>}>    
                     <Routes >
-                        <Route path="/main" element={<Main subSections={subSections} sectionsList={sectionsList}/>} />
+                        <Route path="/main" element={<Main subSections={subSections} sectionsList={sectionsList} subSectionsMap={subSectionsMap}/>} />
                         
+                        <Route path="/organization/general" element={<General />} />
                         <Route path="/organization/data" element={<Data />} />
-                        <Route path="/organization/tilda" element={<Tilda />} />
+                        <Route path="/organization/hours" element={<BussinessHours  />} />
                         
                         <Route path="/users/user" element={<User />} />
                         <Route path="/users/admin-users" element={<AdminUsers />} />
@@ -174,14 +245,15 @@ function Settings () {
                         <Route path="/actions/triggers" element={<Triggers scrollRef={scrollRef}/>} />
                         <Route path="/actions/automations" element={<Automations scrollRef={scrollRef}/>} />
 
-                        <Route path="/channels/configurations" element={<Configurations scrollRef={scrollRef} />} />
-                        <Route path="/channels/web" element={<Chatbot />} />
+                         <Route path="/channels/web" element={<Chatbot />} />
                         <Route path="/channels/whatsapp" element={<Whatsapp />} />
                         <Route path="/channels/phone" element={<Phone />} />
                         <Route path="/channels/instagram/*" element={<Instagram />} />
                         <Route path="/channels/google-business" element={<Google />} />
                         <Route path="/channels/mail" element={<Mail />} />
+                        <Route path="/channels/voip" element={<Voip />} />
 
+                        <Route path="/integrations/store" element={<IntegrationsStore />} />
                         <Route path="/integrations/shopify" element={<Shopify />} />
 
                     </Routes>

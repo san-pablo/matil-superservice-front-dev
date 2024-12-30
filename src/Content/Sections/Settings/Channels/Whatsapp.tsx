@@ -9,11 +9,12 @@ import { Text, Box, Skeleton, Flex, Button } from "@chakra-ui/react"
 //COMPONENTS
 import ChannelInfo from "./Components/Channelnfo"
 import FacebookLoginButton from "./SignUp-Buttons/FacebookLoginButton"
-import LoadingIconButton from "../../../Components/Reusable/LoadingIconButton"
+import SaveChanges from "../../../Components/Reusable/SaveChanges"
 //ICONS
-import { BsTrash3Fill } from "react-icons/bs"
+import { HiTrash } from "react-icons/hi2"
 //TYPING
 import { ConfigProps } from '../../../Constants/typing'
+import { useAuth0 } from "@auth0/auth0-react"
 
 interface WhatsappProps { 
     id:string
@@ -28,13 +29,14 @@ function Whatsapp () {
     //AUTH CONSTANT
     const auth = useAuth()
     const  { t } = useTranslation('settings')
+    const { getAccessTokenSilently } = useAuth0()
 
     //WAITING BOOLEANS FOR CREATING AN ACCOUNT
     const [waitingSend, setWaitingSend] = useState<boolean>(false)
 
     //DATA
     const [data, setData]  =useState<WhatsappProps | null>(null)
-    const dataRef = useRef<any>(null)
+    const dataRef = useRef<WhatsappProps | null>(null)
       
     //MATILDA CONFIGURATION+
     const configIdRef = useRef<string>('')
@@ -43,16 +45,15 @@ function Whatsapp () {
 
     //FETCH DATA
     const fetchInitialData = async() => {
-        await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/matilda_configurations`, setValue:setConfigData, auth})
-        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels`, auth})
+        await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/matilda_configurations`, getAccessTokenSilently,setValue:setConfigData, auth})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels`,getAccessTokenSilently, auth})
         if (response?.status === 200){
           let wasChannel 
           response.data.map((cha:any) => {if (cha.channel_type === 'whatsapp')  wasChannel = cha.id})
           if (wasChannel) {
-            const responseMail = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${wasChannel}`,  setValue: setData, auth})
+            const responseMail = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${wasChannel}`,getAccessTokenSilently,  setValue: setData, auth})
             if (responseMail?.status === 200) {
-                    setData(responseMail.data.configuration)
-                    dataRef.current = responseMail.data.configuration
+                    dataRef.current = responseMail.data
                     setSelectedConfigId(responseMail.data.matilda_configuration_uuid)
                     configIdRef.current = responseMail.data.matilda_configuration_uuid
             }
@@ -69,22 +70,17 @@ function Whatsapp () {
   
 
     const saveChanges = async () => {
-        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${dataRef.current.id}`, setValue:setWaitingSend, setWaiting:setWaitingSend, auth, method:'put', requestForm:{...data, matilda_configuration_uuid:selectedConfigId}, toastMessages:{'works':t('CorrectUpdatedInfo'), 'failed':t('FailedUpdatedInfo')}})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${dataRef?.current?.id}`, setValue:setWaitingSend, setWaiting:setWaitingSend,getAccessTokenSilently,  auth, method:'put', requestForm:{...data, matilda_configuration_uuid:selectedConfigId}, toastMessages:{'works':t('CorrectUpdatedInfo'), 'failed':t('FailedUpdatedInfo')}})
         if (response?.status === 200) {
             configIdRef.current = selectedConfigId
             dataRef.current = data
         }
     }
-    return(<>
+ 
+        return(<>
+        <SaveChanges  onSaveFunc={saveChanges} data={selectedConfigId} dataRef={configIdRef} setData={setSelectedConfigId} areNullEnabled/>
 
-        <Box>
-            <Flex justifyContent={'space-between'}> 
-                <Text fontSize={'1.4em'} fontWeight={'medium'}>Whatsapp</Text>
-                {!(data?.display_id === '') && <Button color='red'   variant={'delete_section'}leftIcon={<BsTrash3Fill/>} size='sm'>{t('DeleteAccount')}</Button>}
-            </Flex>            
-            <Box height={'1px'} width={'100%'} bg='gray.300' mt='2vh' />
-        </Box>
-       
+      
         {(data === null || data?.display_id === '') ?
             <Skeleton isLoaded={ data !== null}>
                 <Flex height={'100%'} top={0} left={0} width={'100%'} position={'absolute'} alignItems={'center'} justifyContent={'center'}> 
@@ -97,12 +93,20 @@ function Whatsapp () {
             </Skeleton>
         :
         <>
+           <Box>
+            <Flex justifyContent={'space-between'}> 
+                <Text fontSize={'1.4em'} fontWeight={'medium'}>Whatsapp</Text>
+                {!(data?.display_id === '') && <Button color='red'   variant={'delete_section'}leftIcon={<HiTrash/>} size='sm'>{t('DeleteAccount')}</Button>}
+            </Flex>            
+            <Box height={'1px'} width={'100%'} bg='gray.300' mt='2vh' />
+        </Box>
+       
             <Flex flex='1' overflow={'hidden'} width={'100%'} gap='5vw'> 
                 <Box flex='1' pt='4vh' overflow={'scroll'}> 
                     <Skeleton isLoaded={data !== null}> 
-                        <ChannelInfo value={data?.credentials.phone_number || ''} title={t('Phone')} description={t('PhoneDes')}/>
-                        <ChannelInfo value={data?.credentials.waba_id || ''} title={t('AccountId')} description={t('AccountIdDes')}/>
-                        <ChannelInfo hide={true}  value={data?.credentials.access_token || ''} title={t('AccessToken')} description={t('AccessTokenDes')}/>
+                        <ChannelInfo value={data?.credentials?.phone_number || ''} title={t('Phone')} description={t('PhoneDes')}/>
+                        <ChannelInfo value={data?.credentials?.waba_id || ''} title={t('AccountId')} description={t('AccountIdDes')}/>
+                        <ChannelInfo hide={true}  value={data?.credentials?.access_token || ''} title={t('AccessToken')} description={t('AccessTokenDes')}/>
                     </Skeleton>
                 </Box>
                 <Box flex='1' pt='4vh' overflow={'scroll'}> 
@@ -117,12 +121,7 @@ function Whatsapp () {
                     </Skeleton>
                 </Box>                        
             </Flex>  
-            <Box> 
-               <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='2vh'/>
-               <Flex flexDir={'row-reverse'}> 
-                   <Button variant={'common'} isDisabled={(JSON.stringify(dataRef.current) === JSON.stringify(data))  && selectedConfigId !== configIdRef.current} onClick={saveChanges}>{waitingSend?<LoadingIconButton/>:t('SaveChanges')}</Button>
-               </Flex>
-           </Box>   
+             
         </>}
     </>)
 }

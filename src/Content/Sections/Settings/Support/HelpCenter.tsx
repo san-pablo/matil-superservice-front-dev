@@ -1,7 +1,8 @@
 
 //REACT
-import  {useState, useEffect, RefObject, ReactElement, useRef, ReactNode, Dispatch, SetStateAction, useMemo, MutableRefObject } from 'react'
+import  {useState, useEffect, RefObject, ReactElement, useRef, ReactNode, Dispatch, SetStateAction, useMemo, MutableRefObject, CSSProperties } from 'react'
 import { useAuth } from '../../../../AuthContext'
+import { useAuth0 } from '@auth0/auth0-react'
 import { useTranslation } from 'react-i18next'
 //FETCH DATA
 import fetchData from "../../../API/fetchData"
@@ -17,15 +18,16 @@ import ColorPicker from '../../../Components/Once/ColorPicker'
 import ConfirmBox from '../../../Components/Reusable/ConfirmBox'
 import LoadingIconButton from '../../../Components/Reusable/LoadingIconButton'
 import CustomCheckbox from '../../../Components/Reusable/CheckBox'
-import IconsPicker from './IconsPicker'
+import IconsPicker from '../../../Components/Reusable/IconsPicker'
+import SaveChanges from '../../../Components/Reusable/SaveChanges'
 //FUNCTIONS
 import useOutsideClick from '../../../Functions/clickOutside'
 import parseMessageToBold from '../../../Functions/parseToBold'
 import showToast from '../../../Components/Reusable/ToastNotification'
+import determineBoxStyle from '../../../Functions/determineBoxStyle'
 //ICONS
 import { IconType } from 'react-icons'
 import { FaBookBookmark, FaPaintbrush, FaCircleDot } from "react-icons/fa6"
-
 import { TbWorld } from 'react-icons/tb'
 import { IoMdArrowRoundForward, IoIosArrowDown, IoIosArrowForward } from 'react-icons/io'
 import { FaMagnifyingGlass }  from "react-icons/fa6"
@@ -49,7 +51,7 @@ import {
     FaUser, FaSmile, FaHandPaper, FaUserFriends, FaUsers, FaChild, FaEye, FaTrash, FaGlobe, FaQuestionCircle,
     FaTools, FaCogs, FaHeart, FaStar, FaExclamationTriangle, FaLightbulb, FaUnlock, FaShieldAlt
 } from 'react-icons/fa'
-
+ import { languagesFlags } from '../../../Constants/typing'
 const iconsMap = {FaArrowRight, FaArrowLeft, FaArrowUp, FaArrowDown,  FaLongArrowAltRight, FaLongArrowAltLeft, FaLongArrowAltUp, FaLongArrowAltDown, FaCaretRight, FaCaretLeft, FaCaretUp,
     FaArrowCircleRight, FaArrowCircleLeft, FaArrowCircleUp, FaArrowCircleDown, FaCaretDown, FaChevronLeft, FaChevronRight,FaChevronDown,FaChevronUp,
     FaChartLine, FaMoneyBill, FaBriefcase, FaCreditCard, FaPiggyBank,FaFileContract, FaBriefcaseMedical,FaClipboardList,FaUserTie,FaHandHoldingUsd,FaMoneyCheck,FaStore,
@@ -219,10 +221,12 @@ const MatilStyles:StylesConfig = {
 //MOTION BOX
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
  
+
 function HelpCenters ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
 
     //CONSTANTS
     const { t } = useTranslation('settings')
+    const {  getAccessTokenSilently } = useAuth0()
     const auth = useAuth()
    
     //DATA
@@ -237,7 +241,7 @@ function HelpCenters ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
     useEffect(() => {
         document.title = `${t('Settings')} - ${t('HelpCenters')} - ${auth.authData.organizationName} - Matil`
         const fetchInitialData = async() => {
-            const helpCentersData = await fetchData({endpoint:`${auth.authData.organizationId}/admin/help_centers`, auth, setValue:setHelpCentersData})
+            const helpCentersData = await fetchData({endpoint:`${auth.authData.organizationId}/admin/help_centers`, auth, getAccessTokenSilently, setValue:setHelpCentersData})
         }
         fetchInitialData()
     }, [])
@@ -252,8 +256,8 @@ function HelpCenters ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
 
         //FUNCTION FOR DELETING AN AUTOMATION
         const createHelpCenter = async () => {
-            const newData = {...newHelpCenter, is_live:false, style:MatilStyles, languages:[auth.authData.userData?.language], created_by:auth.authData.userId, updated_by:auth.authData.userId}
-            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/help_centers`, method:'post', setWaiting:setWaitingCreate, requestForm:newData,  auth, toastMessages:{works:t('CorrectCreatedHelpCenter'), failed:t('FailedCreatedHelpCenter')}})
+             const newData = {...newHelpCenter, is_live:false, style:MatilStyles, languages:[auth.authData.userData?.language], created_by:auth.authData.userId, updated_by:auth.authData.userId}
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/help_centers`, getAccessTokenSilently, method:'post', setWaiting:setWaitingCreate, requestForm:newData,  auth, toastMessages:{works:t('CorrectCreatedHelpCenter'), failed:t('FailedCreatedHelpCenter')}})
             if (response?.status === 200) setHelpCentersData(prev => [...prev as {name: string, is_live: boolean, id: string}[], {name: newData.name, is_live: false, id: newData.id} ])
             setShowCreate(false)
         }
@@ -333,6 +337,7 @@ function HelpCenter ({scrollRef, helpCenterId, setHelpCenterId, setHelpCentersDa
 
     //CONSTANTS
     const auth = useAuth()
+    const { getAccessTokenSilently } = useAuth0()
     const navigate = useNavigate()
     const { t } = useTranslation('settings')
     const desiredKeys = ['uuid', 'title', 'description', 'public_article_help_center_collections', 'public_article_status', 'public_article_common_uuid']
@@ -345,7 +350,7 @@ function HelpCenter ({scrollRef, helpCenterId, setHelpCenterId, setHelpCentersDa
         const blob = await responseBlob.blob();
         const file = new File([blob], 'uploaded_file', { type: blob.type })
 
-        const response = await fetchData({endpoint: `${auth.authData.organizationId}/chatbot/s3_pre_signed_url`, method:'post', auth, requestForm: { file_name: file.name}})   
+        const response = await fetchData({endpoint: `${auth.authData.organizationId}/chatbot/s3_pre_signed_url`, getAccessTokenSilently, method:'post', auth, requestForm: { file_name: file.name}})   
         if (response?.status === 200) {
             const responseUpload = await fetch(response.data.upload_url, {method: "PUT", headers: {}, body: file})
             if (responseUpload.ok) {
@@ -386,9 +391,8 @@ function HelpCenter ({scrollRef, helpCenterId, setHelpCenterId, setHelpCentersDa
         document.title = `${t('Settings')} - ${t('HelpCenter')} - ${auth.authData.organizationName} - Matil`
 
         const fetchInitialData = async() => {
-            const articlesData = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`, params:{page_index:1, type:['public_article']}, auth})
+            const articlesData = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`, getAccessTokenSilently, params:{page_index:1, type:['public_article']}, auth})
             
-            console.log(articlesData?.data)
             if (articlesData?.status === 200) {
                 const publicArticles = articlesData.data.page_data.filter((article:any) => article.type === 'public_article').map((article:any) => {
                     return desiredKeys.reduce((obj:any, key) => {
@@ -398,10 +402,13 @@ function HelpCenter ({scrollRef, helpCenterId, setHelpCenterId, setHelpCentersDa
                 })
                 setPublicArticlesData(publicArticles)
             }
-            const helpCenterResponse = await fetchData({endpoint:`${auth.authData.organizationId}/admin/help_centers/${helpCenterId}`, setValue:setHelpCenterData, auth})
-            if (helpCenterResponse?.status === 200) helpCenterDataRef.current = helpCenterResponse?.data
+            const helpCenterResponse = await fetchData({endpoint:`${auth.authData.organizationId}/admin/help_centers/${helpCenterId}`, getAccessTokenSilently, setValue:setHelpCenterData, auth})
+            if (helpCenterResponse?.status === 200) {
+                helpCenterDataRef.current = helpCenterResponse?.data
+                stylesRef.current = helpCenterResponse?.data.style
+            }
 
-            await fetchData({endpoint:`${auth.authData.organizationId}/admin/help_centers/${helpCenterId}/collections`, setValue:setCollectionsData, auth})
+            await fetchData({endpoint:`${auth.authData.organizationId}/admin/help_centers/${helpCenterId}/collections`, getAccessTokenSilently, setValue:setCollectionsData, auth})
             
         }
         fetchInitialData()
@@ -409,26 +416,29 @@ function HelpCenter ({scrollRef, helpCenterId, setHelpCenterId, setHelpCentersDa
 
     const updateHelpCenter = async (newData:HelpCenterData) => {
         if ( JSON.stringify(newData) === JSON.stringify(helpCenterDataRef.current)) return 
-        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/help_centers/${helpCenterId}`, method:'put', requestForm:newData, auth, toastMessages:{works:t('CorrectEditedHelpCenter'), failed:t('FailedEditedHelpCenter')}})
-        if (response?.status === 200) helpCenterDataRef.current = newData
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/help_centers/${helpCenterId}`, getAccessTokenSilently, method:'put', requestForm:newData, auth, toastMessages:{works:t('CorrectEditedHelpCenter'), failed:t('FailedEditedHelpCenter')}})
+        if (response?.status === 200) {
+            helpCenterDataRef.current = newData
+            setHelpCenterData(newData)
+        }
     }
     //COLLECTIONS TABLE HEIGHT
     const [boxHeight, setBoxHeight] = useState<number>(1000)
     useEffect(() => {
         const updateHeight = () => {
             if (headerRef.current) {
-                const alturaCalculada =  ((window.innerHeight - headerRef.current?.getBoundingClientRect().bottom ) - window.innerWidth * 0.02)
+                 const alturaCalculada =  ((window.innerHeight - headerRef.current?.getBoundingClientRect().bottom ) - window.innerWidth * 0.02)
                 setBoxHeight(alturaCalculada)
             }
         } 
         updateHeight()
         window.addEventListener('resize', updateHeight)
         return () => {window.removeEventListener('resize', updateHeight)}
-    }, [headerRef.current])
+    }, [collectionsData])
+
 
     const saveStyles = async (newStyles:StylesConfig) => {
        
-        setWaitingStyles(true)
         const keysToUpload = [
             "logo",
             "favicion",
@@ -446,13 +456,11 @@ function HelpCenter ({scrollRef, helpCenterId, setHelpCenterId, setHelpCentersDa
             return null
         })
         await Promise.all(uploadPromises)
-
-        
-        const newHelpCenter = {...helpCenterData as HelpCenterData, style:newStyles}
-        setHelpCenterData(newHelpCenter)
-        const response = await fetchData({endpoint: `${auth.authData.organizationId}/admin/help_centers/${helpCenterData?.id}`, requestForm:newHelpCenter, method: 'put', auth, toastMessages:{works:t('CorrectEditedHelpCenter'), failed:t('FailedEditedHelpCenter')}})
-        setWaitingStyles(false)
-
+       
+        const newHelpCenter = {...helpCenterData as HelpCenterData,  style:newStyles}
+         setHelpCenterData(newHelpCenter)
+        const response = await fetchData({endpoint: `${auth.authData.organizationId}/admin/help_centers/${helpCenterData?.id}`,  getAccessTokenSilently, requestForm:newHelpCenter, method: 'put', auth, toastMessages:{works:t('CorrectEditedHelpCenter'), failed:t('FailedEditedHelpCenter')}})
+        stylesRef.current = newStyles
     }
 
     //COLLECTIONS COMPONENT
@@ -498,7 +506,7 @@ function HelpCenter ({scrollRef, helpCenterId, setHelpCenterId, setHelpCentersDa
         //UPDATE A COLLECTION ADATA
         const updateCollection = async (newData:{name:string, description:string, icon:string}) => {
             const newCollection = {data:{...collection.data, [selectedLanguage]:newData}}
-            const response = await fetchData({endpoint: `${auth.authData.organizationId}/admin/help_centers/${helpCenterData?.id}/collections/${collection.uuid}`, requestForm:newCollection, method: 'put', auth,})
+             const response = await fetchData({endpoint: `${auth.authData.organizationId}/admin/help_centers/${helpCenterData?.id}/collections/${collection.uuid}`,  getAccessTokenSilently,requestForm:newCollection, method: 'put', auth,})
         }
 
         //ADD A COLLECTION COMPONENT
@@ -510,7 +518,7 @@ function HelpCenter ({scrollRef, helpCenterId, setHelpCenterId, setHelpCentersDa
                 setWaitingAdd(true)
                 try {
                     for (const articleId of selectedArticles) {
-                        const response = await fetchData({endpoint: `${auth.authData.organizationId}/admin/help_centers/${helpCenterData?.id}/collections/${collection.uuid}/public_articles/${articleId}`, method: 'post', auth,})
+                        const response = await fetchData({endpoint: `${auth.authData.organizationId}/admin/help_centers/${helpCenterData?.id}/collections/${collection.uuid}/public_articles/${articleId}`,  getAccessTokenSilently, method: 'post', auth,})
                     }
                     showToast({message:t('CorrectAddedArticles'), type:'works'})
 
@@ -534,13 +542,13 @@ function HelpCenter ({scrollRef, helpCenterId, setHelpCenterId, setHelpCentersDa
             }
 
             return (<> 
-                    <Box p='20px' > 
+                    <Flex flexDir={'column'}  height={'70vh'} p='20px' > 
                         <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('AddArticles')}</Text>
                         <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
                         {remainingArticles.length === 0 ?<Text>{t('NoArticlesToAdd')}</Text>:
-                        <Box borderTopColor={'gay.300'} borderTopWidth={'1px'}> 
+                        <Flex flexDir={'column'}   flex='1' height={'100%'}  overflow={'scroll'}> 
                             {remainingArticles.map((article, index) => (
-                                <Flex key={`article-to-add-${index}`} p='10px' borderBottomWidth={'1px'} borderBottomColor='gray.200' alignItems={'center'}  gap='20px' bg={selectedArticles.includes(article.public_article_common_uuid)?'blue.100':''}>
+                                <Flex key={`article-to-add-${index}`} p='10px' borderBottomWidth={'1px'} borderBottomColor='gray.200' alignItems={'center'}  gap='20px' bg={selectedArticles.includes(article.public_article_common_uuid)?'brand.blue_hover':''}>
                                     <Box flex='1'> 
                                         <CustomCheckbox id={`checkbox-${index}`}  onChange={() => handleCheckboxChange(article.public_article_common_uuid, !selectedArticles.includes(article.public_article_common_uuid))} isChecked={selectedArticles.includes(article.public_article_common_uuid)} />
                                     </Box>
@@ -552,9 +560,9 @@ function HelpCenter ({scrollRef, helpCenterId, setHelpCenterId, setHelpCentersDa
                                     </Box>
                                 </Flex>
                             ))}
-                        </Box>}
-                    </Box>
-                    <Flex  p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='brand.gray_2' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+                        </Flex>}
+                    </Flex>
+                    <Flex  p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
                         <Button  size='sm' variant={'main'} isDisabled={selectedArticles.length === 0} onClick={createArticles}>{waitingAdd?<LoadingIconButton/>:t('AddArticles')}</Button>
                         <Button  size='sm' variant={'common'} onClick={() => {setShowAddArticle(false)}}>{t('Cancel')}</Button>
                     </Flex>
@@ -566,7 +574,7 @@ function HelpCenter ({scrollRef, helpCenterId, setHelpCenterId, setHelpCentersDa
             const [waitingDelete, setWaitingDelete] = useState<boolean>(false)
             const createAticles = async() => {
                 const endpoint = `${auth.authData.organizationId}/admin/help_centers/${helpCenterData?.id}/collections/${collection.uuid}${ showDeleteElement?.type === 'collection' ?'':`/public_articles/${showDeleteElement?.id}`}`
-                const response = await fetchData({endpoint, method:'delete', setWaiting:setWaitingDelete, auth, toastMessages:{works:showDeleteElement?.type === 'collection'? t('CorrectDeletedCollection'):t('CorrectDeletedArticle'), failed:showDeleteElement?.type === 'collection'? t('FailedDeletedCollection'):t('FailedtDeletedArticle')}})
+                const response = await fetchData({endpoint, method:'delete', setWaiting:setWaitingDelete, auth, getAccessTokenSilently, toastMessages:{works:showDeleteElement?.type === 'collection'? t('CorrectDeletedCollection'):t('CorrectDeletedArticle'), failed:showDeleteElement?.type === 'collection'? t('FailedDeletedCollection'):t('FailedtDeletedArticle')}})
                 if (response?.status === 200)  setCollectionsData(prevCollections => (prevCollections as CollectionsData[]).filter((_, i) => i !== index))
                 setShowDeleteElement(null)
             }     
@@ -598,14 +606,9 @@ function HelpCenter ({scrollRef, helpCenterId, setHelpCenterId, setHelpCentersDa
             </ConfirmBox>
         ), [showDeleteElement])
 
+        useEffect(() => {updateCollection(currentCollection)},[currentCollection.name, currentCollection.description])
         return (<>
-           {settingsIconsBoxPosition && 
-            <Portal> 
-                <MotionBox ref={iconsSelectorRef} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.95 }}  transition={{ duration: '0.1', ease: 'easeOut'}}
-                    style={{ transformOrigin: settingsIconsBoxPosition.top ? 'top left':'bottom left' }} overflow={'scroll'} left={settingsIconsBoxPosition.left}  top={settingsIconsBoxPosition.top || undefined}  bottom={settingsIconsBoxPosition.bottom ||undefined} position='absolute' bg='white'  zIndex={1000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.200' borderWidth='1px' borderRadius='.7rem'>
-                    <IconsPicker selectedIcon={currentCollection.icon} setSelectedIcon={(icon:string) => {setSettingsIconsBoxPosition(null);updateCollection({...currentCollection, icon}); setCurrentCollection(prev => ({...prev, icon}))}}/>
-                </MotionBox >
-            </Portal>}
+        
                 
             {showAddArticle && AddBox} 
             {showDeleteElement && DeleteBox} 
@@ -614,13 +617,10 @@ function HelpCenter ({scrollRef, helpCenterId, setHelpCenterId, setHelpCentersDa
                 <Flex  position={'relative'} borderBottomColor={index === (collectionsData?.length || 0) - 1 ?'':'gray.200'}  borderBottomWidth={index === (collectionsData?.length || 0) - 1 ?'0':'1px'} gap='20px' alignItems={'center'}  p='20px'  _hover={{bg:'brand.gray_2'}} onMouseEnter={() => setHoveringSection('collection')} onMouseLeave={() => setHoveringSection('')}> 
                     <Flex flex='3' alignItems={'center'} gap={'20px'}>
                         {filteredArticles.length > 0 && <IoIosArrowDown size={'20px'} className={expandCollection ? "rotate-icon-up" : "rotate-icon-down"} onClick={handleExpand}/>}
-                        <Flex onClick={determineBoxPosition} ref={iconsBoxRef} justifyContent={'center'} alignItems={'center'} p='15px' bg='brand.gray_1' borderRadius={'.5rem'}> 
-                            <Icon boxSize={'20px'}  as={(iconsMap as any)[currentCollection?.icon]}/>
-                        </Flex>
+                            <IconsPicker selectedIcon={currentCollection.icon} setSelectedIcon={(icon:string) => {setSettingsIconsBoxPosition(null);updateCollection({...currentCollection, icon}); setCurrentCollection(prev => ({...prev, icon}))}}/>
                         <Box>
-                            <textarea maxLength={50} onBlur={() => updateCollection(currentCollection)} value={currentCollection?.name}  className="title-textarea-collections"  onChange={(e) => setCurrentCollection(prev => ({...prev, name:e.target.value}))}  placeholder={t('AddDescription')} rows={1}  />
-                            <textarea maxLength={140} onBlur={() => updateCollection(currentCollection)} value={currentCollection?.description} className="description-textarea-functions"  onChange={(e) => setCurrentCollection(prev => ({...prev, description:e.target.value}))}  placeholder={t('AddDescription')} rows={1}  />
-                        </Box>
+                        <EditText placeholder={t('AddTitle')} value={currentCollection?.name} setValue={(value) => setCurrentCollection(prev => ({...prev, name:value})) } className={'title-textarea-collections'}/>
+                        <EditText placeholder={t('AddDescription')}  value={currentCollection?.description} setValue={(value) => setCurrentCollection(prev => ({...prev, description:value}))} className={'description-textarea-functions'}/></Box>
                     </Flex>
                     
                     <Flex alignItems={'center'} gap='7px' flex='1' >
@@ -714,7 +714,7 @@ function HelpCenter ({scrollRef, helpCenterId, setHelpCenterId, setHelpCentersDa
         const [newCollection, setNewCollection] = useState<{name:string, icon:string, description:string}>({name:'', icon:'FaFolder', description:''})
 
         const createCollection = async () => {
-            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/help_centers/${helpCenterData?.id}/collections`, method:'post', setWaiting:setWaitingCreate, requestForm:{help_center_uuid:helpCenterData?.id, data:{[selectedLanguage]:newCollection}}, auth})
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/help_centers/${helpCenterData?.id}/collections`,  getAccessTokenSilently,method:'post', setWaiting:setWaitingCreate, requestForm:{help_center_uuid:helpCenterData?.id, data:{[selectedLanguage]:newCollection}}, auth})
             if (response?.status === 200){
                 setCollectionsData(prevCollections => {
                     if (prevCollections) {
@@ -739,24 +739,17 @@ function HelpCenter ({scrollRef, helpCenterId, setHelpCenterId, setHelpCentersDa
                 <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('CreateCollection')}</Text>
                 <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
                 <Flex alignItems={'center'} gap='10px'> 
-                    <Flex cursor={'pointer'} ref={emojiButtonRef} onClick={() => setEmojiVisible(true)} alignItems={'center'} justifyContent={'center'} width={'40px'} height={'40px'} borderWidth={'1px'} borderColor={'gray.300'} borderRadius={'.5rem'}> 
-                        <Icon boxSize={'20px'}  as={(iconsMap as any)[newCollection.icon]}/>
-                    </Flex>
+                    <IconsPicker selectedIcon={newCollection.icon} setSelectedIcon={(value:string) => {setNewCollection(prev => ({...prev, icon:value}))} } />
                     <EditText placeholder={t('CollectionName')} hideInput={false} value={newCollection.name} setValue={(value) => setNewCollection(prev => ({...prev, name:value}))}/>
                 </Flex>
                 <Text mt='2vh' mb='.5vh' fontWeight={'medium'}>{t('Description')}</Text>
                 <Textarea maxW={'500px'} resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('Description')}...`} maxH='300px' value={newCollection.description} onChange={(e) => setNewCollection((prev) => ({...prev, description:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "brand.text_blue", borderWidth: "2px"}}/>
             </Box>
-            <Flex bg='brand.gray_2' p='20px' gap='10px' flexDir={'row-reverse'}>
+            <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
                 <Button size='sm' variant={'main'} onClick={createCollection}>{waitingCreate?<LoadingIconButton/>:t('CreateCollection')}</Button>
                 <Button size='sm' variant={'common'} onClick={() => setShowCreateCollection(false)}>{t('Cancel')}</Button>
             </Flex>
-            {emojiVisible && 
-                <Portal> 
-                <Box position={'fixed'} zIndex={1000000} pointerEvents={emojiVisible?'auto':'none'} transition='opacity 0.2s ease-in-out' opacity={emojiVisible ? 1:0} top={`${(emojiButtonRef?.current?.getBoundingClientRect().top || 0)}px`} right={`${window.innerWidth - (emojiButtonRef?.current?.getBoundingClientRect().left || 0) + 5}px`}  ref={emojiBoxRef}> 
-                    <IconsPicker selectedIcon={newCollection.icon} setSelectedIcon={(value:string) => {setNewCollection(prev => ({...prev, icon:value}));setEmojiVisible(false)} } />
-                </Box>
-            </Portal>}
+             
         </>)
     }
 
@@ -769,7 +762,7 @@ function HelpCenter ({scrollRef, helpCenterId, setHelpCenterId, setHelpCentersDa
         //FUNCTION FOR DELETING AN AUTOMATION
         const deleteHelpCenter = async () => {
             setWaitingDelete(true)
-            const response = await fetchData({endpoint: `${auth.authData.organizationId}/admin/help_centers/${helpCenterData?.id}`, method: 'delete', setWaiting: setWaitingDelete, auth, toastMessages: {works: t('CorrectDeletedHelpCenter'), failed: t('FailedDeletedHelpCenter')}})
+            const response = await fetchData({endpoint: `${auth.authData.organizationId}/admin/help_centers/${helpCenterData?.id}`, getAccessTokenSilently, method: 'delete', setWaiting: setWaitingDelete, auth, toastMessages: {works: t('CorrectDeletedHelpCenter'), failed: t('FailedDeletedHelpCenter')}})
             if (response?.status === 200) {
                 setHelpCentersData(prev => (prev || []).filter(helpCenter => helpCenter.id !== helpCenterData?.id))
                 setHelpCenterId(null)
@@ -783,7 +776,7 @@ function HelpCenter ({scrollRef, helpCenterId, setHelpCenterId, setHelpCentersDa
                 <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
                 <Text >{parseMessageToBold(t('ConfirmDeleteHelpCenter', {name:helpCenterData?.name}))}</Text>
             </Box>
-            <Flex bg='brand.gray_2' p='20px' gap='10px' flexDir={'row-reverse'}>
+            <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
                 <Button  size='sm' variant={'delete'} onClick={deleteHelpCenter}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
                 <Button  size='sm' variant={'common'} onClick={() => setShowDelete(false)}>{t('Cancel')}</Button>
             </Flex>
@@ -800,7 +793,7 @@ function HelpCenter ({scrollRef, helpCenterId, setHelpCenterId, setHelpCentersDa
         //FUNCTION FOR DELETING AN AUTOMATION
         const createHelpCenter = async () => {
             const newData = {...helpCenterData as HelpCenterData, ...newHelpCenter}
-            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/help_centers/${newData.id}`, method:'put', setWaiting:setWaitingCreate, requestForm:newData,  auth, toastMessages:{works:t('CorrectEditedHelpCenter'), failed:t('FailedEditedHelpCenter')}})
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/help_centers/${newData.id}`, getAccessTokenSilently, method:'put', setWaiting:setWaitingCreate, requestForm:newData,  auth, toastMessages:{works:t('CorrectEditedHelpCenter'), failed:t('FailedEditedHelpCenter')}})
             if (response?.status === 200) 
             {
                 setHelpCentersData(prev => [...prev as {name: string, is_live: boolean, id: string}[], {name: newData?.name || '', is_live: newData?.is_live || false, id: newData?.id || ''} ])
@@ -818,12 +811,58 @@ function HelpCenter ({scrollRef, helpCenterId, setHelpCenterId, setHelpCentersDa
                 <Text mt='2vh' mb='.5vh' fontWeight={'medium'}>{t('UrlIdentifier')}</Text>
                 <EditText regex={/^[a-zA-Z0-9-_\/]+$/} maxLength={100} placeholder={'matil'} hideInput={false} value={newHelpCenter.id} setValue={(value) => setNewHelpCenter((prev) => ({...prev, url_identifier:value}))}/>
             </Box>
-            <Flex bg='brand.gray_2' p='20px' gap='10px' flexDir={'row-reverse'}>
+            <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
                 <Button  size='sm' variant={'main'} isDisabled={newHelpCenter.name === '' || newHelpCenter.id === '' || !(/^[a-zA-Z0-9-_\/]+$/).test(newHelpCenter.id)} onClick={createHelpCenter}>{waitingCreate?<LoadingIconButton/>:t('Edit')}</Button>
                 <Button  size='sm' variant={'common'} onClick={()=> setShowEdit(false)}>{t('Cancel')}</Button>
             </Flex>
         </>)
     }
+
+    const ChangeLanguage = () => {
+
+        const { t } = useTranslation('settings')
+     
+        //SHOW LANGUAGES 
+        const buttonRef2 = useRef<HTMLButtonElement>(null)
+        const boxRef2 = useRef<HTMLDivElement>(null)
+    
+        //BOOLEAN TO CONTROL THE VISIBILITY OF THE LIST AND CLOSE ON OUTSIDE CLICK
+        const [showList, setShowList] = useState<boolean>(false)
+        useOutsideClick({ref1:buttonRef2, ref2:boxRef2, onOutsideClick:setShowList})
+
+        const sectionsMap1 = {};
+        ( helpCenterData?.languages || []).map((lang) => {(sectionsMap1 as any)[lang] = [languagesFlags[lang][0],<Box>{languagesFlags[lang][1]}</Box>]})
+
+        //BOX POSITION LOGIC, TO SHOW IT UP OR DOWN OF THE INPUT, DEPENDING ON THE POSITION
+        const [boxStyle, setBoxStyle] = useState<CSSProperties>({})
+        determineBoxStyle({buttonRef:buttonRef2, setBoxStyle, boxPosition:'none', changeVariable:showList})
+    
+     
+        const editLanguage = (lang:string) => {
+            setHelpCenterData(prev => ({...prev as HelpCenterData, languages:[...(prev as HelpCenterData)?.languages, lang]}))
+        }
+
+        return (<>
+            <Flex gap='12px' alignItems={'end'}> 
+                <SectionSelector size='xs' selectedSection={selectedLanguage} sections={helpCenterData?.languages || []} sectionsMap={sectionsMap1} onChange={(lang:string) => setSelectedLanguage(lang)}/>  
+                <Button ref={buttonRef2} variant='common' size='xs' leftIcon={<FaPlus/>} onClick={() => setShowList(true)}>{t('AddLanguage')}</Button>
+            </Flex> 
+            <AnimatePresence> 
+              {showList && 
+                <Portal> 
+                    <MotionBox  ref={boxRef2} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.95 }}  transition={{ duration: '0.1', ease: 'easeOut'}}
+                        style={{ transformOrigin:'top left'}} maxH={'60vh'} mt='10px' mb='10px' bg='white' boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.15)'} borderRadius={'.5rem'} zIndex={100000000} overflow={'scroll'} left={buttonRef2.current?.getBoundingClientRect().left  || undefined}  top={boxStyle.top || undefined}  bottom={boxStyle.bottom ||undefined} position='fixed' >
+                        {Object.keys(languagesFlags).filter(item => !helpCenterData?.languages.includes(item)).map((lang, index) => (
+                            <Flex key={`lang-${index}`} px='10px'  py='7px' cursor={'pointer'} justifyContent={'space-between'} alignItems={'center'} _hover={{bg:'brand.hover_gray'}} onClick={() => {setShowList(false); editLanguage(lang)}}>
+                                <Text>{languagesFlags[lang][1]} {languagesFlags[lang][0]}</Text>
+                            </Flex>
+                        ))}
+                    </MotionBox>
+                </Portal>}
+            </AnimatePresence>
+        </>)
+    }
+    
 
      //CREATE COLLECTION
      const memoizedCreateCollectionBox = useMemo(() => (
@@ -848,11 +887,11 @@ function HelpCenter ({scrollRef, helpCenterId, setHelpCenterId, setHelpCentersDa
 
     const selectedCollectionsByLanguage = (collectionsData || []).filter(collection => collection.data[selectedLanguage]).map(col => col.data[selectedLanguage])
 
+
     return(<>
         {showCreateCollection && memoizedCreateCollectionBox}
         {showDelete && memoizedDeleteBox}
         {showEdit && memoizedEditBox}
-
         <Box> 
             <Flex justifyContent={'space-between'} alignItems={'end'}> 
                 <Box> 
@@ -867,21 +906,20 @@ function HelpCenter ({scrollRef, helpCenterId, setHelpCenterId, setHelpCentersDa
                 <Skeleton  isLoaded={(helpCenterData !== null && collectionsData !== null)}> 
                 <SectionSelector selectedSection={currentSection} sections={sectionsList} sectionsMap={sectionsMap} onChange={() => setCurrentSection(prev => (prev === 'collections'?'styles':'collections'))}/>
                 </Skeleton>
-                {currentSection === 'styles' && <Button  variant='common' size={'sm'}  onClick={() => saveStyles(stylesRef.current as StylesConfig)}>{waitingStyles ? <LoadingIconButton/>: t('SaveChanges')}</Button>}
-            </Flex>
+             </Flex>
             <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/>
         </Box>
   
         <Box ref={stylesHeaderRef} flex='1' >
         {(currentSection === 'styles') ? 
         <Skeleton flex='1'  isLoaded={(helpCenterData !== null && collectionsData !== null)}>
-            <EditStyles currentStyles={helpCenterData?.style as StylesConfig} currentCollections={selectedCollectionsByLanguage} publicArticlesData={publicArticlesData as ArticleData[]} stylesRef={stylesRef} stylesHeaderRef={stylesHeaderRef}/>
+            <EditStyles currentStyles={helpCenterData?.style as StylesConfig} currentCollections={selectedCollectionsByLanguage} publicArticlesData={publicArticlesData as ArticleData[]} stylesRef={stylesRef}  stylesHeaderRef={stylesHeaderRef} saveStyles={saveStyles}/>
         </Skeleton>
         :
         <Box flex='1'>
             <Flex flexDir={'row-reverse'} justifyContent={'space-between'}>
                 <Button leftIcon={<FaPlus/>} size='sm' onClick={() => setShowCreateCollection(true)} variant='common'>{t('AddCollection')}</Button>
-                <ActionsButton isLanguage/>
+                <ChangeLanguage/>
             </Flex>
             <Skeleton isLoaded={collectionsData !== null && publicArticlesData !== null}>      
                 {selectedCollectionsByLanguage?.length === 0 ?   
@@ -896,9 +934,9 @@ function HelpCenter ({scrollRef, helpCenterId, setHelpCenterId, setHelpCentersDa
                             </Flex>
                         </Box>
                         <Box overflowX={'hidden'}  borderWidth={'1px'} borderRadius={'0 0 .5rem .5rem'} borderColor={'gray.200'} overflowY={'scroll'} maxH={boxHeight}> 
-                            {collectionsData?.map((collection, index) => (
-                                <CollectionComponent collection={collection} index={index} key={`collection-${index}`}/>
-                            ))}
+                            {collectionsData?.map((collection, index) => (<> 
+                                {(Object.keys(collection.data).includes(selectedLanguage)) && <CollectionComponent collection={collection} index={index} key={`collection-${index}`}/>}
+                            </>))}
                         </Box>
                   
                 </>}
@@ -910,7 +948,7 @@ function HelpCenter ({scrollRef, helpCenterId, setHelpCenterId, setHelpCentersDa
     )
 }
 
-const EditStyles = ({currentStyles, currentCollections, stylesRef, publicArticlesData, stylesHeaderRef}:{currentStyles:StylesConfig,currentCollections:{name:string, icon:string, description:string}[], stylesRef:MutableRefObject<StylesConfig | null>, publicArticlesData:ArticleData[], stylesHeaderRef:RefObject<HTMLDivElement>}) => {
+const EditStyles = ({currentStyles, currentCollections, stylesRef, publicArticlesData, stylesHeaderRef, saveStyles}:{currentStyles:StylesConfig,currentCollections:{name:string, icon:string, description:string}[], publicArticlesData:ArticleData[],stylesRef:MutableRefObject<StylesConfig | null>,  stylesHeaderRef:RefObject<HTMLDivElement>, saveStyles:(data:StylesConfig) => void}) => {
 
      //CONSTANTS
     const { t } = useTranslation('settings')
@@ -921,12 +959,16 @@ const EditStyles = ({currentStyles, currentCollections, stylesRef, publicArticle
 
     //STYLES DATA
     const [configStyles, setConfigStyles] = useState<StylesConfig>(Object.keys(currentStyles).length === 0?MatilStyles:currentStyles)
-    useEffect(() => {stylesRef.current = configStyles},[configStyles])
+
 
     //CURRENT EXPANDED SECTION
     const [sectionExpanded, setSectionExpanded] = useState<sectionsTypes>('')
 
     return (
+        <>
+        <SaveChanges data={configStyles} dataRef={stylesRef} setData={setConfigStyles} onSaveFunc={() => saveStyles(configStyles)} />
+
+  
         <Flex height={window.innerHeight - window.innerWidth * 0.02 - (stylesHeaderRef.current?.getBoundingClientRect().top || 0)} flex='1' gap='30px' minHeight='0'>
              <Flex px='2px' minW={'450px'} flexDir={'column'} flex='3' maxH={'100%'}  overflow={'scroll'} ref={containerRef} >
                 <CollapsableSection section={'common'} setSectionExpanded={setSectionExpanded} sectionExpanded={sectionExpanded}>
@@ -1083,7 +1125,7 @@ const EditStyles = ({currentStyles, currentCollections, stylesRef, publicArticle
                 </Box>
             </Box>
         </Flex>
-    )
+    </>)
 }
 
 const CollapsableSection = ({section, sectionExpanded, setSectionExpanded, children}:{section:sectionsTypes, sectionExpanded:sectionsTypes, setSectionExpanded:Dispatch<SetStateAction<sectionsTypes>>, children:ReactNode}) => {

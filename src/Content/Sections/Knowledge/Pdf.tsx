@@ -1,34 +1,37 @@
- //REACT
- import { useState, useEffect, useRef, Dispatch, SetStateAction, ReactNode, KeyboardEvent, useMemo } from "react"
- import { useTranslation } from "react-i18next"
- import { useAuth } from "../../../AuthContext"
- import { useLocation, useNavigate } from "react-router-dom"
- //FETCH DATA
- import fetchData from "../../API/fetchData"
- //FRONT
- import { Flex, Skeleton, Box, Text, Icon, chakra, shouldForwardProp, Tooltip, Button, IconButton, Switch, Textarea } from "@chakra-ui/react"
- import { motion, isValidMotionProp } from 'framer-motion'
- import "../../Components/styles.css"
- //COMPONENTS
- import ConfirmBox from "../../Components/Reusable/ConfirmBox"
- import { SourceSideBar } from "./Utils"
- //FUNCTIONS
- import parseMessageToBold from "../../Functions/parseToBold"
- import generateUUID from "../../Functions/generateUuid"
- //ICONS
- import { PiSidebarSimpleBold } from "react-icons/pi"
- //TYPING
- import { ContentData } from "../../Constants/typing" 
- import { BsTrash3Fill } from "react-icons/bs"
- import LoadingIconButton from "../../Components/Reusable/LoadingIconButton"
-  
+//REACT
+import { useState, useEffect, useRef, Dispatch, SetStateAction, useMemo } from "react"
+import { useTranslation } from "react-i18next"
+import { useAuth } from "../../../AuthContext"
+import { useLocation, useNavigate } from "react-router-dom"
+import { useAuth0 } from "@auth0/auth0-react"
+
+//FETCH DATA
+import fetchData from "../../API/fetchData"
+//FRONT
+import { Flex, Skeleton, Box, Text, chakra, shouldForwardProp, Button, IconButton } from "@chakra-ui/react"
+import { motion, isValidMotionProp } from 'framer-motion'
+import "../../Components/styles.css"
+import LoadingIconButton from "../../Components/Reusable/LoadingIconButton"
+//COMPONENTS
+import ConfirmBox from "../../Components/Reusable/ConfirmBox"
+import { SourceSideBar } from "./Utils"
+//FUNCTIONS
+import parseMessageToBold from "../../Functions/parseToBold"
+import generateUUID from "../../Functions/generateUuid"
+//ICONS
+import { PiSidebarSimpleBold } from "react-icons/pi"
+import { HiTrash } from "react-icons/hi2"
+//TYPING
+import { ContentData, Folder } from "../../Constants/typing" 
+    
  //MOTION BOX
  const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)}) 
  
- const Pdf = () => {
+ const Pdf = ({folders}:{folders:Folder[]}) => {
  
      //CONSTANTS
      const { t } = useTranslation('knowledge')
+     const { getAccessTokenSilently } = useAuth0()
      const auth = useAuth()
      const location = useLocation().pathname
      const navigate = useNavigate()
@@ -42,8 +45,8 @@
          is_available_to_tilda: false,
          created_at: new Date().toISOString(),
          updated_at: new Date().toISOString(),
-         created_by: auth.authData.userId || -1,
-         updated_by: auth.authData.userId || -1,
+         created_by: auth.authData.userId || '',
+         updated_by: auth.authData.userId || '',
          tags: [],
          public_article_help_center_collections:[],
          public_article_common_uuid: generateUUID(),
@@ -61,7 +64,7 @@
          const articleId = location.split('/')[3]
          
          const fetchInitialData = async() => {
-             const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources/${articleId}`, auth, setValue:setArticleData})
+             const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources/${articleId}`, auth,getAccessTokenSilently, setValue:setArticleData})
              if (response?.status === 200) articleDataRef.current = response?.data
          }
  
@@ -76,8 +79,8 @@
      const saveChanges = async () => {
          const articleId = location.split('/')[3]
          let response
-         if (articleId.startsWith('create') && firstSendedRef.current) response =  await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`, method:'post', setWaiting:setWaitingSave, requestForm:articleData  as ContentData, auth, toastMessages:{works:t('CorrectSavedInfo'), failed:t('FailedSavedInfo')} }) 
-         else response = response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources/${articleData?.uuid}`, method:'put', setWaiting:setWaitingSave, requestForm:articleData as ContentData, auth, toastMessages:{works:t('CorrectSavedInfo'), failed:t('FailedSavedInfo')} })
+         if (articleId.startsWith('create') && firstSendedRef.current) response =  await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`, getAccessTokenSilently,method:'post', setWaiting:setWaitingSave, requestForm:articleData  as ContentData, auth, toastMessages:{works:t('CorrectSavedInfo'), failed:t('FailedSavedInfo')} }) 
+         else response = response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources/${articleData?.uuid}`, method:'put', setWaiting:setWaitingSave, getAccessTokenSilently,requestForm:articleData as ContentData, auth, toastMessages:{works:t('CorrectSavedInfo'), failed:t('FailedSavedInfo')} })
  
          if (response?.status === 200) articleDataRef.current = articleData
          firstSendedRef.current = false
@@ -97,7 +100,7 @@
          //FUNCTION FOR CREATE A NEW BUSINESS
          const deleteArticle= async () => {
              const articleId = location.split('/')[3]
-             const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources/${articleId}`, method:'delete',  auth, toastMessages:{works:t('CorrectSavedInfo'), failed:t('FailedSavedInfo')} })
+             const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources/${articleId}`, method:'delete',  auth,getAccessTokenSilently, toastMessages:{works:t('CorrectSavedInfo'), failed:t('FailedSavedInfo')} })
              if (response?.status === 200) navigate('/knowledge/content')
          }
          return(<> 
@@ -129,7 +132,7 @@
                      <Text fontSize={'1.5em'} fontWeight={'medium'}>{t('PDF')}</Text>
                  </Skeleton>
                  <Flex gap='15px'>
-                     <Button leftIcon={<BsTrash3Fill/>} variant={'delete'} isDisabled={location.split('/')[3].startsWith('create')} size='sm' onClick={() => setShowDeleteBox(true)}>{t('Delete')}</Button>
+                     <Button leftIcon={<HiTrash/>} variant={'delete'} isDisabled={location.split('/')[3].startsWith('create')} size='sm' onClick={() => setShowDeleteBox(true)}>{t('Delete')}</Button>
                      <Button variant={'main'} size='sm' isDisabled={JSON.stringify(articleData) === JSON.stringify(articleDataRef.current)} onClick={saveChanges}>{waitingSave?<LoadingIconButton/>:t('SaveChanges')}</Button>
                      {clientBoxWidth === 0 && <IconButton aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'20px'}/>} onClick={() =>setClientBoxWidth(400)}/>}
                  </Flex>
@@ -142,7 +145,7 @@
                   </Box>
              </Flex>
          </MotionBox>
-         <SourceSideBar clientBoxWidth={clientBoxWidth} setClientBoxWidth={setClientBoxWidth} sourceData={articleData} setSourceData={setArticleData}/>
+         <SourceSideBar clientBoxWidth={clientBoxWidth} setClientBoxWidth={setClientBoxWidth} sourceData={articleData} setSourceData={setArticleData} folders={folders}/>
      </Flex>
      </>)
  }

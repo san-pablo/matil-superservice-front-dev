@@ -18,6 +18,7 @@ import useOutsideClick from '../../../Functions/clickOutside'
 //TYPING
 import { View, Views } from '../../../Constants/typing'
 import showToast from '../../../Components/Reusable/ToastNotification'
+import { useAuth0 } from '@auth0/auth0-react'
   
 //TYPING
 type boxPosition = {right:number, top:string | undefined, bottom:string | undefined, isFirst:boolean,isLast:boolean, box:{type:'private' | 'shared', index:number}} | null
@@ -69,6 +70,7 @@ function ViewsList () {
     
     //CONSTANTS
     const navigate = useNavigate()
+    const {  getAccessTokenSilently } = useAuth0()
     const auth = useAuth()
     const { t } = useTranslation('settings')
     const isAdmin = auth.authData.users?.[auth.authData?.userId || '']?.is_admin
@@ -99,7 +101,7 @@ function ViewsList () {
             }
         }
         const newViews = {'private_views': newPrivateViews, 'shared_views': newSharedViews}
-        const response = await fetchData({endpoint: `${auth.authData.organizationId}/user`, method: 'put', requestForm: {...newViews, shortcuts:auth.authData.shortcuts, users:auth.authData.users, conversation_themes:auth.authData.conversation_themes}, auth: auth, toastMessages: {'works': `${toDelete?t('CorrectDelete'):t('CorrectOrder')}`, 'failed': `${toDelete?t('FailedDelete'):t('FailedOrder')}`}})
+        const response = await fetchData({endpoint: `${auth.authData.organizationId}/user`, method: 'put', requestForm: {...newViews, shortcuts:auth.authData.shortcuts, users:auth.authData.users, conversation_themes:auth.authData.conversation_themes}, auth,  getAccessTokenSilently, toastMessages: {'works': `${toDelete?t('CorrectDelete'):t('CorrectOrder')}`, 'failed': `${toDelete?t('FailedDelete'):t('FailedOrder')}`}})
         if (response?.status === 200) {
             auth.setAuthData({views: {...auth.authData.views, 'private_views': newPrivateViews, 'shared_views': newSharedViews}})
             setCurrentPrivateViews(newPrivateViews)
@@ -147,7 +149,7 @@ function ViewsList () {
                     <Text color='gray.600' fontSize={'.9em'}>{t('ViewsDes')}</Text>
                 </Box>
                 <Flex gap='10px'> 
-                    <Button variant={'common'} size='sm' leftIcon={<FaPlus/>} onClick={() => navigate('edit')}>{t('CreateView')}</Button>
+                    <Button variant={'main'} size='sm' leftIcon={<FaPlus/>} onClick={() => navigate('edit')}>{t('CreateView')}</Button>
                 </Flex>
             </Flex>
             <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='5vh'/>
@@ -216,7 +218,7 @@ function ViewsList () {
         {settingsBoxPosition &&  
         <Portal> 
             <MotionBox ref={boxRef} initial={{ opacity: 0, scale: 0.95 }}  animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}  transition={{ duration: '0.1', ease: 'easeOut'}}  onClick={() => setSettingsBoxPosition(null)} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.13)'
-                style={{ transformOrigin: settingsBoxPosition.top ? 'top right':'bottom right' }} mt={settingsBoxPosition.top ?'5px':''} mb={'5px'} borderRadius={'.5rem'}  right={settingsBoxPosition.right}  top={settingsBoxPosition.top || undefined}  bottom={settingsBoxPosition.bottom ||undefined} position='absolute' bg='white'  zIndex={1000} >
+                style={{ transformOrigin: settingsBoxPosition.top ? 'top right':'bottom right' }} fontSize={'.9em'} mt={settingsBoxPosition.top ?'5px':''} mb={'5px'} borderRadius={'.5rem'}  right={settingsBoxPosition.right}  top={settingsBoxPosition.top || undefined}  bottom={settingsBoxPosition.bottom ||undefined} position='absolute' bg='white'  zIndex={1000} >
                 <Flex px='15px'  onClick={() => navigate(`edit/${settingsBoxPosition.box.type}/${settingsBoxPosition.box.index}`)} py='10px' cursor={'pointer'} gap='10px' alignItems={'center'} _hover={{bg:'brand.hover_gray'}}>
                     <Icon color='gray.600' as={FaPen}/>
                     <Text whiteSpace={'nowrap'}>{t('EditView')}</Text>

@@ -3,18 +3,22 @@
 */
 
 //REACT
+import { useTranslation } from "react-i18next"
 import { useState, useMemo, useRef, useEffect, Fragment, Dispatch, SetStateAction, useCallback } from "react"
 //FRONT
-import { Flex, Box, Text, IconButton } from '@chakra-ui/react'
+import { motion } from "framer-motion";
+import { Flex, Box, Text, IconButton, Skeleton, Icon } from '@chakra-ui/react'
 import '../styles.css'
 //COMPONENTS
 import CustomCheckbox from "./CheckBox"
 //ICONS
 import { IoMdArrowDropdown, IoMdArrowDropup } from 'react-icons/io'
 import { HiTrash } from "react-icons/hi2" 
+import { FaMagnifyingGlass } from "react-icons/fa6"
+
 //TYPING
 interface TableProps{
-    data: any[]
+    data: any[] | null | undefined
     CellStyle:React.FC<{  column: string, element: any }>
     noDataMessage:string 
     columnsMap:{[key:string]:[string, number]}
@@ -29,12 +33,17 @@ interface TableProps{
     currentIndex?:number
     deletableFunction?:(value:any, index:number) => void
     height?:number 
+    showAccRow?:boolean
+    accMessage?:string
+    accColumn?:string
+    waitingInfo?:boolean
 }
     
 //MAIN FUNCTION
-const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  columnsMap, excludedKeys = [], onClickRow, selectedElements, onlyOneSelect = false, setSelectedElements, onSelectAllElements, currentIndex = -1, deletableFunction, height }:TableProps ) =>{
+const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  columnsMap, excludedKeys = [], onClickRow, selectedElements, onlyOneSelect = false, setSelectedElements, onSelectAllElements, currentIndex = -1, deletableFunction, height, showAccRow, accMessage, accColumn, waitingInfo }:TableProps ) =>{
 
     //CALCULATE DYNAMIC HEIGHT OF TABLE
+    const { i18n } = useTranslation('settings')
     const tableBoxRef = useRef<HTMLDivElement>(null)
     const headerRef = useRef<HTMLDivElement>(null)
     const [selectedIndex, setSelectedIndex] = useState<number>(currentIndex)
@@ -43,7 +52,7 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
     useEffect(() => {
         const updateHeight = () => {
             if (headerRef.current) {
-                const alturaCalculada =  ((window.innerHeight - headerRef.current?.getBoundingClientRect().bottom ) - window.innerWidth * 0.02)
+                const alturaCalculada =  ((window.innerHeight - headerRef.current?.getBoundingClientRect().top ) - window.innerWidth * 0.02 - 50)
                 setBoxHeight(alturaCalculada)
             }
         } 
@@ -71,6 +80,7 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
             }
         }
       }}
+    
     
     //SHORTCUTS
     useEffect(() => {
@@ -101,8 +111,15 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
 
     //OBTAIN COLUMNS
     const columns = useMemo(() => {
-        if (!data?.length) return []
-        const keys = Object.keys(data[0]).filter((key) => ![...excludedKeys].includes(key))
+
+        let columnsToWork:any
+        if (!data) columnsToWork =  columnsMap
+        else {
+            if (data.length > 0) columnsToWork = data[0]
+            else return []
+        }
+
+        const keys = Object.keys(columnsToWork).filter((key) => ![...excludedKeys].includes(key))
         const orderedColumns = keys
           .filter(key => key in columnsMap)
           .sort((a, b) => Object.keys(columnsMap).indexOf(a) - Object.keys(columnsMap).indexOf(b))
@@ -146,7 +163,7 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
 
     //SORTED DATA
     const sortedData = useMemo(() => {
-        if (sortConfig.key) {
+        if (sortConfig.key && data) {
           return [...data].sort((a, b) => {
             if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === 'asc' ? -1 : 1
             if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === 'asc' ? 1 : -1;
@@ -162,61 +179,121 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
     return(
         <>  
        
-        <Box  width={'100%'} mt='15px' overflowX={'scroll'}>    
-        {(!data || dataToWork.length === 0) ? 
-            <Box bg='#f1f1f1' borderRadius={'.5rem'} width='100%' borderColor={'gray.200'} borderWidth={'1px'} p='15px'>    
-                <Text fontWeight={'medium'} fontSize={'1.1em'}>{noDataMessage}</Text>
-            </Box>: 
-            <Box borderRadius={'.5em'}  minWidth={`${totalWidth}px`}   >    
-                <Flex position={'sticky'}  borderTopRadius={'.5rem'} minWidth={`${totalWidth}px`}  borderColor={'gray.200'} borderWidth={'1px'} gap='20px' ref={headerRef} alignItems={'center'}  color='gray.600' p='10px' fontSize={'1em'} bg='brand.gray_2' > 
-                    
-                    {selectedElements && 
-                    <Box onClick={(e) => e.stopPropagation()}> 
-                     <CustomCheckbox  id={`checkbox-${-1}`} isChecked={selectedElements.length >= dataToWork.length} onChange={() =>  {if (onSelectAllElements) (onSelectAllElements)()}}/>
-                    </Box>}
-                    {columns.filter(column => column !== 'id').map((column) => (
-                        <Fragment key={`header-${column}`}>
-                            {column in data[0] &&
-                            <Flex minW={0}  alignItems={'center'} flex={`${(columnsMap?.[column]?.[1] || 180)/10} 0 ${(columnsMap?.[column]?.[1] || 180)}px`}> 
-                                <Text color='gray.600' cursor='pointer' onClick={() => requestInternalSort(column)}>{columnsMap?.[column]?.[0] || column}</Text>
-                                {getInternalSortIcon(column) === null ? null : getInternalSortIcon(column) ? <IoMdArrowDropup size='20px' /> : <IoMdArrowDropdown size='20px' />}
-                            </Flex>}
-                        </Fragment>
-                    ))}
-                    {deletableFunction && <Flex width={'60px'}/>}
-                </Flex>
-                 <Box minWidth={`${totalWidth}px`} overflowX={'hidden'} ref={tableBoxRef} overflowY={'scroll'} maxH={height?height:boxHeight}> 
-                    {dataToWork.map((row:any, index:number) => {  
-                        
-                        return (
-                            <Flex height={'50px'} data-index={index}  position={'relative'} overflow={'hidden'} gap='20px' minWidth={`${totalWidth}px`} borderRadius={index === data.length - 1?'0 0 .5rem .5rem':'0'} borderWidth={'0 1px 1px 1px'}  cursor={onClickRow?'pointer':'normal'} onClick={() => {if (onClickRow) onClickRow(row, index)}} key={`row-${index}`}  bg={selectedIndex === index ? 'brand.blue_hover':(selectedElements || []).includes(index)?'brand.blue_hover':index%2 === 1?'#FCFCFC':'white'} alignItems={'center'}  fontSize={'.9em'} color='black' p='10px' borderColor={'gray.200'} _hover={{bg:(selectedElements || [] ).includes(index)?'brand.blue_hover':'brand.blue_hover'}}  > 
-                                {selectedIndex === index && <Box position='absolute' left={0} top={0} height={'100%'} width={'2px'} bg='brand.text_blue'/>}
-                                {selectedElements &&
-                                    <Flex onClick={(e) => e.stopPropagation()}> 
-                                        <CustomCheckbox id={`checkbox-${index}`}  onChange={() => handleCheckboxChange(index, !selectedElements.includes(index))} isChecked={selectedElements.includes(index)} />
-                                    </Flex>}
-                                    {columns.map((column:string, index2:number) => (
-                                        <Fragment key={`header-${index}-${index2}`}>
-                                            {(!(excludedKeys.includes(column)) && column in row) && 
-                                                <Flex minW={0}  alignItems={'center'}  flex={`${(columnsMap?.[column]?.[1] || 180)/10} 0 ${(columnsMap?.[column]?.[1] || 180)}px`}> 
-                                                    {(columnsMap?.[column] !== undefined) ?
-                                                    <CellStyle column={column} element={row[column]}/>
-                                                    :
-                                                    <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{String(row[column])}</Text>
-                                                    }
-                                             </Flex>}
-                                        </Fragment>))}
-                                {deletableFunction && 
-                                    <Flex width={'60px'}  onClick={(e) => e.stopPropagation()}>
-                                        <IconButton size={'sm'} color={'red.600'} bg='transparent' variant={'delete'} _hover={{bg:'red.100'}} icon={<HiTrash size={'20px'}/>} aria-label="delete-row" onClick={() => deletableFunction(row, index)}/>
+        <Box   ref={headerRef}  width={'100%'}  overflowX={'scroll'}>    
 
-                                    </Flex>
-                                }
-                            </Flex>)
-                        })}
+            {(data && dataToWork && !waitingInfo) ?  
+                <>
+                    {data.length === 0  ?
+                    <Flex alignItems={'center'} justifyContent={'center'}  h={height?height:boxHeight}   color='gray.600' flexDir={'column'}> 
+                        <Icon boxSize={'30px'} as={FaMagnifyingGlass}/>
+                        <Text mt='1vh' fontSize={'1em'} fontWeight={'medium'} >{noDataMessage}</Text>
+                    </Flex>
+                    :        
+                    <motion.div initial={{ opacity: 0 }}  animate={{ opacity: 1 }} transition={{ duration: 0.5, ease: "easeInOut" }} style={{ minWidth: `${totalWidth}px` }}> 
+                        <Flex position={'sticky'}minWidth={`${totalWidth}px`}  borderBottomWidth={'1px'} gap='20px' alignItems={'center'}  color='gray.600' p='10px' fontSize={'.9em'} bg='#f8f8f8' > 
+                            {selectedElements && 
+                            <Box onClick={(e) => e.stopPropagation()}> 
+                                <CustomCheckbox  id={`checkbox-${-1}`} isChecked={dataToWork.length > 0 && selectedElements.length >= dataToWork.length} onChange={() =>  {if (onSelectAllElements) (onSelectAllElements)()}}/>
+                            </Box>}
+                            {columns.filter(column => column !== 'id').map((column) => (
+                                <Fragment key={`header-${column}`}>
+                                    {column in data[0] &&
+                                    <Flex minW={0}  alignItems={'center'} flex={`${(columnsMap?.[column]?.[1] || 180)/10} 0 ${(columnsMap?.[column]?.[1] || 180)}px`}> 
+                                        <Text fontWeight={'medium'} color='gray.600' cursor='pointer' onClick={() => requestInternalSort(column)}>{columnsMap?.[column]?.[0] || column}</Text>
+                                        {getInternalSortIcon(column) === null ? null : getInternalSortIcon(column) ? <IoMdArrowDropup size='20px' /> : <IoMdArrowDropdown size='20px' />}
+                                    </Flex>}
+                                </Fragment>
+                            ))}
+                            {deletableFunction && <Flex width={'60px'}/>}
+                        </Flex>
+                        <Box position={'relative'} minWidth={`${totalWidth}px`} overflowX={'hidden'} ref={tableBoxRef} overflowY={'scroll'} maxH={height?height:boxHeight}> 
+                            {dataToWork.map((row:any, index:number) => {  
+                                
+                                return (
+                                    <Flex height={'50px'} data-index={index}  position={'relative'} overflow={'hidden'} gap='20px' minWidth={`${totalWidth}px`}  borderWidth={'0 0px 1px 0px'}  cursor={onClickRow?'pointer':'normal'} onClick={() => {if (onClickRow) onClickRow(row, index)}} key={`row-${index}`}  bg={selectedIndex === index ? 'brand.blue_hover':(selectedElements || []).includes(index)?'brand.blue_hover':index%2 === 1?'#FCFCFC':'white'} alignItems={'center'}  fontSize={'.9em'} color='black' p='10px' borderColor={'gray.200'} _hover={{bg:(selectedElements || [] ).includes(index)?'brand.blue_hover':'brand.blue_hover'}}  > 
+                                        {selectedIndex === index && <Box position='absolute' left={0} top={0} height={'100%'} width={'2px'} bg='brand.text_blue'/>}
+                                        {selectedElements &&
+                                            <Flex onClick={(e) => e.stopPropagation()}> 
+                                                <CustomCheckbox id={`checkbox-${index}`}  onChange={() => handleCheckboxChange(index, !selectedElements.includes(index))} isChecked={selectedElements.includes(index)} />
+                                            </Flex>}
+                                            {columns.map((column:string, index2:number) => (
+                                                <Fragment key={`header-${index}-${index2}`}>
+                                                    {(!(excludedKeys.includes(column)) && column in row) && 
+                                                        <Flex minW={0}  alignItems={'center'}  flex={`${(columnsMap?.[column]?.[1] || 180)/10} 0 ${(columnsMap?.[column]?.[1] || 180)}px`}> 
+                                                            {(columnsMap?.[column] !== undefined) ?
+                                                            <CellStyle column={column} element={row[column]}/>
+                                                            :
+                                                            <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{String(row[column])}</Text>
+                                                            }
+                                                    </Flex>}
+                                                </Fragment>))}
+                                        {deletableFunction && 
+                                            <Flex width={'60px'}  onClick={(e) => e.stopPropagation()}>
+                                                <IconButton size={'sm'} color={'red.600'} bg='transparent' variant={'delete'} _hover={{bg:'red.100'}} icon={<HiTrash size={'20px'}/>} aria-label="delete-row" onClick={() => deletableFunction(row, index)}/>
+                                            </Flex>
+                                        }
+                                    </Flex>)
+                                })}
+                                
+                                {showAccRow && 
+                                    <Flex height={'50px'}zIndex={1000} fontSize={'.9em'}  bottom={0} bg='brand.gray_2' gap='20px'minWidth={`${totalWidth}px`}  borderRadius={'0 0 .5rem .5rem'} borderWidth={'0 1px 1px 1px'}  fontWeight={'medium'} alignItems={'center'} color='black' p='10px'>
+                                        <Text flex={`${(columnsMap?.[accColumn || '']?.[1] || 180) / 10} 0 ${(columnsMap?.[accColumn || '']?.[1] || 180)}px`}>{accMessage}</Text>
+                                        {columns.filter(column => column !== accColumn).map((column: string, index: number) => {
+                                            const sum = dataToWork.reduce((acc: number, row: any) => {
+                                                const value = row[column]
+                                                return typeof value === 'number' ? acc + value : acc;
+                                            }, 0)
+                                            return (
+                                                <Flex key={`sum-${index}`} minW={0} alignItems={'center'} flex={`${(columnsMap?.[column]?.[1] || 180) / 10} 0 ${(columnsMap?.[column]?.[1] || 180)}px`}>
+                                                    <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>
+                                                        {sum.toLocaleString(`${i18n.language}-${i18n.language.toLocaleUpperCase()}`, {minimumFractionDigits:0, maximumFractionDigits:2})}
+                                                    </Text>
+                                                </Flex>
+                                            )
+                                        })}
+                                    </Flex>}
+                        </Box>
+                    </motion.div>
+                }
+                </>
+            :
+            <Box minWidth={`${totalWidth}px`}>
+                <Flex position="sticky" minWidth={`${totalWidth}px`} borderBottomWidth="1px" gap="20px" alignItems="center" color="gray.600" p="10px" fontSize=".9em" bg="#f8f8f8">
+                {selectedElements && (<Box><Skeleton height="20px" width="20px" borderRadius="4px" /></Box>)}
+                
+                {columns.filter((column) => column !== "id").map((column) => (
+                    <Flex key={`skeleton-header-${column}`} minW={0} alignItems="center" flex={`${(columnsMap?.[column]?.[1] || 180) / 10} 0 ${columnsMap?.[column]?.[1] || 180}px`}>
+                    <Skeleton height="20px" width="80%" />
+                    </Flex>
+                ))}
+                {deletableFunction && <Flex width="60px" />}
+                </Flex>
+            
+                <Box position="relative" minWidth={`${totalWidth}px`} overflowX="hidden" overflowY="scroll" maxH={height || boxHeight} >
+                {Array.from({ length: 20 }).map((_, rowIndex) => (
+                    <Flex key={`skeleton-row-${rowIndex}`} height="50px" gap="20px" minWidth={`${totalWidth}px`} borderWidth="0 0px 1px 0px" alignItems="center" p="10px" borderColor="gray.200" bg={rowIndex % 2 === 1 ? "#FCFCFC" : "white"}>
+                    {selectedElements && (
+                        <Flex>
+                        <Skeleton height="20px" width="20px" borderRadius="4px" />
+                        </Flex>
+                    )}
+                    {columns.map((column, colIndex) => (
+                        <Flex key={`skeleton-cell-${rowIndex}-${colIndex}`} minW={0} alignItems="center" flex={`${(columnsMap?.[column]?.[1] || 180) / 10} 0 ${columnsMap?.[column]?.[1] || 180 }px`}>
+                        <Skeleton height="16px" width="70%" />
+                        </Flex>
+                    ))}
+                    {deletableFunction && (
+                        <Flex width="60px">
+                        <Skeleton height="20px" width="20px" borderRadius="4px" />
+                        </Flex>
+                    )}
+                    </Flex>
+                ))}
                 </Box>
             </Box>
+        
             }
+            
         </Box>
     
     </> )

@@ -84,22 +84,24 @@ const ActionsButton = ({items, view, section}:ButtonProps) =>{
         setShowList(false)
     }, [items, view, section])
     const handleEditView = useCallback(() => {
-        if (section === 'conversations' && view) navigate(`/settings/people/edit-views/edit/${view.type}/${view.index}`)
+        if (section === 'conversations' && view) navigate(`/settings/workflows/edit-views/edit/${view.type}/${view.index}`)
     }, [navigate, section, view])
     const handleCloneView = useCallback(() => {
-        if (section === 'conversations' && view) navigate(`/settings/people/edit-views/edit/${view.type}/${view.index}/copy`)
+        if (section === 'conversations' && view) navigate(`/settings/workflows/edit-views/edit/${view.type}/${view.index}/copy`)
     }, [navigate, section, view])
 
     //FRONT
     return (
         <Flex position={'relative'} flexDir='column' alignItems={'end'}>  
-            <Button size='sm'  ref={buttonRef} leftIcon={<IoIosArrowDown className={showList ? "rotate-icon-up" : "rotate-icon-down"}/>}variant='common' onClick={() => {setShowList(!showList)}} >
+            <Button size='sm'   ref={buttonRef} leftIcon={<IoIosArrowDown className={showList ? "rotate-icon-up" : "rotate-icon-down"}/>}variant='common' onClick={() => {setShowList(!showList)}} >
                 {t('Actions')}
             </Button>
             <AnimatePresence> 
+                
                 {showList && 
-                    <MotionBox ref={boxRef} initial={{ opacity: 0, scale: 0.95, }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.95 }}  transition={{ duration: '0.1', ease: 'easeOut'}}
-                        style={{ transformOrigin: 'top' }}  fontSize={'.9em'} marginTop={'5px'} top='100%' position='absolute' bg='white' zIndex={1000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.300' borderWidth='1px' borderRadius='.5rem'>
+                <Portal>
+                    <MotionBox  id="custom-portal"  ref={boxRef} initial={{ opacity: 0, scale: 0.95, }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.95 }}  transition={{ duration: '0.1', ease: 'easeOut'}}
+                        style={{ transformOrigin: 'top right' }} top={buttonRef.current?.getBoundingClientRect().bottom} right={'2vw'} overflow={'hidden'}  fontSize={'.8em'} marginTop={'5px'}  position='fixed' bg='white' zIndex={1000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.300' borderWidth='1px' borderRadius='.5rem'>
                         <Flex onClick={handleDownloadCSV}  cursor={'pointer'}  px='15px' py='10px' gap='10px' alignItems={'center'} _hover={{bg:'brand.hover_gray'}}>
                             <Icon  color='gray.600' as={FaFileCsv}/>
                             <Text whiteSpace={'nowrap'}>{t('CSV')}</Text>
@@ -115,7 +117,9 @@ const ActionsButton = ({items, view, section}:ButtonProps) =>{
                             <Text whiteSpace={'nowrap'}>{t('CloneView')}</Text>
                         </Flex></> }
                    </MotionBox >
+                   </Portal>
                 }
+         
             </AnimatePresence>
         </Flex>
     )

@@ -120,8 +120,9 @@
     "ApplyFilters":"Aplicar filtros",
     "Page":"Página {{count}}",
     "Cancel":"Cancelar",
-    "Processed":"Procesado"
-
+    "Processed":"Procesado",
+    "Create":"Crear",
+    "MoveToFolder":"Mover"
 
   } 
 

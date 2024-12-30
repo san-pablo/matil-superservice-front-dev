@@ -1,23 +1,79 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { visualizer } from 'rollup-plugin-visualizer'
-import { exec } from 'child_process'  // Importar el módulo para ejecutar comandos de terminal
+import { exec } from 'child_process' 
+import fs from 'fs'
 
-// Plugin personalizado para abrir Safari automáticamente
-const openSafariPlugin = () => {
-  return {
-    name: 'open-safari',
-    configureServer(server:any) {
-      server.httpServer?.once('listening', () => {
-        const address = server.httpServer?.address();
-        const url = `http://192.168.0.179:${address.port}`;
-        exec(`open -a Safari ${url}`);
-      });
+const startNgrokPlugin = () => {
+  let isNgrokStarted = false
+  const url = 'https://matil.a.pinggy.link'
+
+  // Función para verificar el estado del túnel
+  const checkTunnelStatus = (url:string) => {
+    return new Promise((resolve, reject) => {
+      fetch(url)
+        .then((response) => {
+          if (response.ok) {
+            resolve(true);
+          } else {
+            reject(new Error('El túnel no está disponible'));
+          }
+        })
+        .catch((error) => reject(error));
+    });
+  };
+
+  // Función para esperar un tiempo
+  const delay = (ms:number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  // Función para esperar hasta que el túnel esté disponible
+  const openInSafariWhenReady = async (url:String) => {
+    let tunnelActive = false;
+
+    while (!tunnelActive) {
+      try {
+        console.log('Comprobando si el túnel está activo...');
+        await checkTunnelStatus(url as string);
+        tunnelActive = true;
+        console.log('El túnel está activo. Abriendo Safari...');
+        
+        // Abre Safari una vez que el túnel está disponible
+        exec(`open -a Safari ${url}`, (err, stdout, stderr) => {
+          if (err) {
+            console.error('Error al abrir Safari:', err);
+          } else {
+            console.log('Safari abierto con éxito.');
+          }
+        });
+        
+      } catch (error) {
+        console.error('El túnel aún no está disponible, reintentando...');
+        await delay(5000)
+      }
     }
-  }
-}
+  };
 
-// https://vitejs.dev/config/
+  return {
+    name: 'start-ngrok',
+    configureServer(server:any) {
+      if (!isNgrokStarted) {
+        server.httpServer?.once('listening', () => {
+          const ngrokCommand = 'ssh -p 443 -R0:localhost:4005 -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -T jKtmHObAcyV@eu.a.pinggy.io x:https x:localServerTls:localhost';
+          exec(ngrokCommand, (error, stdout, stderr) => {
+            if (error) console.error(`Error al iniciar ngrok: ${error.message}`);
+            if (stderr) console.error(`stderr de ngrok: ${stderr}`);
+            console.log(`ngrok stdout: ${stdout}`);
+          });
+          
+          // Esperamos hasta que el túnel esté activo
+          openInSafariWhenReady(url);
+        });
+      }
+    }
+  };
+};
+
+// Configuración de Vite
 export default defineConfig(({ command, mode }) => {
   const commonPlugins = [
     react(),
@@ -27,36 +83,23 @@ export default defineConfig(({ command, mode }) => {
       gzipSize: true,
       brotliSize: true,
     }),
-    openSafariPlugin() // Agregar el plugin personalizado para abrir Safari
+    startNgrokPlugin(),
   ];
 
   if (command === 'serve' && mode === 'hot-reload') {
-    // Development mode with hot-reloading
     return {
       plugins: commonPlugins,
       server: {
         port: 4005,
-        open: false,  // Desactivar la apertura automática del navegador predeterminado
-        host: '192.168.0.179',
-      },
-    };
-  }
-
-  if (command === 'serve' && mode === 'no-hot-reload') {
-    // Production-like mode with no hot-reloading
-    return {
-      plugins: commonPlugins,
-      server: {
-        port: 4002, // Different port for the no-hot-reload version
+        https: {
+          key: fs.readFileSync('./cert/server.key'),
+          cert: fs.readFileSync('./cert/server.crt'),
+        },
         open: false,
-        host: '192.168.0.179',
-        hmr: false, // Disable hot module replacement (HMR)
-      },
+        cors: true
+      }
     };
   }
 
-  // Default configuration (for build, etc.)
-  return {
-    plugins: commonPlugins,
-  };
+  return { plugins: commonPlugins };
 });

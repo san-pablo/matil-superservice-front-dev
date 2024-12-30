@@ -5,7 +5,7 @@
 //REACT
 import { createContext, useContext, useReducer, ReactNode, Dispatch } from 'react'
 //TYPING
-import { Clients, ConversationColumn,  Channels , Conversations, ConversationsData, ClientColumn, ClientData, ContactBusinessesProps, ContactBusinessesTable, FlowsData ,FunctionsData, MessagesData, MessagesProps, ContentData } from './Content/Constants/typing'
+import { Clients, ConversationColumn,  Channels , FunctionTableData, ReportDataType, Conversations, ConversationsData, ClientColumn, ClientData, ContactBusinessesProps, ContactBusinessesTable, MessagesData, MessagesProps, ContentData } from './Content/Constants/typing'
 
 //CONVERSATIONS TABLE DATA TYPE
 type ConversationsTable = {
@@ -40,13 +40,15 @@ type HeaderSections = {
         businessClients:Clients | null,
     }
 }
-//STATS SECTION DATA TYPE
-type StatsSection = {data:any, filters:{channels:Channels[], selectedMonth:number, selectedYear:number}}
-type StatsSectionData = {
-    conversations: StatsSection
-    matilda: StatsSection
-    users: StatsSection
-    csat: StatsSection
+
+//CHANNELS TYOE
+type ChannelsType = {
+    id: string
+    uuid: string
+    display_id: string
+    name: string
+    channel_type: string
+    is_active: string
 }
 
 //SESSION DATA TYPE
@@ -54,10 +56,11 @@ type SessionData = {
     conversationsTable:ConversationsTable[]
     clientsTable:ClientsTable | null
     contactBusinessesTable:ContactBusinessesSection | null
-    flowsFunctions:{flows:FlowsData[] | null, functions:FunctionsData[] | null},
+    functionsData:FunctionTableData[] | null
     contentData:ContentData[] | null
     headerSectionsData:HeaderSections[]
-    statsSectionData:StatsSectionData
+    statsSectionTableData:ReportDataType[] | null
+    additionalData:{channels:null | ChannelsType[]}
 }
 
 //AUTH CONTEXT TYPE DEFINITION
@@ -66,6 +69,7 @@ type AuthContextType = {
     dispatch: Dispatch<any>
 }
 
+
 const SessionContext = createContext<AuthContextType | undefined>(undefined)
 
 //INITIAL SESSION DATA
@@ -73,15 +77,12 @@ const initialState: SessionData = {
     conversationsTable: [],
     clientsTable: null,
     contactBusinessesTable:null,
-    flowsFunctions:{flows:null, functions:null},
+    functionsData:null,
     contentData: null,
     headerSectionsData: [],
-    statsSectionData: {
-        conversations: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } },
-        matilda: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } },
-        users: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } },
-        csat: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } }
-    }
+    statsSectionTableData:null,
+    additionalData:{channels:null}
+
 }
 
 //REDUCER
@@ -135,13 +136,9 @@ const sessionReducer = (state: SessionData, action: { type: string; payload: any
             return { ...state, contentData: action.payload.data }
 
         //SAVE FLOWS AND FUNCTIONS INFORMATION
-        case 'UPDATE_FLOWS':
-            return { ...state, flowsFunctions: { ...state.flowsFunctions, flows:action.payload.data }}
-        case 'DELETE_FLOWS':
-            return { ...state, flowsFunctions: { ...state.flowsFunctions, flows:null }}
         case 'UPDATE_FUNCTIONS':
-            return { ...state, flowsFunctions: { ...state.flowsFunctions, functions:action.payload.data }}
-
+            return { ...state, functionsData: action.payload.data }
+        
         //ADD A NEW HEADER SECTION (CONVERSATION, CLIENT, CONTACT_BUSINESS)
         case 'UPDATE_HEADER_SECTIONS':
             if (action.payload.action === 'add') {
@@ -252,7 +249,7 @@ const sessionReducer = (state: SessionData, action: { type: string; payload: any
 
         //UPDATE AN STAT SECTION
         case 'UPDATE_STATS_SECTION':
-            return { ...state, statsSectionData: { ...state.statsSectionData, ...action.payload } }
+            return { ...state, statsSectionTableData: action.payload  }
 
         //DELETE ALL SESSION DATA (LOG OUT OR ORGANIZATION CHANGE)
         case 'DELETE_ALL_SESSION':
@@ -260,15 +257,11 @@ const sessionReducer = (state: SessionData, action: { type: string; payload: any
                 conversationsTable: [],
                 clientsTable: null,
                 contactBusinessesTable:null,
-                flowsFunctions:{flows:null, functions:null},
+                functionsData:null,
                 headerSectionsData: [],
                 contentData: null,
-                statsSectionData: {
-                    conversations: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } },
-                    matilda: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } },
-                    users: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } },
-                    csat: { data: null, filters: { channels: [], selectedMonth: new Date().getFullYear(), selectedYear: new Date().getMonth() } }
-                }
+                statsSectionTableData: null,
+                additionalData:{channels:null}
             }
 
         //CHANGE UNSEEN_CHANGES ON OPEN VIEWS WHEN ENTERING A clientConversations
@@ -291,6 +284,9 @@ const sessionReducer = (state: SessionData, action: { type: string; payload: any
             })
             return { ...state, conversationsTable: updatedConversationsTables }
             
+        //ADD CHANNELS
+        case 'ADD_CHANNELS':
+            return { ...state, additionalData: {channels:action.payload} }
             
         default:
             return state

@@ -9,12 +9,13 @@ import { Text, Box, Skeleton, Flex, Button } from "@chakra-ui/react"
 //COMPONENTS
 import ChannelInfo from "./Components/Channelnfo"
 import GoogleLoginButton from "./SignUp-Buttons/GoogleLoginButton"
-import GetMatildaConfig from "./Configurations"
 import LoadingIconButton from "../../../Components/Reusable/LoadingIconButton" 
+import SaveChanges from "../../../Components/Reusable/SaveChanges"
 //ICONS
-import { BsTrash3Fill } from "react-icons/bs"
+import { HiTrash } from "react-icons/hi2"
 //TYPING
 import { ConfigProps } from "../../../Constants/typing"
+import { useAuth0 } from "@auth0/auth0-react"
 
 interface WhatsappProps { 
     id:string
@@ -27,6 +28,7 @@ interface WhatsappProps { 
 function Google () {
 
     //AUTH CONSTANT
+    const { getAccessTokenSilently } = useAuth0()
     const auth = useAuth()
     const  { t } = useTranslation('settings')
 
@@ -47,13 +49,13 @@ function Google () {
 
     //FETCH DATA
     const fetchInitialData = async() => {
-        await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/matilda_configurations`, setValue:setConfigData, auth})
-        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels`, auth})
+        await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/matilda_configurations`,getAccessTokenSilently, setValue:setConfigData, auth})
+        const response = await fetchData({getAccessTokenSilently, endpoint:`${auth.authData.organizationId}/admin/settings/channels`, auth})
          if (response?.status === 200){
           let googleChannel 
           response.data.map((cha:any) => {if (cha.channel_type === 'google_business')  googleChannel = cha.id})
           if (googleChannel) {
-            const responseMail = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${googleChannel}`,  setValue: setData, auth})
+            const responseMail = await fetchData({getAccessTokenSilently, endpoint:`${auth.authData.organizationId}/admin/settings/channels/${googleChannel}`,  setValue: setData, auth})
             if (responseMail?.status === 200) {
                 setData(responseMail.data.configuration)
                 dataRef.current = responseMail.data.configuration
@@ -73,23 +75,18 @@ function Google () {
   
 
       const saveChanges = async () => {
-        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${dataRef.current.id}`, setValue:setWaitingSend, setWaiting:setWaitingSend, auth, method:'put', requestForm:{...data, matilda_configuration_uuid:selectedConfigId}, toastMessages:{'works':t('CorrectUpdatedInfo'), 'failed':t('FailedUpdatedInfo')}})
+        const response = await fetchData({getAccessTokenSilently, endpoint:`${auth.authData.organizationId}/admin/settings/channels/${dataRef.current.id}`, setValue:setWaitingSend, setWaiting:setWaitingSend, auth, method:'put', requestForm:{...data, matilda_configuration_uuid:selectedConfigId}, toastMessages:{'works':t('CorrectUpdatedInfo'), 'failed':t('FailedUpdatedInfo')}})
         if (response?.status === 200) {
             configIdRef.current = selectedConfigId
             dataRef.current = data
         }
     }
     return(
-    <Skeleton isLoaded={ data !== null}>
-        <Box> 
-            <Flex justifyContent={'space-between'}> 
-                <Text fontSize={'1.4em'} fontWeight={'medium'}>Google Business</Text>
-                {!(data?.display_id === '') && <Button variant={'delete_section'} leftIcon={<BsTrash3Fill/>} size='sm'>{t('DeleteAccount')}</Button>}
-            </Flex>            
-            <Box height={'1px'} width={'100%'} bg='gray.300' mt='1vh'/>
-        </Box>
+        <>
+    <SaveChanges  onSaveFunc={saveChanges} data={selectedConfigId} dataRef={configIdRef} setData={setSelectedConfigId} areNullEnabled/>
 
  
+    <Skeleton isLoaded={ data !== null}>
         {data?.display_id === '' ?
             <Flex height={'100%'} top={0} left={0} width={'100%'} position={'absolute'} alignItems={'center'} justifyContent={'center'}> 
                 <Box maxW={'580px'} textAlign={'center'}> 
@@ -100,6 +97,14 @@ function Google () {
             </Flex>
         :
         <>
+           <Box> 
+                <Flex justifyContent={'space-between'}> 
+                    <Text fontSize={'1.4em'} fontWeight={'medium'}>Google Business</Text>
+                    {!(data?.display_id === '') && <Button variant={'delete_section'} leftIcon={<HiTrash/>} size='sm'>{t('DeleteAccount')}</Button>}
+                </Flex>            
+                <Box height={'1px'} width={'100%'} bg='gray.300' mt='1vh'/>
+            </Box>
+
             <Flex flex='1' overflow={'hidden'} width={'100%'} gap='5vw'> 
                 <Box flex='1' pt='4vh' overflow={'scroll'}> 
                     <Skeleton isLoaded={ data !== null}> 
@@ -126,7 +131,8 @@ function Google () {
                 </Flex>
             </Box>
         </>} 
-    </Skeleton>)
+    </Skeleton>
+    </>)
     }
  
 export default Google

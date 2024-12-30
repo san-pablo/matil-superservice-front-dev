@@ -8,6 +8,7 @@ import LoadingIconButton from '../../Components/Reusable/LoadingIconButton'
 import fetchData from '../../API/fetchData'
 import EditText from '../../Components/Reusable/EditText'
 import { useTranslation } from 'react-i18next'
+import { useAuth0 } from '@auth0/auth0-react'
 
 
 //MAIN FUNCTION
@@ -16,6 +17,7 @@ const CreateBusiness = ({setShowBox, actionTrigger}:{setShowBox:(key:boolean) =>
     //CONSTANTS
     const auth = useAuth()
     const { t } = useTranslation('businesses')
+    const { getAccessTokenSilently } = useAuth0()
 
     //BOOLEAN FOR WAIT THE CREATION
     const [waitingCreate, setWaitingCreate] = useState<boolean>(false)
@@ -28,7 +30,7 @@ const CreateBusiness = ({setShowBox, actionTrigger}:{setShowBox:(key:boolean) =>
    
     //FUNCTION FOR CREATE A NEW BUSINESS
     const createBusiness = async () => {
-        const businessData = await fetchData({endpoint:`${auth.authData.organizationId}/contact_businesses`, method:'post', setWaiting:setWaitingCreate, requestForm:{name:businessName, domain:businessDomain}, auth, toastMessages:{'works': t('CorrectCreated'), 'failed':t('FailedtCreated')}})
+        const businessData = await fetchData({endpoint:`${auth.authData.organizationId}/contact_businesses`, method:'post',getAccessTokenSilently, setWaiting:setWaitingCreate, requestForm:{name:businessName, domain:businessDomain}, auth, toastMessages:{'works': t('CorrectCreated'), 'failed':t('FailedtCreated')}})
         setShowBox(false)
         if (businessData?.status === 200) actionTrigger( businessData?.data.contact_business)
     }

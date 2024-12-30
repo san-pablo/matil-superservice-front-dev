@@ -7,6 +7,7 @@ import fetchData from '../../API/fetchData'
 import VariableTypeChanger from './VariableTypeChanger'
 //FRONT
 import { Text, Skeleton } from '@chakra-ui/react'
+import { useAuth0 } from '@auth0/auth0-react'
  
 //TYPING
 type variables = 'bool' | 'int' | 'float' | 'str' | 'timestamp'
@@ -17,12 +18,13 @@ const CustomAttributes = ({motherstructureType, customAttributes, updateCustomAt
 
     //CONSTANTS
     const auth = useAuth()
+    const { getAccessTokenSilently } = useAuth0()
 
     //GET ALL ATTRIBUTES
     const [allAtributtes, setAllAttributes] = useState<{conversation:fieldConfigType[], contact:fieldConfigType[], contact_business:fieldConfigType[]} | null>(null)
     useEffect(() => {        
         const fetchInitialData = async() => {
-            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/custom_attributes`, setValue:setAllAttributes, auth})
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/custom_attributes`,getAccessTokenSilently, setValue:setAllAttributes, auth})
         }
         if (auth.authData.customAttributes) setAllAttributes(auth.authData.customAttributes)
         else fetchInitialData()

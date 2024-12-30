@@ -38,6 +38,7 @@ import { IoIosArrowForward, IoIosArrowBack, IoIosArrowDown } from "react-icons/i
 //TYPING
 import { ClientData, Conversations, contactDicRegex, ContactChannel, Channels, logosMap, HeaderSectionType, DeleteHeaderSectionType, languagesFlags, ContactBusinessesTable, ConversationColumn, Clients } from "../../Constants/typing"
 import showToast from "../../Components/Reusable/ToastNotification"
+import { useAuth0 } from "@auth0/auth0-react"
  
 //COMPONENTS    
 const Business = lazy(() => import('../Businesses/Business'))
@@ -100,7 +101,7 @@ const CellStyle = ({column, element}:{column:string, element:any}) => {
     const t_formats = useTranslation('formats').t
 
     if (column === 'local_id') return  <Text color='gray' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>#{element}</Text>
-    else if (column === 'user_id') return  <Text fontWeight={'medium'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element === -1 ?'Matilda':element === 0 ? t('NoAgent'):(auth?.authData?.users?.[element as string | number].name || '')}</Text>
+    else if (column === 'user_id') return  <Text fontWeight={'medium'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element === 'matilda' ?'Matilda':element === 'no_user' ? t('NoAgent'):(auth?.authData?.users?.[element as string | number].name || '')}</Text>
     else if (column === 'unseen_changes') 
         return(
         <Flex color={element?'red':'green'} alignItems={'center'} gap='5px'> 
@@ -134,6 +135,7 @@ function Client ({comesFromConversation,  socket, addHeaderSection, deleteHeader
     const { t } = useTranslation('clients')
     const t_conver = useTranslation('conversations').t
     const t_formats = useTranslation('formats').t
+    const { getAccessTokenSilently } = useAuth0() 
 
     //CONSTANTS
     const auth = useAuth()
@@ -145,11 +147,11 @@ function Client ({comesFromConversation,  socket, addHeaderSection, deleteHeader
         if (languagesFlags.hasOwnProperty(key)) {
             const values = languagesFlags[key]
             languagesMap[key] = values[0]
-        }
+        } 
     }
 
     //TABLE MAPPING
-    const columnsConversationsMap:{[key in ConversationColumn]:[string, number]} = {id: [t_conver('id'), 50], local_id: [t_conver('local_id'), 50], status:  [t_conver('status'), 100], channel_type: [t_conver('channel_type'), 150], theme:  [t_conver('theme'), 200], user_id: [t_conver('user_id'), 200], created_at: [t_conver('created_at'), 150],updated_at: [t_conver('updated_at'), 150], solved_at: [t_conver('solved_at'), 150],closed_at: [t_conver('closed_at'), 150],title: [t_conver('title'), 300], urgency_rating: [t_conver('urgency_rating'), 130], deletion_date: [t_conver('deletion_date'), 180], unseen_changes: [t_conver('unseen_changes'), 200]}
+    const columnsConversationsMap:{[key in ConversationColumn]:[string, number]} = {id: [t('id'), 50], local_id: [t('local_id'), 50], status:  [t('status'), 100], channel_type: [t('channel_type'), 150], theme:  [t('theme'), 200], user_id: [t('user_id'), 200], created_at: [t('created_at'), 150],updated_at: [t('updated_at'), 180], solved_at: [t('solved_at'), 150],closed_at: [t('closed_at'), 150],title: [t('title'), 300], urgency_rating: [t('urgency_rating'), 130], deletion_scheduled_at: [t('deletion_date'), 180], unseen_changes: [t('unseen_changes'), 200],  call_status: [t('call_status'), 150], call_duration: [t('call_duration'), 150], }
     
     //WEBSOCKET ACTIONS, THEY TRIGEGR ONLY IF THE USER IS INSIDE THE SECTION
     useEffect(() =>  {
@@ -238,9 +240,10 @@ function Client ({comesFromConversation,  socket, addHeaderSection, deleteHeader
                     setClientDataEdit(clientElement.data.clientData)
                     clientDataEditRef.current = clientElement.data.clientData
 
+                    console.log(clientElement)
                     if (clientElement.data.clientConversations) setClientConversationsEdit(clientElement.data.clientConversations)
                     else {
-                        const reponse = await fetchData({endpoint:`${auth.authData.organizationId}/conversations`, params:{page_index:1, view_index:0,view_type:'', retrieve_exclusively_for_client:true, contact_id:clientId}, setValue:setClientConversationsEdit, auth })         
+                        const reponse = await fetchData({endpoint:`${auth.authData.organizationId}/conversations`,getAccessTokenSilently, params:{page_index:1, view_index:0,view_type:'', retrieve_exclusively_for_contact:true, contact_id:clientId}, setValue:setClientConversationsEdit, auth })         
                         session.dispatch({type:'UPDATE_HEADER_SECTIONS',payload:{action:'add', data:{id:clientId, type:'client', data:{...clientElement.data ,clientConversations:reponse?.data}}}})
                     }
 
@@ -250,17 +253,17 @@ function Client ({comesFromConversation,  socket, addHeaderSection, deleteHeader
                 
                 //CALL THE API AND REQUEST (CLIENT DATA, CLIENT CONVERSATIONS AND CONTACT BUSINESS)
                 else {
-                    const clientResponse = await fetchData({endpoint:`${auth.authData.organizationId}/contacts/${clientId}`, setValue:setClientDataEdit,  auth})
+                    const clientResponse = await fetchData({endpoint:`${auth.authData.organizationId}/contacts/${clientId}`,getAccessTokenSilently, setValue:setClientDataEdit,  auth})
                      
                     if (clientResponse?.status === 200) {
                         addHeaderSection(clientResponse.data.name , clientResponse.data.id, 'client')
                         clientDataEditRef.current = clientResponse.data
 
-                        const conversationsResponse = await fetchData({endpoint:`${auth.authData.organizationId}/conversations`, params:{page_index:1, view_index:0,view_type:'', retrieve_exclusively_for_client:true, contact_id:clientId}, setValue:setClientConversationsEdit, auth })         
+                        const conversationsResponse = await fetchData({endpoint:`${auth.authData.organizationId}/conversations`,getAccessTokenSilently, params:{page_index:1, view_index:0,view_type:'', retrieve_exclusively_for_contact:true, contact_id:clientId}, setValue:setClientConversationsEdit, auth })         
                         
                         let businessDict:ContactBusinessesTable = {id:-1, domain: '',name:'', notes: '', labels:'', created_at:'', last_interaction_at:''}
                         if (clientResponse.data.contact_business_id && clientResponse.data.contact_business_id !== -1)  {
-                            const businessResponse = await fetchData({endpoint:`${auth.authData.organizationId}/contact_businesses/${clientResponse.data.contact_business_id}`, setValue:setBusinessDataEdit, auth })
+                            const businessResponse = await fetchData({endpoint:`${auth.authData.organizationId}/contact_businesses/${clientResponse.data.contact_business_id}`,getAccessTokenSilently,  setValue:setBusinessDataEdit, auth })
                             businessDict = businessResponse?.data
                         }
                         else setBusinessDataEdit(businessDict)
@@ -280,7 +283,7 @@ function Client ({comesFromConversation,  socket, addHeaderSection, deleteHeader
 
         const filtersToSend = applied_filters?applied_filters:{page_index:1}
 
-        const conversationsResponse = await fetchData({endpoint:`${auth.authData.organizationId}/conversations`, params:{view_index:0,view_type:'', retrieve_exclusively_for_client:true, contact_id:clientDataEdit?.id, ...filtersToSend}, setValue:setClientConversationsEdit, auth })         
+        const conversationsResponse = await fetchData({endpoint:`${auth.authData.organizationId}/conversations`, getAccessTokenSilently,params:{view_index:0,view_type:'', retrieve_exclusively_for_contact:true, contact_id:clientDataEdit?.id, ...filtersToSend}, setValue:setClientConversationsEdit, auth })         
         if (conversationsResponse?.status == 200) {
             setClientConversationsEdit(conversationsResponse?.data)
             setConversationsFilters(filtersToSend)
@@ -293,7 +296,7 @@ function Client ({comesFromConversation,  socket, addHeaderSection, deleteHeader
 
         const compareData = newData ? newData : clientDataEdit as ClientData
         if (JSON.stringify(clientDataEditRef.current) !== JSON.stringify(compareData)){
-            const updateResponse = await fetchData({endpoint:`${auth.authData.organizationId}/contacts/${compareData?.id}`, auth:auth, requestForm:compareData, method:'put', toastMessages:{'works':`El cliente /{${clientDataEdit?.name}}/ se actualizó correctamente.`,'failed':`Hubo un problema al actualizar la información.`}})
+            const updateResponse = await fetchData({endpoint:`${auth.authData.organizationId}/contacts/${compareData?.id}`,getAccessTokenSilently, auth:auth, requestForm:compareData, method:'put', toastMessages:{'works':`El cliente /{${clientDataEdit?.name}}/ se actualizó correctamente.`,'failed':`Hubo un problema al actualizar la información.`}})
             if (updateResponse?.status === 200) {
                 clientDataEditRef.current = compareData
                 if (comesFromConversation && setClientData) setClientData(compareData)
@@ -425,7 +428,7 @@ function Client ({comesFromConversation,  socket, addHeaderSection, deleteHeader
                 setWaitingResults(true)
                 const timeoutId = setTimeout(async () => {
  
-                const response = await fetchData({endpoint: `${auth.authData.organizationId}/contact_businesses`, setValue:setElementsList, auth, params: { page_index: 1, search: text }})
+                const response = await fetchData({endpoint: `${auth.authData.organizationId}/contact_businesses`,getAccessTokenSilently, setValue:setElementsList, auth, params: { page_index: 1, search: text }})
                 if (response?.status === 200) {setShowResults(true);setWaitingResults(false)}
                 else {setShowResults(false);setWaitingResults(false)}
                 }, 500)
@@ -556,10 +559,10 @@ function Client ({comesFromConversation,  socket, addHeaderSection, deleteHeader
                             {(Object.keys(contactDicRegex).includes(con)) && clientDataEdit?.[con as ContactChannel] && clientDataEdit?.[con as ContactChannel] !== '' &&
                                 <Flex mt='1vh' alignItems={'center'} gap='10px' key={`contact_type-2-${index}`}> 
                                     <Box width={'70px'}> 
-                                        <Text fontSize='.8em' fontWeight={'medium'} >{contactDicRegex[con as ContactChannel][0]}</Text>
+                                        <Text fontSize='.8em' fontWeight={'medium'} >{t(con)}</Text>
                                     </Box>
                                     <Box flex='1'> 
-                                        <EditText fontSize={'.8em'} updateData={updateData} focusOnOpen={clientDataEdit?.[con as ContactChannel] === '-'} maxLength={contactDicRegex[con as ContactChannel][2]} regex={contactDicRegex[con as ContactChannel][1]} value={clientDataEdit?.[con as ContactChannel]} setValue={(value:string) => handleChangeChannel(value, con as ContactChannel)} />
+                                        <EditText fontSize={'.8em'} updateData={(text:string | undefined) => updateData({...clientDataEdit as ClientData, [con]:text as string})}  focusOnOpen={clientDataEdit?.[con as ContactChannel] === '-'} maxLength={contactDicRegex[con as ContactChannel][1]} regex={contactDicRegex[con as ContactChannel][0]} value={clientDataEdit?.[con as ContactChannel]} setValue={(value:string) => handleChangeChannel(value, con as ContactChannel)} />
                                     </Box>
                                 </Flex>}
                         </Fragment>))}
@@ -576,8 +579,8 @@ function Client ({comesFromConversation,  socket, addHeaderSection, deleteHeader
                                 <Fragment key={`select-channel-${index}`}> 
                                     {(clientDataEdit?.[con as ContactChannel] === null || clientDataEdit?.[con as ContactChannel] === '')&&
                                         <Flex color='gray.600' fontSize={'.9em'} onClick={() => addNewChannel(con as ContactChannel)} key={`channels-${index}`}  px='15px' py='10px' cursor={'pointer'} gap='10px' alignItems={'center'} _hover={{bg:'gray.100'}}>
-                                            <Icon as={logosMap[contactDicRegex[con as ContactChannel][3]][0]}/>
-                                            <Text>{t(contactDicRegex[con as ContactChannel][3])}</Text>
+                                            <Icon as={logosMap[contactDicRegex[con as ContactChannel][2]][0]}/>
+                                            <Text>{t(contactDicRegex[con as ContactChannel][2])}</Text>
                                         </Flex>
                                     }
                                 </Fragment>))}
@@ -600,10 +603,10 @@ function Client ({comesFromConversation,  socket, addHeaderSection, deleteHeader
                     <Skeleton isLoaded={clientDataEdit !== null}>
                         <Box flex='1'> 
                             <Box   minHeight="30px" maxH="300px" border="1px solid #CBD5E0"   p="5px" _focusWithin={{ borderColor:'transparent', boxShadow:'0 0 0 2px rgb(59, 90, 246)'}} borderRadius=".5rem" overflow="auto" display="flex" flexWrap="wrap" alignItems="center" onKeyDown={handleKeyDown}  tabIndex={0}>
-                                {clientDataEdit?.labels === '' ? <></>:
+                                {(!clientDataEdit?.labels || clientDataEdit?.labels === '') ? <></>:
                                 <> 
                                     {((clientDataEdit?.labels || '').split(',')).map((label, index) => (
-                                        <Flex key={`label-${index}`} borderRadius=".4rem" p='4px' fontSize={'.75em'} alignItems={'center'} m="1"bg='brand.gray_1' borderWidth={'1px'} borderColor={'gray.300'} gap='5px'>
+                                        <Flex key={`label-${index}`} borderRadius=".4rem" p='4px' fontSize={'.75em'} alignItems={'center'} m="1" bg='brand.gray_2' borderWidth={'1px'} borderColor={'gray.300'} gap='5px'>
                                             <Text>{label}</Text>
                                             <Icon as={RxCross2} onClick={() => removeTag(index)} cursor={'pointer'} />
                                         </Flex>
@@ -641,7 +644,7 @@ function Client ({comesFromConversation,  socket, addHeaderSection, deleteHeader
                     <Flex  flex='1' gap='20px'  alignItems={'center'}>
                         <Avatar />
                         <Skeleton width={'100%'} isLoaded={clientDataEdit !== null}> 
-                            <EditText nameInput={true} size='md' maxLength={70} updateData={updateData} value={clientDataEdit?.name === ''? t('WebClient'):clientDataEdit?.name} setValue={handelChangeName}/>
+                            <EditText nameInput={true} size='md' maxLength={70} updateData={(text:string | undefined) => updateData({...clientDataEdit as ClientData, name:text as string})} value={clientDataEdit?.name === ''? t('WebClient'):clientDataEdit?.name} setValue={handelChangeName}/>
                         </Skeleton>
                     </Flex>
                     <Flex alignItems={'center'} gap='10px'>
@@ -691,6 +694,7 @@ const MergeBox = ({clientData, setShowMerge, deleteHeaderSection}:MergeBoxProps)
 
     //AUTH CONSTANT
     const { t } = useTranslation('clients')
+    const { getAccessTokenSilently } = useAuth0()
 
     const auth = useAuth()
     const session = useSession()
@@ -714,7 +718,7 @@ const MergeBox = ({clientData, setShowMerge, deleteHeaderSection}:MergeBoxProps)
         if (text === '') {setWaitingResult(false);setShowResults(false);return}
             const timeoutId = setTimeout(async () => {
             setWaitingResult(true)
-            const response = await fetchData({endpoint: `${auth.authData.organizationId}/contacts`, setValue:setElementsList, auth:auth, params: { page_index: 1, search: text }})
+            const response = await fetchData({endpoint: `${auth.authData.organizationId}/contacts`, setValue:setElementsList, getAccessTokenSilently, auth, params: { page_index: 1, search: text }})
             if (response?.status === 200) {setShowResults(true);setWaitingResult(false)}
             else {setShowResults(false);setWaitingResult(false)}
         }, 500)
@@ -723,7 +727,7 @@ const MergeBox = ({clientData, setShowMerge, deleteHeaderSection}:MergeBoxProps)
 
 
     const confirmMerge = async () => {
-        const response = await fetchData({endpoint: `${auth.authData.organizationId}/contacts/merge/${clientData?.id}/${selectedClient?.id}`, method:'put', setWaiting:setWaitingConfirmMerge, params: { new_name:clientData?.name}, auth: auth, toastMessages:{'works':`${clientData?.name} y ${selectedClient?.name} se han fusionado correctamente`,'failed':'Hubo un fallo al fusionar los clientes'}})
+        const response = await fetchData({endpoint: `${auth.authData.organizationId}/contacts/merge/${clientData?.id}/${selectedClient?.id}`, getAccessTokenSilently, method:'put', setWaiting:setWaitingConfirmMerge, params: { new_name:clientData?.name}, auth: auth, toastMessages:{'works':`${clientData?.name} y ${selectedClient?.name} se han fusionado correctamente`,'failed':'Hubo un fallo al fusionar los clientes'}})
         if (response?.status === 200) {
             session.dispatch({type:'DELETE_VIEW_FROM_CLIENT_LIST'})
             deleteHeaderSection({code:clientData?.id || 0, type:'client', description:'' })

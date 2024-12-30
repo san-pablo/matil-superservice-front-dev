@@ -5,7 +5,7 @@
     "Cancel":"Cancelar",
     "Business":"Empresa",
     "NoConversations":"No hay conversaciones disponibles",
-
+    "NoClients":"No hay clientes disponibles",
     "Conversations_one":"{{count}} conversación",
     "Conversations_other":"{{count}} conversaciones",
     "ApplyFilters":"Aplicar filtros",
@@ -47,6 +47,7 @@
     "email":"Mail",
     "webchat":"Web",
     "whatsapp":"Whatsapp",
+    "voip":"VOIP",
     "instagram": "Instagram",
     "google_business":"Google Business",
     "phone":"Teléfono",

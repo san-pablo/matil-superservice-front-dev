@@ -1,17 +1,20 @@
 import { useTranslation  } from "react-i18next"
 import { useNavigate } from "react-router-dom"
-import { Dispatch, SetStateAction, useRef, useState, ReactNode, KeyboardEvent } from "react"
+import { Dispatch, SetStateAction, useRef, useState, ReactNode, Fragment, useMemo } from "react"
 import { useAuth } from "../../../AuthContext"
+import { useAuth0 } from "@auth0/auth0-react"
 //FETCH DATA
 import fetchData from "../../API/fetchData"
 //FRONT
-import { Text, Box, Icon, Flex,Skeleton, Button, Grid, Portal,  chakra, shouldForwardProp, Tooltip, IconButton, Switch, Textarea } from "@chakra-ui/react"
+import { Text, Box, Icon, Flex,Skeleton, Button, Grid, Portal,  chakra, shouldForwardProp, Tooltip, IconButton, Switch } from "@chakra-ui/react"
 import EmojiPicker, { EmojiClickData } from 'emoji-picker-react'
 import { motion, isValidMotionProp } from 'framer-motion'
 import "../../Components/styles.css"
 //COMPONENTS
 import LoadingIconButton from "../../Components/Reusable/LoadingIconButton"
 import EditText from "../../Components/Reusable/EditText"
+import ConfirmBox from "../../Components/Reusable/ConfirmBox"
+import CustomSelect from "../../Components/Reusable/CustomSelect"
 //FUNCTIONS
 import useOutsideClick from "../../Functions/clickOutside"
 import timeAgo from "../../Functions/timeAgo"
@@ -22,11 +25,10 @@ import { IoIosArrowDown } from "react-icons/io"
 import { IoBook } from "react-icons/io5"
 import { BiWorld } from "react-icons/bi"
 import { RxCross2, RxCheck } from "react-icons/rx"
-import { FaFolder, FaLock, FaFileLines, FaFilePdf,  } from "react-icons/fa6"
+import { FaFolder, FaLock, FaFileLines, FaFilePdf } from "react-icons/fa6"
 //TYPING
-import { Folder } from "../../Constants/typing"
-import { ContentData, languagesFlags } from "../../Constants/typing" 
-
+import { Folder, ContentData, languagesFlags } from "../../Constants/typing" 
+ 
 interface CreateFolderData {
     currentFolder:Folder | null
     type:'edit' | 'add'
@@ -77,6 +79,7 @@ export const CreateFolder= ({currentFolder, type, setShowCreate, parentId, onFol
 
     const { t } = useTranslation('knowledge')
     const auth = useAuth()
+    const { getAccessTokenSilently } = useAuth0()
 
     //REFS
     const emojiButtonRef = useRef<HTMLDivElement>(null)
@@ -92,8 +95,7 @@ export const CreateFolder= ({currentFolder, type, setShowCreate, parentId, onFol
 
     //FUNCTION FOR CREATE A NEW BUSINESS
     const createFolder= async () => {
-        const folderData = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/folders${currentFolder?`/${currentFolder.uuid}`:''}`, method:currentFolder?'put':'post', setWaiting:setWaitingCreate, requestForm:{name:folderName, emoji:folderEmoji, parent_uuid:parentId}, auth, toastMessages:{'works': currentFolder?t('CorrectEditedFolder'): t('CorrectCreatedFolder'), 'failed': currentFolder?t('FailedEditedFolder'):t('FailedtCreatedFolder')}})
-        console.log(folderData?.data)
+        const folderData = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/folders${currentFolder?`/${currentFolder.uuid}`:''}`,getAccessTokenSilently, method:currentFolder?'put':'post', setWaiting:setWaitingCreate, requestForm:{name:folderName, emoji:folderEmoji, parent_uuid:parentId}, auth, toastMessages:{'works': currentFolder?t('CorrectEditedFolder'): t('CorrectCreatedFolder'), 'failed': currentFolder?t('FailedEditedFolder'):t('FailedtCreatedFolder')}})
         if (folderData?.status === 200) {
             const updatedFolder:Folder = currentFolder
                 ? { ...currentFolder, name: folderName, emoji: folderEmoji }
@@ -128,9 +130,10 @@ export const CreateFolder= ({currentFolder, type, setShowCreate, parentId, onFol
 }
 
 //SIDE BAR OF THE SOURCES
-const TypesComponent = ({t,  type }:{t:any, type:'internal_article' | 'public_article' | 'folder' | 'pdf' | 'snippet' | 'subwebsite'}) => {
+const TypesComponent = ({t,  type }:{t:any, type:'internal_article' | 'public_article' | 'folder' | 'pdf' | 'snippet' | 'subpage'  | 'website'}) => {
     
-    const getAlertDetails = (type:'internal_article' | 'public_article' | 'folder' | 'pdf' | 'snippet' | 'subwebsite') => {
+    console.log(type)
+    const getAlertDetails = (type:'internal_article' | 'public_article' | 'folder' | 'pdf' | 'snippet' | 'subpage' | 'website') => {
         switch (type) {
             case 'internal_article':
                 return { color1: 'yellow.100', color2:'yellow.200', icon: FaLock, label: t('InternalArticle') }
@@ -142,7 +145,8 @@ const TypesComponent = ({t,  type }:{t:any, type:'internal_article' | 'public_ar
                 return { color1: 'brand.gray_1', color2:'gray.300', icon: FaFilePdf, label: t('Pdf')  }
             case 'snippet':
                 return { color1: 'brand.gray_1', color2:'gray.300', icon: FaFileLines, label: t('Text')  }
-            case 'subwebsite':
+            case 'subpage':
+            case 'website':
                 return { color1: 'brand.gray_1', color2:'gray.300', icon: BiWorld, label: t('Web')  }
         }
     }
@@ -208,7 +212,28 @@ const CellStyle = ({ column, element }:{column:string, element:any}) => {
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)}) 
 const dataKeys:string[] = [ 'type', 'language', 'created_at', 'updated_at', 'created_by', 'updated_by']
 
-export const SourceSideBar = ({clientBoxWidth, setClientBoxWidth, sourceData, setSourceData}:{clientBoxWidth:number, setClientBoxWidth:Dispatch<SetStateAction<number>>, sourceData:ContentData | null, setSourceData:Dispatch<SetStateAction<ContentData | null>>}) => {
+export const SourceSideBar = ({clientBoxWidth, setClientBoxWidth, sourceData, setSourceData, folders}:{clientBoxWidth:number, setClientBoxWidth:Dispatch<SetStateAction<number>>, sourceData:ContentData | null, setSourceData:Dispatch<SetStateAction<ContentData | null>>, folders:Folder[] }) => {
+
+
+    const [showEditFolder, setShowEditFolder] = useState<boolean>(false)
+
+
+    const MoveSection = ({folder, level, selectedFolder, setSelectedFolder}:{folder:Folder, level:number, selectedFolder:string, setSelectedFolder:Dispatch<SetStateAction<string>>,  }) => {
+
+        return (<> 
+            <Flex  gap="10px" justifyContent={'space-between'} p="10px" pl={`${(level + 1) * 20}px`} bg={selectedFolder === folder.uuid ?'blue.100':''} cursor={folder.disabled?'not-allowed':'pointer'}  color={folder.disabled?'gray.300':"black" } onClick={() => {if (!folder.disabled) setSelectedFolder(folder.uuid)}}  alignItems="center" borderRadius=".5rem" _hover={{bg:selectedFolder === folder.uuid ?'blue.100':'brand.gray_2'}} >
+                <Flex flex='1' gap="10px" alignContent={'center'}> 
+                    {folder.emoji ? <Text>{folder.emoji}</Text>:<Icon boxSize="16px" as={FaFolder} />}
+                    <Text  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{folder.name}</Text>
+                </Flex>
+            </Flex>
+               {folder.children &&
+                folder.children.map((childFolder) => (
+                    <MoveSection key={childFolder.uuid} folder={childFolder} selectedFolder={selectedFolder} setSelectedFolder={setSelectedFolder} level={level + 1}  />
+                ))}
+             </>
+        )
+    }
 
     const { t } = useTranslation('knowledge')
     const [sectionsExpanded, setSectionsExpanded] = useState<string[]>(['Data', 'Tilda', 'HelpCenter', 'Folder' ])
@@ -220,51 +245,87 @@ export const SourceSideBar = ({clientBoxWidth, setClientBoxWidth, sourceData, se
         })
       }
       
-    return (
-        <MotionBox width={clientBoxWidth + 'px'}  whiteSpace={'nowrap'} initial={{ width: clientBoxWidth + 'px' }} animate={{ width: clientBoxWidth + 'px' }} exit={{ width: clientBoxWidth + 'px' }} style={{overflow:'hidden'}} transition={{ duration: '.2'}}> 
-            <Flex p='2vh' height={'70px'} justifyContent={'space-between'} alignItems={'center'} borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
-                <Text fontSize={'1.5em'} fontWeight={'medium'}>{t('Information')}</Text>
-                <IconButton aria-label="close-tab" variant={'common'} bg='transparent' size='sm' icon={<RxCross2 size={'20px'}/>} onClick={() =>setClientBoxWidth(0)}/>
-            </Flex>
-            <Box p='2vh' height={'100%'} > 
 
-            <CollapsableSection section={'Data'} isExpanded={sectionsExpanded.includes('Data')} onSectionExpand={onSectionExpand}> 
-                    {dataKeys.map((showKey, index) => (
-                        <Skeleton key={`article-feature-${index}`} isLoaded={sourceData !== null}> 
-                            <Flex mt='2vh' key={`article-data-${index}`}>
-                                <Text flex='1' fontWeight={'medium'} color='gray.600'>{t(showKey)}</Text>
-                                <Box flex='1' maxW={'50%'}> 
-                                    {(sourceData !== null)&&  
-                                        <Box fontSize={'.9em'}>
-                                            <CellStyle column={showKey} element={sourceData?.[showKey as keyof ContentData]}/>
-                                        </Box>
-                                    }
-                                </Box>
-                            </Flex>
-                        </Skeleton>
-                    ))}
-            </CollapsableSection>
+    //CREATE AND EDIT FOLDERS
+    const MoveFolder = () => {
 
-            <CollapsableSection section={'Tilda'} isExpanded={sectionsExpanded.includes('Tilda')} onSectionExpand={onSectionExpand}> 
-                <Flex gap='8px' mt='1vh'  alignItems={'center'}>
-                    <Switch isChecked={sourceData?.is_available_to_tilda}  onChange={(e) => setSourceData(prev => ({...prev as ContentData, is_available_to_tilda:e.target.checked}))} />
-                    <Text fontWeight={'medium'} fontSize={'.9em'}>{t('IsAvailableTilda')}</Text>
-                </Flex>
-                <Text mt='.5vh' whiteSpace={'normal'} color={'gray.600'} fontSize={'.8em'}>{t('IsAvailableTildaDes')}</Text>
-
-            </CollapsableSection>
-
-            <CollapsableSection section={'Folder'} isExpanded={sectionsExpanded.includes('Folder')} onSectionExpand={onSectionExpand}> 
-                <Flex mt='2vh' bg='brand.gray_2' alignItems={'center'} cursor={'pointer'} borderRadius={'.5rem'} p='10px' gap='10px'>
-                    <Icon as={FaFolder}/>
-                    <Text>{sourceData?.folder_uuid?sourceData?.folder_uuid:t('NoFolder')}</Text>
-                </Flex>
-            </CollapsableSection>
-
+        const [selectedFolder, setSelectedFolder] = useState<string>(sourceData?.folder_uuid || '')
+      
+        return(<> 
+            <Box p='20px' maxW='450px'> 
+                <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('MoveFolder')}</Text>
+                <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
+                {folders.map((folder, index) => (
+                    <Fragment key={`settings-section-${folder.uuid}`}>
+                        <MoveSection folder={folder}  level={0} selectedFolder={selectedFolder} setSelectedFolder={setSelectedFolder}/> 
+                    </Fragment>
+                ))}
             </Box>
-        </MotionBox>
-)
-}
+            <Flex  maxW='450px' p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+                <Button  size='sm' variant={'main'} isDisabled={selectedFolder === ''} onClick={() => {setShowEditFolder(false);setSourceData(prev => ({...prev as ContentData, folder_uuid:selectedFolder}))}}>{t('MoveToFolder')}</Button>
+                <Button  size='sm' variant={'common'} onClick={() => {setShowEditFolder(false)}}>{t('Cancel')}</Button>
+            </Flex>
+        </>)
+    }
+     //MOVE BOX
+     const MoveBox = useMemo(() => (
+        <ConfirmBox setShowBox={setShowEditFolder}> 
+            <MoveFolder/>
+        </ConfirmBox>
+    ), [showEditFolder])
+
+    return (
+        <>
+            {showEditFolder && MoveBox}
+
+            <MotionBox width={clientBoxWidth + 'px'}  whiteSpace={'nowrap'} initial={{ width: clientBoxWidth + 'px' }} animate={{ width: clientBoxWidth + 'px' }} exit={{ width: clientBoxWidth + 'px' }} style={{overflow:'hidden'}} transition={{ duration: '.2'}}> 
+                <Flex p='2vh' height={'70px'} justifyContent={'space-between'} alignItems={'center'} borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
+                    <Text fontSize={'1.5em'} fontWeight={'medium'}>{t('Information')}</Text>
+                    <IconButton aria-label="close-tab" variant={'common'} bg='transparent' size='sm' icon={<RxCross2 size={'20px'}/>} onClick={() =>setClientBoxWidth(0)}/>
+                </Flex>
+                <Box p='2vh' height={'100%'} > 
+
+                <CollapsableSection section={'Data'} isExpanded={sectionsExpanded.includes('Data')} onSectionExpand={onSectionExpand}> 
+                        {dataKeys.map((showKey, index) => (
+                            <Skeleton key={`article-feature-${index}`} isLoaded={sourceData !== null}> 
+                                <Flex mt='2vh' key={`article-data-${index}`}>
+                                    <Text flex='1' fontWeight={'medium'} color='gray.600'>{t(showKey)}</Text>
+                                    <Box flex='1' maxW={'50%'}> 
+                                        {(sourceData !== null)&& <> 
+                                            {showKey === 'language' ? 
+                                            <CustomSelect hide={false} options={Object.keys(languagesFlags)} iconsMap={languagesFlags} selectedItem={sourceData?.[showKey as keyof ContentData]} setSelectedItem={(value) => setSourceData(prev => ({...prev as ContentData, language:value }) )}/>
+                                            : 
+                                            <Box fontSize={'.9em'}>
+                                                <CellStyle column={showKey} element={sourceData?.[showKey as keyof ContentData]}/>
+                                            </Box>
+                                            }</>
+                                        }
+                                    </Box>
+                                </Flex>
+                            </Skeleton>
+                        ))}
+                </CollapsableSection>
+
+                <CollapsableSection section={'Tilda'} isExpanded={sectionsExpanded.includes('Tilda')} onSectionExpand={onSectionExpand}> 
+                    <Flex gap='8px' mt='1vh'  alignItems={'center'}>
+                        <Switch isChecked={sourceData?.is_available_to_tilda}  onChange={(e) => setSourceData(prev => ({...prev as ContentData, is_available_to_tilda:e.target.checked}))} />
+                        <Text fontWeight={'medium'} fontSize={'.9em'}>{t('IsAvailableTilda')}</Text>
+                    </Flex>
+                    <Text mt='.5vh' whiteSpace={'normal'} color={'gray.600'} fontSize={'.8em'}>{t('IsAvailableTildaDes')}</Text>
+
+                </CollapsableSection>
+
+                <CollapsableSection section={'Folder'} isExpanded={sectionsExpanded.includes('Folder')} onSectionExpand={onSectionExpand}> 
+                    <Flex mt='2vh' bg='brand.gray_2' alignItems={'center'} cursor={'pointer'} borderRadius={'.5rem'} p='10px' gap='10px' onClick={() => setShowEditFolder(true)}>
+                        <Icon as={FaFolder}/>
+                        <Text>{sourceData?.folder_uuid?sourceData?.folder_uuid:t('NoFolder')}</Text>
+                    </Flex>
+                </CollapsableSection>
+
+                </Box>
+            </MotionBox>
+        </>)
+    }
 const CollapsableSection = ({ section, isExpanded, onSectionExpand, children}:{section:string, isExpanded:boolean, onSectionExpand:(key:string) => void ,children:ReactNode}) => {
 
     const { t } = useTranslation('knowledge')

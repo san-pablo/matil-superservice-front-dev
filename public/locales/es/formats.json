@@ -1,4 +1,7 @@
 {
+    "Attached_one":"{{count}} adjunto",
+    "Attached_other":"{{count}} adjuntos",
+    "Conversation":"Conversación",
     "timeAgo": {
         "lessThanMinute": "Hace menos de un minuto",
         "minutesAgo_one": "Hace {{count}} minuto",

@@ -1,28 +1,31 @@
 //REACT
 import { useState, useEffect, RefObject, useRef } from 'react'
 import { useAuth } from '../../../../AuthContext'
-import DOMPurify from 'dompurify'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 //FETCH DATA
 import fetchData from "../../../API/fetchData"
 //FRONT
-import { Flex, Text, Box, Tooltip, Input, IconButton, Button } from "@chakra-ui/react"
+import { Flex, Text, Box, Button, Icon } from "@chakra-ui/react"
 //COMPONENTS
-import LoadingIconButton from '../../../Components/Reusable/LoadingIconButton'
+import SaveChanges from '../../../Components/Reusable/SaveChanges'
 import EditViewComponent from './EditViewsComponent'
 import EditText from '../../../Components/Reusable/EditText'
+import LoadingIconButton from '../../../Components/Reusable/LoadingIconButton'
 //ICONS
-import { FaUnlock, FaLock } from 'react-icons/fa6'
-import { IoIosArrowBack } from 'react-icons/io'
+import { FaUnlock, FaLock, FaPlus } from 'react-icons/fa6'
+import { IoIosArrowForward } from 'react-icons/io'
+
 //TYPING
 import { View, Views } from '../../../Constants/typing'
+import { useAuth0 } from '@auth0/auth0-react'
     
 //MAIN FUNCTION
 function EditView ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
 
     //CONSTANTS
     const auth = useAuth()
+    const {  getAccessTokenSilently } =  useAuth0()
     const navigate = useNavigate()
     const location = useLocation().pathname
     const { t } = useTranslation('settings')
@@ -85,45 +88,48 @@ function EditView ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
         else {
             if (selectedView) viewsAuthChange[mapType[viewType]].push(selectedView)
         }
-        const response = await fetchData({endpoint:`${auth.authData.organizationId}/user`, method:'put',setWaiting:setWaitingSend,auth:auth, requestForm:{...viewsAuthChange, shortcuts:auth.authData.shortcuts, users:auth.authData.users, conversation_themes:auth.authData.conversation_themes},toastMessages:{'works':t('CorrectView'), 'failed':t('FailedView')}})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/user`, method:'put',setWaiting:setWaitingSend,auth,  getAccessTokenSilently, requestForm:{...viewsAuthChange, shortcuts:auth.authData.shortcuts, users:auth.authData.users, conversation_themes:auth.authData.conversation_themes},toastMessages:{'works':t('CorrectView'), 'failed':t('FailedView')}})
         if (response?.status === 200) {
             auth.setAuthData({views:viewsAuthChange})   
             navigate('/settings/workflows/edit-views')
         }
     }
-   
+
     //CHANGE DOCUMENT TITLE
     useEffect (() => {document.title = `${t('Settings')} - ${t('Views')} - ${selectedView?.name} - ${auth.authData.organizationName} - Matil`}, [])
 
     //FRONT
-    return(
-        <Flex height={'100%'} minH={'90vh'} width={'100%'} flexDir={'column'}> 
-         {selectedView && <>
-            <Box flex='1' overflow={'scroll'} py='2px'> 
-                <Flex gap='20px' alignItems={'center'}> 
-                    <Tooltip label={'Atrás'}  placement='bottom' hasArrow bg='black'  color='white'  borderRadius='.4rem' fontSize='.75em' p='4px'> 
-                        <IconButton aria-label='go-back' size='sm' bg='transparent' border='none' onClick={() => navigate('/settings/workflows/edit-views')} icon={<IoIosArrowBack size='20px'/>}/>
-                    </Tooltip>
-                    <Box maxW='1000px'> 
-                        <EditText nameInput fontSize={'1.5em'} size='md'  value={selectedView?.name || ''} setValue={(value:string) => setSelectedView(prev => ({...prev as View, name:value}))}/>
-                    </Box>
-                </Flex>
-            
+    return(<> 
+        <SaveChanges data={selectedView} disabled={!(view && lastLocationString !== 'copy')} setData={setSelectedView}  dataRef={currentViewsRef} onSaveFunc={sendEditView}/>
+
+
+        <Flex alignItems={'end'} justifyContent={'space-between'}>
+            <Flex fontWeight={'medium'} fontSize={'1.4em'} gap='10px' alignItems={'center'}> 
+                <Text onClick={() => navigate('/settings/workflows/edit-views')}  color='brand.text_blue' cursor={'pointer'}>{t('Views')}</Text>
+                <Icon as={IoIosArrowForward}/>
+                <Text>{selectedView?.name}</Text>
+            </Flex>
+            {!(view && lastLocationString !== 'copy') && <Button variant={'main'} onClick={sendEditView} size={'sm'} leftIcon={<FaPlus/>}>{waitingSend ? <LoadingIconButton/>: t('Create')}</Button>}
+
+        </Flex>
+        <Box width='100%' bg='gray.300' height='1px' mt='2vh'/>
+        
+        <Flex flex='1' overflow={'scroll'} width={'100%'} pt='3vh' flexDir={'column'}> 
+            {selectedView && <>
+                <Text fontWeight={'medium'} fontSize={'1.1em'}>{t('Name')}</Text>
+                <Box maxW='350px' mt='.5vh'> 
+                    <EditText hideInput={false}  value={selectedView?.name || ''} setValue={(value:string) => setSelectedView(prev => ({...prev as View, name:value}))}/>
+                </Box>
+
                 <Text mt='3vh' fontWeight={'medium'} fontSize={'1.1em'}>{t('ViewType')}</Text>
                 <Flex mb='3vh' gap='20px' mt='1vh'>
                     <Button leftIcon={<FaLock/>} size='sm' fontWeight={'medium'} variant={viewType === 'private'?'main':'common'}  onClick={() => setViewType('private')}>{t('Private')}</Button>
                     <Button  leftIcon={<FaUnlock/>}  fontWeight={'medium'} isDisabled={!isAdmin} size='sm'variant={viewType === 'shared'?'main':'common'} onClick={() => setViewType('shared')}>{t('Shared')}</Button>
                 </Flex>
                 <EditViewComponent scrollRef={scrollRef}  viewData={selectedView as View} editViewData={setSelectedView}/>
-            </Box>
-
-            <Box width={'100%'} mt='2vh' mb='2vh' height={'1px'} bg='gray.300'/>
-            <Flex flexDir = 'row-reverse'>
-                <Button variant={'common'} onClick={sendEditView} isDisabled={selectedView?.name === '' || ((view !== null && JSON.stringify(selectedView) === JSON.stringify(currentViewsRef.current) && viewType === view.type) )}>{waitingSend?<LoadingIconButton/>:t('SaveChanges')}</Button>
-            </Flex>
             </>}
      </Flex> 
-    )
+     </>)
 }
 
 export default EditView

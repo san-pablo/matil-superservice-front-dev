@@ -193,7 +193,7 @@
   color: rgb(0, 0, 0);
   font-size: 13px;
   font-weight: 400;
-  font-family: 'jost';
+  font-family: 'Poppins';
   max-height: 100px;
   z-index: 999;
   scrollbar-width: none;
@@ -1250,23 +1250,38 @@
 }
 
 .conversation-container {
-  height: 90vh;
+  height: 90%;
   position: relative;
   overflow-y: scroll;
-  padding-bottom: 20vh; 
+  padding-bottom: 20%; 
   align-items: center;
 }
 .gradient {
   content: '';
-  position: fixed;
+  position: absolute;
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 10%;
+  height: 6.5%;
   background: linear-gradient(to top, white, rgba(255, 255, 255, 0.6));
   z-index: 1;
 }
 
+.icon-container:hover {
+  text-decoration: underline;
+}
+.chat-container-soft {
+  transition: opacity 0.2s ease-in-out; 
+  z-index: 2;
+  height: 90%;
+
+}
+.chat-container-soft.slide-out {
+  opacity: 0;
+}
+.chat-container-soft.slide-in {
+  opacity: 1; 
+}
 .conversation {
   display: flex;
   flex-direction: row;
@@ -1288,13 +1303,13 @@
 }
 
 .bottom-button {
-  position: fixed;
+  position: absolute;
   padding: 9px 12px 9px 12px;
   box-shadow: none;
   border-radius: .5rem;
   white-space: nowrap;
   font-weight: 500;
-  bottom: 10vh;
+  bottom: 10%;
   font-size: 1em;
   left: 50%;
   transform: translateX(-50%);
@@ -1310,7 +1325,6 @@
 }
 
 
-  
 @keyframes expandFromLeft {
   from {
     opacity: 0;
@@ -1366,86 +1380,93 @@
   justify-content: center;
 }
 
-
 /*Input styles*/
 .text-area {
-position: absolute;
-bottom:0;
-resize: none;
-box-sizing: border-box;
-border: none;
-border-radius: 16px;
-background: #EDF2F7;
-appearance: none;
-width: 100%;
-padding: 12px 36px 12px 36px;
-line-height: 12px;
-height: auto;
-color: #4A5568;
-font-size: 12px;
-font-weight: 400;
-font-family: 'jost';
-max-height: 100px;
-z-index: 999;
-scrollbar-width: none;
-}
-.text-area:focus{
-    outline: none;
-    border:none
-}
-input::placeholder {
-  color: #abacaf; 
-  opacity: 1; 
-  font-weight: 500; 
-}
-::-webkit-input-placeholder {
-  color: #abacaf;
-}
-:-moz-placeholder {
-  color: #abacaf;
-  opacity: 1;
-}
-::-moz-placeholder {
-  color: #abacaf;
-  opacity: 1;
-}
-:-ms-input-placeholder { 
-  color: #abacaf;
-}
-::placeholder {
-  color: #abacaf;
-  opacity: 1; 
-}
-::-webkit-scrollbar {
-    display: none; 
-}
-
-.send-btn {
   position: absolute;
-  right: 10px; 
-  top: 10px;
+  bottom:0;
+  resize: none;
+  box-sizing: border-box;
   border: none;
-  background-color: black;
-  border-radius: 100%;
+  border-radius: 18px;
+  background: #EDF2F7;
+  font-family: Poppins;
+  appearance: none;
+  width: 100%;
+  padding: 12px 36px 12px 36px;
+  line-height: 14px;
+  height: auto;
+  color: #4A5568;
+  font-size: 14px;
+  font-weight: 400;
+  max-height: 100px;
+  min-height: 40px;
+  z-index: 999;
+  scrollbar-width: none;
+  }
+  .text-area:focus{
+      outline: none;
+      border:none
+  }
+  input::placeholder {
+    color: #abacaf; 
+    opacity: 1; 
+    font-weight: 500; 
+  }
+  ::-webkit-input-placeholder {
+    color: #abacaf;
+  }
+  :-moz-placeholder {
+    color: #abacaf;
+    opacity: 1;
+  }
+  ::-moz-placeholder {
+    color: #abacaf;
+    opacity: 1;
+  }
+  :-ms-input-placeholder { 
+    color: #abacaf;
+  }
+  ::placeholder {
+    color: #abacaf;
+    opacity: 1; 
+  }
+  ::-webkit-scrollbar {
+      display: none; 
+  }
+
+  .send-btn {
+    position: absolute;
+    right: 10px; 
+    top: 10px;
+    border: none;
+    background-color: black;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 9999;
+}
+.clip-btn {
+  position: absolute;
+  left: 11px; 
+  top: 11px;
+  border: none;
+  background-color: transparent;
   cursor: pointer;
   z-index: 9999;
 }
-.clip-btn {
-position: absolute;
-left: 11px; 
-top: 13px;
-border: none;
-background-color: transparent;
-cursor: pointer;
-z-index: 9999;
+.clip-btn:hover {
+  background-color: transparent;
 }
 
-.matil-text {
-cursor: pointer;
-}
-.matil-text:hover {
-text-decoration: underline;
-}
+
+ .matil-text {
+  cursor: pointer;
+  font-size: 1em;
+  font-weight: 500;
+
+ }
+ .matil-text:hover {
+  text-decoration: underline;
+ }
 
  
 .hover-effect {
@@ -1748,8 +1769,14 @@ text-decoration: underline;
   inset:0;
   background: linear-gradient(90deg, #3386FF, #005CFF, #00E0FF, #3386FF, #005CFF, #00E0FF, #00E0FF, #0066FF, #3386FF);
   animation: gradient-animation 20s linear infinite;
-  background-size: 500%;
+  background-size: 300%;
   rotate: -40deg;
+  height: 200%;
+  left: -50%;
+  top: -50%;
+  width: 200%;
+  position: absolute;
+  opacity: 0.05;
 }
 
 .mask-box {
@@ -1758,4 +1785,270 @@ text-decoration: underline;
   mask-size: 100%;
   mask-repeat: no-repeat;
   background-color: lightblue;
+}
+
+
+/*CALENDAR*/
+.react-calendar-2{
+  border:none !important;
+  border-color:transparent !important;
+  border-width:transparent !important;
+  font-family: 'Poppins', Arial, sans-serif !important;
+  text-decoration: none !important;
+  padding: 10px;
+}
+.react-calendar__month-view__weekdays {
+  color: black;
+  font-weight: 600 !important; 
+}
+.react-calendar__month-view__weekdays__weekday abbr {
+  text-decoration: none !important; 
+}
+
+/* Estilo para los días seleccionados */
+.react-calendar__tile.react-calendar__month-view__days__day{
+  padding: 4px !important;
+  font-size: 14px;
+ 
+}
+.react-calendar__tile {
+  padding: 0px !important;
+  margin-top: 8px !important;
+}
+.react-calendar__tile:hover:not(.react-calendar__tile--active):not(.react-calendar__tile--range):not(.react-calendar__tile--rangeStart):not(.react-calendar__tile--rangeEnd) {
+  background: rgba(59, 90, 246, 0.2) !important; 
+  border-radius: 4px !important;
+  transition: none
+}
+.react-calendar__month-view__days__day.react-calendar__tile--now:not(.react-calendar__tile--active):not(.react-calendar__tile--range):not(.react-calendar__tile--hover):not(.react-calendar__tile--rangeStart):not(.react-calendar__tile--rangeEnd) {
+  color: rgb(59, 90, 246) !important;
+  font-weight: 600;
+  background-color: transparent !important;
+}
+ 
+.react-calendar__tile--active {
+  background: rgb(59, 90, 246) !important;
+  color: white !important;
+}
+.react-calendar__tile--range {
+  background: rgb(59, 90, 246) !important; 
+  color: white !important;
+}
+.react-calendar__tile--rangeStart {
+  border-top-left-radius: .5rem;
+  border-bottom-left-radius:.5rem
+}
+.react-calendar__tile--rangeEnd {
+  border-top-right-radius: .5rem; 
+  border-bottom-right-radius: .5rem
+}
+.react-calendar__tile {transition: background 0.3s}
+
+
+
+body {
+  font-family: 'Poppins', sans-serif;
+}
+
+/* RATING */
+.stars {
+  display: flex;
+  margin-top: 1em;
+  flex-direction: row-reverse;
+  justify-content: space-between;
+
+}
+
+input.star {
+  display: none; 
+}
+
+label.star {
+  float: right;
+  padding: 10px;
+  cursor: pointer;
+  transition: transform .2s ease;
+}
+
+label.star svg {
+  fill: #ccc; 
+  transition: fill .25s ease, transform .2s ease;
+}
+
+label.highlighted svg {fill: gold}
+label.highlighted-one svg {fill: #F62}
+label.highlighted-five svg {fill: #FE7}
+label.star:hover {transform: rotate(-15deg) scale(1.3);}
+
+/*ANIMATE STARS*/
+@keyframes moveStarsUp {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-700px);
+    opacity: 0;
+  }
+}
+@keyframes moveStarsDown {
+  0% {
+    transform: translateY(-700px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.animate-stars {animation: moveStarsUp 0.5s ease forwards}
+.animate-stars-inverse {animation: moveStarsDown 0.5s ease forwards}
+
+
+/*ANIMATE COMMENTS*/
+@keyframes moveCommentsUp {
+  0% {
+    transform: translateY(700px); 
+    opacity: 0
+  }
+  100% {
+    transform: translateY(0); 
+    opacity: 1
+  }
+}
+@keyframes moveCommentsDown {
+  0% {
+    transform: translateY(0); 
+    opacity: 0
+  }
+  100% {
+    transform: translateY(700px); 
+    opacity: 1
+  }
+}
+
+.comment-box {
+  opacity: 0;
+  transform: translateY(700px)
+}
+
+.comment-box.animate-comments {animation: moveCommentsUp 0.5s ease forwards}
+.comment-box.animate-comments-inverse {animation: moveCommentsDown 0.5s ease forwards}
+
+
+/*TEXTAREA STYLES*/
+.textarea-container {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+
+.custom-textarea-stars {
+  width: 100%;
+  border: none;
+  margin-top: 10px;
+  margin-bottom: 20px;
+  background-color: transparent;
+  outline: none;
+  padding: 10px 0;
+  resize: none;
+  height: 50px;
+  font-size: 24px;
+  box-shadow: 0 2px 0 0 rgba(0, 0, 0, 0.3);
+  transition: box-shadow 0.3s ease;
+  font-weight: 300;
+}
+
+.custom-textarea-stars::placeholder {color: rgba(0, 0, 0, 0.5)}
+
+.custom-textarea-stars:focus {
+  box-shadow: 0 3px 0 0 rgb(77, 144, 254); /* Añadir sombra más gruesa */
+}
+
+
+
+
+
+
+
+
+
+
+.fondoAnimado {
+  position: relative;
+  background: linear-gradient(-25deg, rgba(135, 206, 250, 0.8), rgba(255, 250, 250, 0.9), rgba(255, 255, 255, 1));
+  background-size: 100% 100%;
+  animation: gradientAnimation 15 ease-in-out infinite;
+}
+
+@keyframes gradientAnimation {
+  0% {
+    background-position: 0% 50%;
+  }
+  25% {
+    background-position: 50% 30%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  75% {
+    background-position: 50% 70%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.particle {
+  position: absolute;
+  width: 150px;
+  height: 200px;
+  bottom:0;
+  background: rgba(135, 206, 250, 0.8);
+  border-radius: 50%;
+  opacity: 0.7;
+  animation: smokeAnimation 10s ease-in-out infinite, particleColorAnimation 15s ease-in-out infinite, particleAppear 2s ease-out forwards;
+}
+
+@keyframes smokeAnimation {
+  0% {
+    transform: translateY(0) scale(0.5);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100vh) scale(1.2); 
+    opacity: 0; 
+  }
+}
+
+@keyframes particleColorAnimation {
+  0% {
+    background: rgba(135, 206, 250, 0.8); /* Azul claro */
+    box-shadow: 0 0 15px rgba(135, 206, 250, 0.6);
+  }
+  25% {
+    background: rgba(255, 250, 250, 0.8); /* Blanco claro */
+    box-shadow: 0 0 15px rgba(255, 250, 250, 0.6);
+  }
+  50% {
+    background: rgba(255, 255, 255, 1); /* Blanco */
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+  }
+  75% {
+    background: rgba(135, 206, 250, 0.8); /* Azul claro nuevamente */
+    box-shadow: 0 0 15px rgba(135, 206, 250, 0.6);
+  }
+  100% {
+    background: rgba(135, 206, 250, 0.8); /* Azul claro */
+    box-shadow: 0 0 15px rgba(135, 206, 250, 0.6);
+  }
+}
+@keyframes particleAppear {
+  0% {
+    opacity: 0;  /* Al principio, invisibles */
+  }
+  100% {
+    opacity: 0.7;  /* Después de la animación de aparición, la opacidad es de 0.7 */
+  }
 }

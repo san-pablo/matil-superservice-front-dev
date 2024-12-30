@@ -14,6 +14,7 @@ import LoadingIconButton from "../../../Components/Reusable/LoadingIconButton"
 import { BsTrash3Fill } from "react-icons/bs"
 //TYPING
 import { ConfigProps } from '../../../Constants/typing'
+import { useAuth0 } from "@auth0/auth0-react"
 
 interface WhatsappProps { 
     id:string
@@ -28,6 +29,7 @@ function Phone () {
     //AUTH CONSTANT
     const auth = useAuth()
     const  { t } = useTranslation('settings')
+    const { getAccessTokenSilently } = useAuth0()
 
     //WAITING BOOLEANS FOR CREATING AN ACCOUNT
     const [waitingSend, setWaitingSend] = useState<boolean>(false)
@@ -43,13 +45,13 @@ function Phone () {
 
     //FETCH DATA
     const fetchInitialData = async() => {
-        await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/matilda_configurations`, setValue:setConfigData, auth})
-        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels`, auth})
+        await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/matilda_configurations`, setValue:setConfigData,getAccessTokenSilently, auth})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels`,getAccessTokenSilently, auth})
         if (response?.status === 200){
           let wasChannel 
           response.data.map((cha:any) => {if (cha.channel_type === 'whatsapp')  wasChannel = cha.id})
           if (wasChannel) {
-            const responseMail = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${wasChannel}`,  setValue: setData, auth})
+            const responseMail = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${wasChannel}`,  setValue: setData, getAccessTokenSilently,auth})
             if (responseMail?.status === 200) {
                     setData(responseMail.data.configuration)
                     dataRef.current = responseMail.data.configuration
@@ -69,7 +71,7 @@ function Phone () {
   
 
     const saveChanges = async () => {
-        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${dataRef.current.id}`, setValue:setWaitingSend, setWaiting:setWaitingSend, auth, method:'put', requestForm:{...data, matilda_configuration_uuid:selectedConfigId}, toastMessages:{'works':t('CorrectUpdatedInfo'), 'failed':t('FailedUpdatedInfo')}})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${dataRef.current.id}`, setValue:setWaitingSend, setWaiting:setWaitingSend, getAccessTokenSilently, auth, method:'put', requestForm:{...data, matilda_configuration_uuid:selectedConfigId}, toastMessages:{'works':t('CorrectUpdatedInfo'), 'failed':t('FailedUpdatedInfo')}})
         if (response?.status === 200) {
             configIdRef.current = selectedConfigId
             dataRef.current = data

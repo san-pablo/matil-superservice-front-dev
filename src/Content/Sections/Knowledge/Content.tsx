@@ -28,6 +28,7 @@ import { BiWorld } from "react-icons/bi"
 import { PiDesktopTowerFill } from "react-icons/pi"
 //TYPING
 import { ContentData, languagesFlags, Folder } from "../../Constants/typing"
+import { useAuth0 } from "@auth0/auth0-react"
   
 //TYPING
 type sourcesType = 'internal_article' | 'public_article' | 'folder' | 'pdf' | 'snippet' |  'website'
@@ -121,6 +122,7 @@ function Content ({folders, handleFolderUpdate}:{folders:Folder[], handleFolderU
 
     //AUTH CONSTANT
     const auth = useAuth()
+    const { getAccessTokenSilently } = useAuth0() 
     const session = useSession()
     const navigate = useNavigate()
     const { t } = useTranslation('knowledge')
@@ -134,6 +136,17 @@ function Content ({folders, handleFolderUpdate}:{folders:Folder[], handleFolderU
         'website':[ t('website'), BiWorld]
     }
     const folderUuid = useLocation().pathname.split('/')[3] || null
+    const findFolderByUuid = (folders: Folder[], folderUuid: string | null): Folder | null => {
+        if (folderUuid === null) return null
+        for (let folder of folders) {
+            if (folder.uuid === folderUuid) return folder
+            if (folder.children && folder.children.length > 0) {
+                const found = findFolderByUuid(folder.children, folderUuid)
+                if (found) return found
+            }
+        }
+        return null
+    }
 
 
     //CREATE BOX AND FOLDER
@@ -145,32 +158,22 @@ function Content ({folders, handleFolderUpdate}:{folders:Folder[], handleFolderU
     const [selectedFolder, setSelectedFolder] = useState<Folder | null>(null)
     const [contentData, setContentData] = useState<{page_data:ContentData[], page_index:1, number_of_sources:number} | null>(null)
 
+
     //FETCH INITIAL DATA
     useEffect(() => {
-        const findFolderByUuid = (folders: Folder[], folderUuid: string | null): Folder | null => {
-            if (folderUuid === null) return null
-            for (let folder of folders) {
-                if (folder.uuid === folderUuid) return folder
-                if (folder.children && folder.children.length > 0) {
-                    const found = findFolderByUuid(folder.children, folderUuid)
-                    if (found) return found
-                }
-            }
-            return null
-        }
-
+        
         const fetchSourceData = async () => {
             const selectedFolder = findFolderByUuid(folders, folderUuid)
             if (selectedFolder) document.title = `${t('Folder')} - ${selectedFolder?.name} - ${auth.authData.organizationName} - Matil`
             else document.title = `${t('Content')} - ${auth.authData.organizationName} - Matil`
-            const response  = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources${folderUuid?`/${folderUuid}`:''}`, params:{page_index:1, type:[]}, setValue:setContentData, auth})
+            const response  = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`,getAccessTokenSilently, params:folderUuid?{page_index:1, type:[], folder_uuid:folderUuid }:{page_index:1, type:[]}, setValue:setContentData, auth})
             if (response?.status === 200) {
                 setSelectedFolder(selectedFolder)
             }
         }
         localStorage.setItem('currentSectionContent', 'content')
-         fetchSourceData()
-    }, [])
+        fetchSourceData()
+    }, [folderUuid])
 
     //FILTER TRIGGER DATA
     const [filters, setFilters] = useState<ContentFilters>({page_index:1, type:[] })
@@ -178,7 +181,7 @@ function Content ({folders, handleFolderUpdate}:{folders:Folder[], handleFolderU
     //FETCH NEW DATA ON FILTERS CHANGE
     const fetchClientDataWithFilter = async (filters:ContentFilters) => {
         setFilters(filters)
-        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`, setValue:setContentData, setWaiting:setWaitingInfo, params:filters, auth})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`, setValue:setContentData, getAccessTokenSilently,setWaiting:setWaitingInfo, params:filters, auth})
         if (response?.status === 200) {            
             session.dispatch({ type: 'UPDATE_CONTENT_TABLE', payload: {data:response.data, filters:filters} })
         }
@@ -218,12 +221,12 @@ function Content ({folders, handleFolderUpdate}:{folders:Folder[], handleFolderU
 
     const memoizedCreateFolderBox = useMemo(() => (
         <ConfirmBox maxW={'800px'}  setShowBox={setShowCreateFolder}> 
-            <CreateFolder setShowCreate={setShowCreateFolder} type='add' parentId={null} currentFolder={null} onFolderUpdate={handleFolderUpdate}/>
+            <CreateFolder setShowCreate={setShowCreateFolder} type='add' parentId={folderUuid} currentFolder={null} onFolderUpdate={handleFolderUpdate}/>
         </ConfirmBox>
     ), [showCreateFolder])
 
 
-     //FRONT
+    //FRONT
     return(<>
         {showCreate && memoizedCreateBox}
         {showCreateFolder && memoizedCreateFolderBox}
@@ -234,15 +237,14 @@ function Content ({folders, handleFolderUpdate}:{folders:Folder[], handleFolderU
                     <Text fontSize={'1.4em'} fontWeight={'medium'}>{selectedFolder ? selectedFolder.emoji + ' ' + selectedFolder.name :t('Content')}</Text>
                 </Box>
                 <Flex gap='10px'> 
-                    <Button size={'sm'} variant={'common'} leftIcon={<FaFolder/>} onClick={() => setShowCreateFolder(true)}>{t('CreateFolder')}</Button>
+                    <Button size={'sm'} variant={'common'} leftIcon={<FaFolder/>} onClick={() => setShowCreateFolder(true)}>{folderUuid ? t('CreateSubFolder'):t('CreateFolder')}</Button>
                     <Button size={'sm'} variant={'main'} leftIcon={<FaPlus/>} onClick={() => setShowCreate(true)}>{t('CreateContent')}</Button>
                 </Flex> 
             </Flex>
             
-    
             <Flex gap='15px' mt='2vh' > 
                 <Box width={'350px'}> 
-                    <EditText value={filters?.search || ''} setValue={(value:string) => setFilters(prev => ({...prev, search:value}))} searchInput={true}/>
+                    <EditText  filterData={(text:string) => {fetchClientDataWithFilter({...filters, search:text})}}  value={filters?.search || ''} setValue={(value:string) => setFilters(prev => ({...prev, search:value}))} searchInput={true}/>
                 </Box>
                 <FilterButton selectList={Object.keys(logosMap)} itemsMap={logosMap} selectedElements={filters.type} setSelectedElements={(element) => toggleChannelsList(element as sourcesType)} icon={PiDesktopTowerFill} initialMessage={t('SourceFilterMessage')}/>
                 <Button leftIcon={<FaFilter/>} size='sm' variant={'common'}  onClick={() => fetchClientDataWithFilter({...filters, page_index:1})}>{t('ApplyFilters')}</Button>

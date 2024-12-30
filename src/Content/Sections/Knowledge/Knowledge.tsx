@@ -22,11 +22,13 @@ import useOutsideClick from "../../Functions/clickOutside"
 import parseMessageToBold from "../../Functions/parseToBold"
 //ICONS
 import { IoIosArrowDown } from "react-icons/io"
-import { BsFillLayersFill, BsThreeDots, BsFillFolderSymlinkFill, BsTrash3Fill } from "react-icons/bs"
+import { BsFillLayersFill, BsThreeDots } from "react-icons/bs"
 import { FaFolder, FaBox, FaPlus } from "react-icons/fa6"
 import { FiEdit } from "react-icons/fi"
+import { HiTrash } from "react-icons/hi2"
 //TYPING
 import { Folder } from "../../Constants/typing"
+import { useAuth0 } from "@auth0/auth0-react"
 //SECTIONS
 const Content = lazy(() => import('./Content'))
 const Fonts = lazy(() => import('./Fonts'))
@@ -66,6 +68,7 @@ const Section = ({ folder, level, onFolderUpdate, handleFoldersDisabled}: { fold
     const auth = useAuth()
     const { t } = useTranslation('knowledge')
     const navigate = useNavigate()
+    const { getAccessTokenSilently } = useAuth0()
     const selectedSection = useLocation().pathname.split('/')[3]
     
     //SETTINGS BUTTON REF
@@ -107,7 +110,7 @@ const Section = ({ folder, level, onFolderUpdate, handleFoldersDisabled}: { fold
 
         //FUNCTION FOR CREATE A NEW BUSINESS
         const deleteFolder= async () => {
-            const businessData = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/folders/${folder.uuid}`, method:'delete', setWaiting:setWaitingDelete, auth, toastMessages:{'works': t('CorrectDeletedFolder'), 'failed':t('FailedDeletedFolder')}})
+            const businessData = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/folders/${folder.uuid}`, getAccessTokenSilently, method:'delete', setWaiting:setWaitingDelete, auth, toastMessages:{'works': t('CorrectDeletedFolder'), 'failed':t('FailedDeletedFolder')}})
             if (businessData?.status === 200) onFolderUpdate('delete', folder, null)
             setShowCreate(false)
         }
@@ -130,11 +133,8 @@ const Section = ({ folder, level, onFolderUpdate, handleFoldersDisabled}: { fold
         const [selectedFolder, setSelectedFolder] = useState<string>('')
         const [waitingCreate, setWaitingCreate] = useState<boolean>(false)
 
-        //FUNCTION FOR CREATE A NEW BUSINESS
         const createFolder= async () => {
-
-            
-            const businessData = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/folders/${folder.uuid}/move/${selectedFolder}`, method:'put', setWaiting:setWaitingCreate, requestForm:{name:folder.name, parent_folders:[]}, auth, toastMessages:{'works': t('CorrectMovedFolder'), 'failed':t('FailedMovedFolder')}})
+            const businessData = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/folders/${folder.uuid}/move/${selectedFolder}`,getAccessTokenSilently, method:'put', setWaiting:setWaitingCreate, requestForm:{name:folder.name, parent_folders:[]}, auth, toastMessages:{'works': t('CorrectMovedFolder'), 'failed':t('FailedMovedFolder')}})
             if (businessData?.status === 200) onFolderUpdate('move', folder,selectedFolder )
             setShowCreate(false)
         }
@@ -195,8 +195,6 @@ const Section = ({ folder, level, onFolderUpdate, handleFoldersDisabled}: { fold
                 {folder.emoji ? <Text>{folder.emoji}</Text>:<Icon boxSize="16px" as={FaFolder} />}
                 <Text  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{folder.name}</Text>
             </Flex>
-
-       
             <Box width={'15px'} ref={buttonRef}> 
                 {(isHovering || (settingsBoxPosition?.id === folder.uuid)) && <BsThreeDots size='15px' onClick={(e) => {e.stopPropagation();determineBoxPosition(folder.uuid) }}/>}
             </Box>
@@ -207,10 +205,7 @@ const Section = ({ folder, level, onFolderUpdate, handleFoldersDisabled}: { fold
             }
         </Flex>
         <motion.div initial={{height:showFolders?'auto':0}} animate={{height:showFolders?0:'auto' }} exit={{height:showFolders?'auto':0 }} transition={{duration:.2}} style={{overflow:'hidden', padding:'5px', maxHeight:1000}}>           
-            {folder.children &&
-            folder.children.map((childFolder) => (
-                <Section key={childFolder.uuid} folder={childFolder} level={level + 1} onFolderUpdate={onFolderUpdate} handleFoldersDisabled={handleFoldersDisabled}/>
-            ))}
+            {folder.children &&folder.children.map((childFolder) => (<Section key={childFolder.uuid} folder={childFolder} level={level + 1} onFolderUpdate={onFolderUpdate} handleFoldersDisabled={handleFoldersDisabled}/>))}
         </motion.div>
 
         {settingsBoxPosition &&  
@@ -226,12 +221,12 @@ const Section = ({ folder, level, onFolderUpdate, handleFoldersDisabled}: { fold
                     <Icon as={FiEdit}/>
                     <Text whiteSpace={'nowrap'}>{t('EditFolder')}</Text>
                 </Flex>
-                <Flex px='15px' borderRadius='.5rem' onClick={() => {setShowMove(true);setSettingsBoxPosition(null)}} py='10px' cursor={'pointer'} gap='10px' alignItems={'center'} _hover={{bg:'brand.gray_2'}}>
+                {/*<Flex px='15px' borderRadius='.5rem' onClick={() => {setShowMove(true);setSettingsBoxPosition(null)}} py='10px' cursor={'pointer'} gap='10px' alignItems={'center'} _hover={{bg:'brand.gray_2'}}>
                     <Icon as={BsFillFolderSymlinkFill}/>
                     <Text whiteSpace={'nowrap'}>{t('MoveFolder')}</Text>
-                </Flex>
+                </Flex>*/}
                 <Flex  px='15px' borderRadius='.5rem'  color='red' py='10px'cursor={'pointer'} onClick={() => {setShowDelete(true);setSettingsBoxPosition(null)}}gap='10px' alignItems={'center'} _hover={{bg:'red.50'}}>
-                    <Icon as={BsTrash3Fill}/>
+                    <Icon as={HiTrash}/>
                     <Text whiteSpace={'nowrap'}>{t('DeleteFolder')}</Text>
                 </Flex>
 
@@ -249,6 +244,7 @@ function Knowledege () {
     const auth = useAuth()
     const navigate = useNavigate()
     const location = useLocation().pathname
+    const { getAccessTokenSilently } = useAuth0() 
 
     //SCROLL REF 
     const scrollRef = useRef<HTMLDivElement>(null)
@@ -263,6 +259,7 @@ function Knowledege () {
     useEffect(() => {
         document.title = `${t('Knowledge')} - ${auth.authData.organizationId} - Matil`
         localStorage.setItem('currentSection', 'knowledge')
+        const response  =  fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/folders`,getAccessTokenSilently, setValue:setFolders, auth})
 
         navigate(localStorage.getItem('currentSectionContent') || 'fonts')
     }, [])
@@ -378,13 +375,12 @@ function Knowledege () {
                             <Route path="/fonts" element={<Fonts/>} />
                             <Route path="/folder/*" element={<Content folders={folders} handleFolderUpdate={handleFolderUpdate} />}  />
 
-                            <Route path="/article/*" element={<Article />} />
-                            <Route path="/article/*" element={<Article />} />
+                            <Route path="/article/*" element={<Article folders={folders}/>} />
 
-                            <Route path="/website/*" element={<Website/>} />
+                            <Route path="/website/*" element={<Website folders={folders}/>} />
                             
-                            <Route path="/pdf/*" element={<Pdf/>} />
-                            <Route path="/snippet/*" element={<TextSection/>} />
+                            <Route path="/pdf/*" element={<Pdf folders={folders}/>} />
+                            <Route path="/snippet/*" element={<TextSection folders={folders}/>} />
                         </Routes>
                     </Suspense>
                 </Flex>   

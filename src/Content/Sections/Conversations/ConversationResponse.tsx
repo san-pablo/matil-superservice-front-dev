@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next'
 //FETCH DATA
 import fetchData from "../../API/fetchData"
 //FRONT
-import { Flex, Box, Text, Avatar, Icon, Skeleton, Button, IconButton, Tooltip, Textarea, Link, Image, NumberInput, NumberInputField, chakra, shouldForwardProp, useDisclosure, Modal, ModalOverlay, ModalContent, ModalBody, ModalCloseButton } from '@chakra-ui/react'
+import { Flex, Box, Text, Avatar, Icon, Skeleton, Button, IconButton, Tooltip, Textarea, Link, Image, NumberInput, NumberInputField, chakra, shouldForwardProp, useDisclosure,ModalOverlay, Modal, ModalContent, ModalBody, ModalCloseButton, Portal } from '@chakra-ui/react'
 import { motion, AnimatePresence, isValidMotionProp } from 'framer-motion'
 import '../../Components/styles.css'
 //COMPONENTS
@@ -31,14 +31,17 @@ import downloadFile from "../../Functions/downloadFile"
 import timeStampToDate from "../../Functions/timeStampToString"
 //ICONS
 import { IoIosArrowDown } from "react-icons/io"
-import { BsPersonFill, BsThreeDotsVertical,  } from "react-icons/bs"
+import { BsPersonFill, BsThreeDotsVertical, BsStars } from "react-icons/bs"
 import { MdFileDownload, } from 'react-icons/md'
 import { HiTrash, HiMenuAlt1 } from "react-icons/hi"
 import { TbArrowMerge } from "react-icons/tb"
-import { FaClockRotateLeft } from "react-icons/fa6"
+import { AiFillAudio } from "react-icons/ai"
+import { FaClockRotateLeft, } from "react-icons/fa6"
 import { HiOutlinePaperClip } from "react-icons/hi"
 //TYPING
 import { ClientData, statesMap, ConversationsData, Conversations, contactDicRegex, ContactChannel, MessagesData, languagesFlags, DeleteHeaderSectionType, ConversationColumn } from "../../Constants/typing"
+import { useAuth0 } from "@auth0/auth0-react"
+import { RxCross2 } from "react-icons/rx"
    
 //TYPING
 interface RespuestaProps {
@@ -51,7 +54,6 @@ interface RespuestaProps {
     clientData: ClientData | null
     setClientData:Dispatch<SetStateAction<ClientData | null>>
     clientId:number
-    deleteHeaderSection: DeleteHeaderSectionType
     socket:any
 }
 interface MergeBoxProps {
@@ -65,10 +67,11 @@ interface MergeBoxProps {
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
 
 //MAIN FUNCTION
-function ConversationResponse ( {conversationData, setClientConversations, clientConversations, setConversationData, messagesList, setMessagesList, clientData, setClientData, clientId, deleteHeaderSection, socket }:RespuestaProps) {
+function ConversationResponse ( {conversationData, setClientConversations, clientConversations, setConversationData, messagesList, setMessagesList, clientData, setClientData, clientId, socket }:RespuestaProps) {
 
     //TRANSLATION
     const { t } = useTranslation('conversations')
+    const { getAccessTokenSilently } = useAuth0()
     const t_clients = useTranslation('clients').t
     const t_formats = useTranslation('formats').t
 
@@ -78,10 +81,10 @@ function ConversationResponse ( {conversationData, setClientConversations, clien
     const navigate = useNavigate()
        
     //SIDE PANEL CONSTANTS FOR MAPPING SELECTORS
-    let usersDict:{[key:number]:string} = {}
+    let usersDict:{[key:string]:string} = {}
     if (auth.authData.users) Object.keys(auth.authData?.users).map((key:any) => {if (auth?.authData?.users) usersDict[key] = auth?.authData?.users[key].name})
-    usersDict[0] = t('NoAgent')
-    usersDict[-1] = 'Matilda'
+    usersDict['no_user'] = t('NoAgent')
+    usersDict['matilda'] = 'Matilda'
     let themesDict:{[key:number]:string} = {}
     if (auth.authData?.users) Object.keys(auth.authData?.users).map((key:any) => {if (auth?.authData?.users) themesDict[key] = auth?.authData?.users[key].name})
     const ratingMapDic = {0:`${t('Priority_0')} (0)`, 1:`${t('Priority_1')} (1)`, 2:`${t('Priority_2')} (2)`, 3:`${t('Priority_3')} (3)`, 4:`${t('Priority_4')} (4)`}
@@ -101,12 +104,16 @@ function ConversationResponse ( {conversationData, setClientConversations, clien
     }
     useEffect(() => {if (messageQueue.current.length > 0) processQueue()}, [messagesList])
     
-     //BOOLEAN FOR MERGE A CONVERSATION
-    const [showMerge, setShowMerge] = useState(false)
+    //BOOLEAN FOR SHOW THE AUDIO IN VOIP
+    const [showAudio, setShowAudio] = useState<boolean>(false)
+
+    //BOOLEAN FOR MERGE A CONVERSATION
+     const [showMerge, setShowMerge] = useState<boolean>(false)
 
 
     //WIDTH OF CLIENT BOX
-    const [clientBoxWidth, setClientBoxWidth] = useState(360)
+    const containerWidth = Math.min(window.innerWidth * 0.6, window.innerWidth - 275 - 240)
+    const [clientBoxWidth, setClientBoxWidth] = useState(containerWidth / 2)
     const sendBoxWidth = `calc(100vw - 55px - 280px - ${clientBoxWidth}px)`
 
     //BOOLEAN FOR SHOW CONTACT INFO
@@ -212,11 +219,11 @@ function ConversationResponse ( {conversationData, setClientConversations, clien
     const updateData = async(section:'conversation' | 'client', newData?:ConversationsData | null) => {       
         const compareData = newData?newData:conversationDataEdit as ConversationsData
         if (section === 'conversation' && JSON.stringify(conversationDataRef.current) !== JSON.stringify(compareData)){
-            fetchData({endpoint:`${auth.authData.organizationId}/conversations/${conversationData?.id}`, auth:auth, requestForm:compareData, method:'put', toastMessages:{'works':t('ConversationUpdated', {id:conversationData?.id}),'failed':t('UpdatedFailed')}})
+            fetchData({endpoint:`${auth.authData.organizationId}/conversations/${conversationData?.id}`, auth:auth,getAccessTokenSilently, requestForm:compareData, method:'put', toastMessages:{'works':t('ConversationUpdated', {id:conversationData?.id}),'failed':t('UpdatedFailed')}})
             setConversationData(compareData)
         }
         else if (section === 'client' && JSON.stringify(clientDataRef.current) !== JSON.stringify(clientDataEdit)){
-            fetchData({endpoint:`${auth.authData.organizationId}/contacts/${clientData?.id}`, auth:auth, requestForm:clientDataEdit || {}, method:'put', toastMessages:{'works':t_clients('ClientUpdated', {id:clientData?.id}),'failed':t('UpdatedFailed')} })
+            fetchData({endpoint:`${auth.authData.organizationId}/contacts/${clientData?.id}`, auth:auth, requestForm:clientDataEdit || {},getAccessTokenSilently, method:'put', toastMessages:{'works':t_clients('ClientUpdated', {id:clientData?.id}),'failed':t('UpdatedFailed')} })
             setClientData(clientData)
         }
     }
@@ -279,7 +286,7 @@ function ConversationResponse ( {conversationData, setClientConversations, clien
             let conversationText = `${t('Conversation')} #${conversationDataEdit?.local_id} (${auth.authData.organizationName})\n\n`
 
             messagesList.messages.forEach(con => {
-                const sender = (con.sender_type === -3?t('SystemMessage'):con.sender_type === -2?t('InternalNote'):con.sender_type === -1?'Matilda':con.sender_type === 0?clientDataEdit?.name:auth.authData?.users?.[con.sender_type].name) || ''
+                const sender = (con.sender_type === 'system'?t('SystemMessage'):con.type === 'internal_note'?t('InternalNote'):con.sender_type === 'matilda'?'Matilda':con.sender_type === 'contact'?clientDataEdit?.name:auth.authData?.users?.[con.sender_type].name) || ''
                 conversationText += `${sender}: ${WriteMessages(con.type, con.content)}\n\n`
             })
             messagesList.scheduled_messages.forEach(con => {
@@ -299,21 +306,21 @@ function ConversationResponse ( {conversationData, setClientConversations, clien
 
     //TAKE THE CONTROL OF A CONVERSATION
     const takeConversationControl = () => {
-        updateSelector('user_id', auth.authData?.userId || -1 )
-        fetchData({endpoint:`${auth.authData.organizationId}/conversations/${conversationDataEdit?.id}/cancel_scheduled_messages`, method:'post', auth})
+        updateSelector('user_id', auth.authData?.userId || 'matilda' )
+        fetchData({endpoint:`${auth.authData.organizationId}/conversations/${conversationDataEdit?.id}/cancel_scheduled_messages`,getAccessTokenSilently, method:'post', auth})
     }
 
     //COMPONENT FOR DELETING A CONVERSATION
     const DeleteComponent = ({t}:{t:any}) => {
         const [waitingDelete, setWaitingDelete] = useState<boolean>(false)
         const deleteConversation= async() => {
-            const response = await fetchData({endpoint:`${auth.authData.organizationId}/conversations/bin`, requestForm:{conversation_ids:[conversationData?.id], days_until_deletion:30}, setWaiting:setWaitingDelete, auth:auth, method:'post', toastMessages:{'works':t('ConversationDeleted'),'failed':t('ConversationDeletedFailed')}})
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/conversations/bin`, getAccessTokenSilently,requestForm:{conversation_ids:[conversationData?.id], days_until_deletion:30}, setWaiting:setWaitingDelete, auth:auth, method:'post', toastMessages:{'works':t('ConversationDeleted'),'failed':t('ConversationDeletedFailed')}})
             if (response?.status === 200) {
                 session.dispatch({type:'DELETE_VIEW_FROM_CONVERSATION_LIST'})
                 session.dispatch({type:'EDIT_HEADER_SECTION_CONVERSATION', payload:{new_data:conversationDataEdit, is_new:false, is_deleted:true, auth}})
-                const responseOrg = await fetchData({endpoint:`${auth.authData.organizationId}/user`, auth})
+                const responseOrg = await fetchData({endpoint:`${auth.authData.organizationId}/user`,getAccessTokenSilently, auth})
                 auth.setAuthData({views: responseOrg?.data})
-                deleteHeaderSection({ description: '', code: conversationDataRef?.current?.id as number, local_id:conversationDataRef?.current?.local_id, type: 'conversation'})
+                //deleteHeaderSection({ description: '', code: conversationDataRef?.current?.id as number, local_id:conversationDataRef?.current?.local_id, type: 'conversation'})
                 setShowConfirmDelete(false)
             }
         }
@@ -326,8 +333,8 @@ function ConversationResponse ( {conversationData, setClientConversations, clien
                 <Text >{t('ConfirmDeleteQuestion')}</Text>
             </Box>
             <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-                <Button  size='sm'  bg='red.100' color='red.600' _hover={{bg:'red.200'}} onClick={deleteConversation}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
-                <Button  size='sm' _hover={{color:'blue.400'}}  onClick={()=>setShowConfirmDelete(false)}>{t('Cancel')}</Button>
+                <Button  size='sm'  variant={'delete'} onClick={deleteConversation}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
+                <Button  size='sm' variant={'common'}  onClick={()=>setShowConfirmDelete(false)}>{t('Cancel')}</Button>
             </Flex>
         </>)
     }
@@ -341,7 +348,7 @@ function ConversationResponse ( {conversationData, setClientConversations, clien
                 <>
                     {messagesList.messages.map((con:any, index:number) => (               
                     <Box  mt={'5vh'} key={`message-${index}`} ref={index === (messagesList?.messages.length || 0) - 1 ? lastMessageRef : null}> 
-                        <MessageComponent con={con} sender={(con.sender_type === -3?'':con.sender_type === -2?t('InternalNote'):con.sender_type === -1?'Matilda':con.sender_type === 0?clientDataEdit?.name:auth.authData?.users?.[parseInt(con.sender_type)].name) || ''} navigate={navigate}/>
+                        <MessageComponent conId={conversationDataEdit?.id || -1} con={con} sender={(con.sender_type === 'system'?'':con.type === 'internal_note'?t('InternalNote'):con.sender_type === 'matilda'?'Matilda':con.sender_type === 'contact'?clientDataEdit?.name:auth.authData?.users?.[con.sender_type].name) || ''} navigate={navigate}/>
                     </Box>))}
 
                     {messagesList.scheduled_messages.map((con:any, index:number) =>(
@@ -365,58 +372,37 @@ function ConversationResponse ( {conversationData, setClientConversations, clien
             <MergeBox t={t} conversationData={conversationDataEdit} clientName={clientDataEdit?.name || t('NoClient')} setShowMerge={setShowMerge}/>
         </ConfirmBox>
     ), [showMerge])
+     
    
+    
 
     //FRONT
     return(<> 
  
-        <Flex height={'calc(100vh - 120px)'} ref={scrollRef1} maxW={'calc(100vw - 55px)'}>
-            <Box position={'relative'}  p='2vw' bg='#f1f1f1' overflow={'scroll'}   width={'280px'}   borderRightWidth={'1px'} borderRightColor='gray.200' >
-                <Text mb='.5vh'fontWeight={'medium'} fontSize='.9em' >{t('theme')}</Text>
-                <Skeleton isLoaded={conversationDataEdit !== null}>
-                    <CustomSelect  isDisabled={conversationDataEdit?.user_id === -1 ||conversationDataEdit?.status === 'closed'} containerRef={scrollRef1}  selectedItem={conversationDataEdit?.theme} options={auth.authData?.conversation_themes || []} setSelectedItem={(value) => updateSelector('theme',value)} hide={false} />
-                </Skeleton>
-
-                <Text mb='.5vh'fontWeight={'medium'} fontSize='.9em' mt='2vh' >{t('user_id')}</Text>
-                <Skeleton isLoaded={conversationDataEdit !== null}>
-                    <CustomSelect isDisabled={conversationDataEdit?.user_id === -1 ||conversationDataEdit?.status === 'closed'}  containerRef={scrollRef1}  selectedItem={conversationDataEdit?.user_id} options={Object.keys(usersDict).map(key => parseInt(key))} labelsMap={usersDict} setSelectedItem={(value) => updateSelector('user_id',value)} hide={false} />
-                </Skeleton>
-
-                <Text mb='.5vh' fontWeight={'medium'}fontSize='.9em'  mt='2vh'>{t('urgency_rating')}</Text>
-                <Skeleton isLoaded={conversationDataEdit !== null}>
-                    <CustomSelect isDisabled={conversationDataEdit?.user_id === -1 ||conversationDataEdit?.status === 'closed'}  containerRef={scrollRef1}  selectedItem={conversationDataEdit?.urgency_rating} options={ratingsList} labelsMap={ratingMapDic} setSelectedItem={(value) => updateSelector('urgency_rating',value)} hide={false} />
-                </Skeleton>
-                
-                <Text mb='.5vh'fontWeight={'medium'} mt='2vh' fontSize='.9em'>{t('created_at')}</Text>
-                <Skeleton isLoaded={conversationDataEdit !== null}>
-                    <Text fontSize={'.9em'}>{timeAgo(conversationDataEdit?.created_at, t_formats)}</Text>
-                </Skeleton>
-     
-                <Text mb='.5vh'fontWeight={'medium'} mt='2vh' fontSize='.9em'>{t('updated_at')}</Text>
-                <Skeleton isLoaded={conversationDataEdit !== null}>
-                    <Text fontSize={'.9em'}>{timeAgo(conversationDataEdit?.updated_at, t_formats)}</Text>
-                </Skeleton>
-
-                <Skeleton isLoaded={conversationDataEdit !== null}>
-                    <CustomAttributes  disabled={conversationDataEdit?.user_id === -1 ||conversationDataEdit?.status === 'closed'}   motherstructureType="conversation" customAttributes={conversationDataEdit?.custom_attributes || []} updateCustomAttributes={updateCustomAttributes}/>
-                </Skeleton>
-            </Box>
+        <Flex height={'100vh'} ref={scrollRef1} w={'100%'}>
+          
 
             <MotionBox initial={{ width: sendBoxWidth  }} animate={{ width: sendBoxWidth}} exit={{ width: sendBoxWidth }} transition={{ duration: '.2' }}  
               width={sendBoxWidth}    overflowY={'hidden'}  borderRightWidth={'1px'} borderRightColor='gray.200' >
-                <Flex height={'calc(100vh - 120px)'} position='relative' flexDir={'column'}> 
-                  
-                     <Flex justifyContent={'space-between'} alignItems={'center'} height={'50px'} px='20px'>
+                <Flex height="100vh"position="relative" flexDir="column" overflow="hidden" className="fondoAnimado">
+                    <div className="gradient-box"/>
+                     <Flex  justifyContent={'space-between'} alignItems={'center'} height={'50px'} px='20px'>
                         <Skeleton isLoaded={conversationDataEdit !== null}>
-                            <Text fontWeight={'medium'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{conversationDataEdit?.title}</Text>
+                            <Text fontWeight={'medium'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{conversationDataEdit?.title} <span style={{fontWeight:600}}> {conversationDataEdit?.call_duration  ? `${t('Duration', {seconds:conversationDataEdit?.call_duration})}`:''}</span></Text>
                         </Skeleton>
                         <Box  position={'relative'}> 
-                            <IconButton ref={settingsButtonRef} aria-label='conver-settings' icon={<BsThreeDotsVertical/>} size='sm' isRound bg='transparent'  _hover={{bg:'brand.gray_1'}}  onClick={() => {setShowSettings(!showSettings)}}/>
+                            <IconButton ref={settingsButtonRef} aria-label='conver-settings' icon={<BsThreeDotsVertical/>} size='sm'  variant={'common'} bg='transparent'  onClick={() => {setShowSettings(!showSettings)}}/>
                             <AnimatePresence> 
                                 {showSettings && 
                                 <MotionBox initial={{ opacity: 0, marginTop: -5 }} animate={{ opacity: 1, marginTop: 5 }}  exit={{ opacity: 0,marginTop: -5}} transition={{ duration: '.2', ease: 'easeOut'}}
-                                maxH='40vh' right={0} overflow={'scroll'} top='100%' gap='10px' ref={settingsBoxRef} fontSize={'.9em'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000}   position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
-                                 
+                                maxH='40vh' right={0} overflow={'scroll'} top='100%' gap='10px' ref={settingsBoxRef} fontSize={'.9em'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.1)'} bg='white' zIndex={100000}   position={'absolute'} borderRadius={'.5rem'} borderWidth={'1px'} borderColor={'gray.200'}>
+                                
+                                    {conversationDataEdit?.call_url && 
+                                    <Flex  px='15px' py='10px' cursor={'pointer'} gap='10px' alignItems={'center'} _hover={{bg:'brand.hover_gray'}} onClick={() => {setShowAudio(true);setShowSettings(false)}}>
+                                        <Icon color='gray.600'  boxSize={'15px'} as={AiFillAudio}/>
+                                        <Text whiteSpace={'nowrap'}>{t('Audio')}</Text>
+                                    </Flex>}
+
                                     <Flex  px='15px' py='10px' cursor={'pointer'} gap='10px' alignItems={'center'} _hover={{bg:'brand.hover_gray'}} onClick={() => {setShowMerge(true);setShowSettings(false)}}>
                                         <Icon color='gray.600'  boxSize={'15px'} as={TbArrowMerge }/>
                                         <Text whiteSpace={'nowrap'}>{t('MergeConversation')}</Text>
@@ -433,30 +419,56 @@ function ConversationResponse ( {conversationData, setClientConversations, clien
                             </AnimatePresence>                 
                         </Box>                
                     </Flex>  
-                    <Box position={'relative'} flex='1' overflow={'hidden'} width={'100%'} px='20px' bg={ conversationDataEdit?.status !== 'closed'?'transparent':'gray.200'} backdropBlur='10px'  >
 
-                        {(conversationDataEdit?.user_id === -1 && conversationDataEdit.status !== 'closed') ? 
-                             <GradientBox scrollRef={scrollRef}> 
-                                <MessagesContent/>
-                            </GradientBox> 
-                        :
-                        <Box ref={scrollRef} position={'relative'} flex='1'   width={'100%'} px='20px' overflow={'scroll'}  height={'calc(100% - 20px)'}  >
+                    <Box position={'relative'} flex='1' overflow={'hidden'} width={'100%'} px='20px' bg={ (conversationDataEdit?.status !== 'closed' && conversationDataEdit?.call_status !== 'completed')?'transparent':'gray.200'} backdropBlur='10px'  >
+                        <Box ref={scrollRef} position={'relative'} flex='1'   width={'100%'} p='0 0px 50px 0px' overflow={'scroll'}  height={'calc(100%)'}   >
                             <MessagesContent/>
-                        </Box>}
+                        </Box>
                     </Box>
-                    {(conversationDataEdit) && <TextEditor conversationData={conversationDataEdit as ConversationsData} updateData={updateData} takeConversationControl={takeConversationControl}  deleteHeaderSection={deleteHeaderSection} clientName={clientDataEdit?.name}/>}
-
+                    {(conversationDataEdit) && <TextEditor conversationData={conversationDataEdit as ConversationsData} updateData={updateData} takeConversationControl={takeConversationControl} clientName={clientDataEdit?.name}/>}
                 </Flex>
+            
             </MotionBox>
             
             <MotionBox width={clientBoxWidth + 'px'}  overflowY={'scroll'} initial={{ width: clientBoxWidth + 'px' }} animate={{ width: clientBoxWidth + 'px' }} exit={{ width: clientBoxWidth + 'px' }} transition={{ duration: '.2'}} 
-                bg='brand.gray_2' py='2vw' px={clientBoxWidth === 360 ?'2vw':'8px'} ref={scrollRef2} overflowX={'hidden'}>
+                bg='white' py='2vw' px={'1vw'} ref={scrollRef2} overflowX={'hidden'}>
  
                 <AnimatePresence>
-                    {clientBoxWidth === 360 ?<> 
+                    {clientBoxWidth === (containerWidth / 2) ?<> 
                   
                     <MotionBox whiteSpace={'nowrap'} overflow={'hidden'} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}  transition={{ duration: '.3' }} > 
                              
+                        <Box position={'relative'}   >
+                            <Text mb='.5vh'fontWeight={'medium'} fontSize='.9em' >{t('theme')}</Text>
+                            <Skeleton isLoaded={conversationDataEdit !== null}>
+                                <CustomSelect  isDisabled={conversationDataEdit?.user_id === 'matilda' ||conversationDataEdit?.status === 'closed'} containerRef={scrollRef1}  selectedItem={conversationDataEdit?.theme} options={auth.authData?.conversation_themes || []} setSelectedItem={(value) => updateSelector('theme',value)} hide={false} />
+                            </Skeleton>
+
+                            <Text mb='.5vh'fontWeight={'medium'} fontSize='.9em' mt='2vh' >{t('user_id')}</Text>
+                            <Skeleton isLoaded={conversationDataEdit !== null}>
+                                <CustomSelect isDisabled={conversationDataEdit?.user_id === 'matilda' ||conversationDataEdit?.status === 'closed'}  containerRef={scrollRef1}  selectedItem={conversationDataEdit?.user_id} options={Object.keys(usersDict).map(key => key)} labelsMap={usersDict} setSelectedItem={(value) => updateSelector('user_id',value)} hide={false} />
+                            </Skeleton>
+
+                            <Text mb='.5vh' fontWeight={'medium'}fontSize='.9em'  mt='2vh'>{t('urgency_rating')}</Text>
+                            <Skeleton isLoaded={conversationDataEdit !== null}>
+                                <CustomSelect isDisabled={conversationDataEdit?.user_id === 'matilda' ||conversationDataEdit?.status === 'closed'}  containerRef={scrollRef1}  selectedItem={conversationDataEdit?.urgency_rating} options={ratingsList} labelsMap={ratingMapDic} setSelectedItem={(value) => updateSelector('urgency_rating',value)} hide={false} />
+                            </Skeleton>
+                            
+                            <Text mb='.5vh'fontWeight={'medium'} mt='2vh' fontSize='.9em'>{t('created_at')}</Text>
+                            <Skeleton isLoaded={conversationDataEdit !== null}>
+                                <Text fontSize={'.9em'}>{timeAgo(conversationDataEdit?.created_at, t_formats)}</Text>
+                            </Skeleton>
+                
+                            <Text mb='.5vh'fontWeight={'medium'} mt='2vh' fontSize='.9em'>{t('updated_at')}</Text>
+                            <Skeleton isLoaded={conversationDataEdit !== null}>
+                                <Text fontSize={'.9em'}>{timeAgo(conversationDataEdit?.updated_at, t_formats)}</Text>
+                            </Skeleton>
+
+                            <Skeleton isLoaded={conversationDataEdit !== null}>
+                                <CustomAttributes  disabled={conversationDataEdit?.user_id === 'matilda' ||conversationDataEdit?.status === 'closed'}   motherstructureType="conversation" customAttributes={conversationDataEdit?.custom_attributes || []} updateCustomAttributes={updateCustomAttributes}/>
+                            </Skeleton>
+                        </Box>
+
                             <Flex justifyContent={'space-between'} mb='2vh' alignItems={'center'}> 
                                 <Flex flex='1'   minW={0}     gap='15px' alignItems={'center'}>
                                     <Avatar name={clientDataEdit?.name} size='sm'/>
@@ -465,7 +477,7 @@ function ConversationResponse ( {conversationData, setClientConversations, clien
                                     </Skeleton>
                                 </Flex>
                                 <Flex alignItems={'center'}> 
-                                    <IconButton isRound variant={'common'} size='sm' onClick={()=>setShowContactoInfo(!showContactoInfo)} aria-label="show-client" icon={<IoIosArrowDown size={'16px'} className={showContactoInfo ? "rotate-icon-down" : "rotate-icon-up" }/>}/>
+                                    <IconButton isRound variant={'common'} bg='transparent' size='sm' onClick={() => setShowContactoInfo(!showContactoInfo)} aria-label="show-client" icon={<IoIosArrowDown size={'16px'} className={showContactoInfo ? "rotate-icon-down" : "rotate-icon-up" }/>}/>
                                     <Tooltip label={t('HideClient')}  hasArrow={true} placement='left' color='black' bg='white' borderRadius='.4rem' fontSize='.75em' p='5px'>
                                         <Flex justifyContent='center' alignItems='center' width={'36px'} height={'36px'}  cursor='pointer' borderRadius='.4rem' color='gray.600' _hover={{bg:'brand.blue_hover', color:'brand.text_blue'  }} onClick={() => setClientBoxWidth(50)}>
                                             <Icon as={BsPersonFill} boxSize='18px'/>
@@ -510,27 +522,23 @@ function ConversationResponse ( {conversationData, setClientConversations, clien
                                         <Textarea  maxLength={500} height={'auto'} onBlur={() => updateData('client')} minHeight={'37px'} ref={textareaNotasRef} placeholder={`${t_clients('notes')}...`} maxH='300px' value={clientDataEdit?.notes} onChange={handleInputNotesChange} p='8px'  resize={'none'} borderRadius='.5rem' rows={1} fontSize={'.9em'}  borderColor='transparent' _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "brand.text_blue", borderWidth: "2px"}}/>
                                      </Flex>
                                 </Skeleton>
-
                             </motion.div>
                     
                         <Box width={'100%'} mt='3vh' mb='3vh' height={'1px'} bg='gray.300'/>
                         <Text fontWeight={'medium'} fontSize={'1.1em'}>{t('Conversations')}</Text>
                         <Skeleton isLoaded={clientDataEdit !== null}>
                             <Box mt='2vh' position={'relative'}> 
-                                    {clientConversations && <>
+                                {clientConversations && <>
                                     {clientConversations.page_data.map((con, index) => (
-                                        <Box position={'relative'} key={`conversations-${index}`} onClick={() => {navigate(`/conversations/conversation/${con.id}`)}}  p='10px' borderRadius={'.3rem'} cursor={'pointer'} bg={conversationDataEdit?.id === con.id ? 'white':'transparent'} _hover={{bg:conversationDataEdit?.id  === con.id ?'white':'brand.blue_hover'}}>
-                                            
+                                        <Box position={'relative'} key={`conversations-${index}`} onClick={() => {navigate(`/conversations/conversation/${con.id}`)}}  p='10px' borderRadius={'.3rem'} cursor={'pointer'} bg={conversationDataEdit?.id === con.id ? 'brand.gray_2':'transparent'} _hover={{bg:conversationDataEdit?.id  === con.id ?'brand.gray_2':'brand.hover_gray'}}>
                                             {index !== clientConversations.page_data.length - 1 && <Box position={'absolute'} height={'calc(100%)'} mt='10px' ml='4px'  width={'2px'} bg='gray.400' zIndex={1}/>}
-
                                             <Flex alignItems={'center'}  gap='20px'> 
                                                 <Box borderRadius={'.2rem'}  bg={statesMap[con.status as 'new' | 'open' | 'pending' | 'solved' | 'closed'][1]} zIndex={10} height={'10px'} width='10px' />
-                                           
-                                                <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'} fontSize={'.9em'}>{con.title ? con.title:t('NoDescription')}</Text>
+                                                <Text flex='1' whiteSpace={'nowrap'} fontWeight={conversationDataEdit?.id  === con.id ?'medium':'normal'} textOverflow={'ellipsis'} overflow={'hidden'} fontSize={'.9em'}>{con.title ? con.title:t('NoDescription')}</Text>
                                             </Flex>
                                             <Box ml='30px' >
                                                 <Text mt='5px' fontSize={'.8em'} color='gray' whiteSpace={'nowrap'} >{timeAgo(con.created_at as string, t_formats)}</Text>
-                                                <Text  mt='5px'  fontSize={'.8em'}><span style={{fontWeight:'500'}}>{t('status')}</span> {t(con.status as string)}</Text>
+                                                <Text mt='5px' fontSize={'.8em'}><span style={{fontWeight:'500'}}>{t('status')}</span> {t(con.status as string)}</Text>
                                             </Box>
                                         </Box>
                                     ))}
@@ -540,8 +548,8 @@ function ConversationResponse ( {conversationData, setClientConversations, clien
                     </MotionBox>
                     </>:
                     <MotionBox initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}  transition={{ duration: '.3'}} > 
-                       <Tooltip label={t('ExpandClient')}  hasArrow={true} placement='left' bg='black'  borderRadius='.4rem' fontSize='.75em' p='5px'>
-                            <Flex justifyContent='center' alignItems='center' width={'36px'} height={'36px'}  cursor='pointer' borderRadius='.4rem' color='gray.700' _hover={{bg:'blue.50', color:'blue.300'  }} onClick={() => setClientBoxWidth(360)}>
+                       <Tooltip label={t('ExpandClient')}  hasArrow={true} placement='left' bg='white'color='black'  borderRadius='.4rem' fontSize='.75em' p='5px'>
+                            <Flex justifyContent='center' alignItems='center' width={'36px'} height={'36px'}  cursor='pointer' borderRadius='.4rem' color='gray.700'  _hover={{bg:'brand.blue_hover', color:'brand.text_blue'}} onClick={() => setClientBoxWidth(containerWidth / 2)}>
                                 <Icon as={BsPersonFill} boxSize='18px'/>
                             </Flex>
                         </Tooltip>
@@ -553,30 +561,33 @@ function ConversationResponse ( {conversationData, setClientConversations, clien
         
         {showConfirmDelete && memoizedDeleteBox}   
         {showMerge && memoizedMergeBox }
-    </>)
+     </>)
 }
 
 export default ConversationResponse
 
 
 //COMPONENT FOR SHOWING THE CORREPONDING STYLE OF A MESSAGE
-const ShowMessages = ({type, content}:{type:string, content:any}) => {
+const ShowMessages = ({type, content, conId}:{type:string, content:any, conId?:number}) => {
     
-    
+    const navigate = useNavigate()
+    const { t } = useTranslation('conversations')
     //MAIL OR PLAIN
-    if (type === 'plain' || type === 'email') {
+    if (type === 'plain' || type === 'email' || type === 'internal_note') {
+        
         const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/
-        const urlRegex = /https?:\/\/[^\s/$.?#].[^\s]*/
+        const urlRegex = /\[(.*?)\]\((https?:\/\/[^\s/$.?#].[^\s]*)\)/
         const boldRegex = /\*\*(.*?)\*\*/
-  
+        
         // Creamos una nueva expresión regular combinada
         const combinedRegex = new RegExp(`(${emailRegex.source}|${urlRegex.source}|${boldRegex.source})`, 'gi');
         
         // Dividimos el contenido del texto utilizando la expresión regular combinada
-        let parts = content.text.split(combinedRegex);
+        const cleanedText = content.text.replace(/{>>\s*(.*?)\s*<<}/, '$1')
+        let parts = cleanedText.split(combinedRegex)
     
         // Filtramos los elementos undefined de la lista resultante
-        parts = parts.filter((part:any) => part !== undefined && part !== '');
+        parts = parts.filter((part:any) => part !== undefined && part !== '')
         
         parts = parts.reduce((acc:any, part:string, index:number, array:any) => {
           if (boldRegex.test(part) && index < array.length - 1 && part.replace(/\*\*/g, '') === array[index + 1]) {
@@ -587,22 +598,36 @@ const ShowMessages = ({type, content}:{type:string, content:any}) => {
           return acc
         }, [])
   
+        let skipCount = 0
           return (<> 
               <span style={{ wordBreak: 'break-word'}}>
                   {parts.map((part:string, index:number) => {
+  
+                      if (skipCount > 0) {
+                        skipCount--
+                        return null
+                      }
+  
                       if (emailRegex.test(part)) {
                           return (
                               <a key={index} href={`mailto:${part}`} style={{ color: '#1a73e8', wordBreak: 'break-all', whiteSpace: 'pre-line' }}>{part}</a>)
                       } else if (urlRegex.test(part)) {
-                           return (
-                              <a key={index} href={part} target="_blank" rel="noopener noreferrer" style={{ color: '#1a73e8', wordBreak: 'break-all', whiteSpace: 'pre-line' }}>{part}</a>)
+                          const match = part.match(/\[(.*?)\]\((https?:\/\/[^\s/$.?#].[^\s]*)\)/);
+                          if (match) {
+                            const displayText = match[1]
+                            const url = match[2]
+                            skipCount = 2
+                            return (
+                              <a key={index} href={url} target="_blank" rel="noopener noreferrer" style={{ color: '#1a73e8', wordBreak: 'break-all', whiteSpace: 'pre-line' }}>
+                                {displayText}
+                              </a>
+                            )
+                          }
                       }
                        else if (boldRegex.test(part)) {
                         const boldText = part.replace(/\*\*/g, '')
                         return <span style={{fontWeight:500}} key={index}>{boldText}</span>
-                      } 
-                   
-                      else return <span key={index}>
+                      } else return <span key={index}>
                         {part.split('\n').map((line, i) => (
                             <Fragment key={i}>
                                 {i > 0 && <br />}
@@ -614,7 +639,7 @@ const ShowMessages = ({type, content}:{type:string, content:any}) => {
               </span>
               {(content?.sources && content?.sources.length > 0) && 
               <div style={{marginTop:'10px'}}>
-              <span style={{fontWeight:'500'}} >Fuentes</span>
+              <span style={{fontWeight:'500'}} >{t('Sources')}</span>
                 {content.sources.map((source:{title:string, uuid:string, help_center_id:string}, index:number) => (
                     <Flex key={`source-${index}`} cursor={'pointer'} alignItems={'center'} justifyContent={'space-between'} p='5px' borderRadius={'.5rem'} _hover={{bg:'brand.gray_1'}} onClick={() => window.open(`https://www.help.matil.ai/${source.help_center_id}/article/${source.uuid}`, '_blank')} >
                         <span>{source.title}</span>
@@ -625,6 +650,30 @@ const ShowMessages = ({type, content}:{type:string, content:any}) => {
           </>)
     }
 
+    else if (type === 'function_call') {
+        const [isExpanded, setIsExpanded] = useState<boolean>(false)
+
+        const parseJson = (str:any) => {
+             if (typeof str === 'string') {
+                const parsedData = JSON.parse(str)
+                return parsedData.replace(/\\u[\dA-F]{4}/gi, (match:any) => String.fromCharCode(parseInt(match.replace(/\\u/g, ''), 16))).replace(/\\/g, '')
+            }
+            else return JSON.stringify(str)
+        }
+        return (
+        <Box  onMouseLeave={() => setIsExpanded(false)}>
+            <Flex  justifyContent={'space-between'} onMouseEnter={() => setIsExpanded(true)}  > 
+                <Box> 
+                    <Text fontWeight={'medium'}>{t('FunctionCall')} <span style={{cursor:'pointer', color:'rgb(59, 90, 246)'}}  onClick={() => navigate(`/functions/${content.uuid}/${conId}`)}>{content.name}</span></Text>
+                    <Text mt='7px' whiteSpace={'break-word'} wordBreak={'break-word'} overflowWrap={'break-word'} fontSize={'.9em'}><span style={{fontWeight:500}}> {t('Arguments')}:</span> {content.arguments}</Text>
+                 </Box>
+               <IoIosArrowDown cursor={'pointer'} color={'gray.600'} className={isExpanded ? "rotate-icon-up" : "rotate-icon-down"}/>
+            </Flex>
+            <motion.div initial={false} animate={{height:isExpanded?'auto':0, opacity:isExpanded?1:0 }} exit={{height:isExpanded?0:'auto',  opacity:isExpanded?0:1 }} transition={{duration:.2}} style={{overflow:isExpanded?'visible':'hidden'}}>           
+                 <Text fontSize={'.9em'}  mt='7px'><span style={{fontWeight:500}}> {t('Output')}:</span> {parseJson(content.output)}</Text>
+            </motion.div>
+        </Box>)
+    }
     //CHAT OPTIONS
     else if (type === 'options') return (<> 
          {content.map((element:string, index:number) => ( 
@@ -639,33 +688,18 @@ const ShowMessages = ({type, content}:{type:string, content:any}) => {
 
     //IMAGE LINK
     else if (type === 'image') {
-        const { isOpen, onOpen, onClose } = useDisclosure()
+        const [isOpen, setIsOpen] = useState(false);
         const [selectedImage, setSelectedImage] = useState<string | null>(null)
       
         const handleImageClick = (url:string) => {
           setSelectedImage(url)
-          onOpen()
+          setIsOpen(true)
         }
       
-        return (<>
-            <Image maxWidth="50%"  cursor="pointer"  src={content.url}  onClick={() => handleImageClick(content.url)}/>
-                <Modal isOpen={isOpen} onClose={onClose} size="full"   closeOnOverlayClick={true}>
-                <ModalOverlay />
-                <ModalContent bg="white" onClick={onClose} boxShadow="none">
-                    <ModalCloseButton />
-                    <ModalBody display="flex" justifyContent="center" alignItems="center">
-                    <Image   cursor="zoom-in" onClick={(e) => e.stopPropagation()} src={selectedImage as string} maxWidth="60vw" maxHeight="90vh" />
-                    </ModalBody>
-                </ModalContent>
-                <style>{`
-                        .zoom-image {
-                        transition: transform 0.3s ease; /* Animación suave */
-                        }
-                        .zoom-image:hover {
-                        transform: scale(1.1); /* Ampliar imagen al hacer hover */
-                        }
-                    `}</style>
-            </Modal>
+        return (
+        <>
+            <Image maxWidth="50%"   cursor="pointer"  src={content.url}  onClick={() => handleImageClick(content.url)}/>
+            <CustomModal isOpen={isOpen} onClose={() => setIsOpen(false)} imageUrl={selectedImage as string} />
         </>)
     }
   
@@ -700,18 +734,24 @@ const ShowMessages = ({type, content}:{type:string, content:any}) => {
 }
 
 //COMPONENT FOR GETTING A MESSAGE STYLE DEPENDING ON THE TYPE, SENDER AND CHANNEL
-const MessageComponent = memo(({con, navigate, sender, isScheduled = false}:{con:any, navigate:any, sender:string, isScheduled?:boolean}) => {
+const MessageComponent = memo(({con, navigate, sender, isScheduled = false, conId}:{con:any, navigate:any, sender:string, isScheduled?:boolean, conId?:number}) => {
 
+    const auth = useAuth()
     const t_formats = useTranslation('formats').t
-
     const [showAttachments, setShowAttachments] = useState<boolean>(false)
     
+    const memoizedImage = useMemo(() => (<> 
+        <Box width={'25px'} height={'25px'} className='hover-effect'  > 
+            <Image src="/images/matil.svg"  /> 
+        </Box>
+    </>),[])
+
     return(<>
     {isScheduled ?  <>  
         {con.timestamp >= new Date().toISOString() && 
             <Flex gap='10px'  mb='1vh'>
                 <Box width={'25px'} height={'25px'} className='hover-effect'  > 
-                    <Image src="/images/matil.svg"  /> 
+                    {memoizedImage} 
                 </Box>
                 <Box width={'100%'} > 
                     <Flex gap='10px' alignItems={'center'} justifyContent={'space-between'}> 
@@ -721,7 +761,7 @@ const MessageComponent = memo(({con, navigate, sender, isScheduled = false}:{con
                             <Countdown timestamp={con.timestamp}/>
                         </Flex>
                     </Flex>
-                    <Box mt='10px' borderColor={'blue.100'} borderWidth={'1px'}  borderRadius={'.3rem'} bg={'blue.50'} p={'10px'} width={'100%'}> 
+                    <Box mt='10px'  borderColor={'blue.100'} borderWidth={'1px'}  borderRadius={'.3rem'} bg={'blue.50'} p={'10px'} width={'100%'}> 
                         <ShowMessages  content={con.content} type={con.type}/>
                     </Box>
                 </Box>
@@ -729,7 +769,7 @@ const MessageComponent = memo(({con, navigate, sender, isScheduled = false}:{con
             }</>
             :
             <Flex fontSize='.9em' gap='10px'  >
-                {con.sender_type === -3 ?
+                {con.sender_type === 'system' ?
                     <Flex width={'100%'} py='10px' px='5px' gap='15px' alignItems={'center'}>
                         <Box height={'1px'} width={'100%'} bg='gray.300'/>
                          <GetSystemMessage message={con.content} navigate={navigate}/>
@@ -737,29 +777,28 @@ const MessageComponent = memo(({con, navigate, sender, isScheduled = false}:{con
                     </Flex>
                 :
                 <>
-                    {con.sender_type === -1 ? 
-                        <Box width={'25px'} height={'25px'} className='hover-effect'  > 
-                            <Image src="/images/matil.svg"  /> 
-                        </Box>
+                    {(con.sender_type === 'matilda') ? 
+                        <>{con.type === 'function_call' ? <Icon  fill="url(#gradient2)" as={BsStars} boxSize={'25px'}/> : memoizedImage}</>
                         :
                         <Avatar width={'25px'} height={'25px'} size='xs' name={sender}/>
                     }
-                    <Box  width={'calc(100% - 35px)'}> 
-                         <Flex mb='1vh' justifyContent={'space-between'}> 
+                   
+                    <Box  width={con.type !== 'function_call' ? 'calc(100% - 35px)':'100%'}> 
+                        
+                        {con.type !== 'function_call'  && <Flex mb='1vh' justifyContent={'space-between'}> 
                             <Flex gap='30px' alignItems={'center'}> 
-                                <Text fontWeight={'medium'}>{sender}</Text>
+                                <Text fontWeight={'medium'}>{con.type === 'function_call'? t_formats('FunctionCall'):sender}</Text>
                                 {(con.content.attachments && con.content.attachments.length > 0)&& 
                                     <Flex gap='5px' onClick={() => setShowAttachments(!showAttachments)} cursor={'pointer'} alignItems={'center'} _hover={{bg:'underline'}}>
                                         <Icon as={HiOutlinePaperClip}/>
-                                        <Text>{con.content.attachments.length} adjunto{con.content.attachments.length === 1 ? '':'s'}</Text>
+                                        <Text>{t_formats('Attached', {count:con.content.attachments.length})}</Text>
                                         <IoIosArrowDown className={showAttachments ? "rotate-icon-up" : "rotate-icon-down"}/>
                                     </Flex>
                                 }
                             </Flex>
                             <Text fontWeight={'medium'} color='gray.600' fontSize={'.85em'} whiteSpace={'nowrap'}>{timeAgo(con.timestamp, t_formats)}</Text>
-                        </Flex>
- 
-                        <Box borderColor={con.sender_type === -2?'yellow.200':''} mt={con.sender_type === -2?'10px':''} borderWidth={con.sender_type === -2?'1px':''}  borderRadius={'.3rem'} bg={con.sender_type === -2?'yellow.100':''} p={con.sender_type === -2?'10px':'0'} width={'100%'}>
+                        </Flex>}
+                        <Box borderColor={con.type === 'function_call'? 'gray.200':con.type === 'internal_note'?'yellow.200':''} mt={(con.type === 'internal_note')?'10px':''} borderWidth={(con.type === 'internal_note')?'1px':''}  borderRadius={'.3rem'} bg={con.type === 'function_call'?'transparent':con.type === 'internal_note'?'yellow.100':''} p={(con.type === 'internal_note')?'10px':'0'} width={'100%'}>
                             {showAttachments && 
                                 <>
                                 {con.content.attachments.map((file:{file_name:string, url:string, size:number}, index:number) => (
@@ -769,7 +808,7 @@ const MessageComponent = memo(({con, navigate, sender, isScheduled = false}:{con
                                     </Flex>
                                 ))}
                                 </>} 
-                            <ShowMessages  content={con.content} type={con.type}/>
+                            <ShowMessages  content={con.content} type={con.type} conId={conId}/>
                         </Box>
                      
                     </Box>
@@ -805,6 +844,7 @@ const MergeBox = ({t, conversationData, clientName, setShowMerge}:MergeBoxProps)
     //AUTH CONSTANT
     const auth = useAuth()
     const t_formats = useTranslation('formats').t
+    const { getAccessTokenSilently } = useAuth0()
 
     //SHOW CONFIRM
     const [showConfirmMerge, setShowConfirmMerge] = useState<boolean>(false)
@@ -820,9 +860,9 @@ const MergeBox = ({t, conversationData, clientName, setShowMerge}:MergeBoxProps)
         const [waitingConfirmMerge, setWaitingConfirmMerge] = useState<boolean>(false)
         const confirmMerge = async () => {
             setWaitingConfirmMerge(true)
-            const response = await fetchData({endpoint: `${auth.authData.organizationId}/conversations/merge/${selectedConversationId}/${conversationData?.local_id}`,  method:'put',  auth: auth})
+            const response = await fetchData({endpoint: `${auth.authData.organizationId}/conversations/merge/${selectedConversationId}/${conversationData?.local_id}`,  getAccessTokenSilently, method:'put',  auth: auth})
             if (response?.status === 200) {
-                const conResponse = await fetchData({endpoint: `${auth.authData.organizationId}/conversations/${conversationData?.id}`, requestForm:{...conversationData, status:'closed'},  method:'put',  auth: auth, toastMessages:{'works':t('ConversationMerged'),'failed':t('ConversationMergedFailed')}})
+                const conResponse = await fetchData({endpoint: `${auth.authData.organizationId}/conversations/${conversationData?.id}`, getAccessTokenSilently,requestForm:{...conversationData, status:'closed'},  method:'put',  auth: auth, toastMessages:{'works':t('ConversationMerged'),'failed':t('ConversationMergedFailed')}})
                 setWaitingConfirmMerge(false)
                 setShowConfirmMerge(false)
                 setShowMerge(false)
@@ -847,9 +887,8 @@ const MergeBox = ({t, conversationData, clientName, setShowMerge}:MergeBoxProps)
                 </>
         )
     }
-    //FUNCTION FOR MERGE
-    
 
+    //FUNCTION FOR MERGE
     return(<>
         
         {showConfirmMerge &&
@@ -880,8 +919,22 @@ const MergeBox = ({t, conversationData, clientName, setShowMerge}:MergeBoxProps)
         
         <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
             <Button  size='sm' bg='blackAlpha.800' color='white' _hover={{bg:'blackAlpha.900'}}  isDisabled={selectedConversationId === null} onClick={()=>setShowConfirmMerge(true)}>{t('Merge')}</Button>
-            <Button  size='sm' _hover={{color:'blue.400'}} onClick={() => setShowMerge(false)}>{t('Cancel')}</Button>
+            <Button  size='sm' variant={'common'} onClick={() => setShowMerge(false)}>{t('Cancel')}</Button>
         </Flex>
     </>)
 
 }
+
+ 
+
+const CustomModal = ({ isOpen, onClose, imageUrl }: { isOpen: boolean; onClose: () => void; imageUrl: string }) => {
+    if (!isOpen) return null;
+  
+    return (
+      <MotionBox initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} position="fixed" top={0} left={0} width="100vw" height="100vh" display="flex" justifyContent="center" alignItems="center" zIndex={100000} bg="rgba(0,0,0,0.5)"  onClick={onClose} >
+        <MotionBox initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} bg="white" borderRadius="md" padding="1rem" position="relative" onClick={(e) => e.stopPropagation()} >
+           <Image src={imageUrl} maxWidth="60vw" maxHeight="90vh" cursor="zoom-in" />
+        </MotionBox>
+      </MotionBox>
+    )
+  }

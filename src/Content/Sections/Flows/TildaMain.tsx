@@ -8,7 +8,7 @@ import { useLocation, useNavigate } from "react-router-dom"
 import fetchData from "../../API/fetchData"
 //FRONT
 import { motion, isValidMotionProp, AnimatePresence } from 'framer-motion'
-import { Text, Box, Flex, Button, Textarea, Skeleton, Tooltip, IconButton, NumberInput, NumberInputField, chakra, shouldForwardProp, Icon, Switch, Radio, Spinner } from "@chakra-ui/react"
+import { Text, Box, Flex, Button, Textarea, Skeleton, Tooltip, IconButton, chakra, shouldForwardProp, Icon, Switch, Radio, Spinner } from "@chakra-ui/react"
 //PYTHON CODE EDITOR
 import CodeMirror from "@uiw/react-codemirror"
 import { python } from "@codemirror/lang-python"
@@ -18,7 +18,9 @@ import LoadingIconButton from "../../Components/Reusable/LoadingIconButton"
 import EditText from "../../Components/Reusable/EditText"
 import ConfirmBox from "../../Components/Reusable/ConfirmBox"
 import CustomSelect from "../../Components/Reusable/CustomSelect"
-import Table from "../../Components/Reusable/Table"
+import SectionSelector from "../../Components/Reusable/SectionSelector"
+import VariableTypeChanger from "../../Components/Reusable/VariableTypeChanger"
+import IconsPicker from "../../Components/Reusable/IconsPicker"
 import '../../Components/styles.css'
 //FUNCTIONS
 import copyToClipboard from "../../Functions/copyTextToClipboard"
@@ -26,10 +28,11 @@ import useOutsideClick from "../../Functions/clickOutside"
 import parseMessageToBold from "../../Functions/parseToBold"
 //ICONS
 import { IconType } from "react-icons"
-import { FaPlus, FaCircleExclamation,FaCircleQuestion  } from "react-icons/fa6"
+
+import { FaPlus, FaCircleExclamation ,FaCircleQuestion, FaCircleDot, FaCode  } from "react-icons/fa6"
 import { FaCheckCircle, FaTimesCircle, FaEdit } from "react-icons/fa"
-import { IoIosArrowDown, IoIosArrowBack } from "react-icons/io"
-import { IoWarning } from "react-icons/io5"
+import { IoIosArrowDown, IoIosArrowBack,  } from "react-icons/io"
+import { IoWarning, IoSettingsSharp } from "react-icons/io5"
 import { BsTrash3Fill, BsClipboard2Check } from "react-icons/bs"
 import { RxCross2 } from "react-icons/rx"
 import { PiSidebarSimpleBold } from "react-icons/pi"
@@ -37,8 +40,58 @@ import { AiOutlineCheckCircle, AiOutlineCalendar } from "react-icons/ai"
 import { MdOutlineFormatListBulleted } from "react-icons/md"
 import { FiHash, FiType } from "react-icons/fi"
 import { TbMathFunction } from "react-icons/tb"
+import { HiTrash } from "react-icons/hi2"
 //TYPING
-import { FunctionsData, logosMap, Channels, ConfigProps } from "../../Constants/typing"
+import { FunctionsData, FunctionTableData, ConfigProps } from "../../Constants/typing"
+import { useAuth0 } from "@auth0/auth0-react"
+//COMPONENTS
+import Tilda from "./Tilda"
+  
+const tryData = {is_active:false, uuid:'', icon:'',name:'Hola', description:'Hola'}
+
+const TildaMain = () => {
+    const { t } = useTranslation('settings')
+    const location = useLocation().pathname
+
+    const scrollRef = useRef<HTMLDivElement>(null)
+    const [currentSection, setCurrentSection] = useState<'functions' | 'configurations'>('functions')
+
+    //CREATE NEW FUNCTION OR EDITING ONE
+    const [editFunctionUuid, setEditFunctionUuid] = useState<string | null>(location.split('/')[2] ? location.split('/')[2]: null)
+
+    //TILDA DATA
+    const [configData, setConfigData] = useState<ConfigProps[] | null>(null)
+    const [selectedIndex, setSelectedIndex] = useState<number>(-2)
+
+    return (<> 
+        <Flex flexDir={'column'} height={'100vh'} width={'calc(100vw - 55px)'}  p='2vw'> 
+            <Box> 
+                <Flex justifyContent={'space-between'} alignItems={'end'}> 
+                    <Box> 
+                        <Text mb='2vh' fontSize={'1.4em'} fontWeight={'medium'}>{t('WebConfig')}</Text>
+                        <SectionSelector selectedSection={currentSection} sections={['functions','configurations']} sectionsMap={{'functions':[t('functions'), <FaCode/>],'configurations':[t('configurations'), <IoSettingsSharp/>]}} onChange={(section) => setCurrentSection(section)}/>
+                    </Box>
+                    <Flex gap='12px'>
+                        {currentSection === 'functions' ?
+                        <Button size='sm' variant={'main'} leftIcon={<FaPlus/>} onClick={() => setEditFunctionUuid('-1')}>{t('CreateFunction')}</Button>
+                    :
+                        <Button size='sm' variant={'main'} leftIcon={<FaPlus/>} onClick={() => {setSelectedIndex(-1)}}>{t('CreateConfig')}</Button>
+
+                    }
+                     </Flex>
+                </Flex>
+                <Box height={'1px'} width={'100%'} bg='gray.300' mt='1vh'  />
+            </Box>
+            <Box ref={scrollRef}  style={{paddingBottom:'3vh', paddingTop:'3vh', flex:1, overflow:'scroll'}}> 
+                {currentSection === 'functions' ? <Functions editFunctionUuid={editFunctionUuid} setEditFunctionUuid={setEditFunctionUuid}/>:<Tilda configData={configData} setConfigData={setConfigData} selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex} scrollRef={scrollRef}/>}
+            </Box>
+        </Flex>
+
+     </>)
+}
+
+export default TildaMain
+
  
 //TYPING  
 interface FunctionResultType {
@@ -49,31 +102,25 @@ interface FunctionResultType {
 }
   
 type parameterType = {confirm: boolean, description:string, name: string, required: boolean, type: string, default:any, enum:any[]}
-const CellStyle = ({ column, element }:{column:string, element:any}) => {
-    return ( <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element}</Text>)
-}
 
 //MOTION BOX
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
 
 //MAIN FUNCTION
-const Functions = () => {
+const Functions = ({editFunctionUuid, setEditFunctionUuid}:{editFunctionUuid:string | null, setEditFunctionUuid:Dispatch<SetStateAction<string | null>>}) => {
 
     //CONSTANTS
     const { t } = useTranslation('settings')
+    const { getAccessTokenSilently } = useAuth0()
     const auth = useAuth()
-    const session = useSession()
-    const functionsDataMap:{[key:string]:[string, number]} = { name:[t('name'), 200], description:[t('title'), 300],  is_active:[t('is_active'), 200], number_of_errors:[t('NumberErrors'), 140]} 
-
-    //CREATE NEW FUNCTION OR EDITING ONE
-    const [editFunctionUuid, setEditFunctionUuid] = useState<string | null>(null)
+    const session = useSession() 
 
     //FUNCTIONS DATA
-    const [functionsData, setFunctionsData] = useState<FunctionsData[] | null>(null)
+    const [functionsData, setFunctionsData] = useState<FunctionTableData[] | null>(null)
 
     //FILTER LOGIC
     const [text, setText] = useState<string>('')
-    const [filteredFunctions, setFilteredFunctions] = useState<FunctionsData[]>([])
+    const [filteredFunctions, setFilteredFunctions] = useState<FunctionTableData[]>([])
     useEffect(() => {
     const filterUserData = () => {
         if (functionsData) {
@@ -93,9 +140,9 @@ const Functions = () => {
         document.title = `${t('Functions')} - ${auth.authData.organizationName} - Matil`
         localStorage.setItem('currentSection', 'functions')
         const fetchInitialData = async() => {
-            if (session.sessionData.flowsFunctions.functions) setFunctionsData(session.sessionData.flowsFunctions.functions)
+            if (session.sessionData.functionsData) setFunctionsData(session.sessionData.functionsData)
             else {
-                const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions`, setValue:setFunctionsData, auth})
+                const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions`,getAccessTokenSilently, setValue:setFunctionsData, auth})
                 if (response?.status === 200) session.dispatch({type:'UPDATE_FUNCTIONS',payload:{data:response?.data}})
             }
         }
@@ -104,46 +151,60 @@ const Functions = () => {
     
     const onSaveFunction = async(action: 'go-back' | 'delete') => {
         setEditFunctionUuid(null)  
-        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions`, setValue:setFunctionsData, auth})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions`, getAccessTokenSilently,setValue:setFunctionsData, auth})
     }
 
    return(<>
     
-    {editFunctionUuid ?<EditFunctionBox selectedUuid={editFunctionUuid} onSaveFunction={onSaveFunction}/>: 
-        <Box height={'100vh'} width={'calc(100vw - 55px)'}p='2vw'> 
-
-            <Flex justifyContent={'space-between'} alignItems={'end'}> 
-                <Box> 
-                    <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Functions')}</Text>
+ 
+    {editFunctionUuid ?<EditFunctionBox selectedUuid={editFunctionUuid} setselectedUuid={setEditFunctionUuid} onSaveFunction={onSaveFunction} setFunctionsData={setFunctionsData}/>: 
+    <>
+        {functionsData?.length === 0 ? 
+            <Flex height={'100%'} top={0} left={0} width={'100%'} alignItems={'center'} justifyContent={'center'}> 
+                <Box maxW={'580px'} textAlign={'center'}> 
+                    <Text fontWeight={'medium'} fontSize={'2em'} mb='2vh'>{t('NoFunctions')}</Text>               
+                    <Button  variant={'main'} leftIcon={<FaPlus/>} onClick={() => setEditFunctionUuid('-1')}>{t('CreateFunction')}</Button>
                 </Box>
-                <Button size='sm' variant={'common'} leftIcon={<FaPlus/>} onClick={() => setEditFunctionUuid('-1')}>{t('CreateFunction')}</Button>
-            </Flex>
+            </Flex> 
+            :
 
-            <Box mt='2vh' width={'350px'}> 
-                <EditText value={text} setValue={setText} searchInput={true}/>
-            </Box>
-        
-            <Skeleton mt='2vh' isLoaded={functionsData !== null} >
-                <Text fontWeight={'medium'} color='gray.600' fontSize={'1.2em'}>{t('functionsCount', {count:filteredFunctions?.length})}</Text> 
-            </Skeleton>
-
-            <Skeleton isLoaded={functionsData !== null}> 
-                <Table data={filteredFunctions} CellStyle={CellStyle} noDataMessage={t('NoFunctions')} excludedKeys={['uuid']} columnsMap={functionsDataMap} onClickRow={(value:any, index:number) => setEditFunctionUuid(value.uuid)}/>
-            </Skeleton>
-        </Box>
+            <Flex  flexWrap={'wrap'} gap='32px'  >
+                {(functionsData ? functionsData: [tryData, tryData, tryData])?.map((func, index) => (
+                    <Skeleton isLoaded={functionsData !== null} style={{borderRadius:'1rem'}}> 
+                        <Box p='20px' overflow={'hidden'}  width={'400px'}  onClick={() => setEditFunctionUuid(func.uuid)} cursor={'pointer'} borderWidth={'1px'} key={`help-center-${index}`} transition={'box-shadow 0.3s ease-in-out'} _hover={{shadow:'lg'}} shadow={'sm'} borderRadius={'1rem'}>
+                            <Flex gap='15px'>
+                                <IconsPicker disabled selectedIcon={func?.icon || 'FaCode'} setSelectedIcon={() => {}}/> 
+                                <Box flex='1'> 
+                                <Text fontWeight={'medium'}  w='295px' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'} fontSize={'1.2em'}>{func.name}</Text>
+                                    <Text color='gray.600' w='295px' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}  fontSize={'.9em'}>{func.description?func.description:t('NoDescription')}</Text>
+                                </Box>
+                            </Flex>                       
+                            <Flex mt='1vh' alignItems={'center'}  gap='5px'>
+                                <Icon color={func?.is_active?'#68D391':'#ECC94B'} as={FaCircleDot}/>
+                                <Text mt='2px'>{func.is_active?t('LiveTilda'):t('NoLiveTilda')}</Text>
+                            </Flex>
+                        </Box>
+                    </Skeleton>
+                ))}
+            </Flex> 
+        }   
+    </>
+         
+ 
         }
     </>)
 }
 
-export default Functions
-
-
  //BOX FOR ADDING, EDITING AND DELETE A FUNCTION
-const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, onSaveFunction:(action: 'go-back' | 'delete') => void}) => {   
+const EditFunctionBox = ({selectedUuid, setselectedUuid, onSaveFunction, setFunctionsData}:{selectedUuid:string, setselectedUuid:Dispatch<SetStateAction<string | null>>, onSaveFunction:(action: 'go-back' | 'delete') => void, setFunctionsData:Dispatch<SetStateAction<FunctionTableData[] | null>>}) => {   
 
     //CONSTATNS
     const { t } = useTranslation('settings')
     const auth = useAuth()
+    const location = useLocation().pathname
+    const navigate = useNavigate()
+    const { getAccessTokenSilently } = useAuth0()
+    const pythonRegex = /^[a-zA-Z_][a-zA-Z0-9_]*$/
 
     //BUTTON REF
     const errorButtonRef = useRef<HTMLButtonElement>(null)
@@ -185,7 +246,7 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
           if (prevSections.includes(section))return prevSections.filter((s) => s !== section)
           else return [...prevSections, section]
         })
-      }
+    }
 
     //FUNCTION DATA
     const functionDataRef = useRef<FunctionsData | null>(null)
@@ -201,11 +262,9 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
         const fetchInitialData = async() => {
             if (selectedUuid === '-1') {setFunctionData(newFunction);functionDataRef.current = newFunction}
             else {
-                const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions/${selectedUuid}`, setValue:setFunctionData, auth})
-                if (response?.status === 200) functionDataRef.current = response?.data
+                const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions/${selectedUuid}`, getAccessTokenSilently,setValue:setFunctionData, auth, setRef:functionDataRef})
             }
-            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/matilda_configurations`, auth, setValue:setInternalChannelsData})
-
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/matilda_configurations`, getAccessTokenSilently,auth, setValue:setInternalChannelsData})
         }
         fetchInitialData()
     }, [])
@@ -220,19 +279,25 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
         setWaitingEdit(true)
         const isNew = functionData?.uuid === '-1' 
         if (isNew) {
-            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions`, setWaiting:setWaitingEdit, method:'post', requestForm:functionData as FunctionsData, auth, toastMessages:{'works':t('CorrectAddedFunction'), 'failed':t('FailedAddedFunction')}})  
-            if (response?.status === 200) {setFunctionData(prev => ({...prev as FunctionsData, uuid:response?.data?.uuid}));functionDataRef.current = {...functionData, uuid:response?.data?.uuid}  }          
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions`, setWaiting:setWaitingEdit, getAccessTokenSilently, method:'post', requestForm:functionData as FunctionsData, auth, toastMessages:{'works':t('CorrectAddedFunction'), 'failed':t('FailedAddedFunction')}})  
+            if (response?.status === 200) {
+                setselectedUuid(null)
+                setFunctionsData(prev => ([...prev as FunctionTableData[], {uuid:response.data.uuid, name:functionData.name, number_of_errors:0, description:functionData.description, is_active:functionData.is_active, icon:''}]))
+            }          
         }
         else {
-            const response2 = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions/${functionData?.uuid}`, setWaiting:setWaitingEdit, method:'put', requestForm:functionData as FunctionsData, auth, toastMessages:{'works':t('CorrectEditedFunction'), 'failed':t('FailedEditedFunction')}})
-            if (response2?.status === 200) functionDataRef.current = functionData      
+            const response2 = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions/${functionData?.uuid}`, getAccessTokenSilently,setWaiting:setWaitingEdit, method:'put', requestForm:functionData as FunctionsData, auth, toastMessages:{'works':t('CorrectEditedFunction'), 'failed':t('FailedEditedFunction')}})
+            if (functionData && response2?.status === 200) {
+                functionDataRef.current = functionData   
+                setFunctionsData(prev => ([...prev as FunctionTableData[], {uuid:functionData.uuid, name:functionData.name, number_of_errors:0, description:functionData.description, is_active:functionData.is_active, icon:''}]))
+            }   
         }   
     }
 
     //DELETE A FUNCTION
     const handleDeleteFunctions= async() => {
         setWaitingDelete(true)
-        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions/${selectedUuid}`, setWaiting:setWaitingDelete, method:'delete', auth, toastMessages:{'works':t('CorrectDeletedFunctions'), 'failed':t('FailedDeletedFunctions')}})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions/${selectedUuid}`, getAccessTokenSilently, setWaiting:setWaitingDelete, method:'delete', auth, toastMessages:{'works':t('CorrectDeletedFunctions'), 'failed':t('FailedDeletedFunctions')}})
         if (response?.status == 200) onSaveFunction('delete')   
     }
 
@@ -290,9 +355,9 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
             //SELCETED ARGS
             const [selectedArgs, setSelectedArgs] = useState<{confirm: boolean, description:string, name: string, required: boolean, type: string, default:any, enum:any[]  }[]>(functionData?.parameters || [])
 
-
             //EDIT FUNCTION ARGS
             const editSelectedArgs = (value:any, index:number) => {
+                console.log(value)
                 setSelectedArgs(prev => {
                     const updatedArgs = [...prev]
                     updatedArgs[index] = {...updatedArgs[index], default:value}
@@ -307,7 +372,7 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
                     return acc  
                 }, {} as Record<string, any>)
             
-                const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions/${selectedUuid}/run`, method:'post', setWaiting:setWaitingTest, setValue:setFunctionResult,  auth, requestForm:requestDict})
+                const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions/${selectedUuid}/run`, method:'post', getAccessTokenSilently, setWaiting:setWaitingTest, setValue:setFunctionResult,  auth, requestForm:requestDict})
                 if (response?.status === 200) setFunctionData(prev => ({...prev as FunctionsData, errors: (response.data?.result?.errors || [])})) 
             }
 
@@ -320,7 +385,7 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
                     <Fragment key={`arg-${index}`}>
                         <Text fontWeight={'medium'} mt='1vh' mb='.5vh'>{arg.name}</Text>
                         <Box flex='2'>
-                            <InputType inputType={arg.type} value={arg.default} setValue={(value) => editSelectedArgs(value, index)}/>
+                            <VariableTypeChanger customType inputType={arg.type} value={arg.default} setValue={(value) => editSelectedArgs(value, index)}/>
                         </Box>
                     </Fragment>))}
                 </Box>
@@ -376,7 +441,7 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
     const AddChannels = () => {
        
         const addChannel = async (channel:any) => {
-            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/matilda_configurations/${channel.uuid}/functions/${functionData?.uuid}`, method:'post', auth, toastMessages:{works:t('CorrectAddedChannel'), failed:t('FailedAddedChannel')}})
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/matilda_configurations/${channel.uuid}/functions/${functionData?.uuid}`, method:'post', auth, getAccessTokenSilently, toastMessages:{works:t('CorrectAddedChannel'), failed:t('FailedAddedChannel')}})
             if (response?.status === 200) setFunctionData((prev) => ({...prev as FunctionsData, matilda_configurations_uuids:[...prev?.matilda_configurations_uuids || [], channel.uuid]}))
             setShowAddChannels(false)
         }
@@ -405,7 +470,8 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
  
     //ACTION ON EXIT
     const onExitAction = () => {
-        if (JSON.stringify(functionData) !== JSON.stringify(functionDataRef.current)) setShowNoSaveWarning(true)
+        if (location.split('/')[2]) navigate(`/conversations/conversation/${location.split('/')[3]}`)
+        if (JSON.stringify(functionData) !== JSON.stringify(functionDataRef.current) && functionData?.code !== '' && pythonRegex.test(functionData?.name || '')) setShowNoSaveWarning(true)
         else onSaveFunction('go-back')
     }   
 
@@ -450,84 +516,82 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
         {showAddChannels && memoizedAddChannel}
 
         <Flex flex='1' position='absolute' width={'calc(100vw - 55px)'} height={'100vh'} top={0} left={0} bg='white'>
-        <MotionBox   initial={{ width: sendBoxWidth  }} animate={{ width: sendBoxWidth}} exit={{ width: sendBoxWidth }} transition={{ duration: '.2' }}  
-        width={sendBoxWidth} overflowY={'hidden'}  borderRightWidth={'1px'} borderRightColor='gray.200' >
-            <Flex px='2vw' gap='2vw' height={'70px'} alignItems={'center'} justifyContent={'space-between'}  borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
+            <MotionBox   initial={{ width: sendBoxWidth  }} animate={{ width: sendBoxWidth}} exit={{ width: sendBoxWidth }} transition={{ duration: '.2' }}  
+            width={sendBoxWidth} overflowY={'hidden'}  borderRightWidth={'1px'} borderRightColor='gray.200' >
+                <Flex px='2vw' gap='2vw' height={'70px'} alignItems={'center'} justifyContent={'space-between'}  borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
 
-                <Flex flex={1} gap='20px' alignItems={'center'}> 
-                    <Tooltip label={t('GoBack')}  placement='bottom' hasArrow bg='black'  color='white'  borderRadius='.4rem' fontSize='.75em' p='4px'> 
-                        <IconButton aria-label='go-back' size='sm' variant={'common'} bg='transparent' onClick={onExitAction} icon={<IoIosArrowBack size='20px'/>}/>
-                    </Tooltip>
-                    <EditText fontSize={'1.4em'} value={functionData?.name} setValue={(value) => {setFunctionData(prev => ({...prev as FunctionsData, name:value}))}}/>
-                </Flex>
-                
-                <Flex gap='15px'>
-                    <Button leftIcon={<BsTrash3Fill/>} variant={'delete'} isDisabled={selectedUuid === '-1'} size='sm' onClick={() => setShowConfirmDelete(true)}>{t('Delete')}</Button>
-                    <Button variant={'common'} size='sm' onClick={() => setShowTestFunction(true)}>{t('Test')}</Button>
-                    <Button variant={'main'} size='sm' isDisabled={JSON.stringify(functionData) === JSON.stringify(functionDataRef.current)} onClick={handleEditFunctions}>{waitingEdit?<LoadingIconButton/>:t('SaveChanges')}</Button>
-                    {clientBoxWidth === 0 && <IconButton aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'20px'}/>} onClick={() =>setClientBoxWidth(400)}/>}
-                </Flex>
-            </Flex>
-            <Flex width={'100%'} height={'100%'} justifyContent={'center'} overflow={'scroll'} >
-                <Box p='2vw'  width={'100%'} height={'100%'}  >
-                    <Skeleton isLoaded={functionData !== null} style={{overflow:'hidden'}}> 
-                        <CodeMirror value={functionData?.code} maxHeight={`${codeBoxHeight}px`} extensions={[python()]} onChange={(value) => setFunctionData(prev => ({...prev as FunctionsData, code:value}))} theme={oneDark}/>
-                    </Skeleton>
-                </Box>
-            </Flex>
-        </MotionBox>
-        <MotionBox width={clientBoxWidth + 'px'}  whiteSpace={'nowrap'} initial={{ width: clientBoxWidth + 'px' }} animate={{ width: clientBoxWidth + 'px' }} exit={{ width: clientBoxWidth + 'px' }} transition={{ duration: '.2'}}> 
-            <Flex p='2vh' height={'70px'} justifyContent={'space-between'} alignItems={'center'} borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
-                <Text fontSize={'1.5em'} fontWeight={'medium'}>{t('FunctionData')}</Text>
-                <IconButton aria-label="close-tab" variant={'common'} bg='transparent' size='sm' icon={<RxCross2 size={'20px'}/>} onClick={() =>setClientBoxWidth(0)}/>
-            </Flex>
-            <Box p='2vh' pb='10vh' height={'100%'} overflow={'scroll'}> 
-                <Text fontWeight={'semibold'}  fontSize={'.9em'}>{t('Description').toLocaleUpperCase()}</Text>
-                <Textarea maxW={'500px'} mt='.5vh' resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('Description')}...`} maxH='300px' value={functionData?.description} onChange={(e) => setFunctionData((prev) => ({...prev as FunctionsData, description:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(59, 90, 246)", borderWidth: "2px"}}/>
-                <CollapsableSection section={'Parameters'} isExpanded={sectionsExpanded.includes('Parameters')} onSectionExpand={onSectionExpand}> 
-                    <Skeleton isLoaded={functionData !== null}> 
-                        {(functionData?.parameters || []).map((param, index) => (
-                            <Fragment key={`parameter-${index}`}> 
-                                <ParameterBox variableData={param} index={index} setIndex={setSelectedParameter} editFunctionData={editFunctionData}/>
-                                {index !== (functionData?.parameters?.length || 0) - 1 && <Box height={'1px'} width={'100%'} bg='gray.200' mt='1vh' mb='1vh'/>}
-                            </Fragment>
-                        ))}
-                        <Button variant={'common'} leftIcon={<FaPlus/>} onClick={() => setSelectedParameter(-1)} size='sm' mt='2vh'>{t('AddParameter')}</Button>
-                    </Skeleton>
+                    <Flex flex={1} gap='20px' alignItems={'center'}> 
+                        <Tooltip label={t('GoBack')}  placement='bottom' hasArrow bg='black'  color='white'  borderRadius='.4rem' fontSize='.75em' p='4px'> 
+                            <IconButton aria-label='go-back' size='sm' variant={'common'} bg='transparent' onClick={onExitAction} icon={<IoIosArrowBack size='20px'/>}/>
+                        </Tooltip>
 
-                </CollapsableSection>
-
-                <CollapsableSection section={'TildaActive'} isExpanded={sectionsExpanded.includes('TildaActive')} onSectionExpand={onSectionExpand}> 
-                    <Flex gap='8px' mt='1vh'  alignItems={'center'}>
-                        <Switch isChecked={functionData?.is_active}  onChange={(e) => setFunctionData(prev => ({...prev as FunctionsData, is_active:e.target.checked}))} />
-                        <Text mt='.5vh' fontWeight={'medium'} >{t('AvailableTilda')}</Text>
+                        <EditText  regex={pythonRegex} placeholder={t('name')}  value={functionData?.name} setValue={(value) => setFunctionData(prev => ({...prev as FunctionsData, name:value}))} className={'title-textarea-collections'}/>
                     </Flex>
-                    <Text color='gray.600'whiteSpace='pre-wrap' fontSize={'.9em'}>{t('AvailableTildaDes')}</Text>
-                </CollapsableSection>
+                    
+                    <Flex gap='15px'>
+                        {selectedUuid !== '-1' && <Button leftIcon={<BsTrash3Fill/>} variant={'delete'}  size='sm' onClick={() => setShowConfirmDelete(true)}>{t('Delete')}</Button>}
+                        <Button variant={'common'} size='sm' onClick={() => setShowTestFunction(true)}>{t('Test')}</Button>
+                        <Button variant={'main'} size='sm' isDisabled={JSON.stringify(functionData) === JSON.stringify(functionDataRef.current) || functionData?.code === '' || !pythonRegex.test(functionData?.name || '')} onClick={handleEditFunctions}>{waitingEdit?<LoadingIconButton/>:selectedUuid !== '-1'?t('SaveChanges'):t('CreateFunction')}</Button>
+                        {clientBoxWidth === 0 && <IconButton aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'20px'}/>} onClick={() =>setClientBoxWidth(400)}/>}
+                    </Flex>
+                </Flex>
+                <Flex width={'100%'} height={'100%'} justifyContent={'center'} overflow={'scroll'} >
+                    <Box p='2vw'  width={'100%'} height={'100%'}  >
+                        <Skeleton isLoaded={functionData !== null} style={{overflow:'hidden'}}> 
+                            <CodeMirror value={functionData?.code} maxHeight={`${codeBoxHeight}px`} extensions={[python()]} onChange={(value) => setFunctionData(prev => ({...prev as FunctionsData, code:value}))} theme={oneDark}/>
+                        </Skeleton>
+                    </Box>
+                </Flex>
+            </MotionBox>
+            <MotionBox width={clientBoxWidth + 'px'}  whiteSpace={'nowrap'} initial={{ width: clientBoxWidth + 'px' }} animate={{ width: clientBoxWidth + 'px' }} exit={{ width: clientBoxWidth + 'px' }} transition={{ duration: '.2'}}> 
+                <Flex p='2vh' height={'70px'} justifyContent={'space-between'} alignItems={'center'} borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
+                    <Text fontSize={'1.5em'} fontWeight={'medium'}>{t('FunctionData')}</Text>
+                    <IconButton aria-label="close-tab" variant={'common'} bg='transparent' size='sm' icon={<RxCross2 size={'20px'}/>} onClick={() =>setClientBoxWidth(0)}/>
+                </Flex>
+                <Box p='2vh' pb='10vh' height={'100%'} overflow={'scroll'}> 
+                    <Text fontWeight={'semibold'}  fontSize={'.9em'}>{t('Description').toLocaleUpperCase()}</Text>
+                    <Textarea maxW={'500px'} mt='.5vh' resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('Description')}...`} maxH='300px' value={functionData?.description} onChange={(e) => setFunctionData((prev) => ({...prev as FunctionsData, description:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "brand.text_blue", borderWidth: "2px"}}/>
+                    <CollapsableSection section={'Parameters'} isExpanded={sectionsExpanded.includes('Parameters')} onSectionExpand={onSectionExpand}> 
+                        <Skeleton isLoaded={functionData !== null}> 
+                            {(functionData?.parameters || []).map((param, index) => (
+                                <Fragment key={`parameter-${index}`}> 
+                                    <ParameterBox variableData={param} index={index} setIndex={setSelectedParameter} editFunctionData={editFunctionData}/>
+                                    {index !== (functionData?.parameters?.length || 0) - 1 && <Box height={'1px'} width={'100%'} bg='gray.200' mt='1vh' mb='1vh'/>}
+                                </Fragment>
+                            ))}
+                            <Button variant={'common'} leftIcon={<FaPlus/>} onClick={() => setSelectedParameter(-1)} size='sm' mt='2vh'>{t('AddParameter')}</Button>
+                        </Skeleton>
 
-                <CollapsableSection section={'ActiveChannels'} isExpanded={sectionsExpanded.includes('ActiveChannels')} onSectionExpand={onSectionExpand}> 
-                    <Skeleton isLoaded={functionData !== null && internalChannelsData !== null}> 
-                        {(functionData?.matilda_configurations_uuids || []).map((cha, index) => (
-                            <Flex  gap='10px' mt='12px' key={`channel-${index}`} alignItems={'start'}> 
-                                <Box mt='-2px' flex='1' > 
-                                    <Flex gap='10px' alignItems='center'> 
-                                        <Text   minWidth={0}  fontWeight={'medium'} fontSize={'.9em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{internalChannelsData?.find(element => element.uuid === cha)?.name}</Text>
-                                    </Flex> 
-                                    <Text width={'190px'} color='gray.600'fontSize={'.8em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{cha}</Text>
-                                </Box>
-                            </Flex>
-                        ))}
-                    </Skeleton>
-                    <Button variant={'common'} isDisabled={functionData?.uuid === '-1'} leftIcon={<FaPlus/>} onClick={() => setShowAddChannels(true)} size='sm' mt='2vh'>{t('AddConfig')}</Button>
-                    {functionData?.uuid === '-1' && <Text mt='1vh' color='red' fontSize={'.8em'}>{t('SaveChannelsWarning')}</Text>}
-                </CollapsableSection>
- 
-            </Box>
-        </MotionBox>
+                    </CollapsableSection>
 
-    </Flex>
+                    <CollapsableSection section={'TildaActive'} isExpanded={sectionsExpanded.includes('TildaActive')} onSectionExpand={onSectionExpand}> 
+                        <Flex gap='8px' mt='1vh'  alignItems={'center'}>
+                            <Switch isChecked={functionData?.is_active}  onChange={(e) => setFunctionData(prev => ({...prev as FunctionsData, is_active:e.target.checked}))} />
+                            <Text mt='.5vh' fontWeight={'medium'} >{t('AvailableTilda')}</Text>
+                        </Flex>
+                        <Text color='gray.600'whiteSpace='pre-wrap' fontSize={'.9em'}>{t('AvailableTildaDes')}</Text>
+                    </CollapsableSection>
 
-        
+                    <CollapsableSection section={'ActiveChannels'} isExpanded={sectionsExpanded.includes('ActiveChannels')} onSectionExpand={onSectionExpand}> 
+                        <Skeleton isLoaded={functionData !== null && internalChannelsData !== null}> 
+                            {(functionData?.matilda_configurations_uuids || []).map((cha, index) => (
+                                <Flex  gap='10px' mt='12px' key={`channel-${index}`} alignItems={'start'}> 
+                                    <Box mt='-2px' flex='1' > 
+                                        <Flex gap='10px' alignItems='center'> 
+                                            <Text   minWidth={0}  fontWeight={'medium'} fontSize={'.9em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{internalChannelsData?.find(element => element.uuid === cha)?.name}</Text>
+                                        </Flex> 
+                                        <Text width={'190px'} color='gray.600'fontSize={'.8em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{cha}</Text>
+                                    </Box>
+                                </Flex>
+                            ))}
+                        </Skeleton>
+                        <Button variant={'common'} isDisabled={functionData?.uuid === '-1'} leftIcon={<FaPlus/>} onClick={() => setShowAddChannels(true)} size='sm' mt='2vh'>{t('AddConfig')}</Button>
+                        {functionData?.uuid === '-1' && <Text mt='1vh' color='red' fontSize={'.8em'}>{t('SaveChannelsWarning')}</Text>}
+                    </CollapsableSection>
+                </Box>
+            </MotionBox>
+        </Flex>
+            
         {(functionData?.errors?.length || 0) > 0 &&
             <Box position={'absolute'} right={'2vw'} bottom={'2vw'}  > 
                 <Box position='relative'> 
@@ -561,7 +625,8 @@ const EditFunctionBox = ({selectedUuid, onSaveFunction}:{selectedUuid:string, on
                         </MotionBox>}
                     </AnimatePresence>
                 </Box>
-            </Box>}
+            </Box>
+        }
 
         {memoizedTestFunction}
  
@@ -589,7 +654,7 @@ const CollapsableSection = ({ section, isExpanded, onSectionExpand, children}:{s
  const CreateVariable = ({variableData,  index, setIndex, editFunctionData}:{variableData:parameterType | undefined, index:number, setIndex:Dispatch<SetStateAction<number | null>>, editFunctionData:(keyToEdit:'parameters' ,value:any, type?:'add' | 'delete' | 'edit', index?:number, secondKey?:'name' | 'type' | 'default' | 'required' | 'confirm' | 'is_active' | '' ) => void }) => {
 
     const { t } = useTranslation('settings')
-    const variablesMap:{[key:string]:string} = {'boolean':t('bool'), 'integer':t('int'), 'float':t('float'), 'string':t('str'), 'timestamp':t('timestamp'), 'list':t('list')}
+    const variablesMap:{[key:string]:string} = {'boolean':t('bool'), 'integer':t('int'), 'number':t('float'), 'string':t('str'), 'timestamp':t('timestamp'), 'list':t('list')}
 
     const [currentVariable, setCurrentVariable] = useState<parameterType>((index === -1 || variableData === undefined)?{name:'', type:'boolean', description:'', default:false, required:false, confirm:false, enum:[]}:variableData)
     const [currentExample, setCurrentExample] = useState<any>('')
@@ -613,13 +678,13 @@ const CollapsableSection = ({ section, isExpanded, onSectionExpand, children}:{s
             <EditText  maxLength={70} hideInput={false}  value={currentVariable.name} placeholder={`${t('Name')}...`} setValue={(value) => setCurrentVariable((prev) => ({...prev, name:value})) }/>
             
             <Text mb='.5vh' mt='1.5vh' fontWeight={'medium'}>{t('Description')}</Text>
-            <Textarea maxLength={2000} height={'auto'} placeholder={`${t('Description')}...`} maxH='300px' value={currentVariable.description} onChange={(e) => setCurrentVariable((prev) => ({...prev, description:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
+            <Textarea maxLength={2000} height={'auto'} placeholder={`${t('Description')}...`} maxH='300px' value={currentVariable.description} onChange={(e) => setCurrentVariable((prev) => ({...prev, description:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "brand.text_blue", borderWidth: "2px"}}/>
             
             <Text mb='.5vh' mt='1.5vh' fontWeight={'medium'}>{t('Type')}</Text>
             <CustomSelect hide={false} selectedItem={currentVariable.type} setSelectedItem={(value) => setCurrentVariable((prev) => ({...prev, type:value, enum:[], default:null}))} options={Object.keys(variablesMap)} labelsMap={variablesMap}/>
          
             <Text  mt='1.5vh' mb='.5vh' fontWeight={'medium'}>{t('DefaultValue')}</Text>
-            <InputType inputType={currentVariable.type} value={currentVariable.default} setValue={(value) => setCurrentVariable((prev) => ({...prev, default:value}))}/>
+            <VariableTypeChanger customType inputType={currentVariable.type} value={currentVariable.default} setValue={(value) => setCurrentVariable((prev) => ({...prev, default:value}))}/>
 
             <Text  mt='1.5vh' fontWeight={'medium'}>{t('AllowedValues')}</Text>
             <Flex flexWrap="wrap" gap='5px' mt='.5vh' alignItems="center" >
@@ -633,7 +698,7 @@ const CollapsableSection = ({ section, isExpanded, onSectionExpand, children}:{s
             </Flex>     
             <Flex mt='1vh' gap='20px' alignItems={'center'}> 
                 <Box flex='1'> 
-                    <InputType inputType={currentVariable.type} value={currentExample} setValue={(value) => setCurrentExample(value)}/>
+                    <VariableTypeChanger customType inputType={currentVariable.type} value={currentExample} setValue={(value) => setCurrentExample(value)}/>
                 </Box>
                 <Button isDisabled={currentExample === ''} leftIcon={<FaPlus/>} variant={'common'} size='sm' onClick={() => editList('add')}>{t('Add')}</Button>
             </Flex>
@@ -657,52 +722,13 @@ const CollapsableSection = ({ section, isExpanded, onSectionExpand, children}:{s
     </>)
 }
  
-//INPUT DEPENDING ON THE VARIABLE TYPE
-const InputType = ({inputType, value, setValue}:{inputType:string,value:string, setValue:(value:any) => void}) => {
-    
-    //USEFUL CONSTANTS
-    const { t } = useTranslation('settings')
-    const boolDict = {true:t('True'), false:t('False')}
-    const datesMap = {'{today}':t('today'), '{yesterday}':t('yesterday'), '{start_of_week}':t('start_of_week'),'{start_of_month}':t('start_of_month')}
-
-    const [currentValue, setCurrentValue] = useState<string | null>(value) 
-
-    switch(inputType) {
-        case 'boolean':
-            return <CustomSelect hide={false} selectedItem={value} setSelectedItem={(value) => setValue(value) }  options={Object.keys(boolDict)} labelsMap={boolDict}/>
-        case 'integer':
-        case 'float':  {  
-             const handleBlur = () => {
-                const normalizedValueString = currentValue?.replace(',', '.')
-                if (normalizedValueString) {
-                    if (!(normalizedValueString && isNaN((parseFloat(normalizedValueString)))) ) setValue(null)
-                    if (inputType === 'integer') setValue(parseInt(normalizedValueString))
-                    else if (inputType === 'float') return setValue(parseInt(normalizedValueString))
-                }
-            } 
-            return (
-            <NumberInput value={value || undefined} onBlur={handleBlur} onChange={(value) => setCurrentValue(value) } clampValueOnBlur={false} >
-                <NumberInputField borderRadius='.5rem'  fontSize={'.9em'} height={'37px'}  borderColor={'gray.300'} _hover={{ border:'1px solid #CBD5E0'}} _focus={{ px:'11px', borderColor: "rgb(77, 144, 254)", borderWidth: "2px" }} px='12px' />
-            </NumberInput>)
-        }           
-        case 'string':
-        case 'list':
-                return <EditText value={value} setValue={(value) => setValue(value) } hideInput={false} />
-        case 'timestamp':
-            return <CustomSelect hide={false} selectedItem={value}  setSelectedItem={(value) => setValue(value)}  options={Object.keys(datesMap)} labelsMap={datesMap}/>
-
-        default: 
-            return null
-    }
-} 
-
 const ParameterBox = ({variableData,  index, setIndex, editFunctionData}:{variableData:parameterType, index:number, setIndex:Dispatch<SetStateAction<number | null>>, editFunctionData:(keyToEdit:'parameters' ,value:any, type?:'add' | 'delete' | 'edit', index?:number, secondKey?:'name' | 'type' | 'default' | 'required' | 'confirm' | 'is_active' | '' ) => void }) => {
     
     //TRANSLATION
     const { t }  = useTranslation('settings')
 
     //MAPPING CONSTANTS
-    const variablesMap:{[key:string]:[string, IconType]} = {'boolean':[t('bool'),AiOutlineCheckCircle ], 'integer':[t('int'), FiHash], 'float':[t('float'), TbMathFunction], 'string':[t('str'), FiType], 'timestamp':[t('timestamp'), AiOutlineCalendar], 'list':[t('list'), MdOutlineFormatListBulleted]}
+    const variablesMap:{[key:string]:[string, IconType]} = {'boolean':[t('bool'),AiOutlineCheckCircle ], 'integer':[t('int'), FiHash], 'number':[t('float'), TbMathFunction], 'string':[t('str'), FiType], 'timestamp':[t('timestamp'), AiOutlineCalendar], 'list':[t('list'), MdOutlineFormatListBulleted]}
  
     return (
         <Box position={'relative'}  w={'100%'} cursor={'pointer'} mt={'1.5vh'} >
@@ -717,7 +743,7 @@ const ParameterBox = ({variableData,  index, setIndex, editFunctionData}:{variab
                 </Flex>
                 <Flex gap='5px'> 
                     <IconButton size='xs' variant={'common'} icon={<FaEdit/>}  onClick={() => setIndex(index)} aria-label="edit-param"/>
-                    <IconButton size='xs' variant={'delete'} onClick={() => editFunctionData('parameters', null, 'delete', index)} icon={<BsTrash3Fill/>} aria-label="delete-param"/>
+                    <IconButton size='xs' variant={'delete'} onClick={() => editFunctionData('parameters', null, 'delete', index)} icon={<HiTrash/>} aria-label="delete-param"/>
                 </Flex>
             </Flex>
             
@@ -737,4 +763,5 @@ const ParameterBox = ({variableData,  index, setIndex, editFunctionData}:{variab
         </Box>
         )
 }
+
 

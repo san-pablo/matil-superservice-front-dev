@@ -3,11 +3,13 @@
     FUNCTION TO MAKE ANY CALL TO THE API DINAMICALLY AND SHOW THE SUCCESS OR ERROR MESSAGE WITH A TOAST NOTIFICATION
 */
 
+//REACT
+import { MutableRefObject } from 'react'
 //AXIOS
 import axios, { isAxiosError } from 'axios'
 //TOAST NOTIFICATIONS
 import showToast from "../Components/Reusable/ToastNotification"
-
+ 
 //SERIALIZE PARAMETERS
 function paramsSerializer(params:string) {
     const str = [];
@@ -29,10 +31,12 @@ interface fetchDataProps {
     setValue?:(value:any) => void | null
     setWaiting?:(value:boolean) => void 
     auth:any
+    getAccessTokenSilently:any
     requestForm?:Object
     params?:Object 
     method?: 'get' | 'post' | 'put' | 'delete'
     toastMessages?:{'works'?:string,'failed'?:string} | null
+    setRef?:MutableRefObject<any>
 }
 interface Config {
     method: 'get' | 'post' | 'put' | 'delete'
@@ -44,10 +48,11 @@ interface Config {
     params?: Object
     data?: Object
     paramsSerializer?: (params: any) => string
+    
 }
 
 //MAIN FUNCTION
-const fetchData = async ({endpoint, setValue, setWaiting, auth, requestForm = {}, params = {}, method = 'get', toastMessages=null}: fetchDataProps) => {
+const fetchData = async ({endpoint, setValue, setWaiting, getAccessTokenSilently, auth, requestForm = {}, params = {}, method = 'get', toastMessages=null, setRef}: fetchDataProps) => {
  
     //API ENDPOINT AND CONFIGURATION
     const URL = import.meta.env.VITE_PUBLIC_API_URL
@@ -73,14 +78,14 @@ const fetchData = async ({endpoint, setValue, setWaiting, auth, requestForm = {}
         if (['post', 'put', 'delete'].includes(method.toLowerCase())) config.data = requestForm
         else config.params = {...config.params, ...requestForm}
   
-        //RESPONSE
-        console.log(endpoint)
-        console.log(requestForm)
 
+        console.log(requestForm)
+        //RESPONSE  
         const response = await axios(config)
 
         console.log(response.data)
         //ACTIONS ON A SUCCESSFUL CALL
+        if (setRef)  setRef.current = JSON.parse(JSON.stringify(response.data)) 
         if (setValue) setValue(response.data)
         if (setWaiting) setWaiting(false)
         if (toastMessages?.works) showToast({message:toastMessages.works})
@@ -91,18 +96,21 @@ const fetchData = async ({endpoint, setValue, setWaiting, auth, requestForm = {}
     //CATCH ERROR
     catch (error) {
 
+        console.log(error)
         //HANDLE ACCESS TOKEN ERROR
         if (isAxiosError(error) && error.response && error.response.status === 403){
             try {
                 //REQUEST AND CHANGE NEW ACCESS TOKEN
-                const accessResponse = await axios.get(URL + 'user/refresh_token', {headers: {'Authorization': `Bearer ${auth.authData.refreshToken}`}})
-                auth.setAuthData({ accessToken: accessResponse.data.access_token })
-                config.headers =  {'Authorization': `Bearer ${accessResponse.data.access_token }`, 'Content-Type': 'application/json' }
+                const accessToken = await getAccessTokenSilently({authorizationParams: {audience: `https://api.matil/v2/`, scope: "read:current_user"}})
+
+                auth.setAuthData({ accessToken: accessToken})
+                config.headers =  {'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' }
 
                 //NEW CALL
                 const refreshedResponse = await axios(config)
 
                 //ACTIONS ON A SUCCESSFUL CALL
+                if (setRef) setRef.current = refreshedResponse.data
                 if (setValue) setValue(refreshedResponse.data)              
                 if (setWaiting) setWaiting(false)
                 if (toastMessages?.works) showToast({message:toastMessages.works})

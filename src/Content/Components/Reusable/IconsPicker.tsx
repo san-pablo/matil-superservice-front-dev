@@ -1,7 +1,9 @@
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useTranslation } from "react-i18next"
-import { Box, Text, Icon, Flex, Grid} from "@chakra-ui/react"
+import { Box, Text, Icon, Flex, Grid, Portal, chakra, shouldForwardProp } from "@chakra-ui/react"
+import useOutsideClick from "../../Functions/clickOutside"
+import { motion, isValidMotionProp, AnimatePresence } from 'framer-motion'
 
 //ICONS
 import { 
@@ -16,14 +18,32 @@ import {
     FaTree, FaLeaf, FaSun, FaCloud, FaMountain, FaWater, FaSeedling, FaGamepad, FaKeyboard, FaPrint, FaSatelliteDish, 
     FaDesktop, FaLaptop, FaTabletAlt, FaHeadphones, FaCamera, FaTv, FaFrown, FaGrin, FaFemale,FaMale, FaUserNinja, FaUserShield,
     FaUser, FaSmile, FaHandPaper, FaUserFriends, FaUsers, FaChild, FaEye, FaTrash, FaGlobe, FaQuestionCircle,
-    FaTools, FaCogs, FaHeart, FaStar, FaExclamationTriangle, FaLightbulb, FaUnlock, FaShieldAlt
+    FaTools, FaCogs, FaHeart, FaStar, FaExclamationTriangle, FaLightbulb, FaUnlock, FaShieldAlt, FaCode
 } from 'react-icons/fa'
+import { IoSettingsSharp } from "react-icons/io5"
 
-import EditText from "../../../Components/Reusable/EditText"
+import EditText from "./EditText"
 import { IconType } from "react-icons"
   
 
-const IconsPicker = ({selectedIcon, setSelectedIcon}:{selectedIcon:string, setSelectedIcon:(value:string) => void}) => {
+const iconsMap = {FaArrowRight, FaArrowLeft, FaArrowUp, FaArrowDown,  FaLongArrowAltRight, FaLongArrowAltLeft, FaLongArrowAltUp, FaLongArrowAltDown, FaCaretRight, FaCaretLeft, FaCaretUp,
+    FaArrowCircleRight, FaArrowCircleLeft, FaArrowCircleUp, FaArrowCircleDown, FaCaretDown, FaChevronLeft, FaChevronRight,FaChevronDown,FaChevronUp,
+    FaChartLine, FaMoneyBill, FaBriefcase, FaCreditCard, FaPiggyBank,FaFileContract, FaBriefcaseMedical,FaClipboardList,FaUserTie,FaHandHoldingUsd,FaMoneyCheck,FaStore,
+    FaBusinessTime, FaDollarSign, FaFileInvoice, FaComments, FaVideo, FaVolumeUp,  FaVolumeMute, FaVolumeDown, FaHeadset,
+    FaChartBar, FaChartPie, FaChartArea, FaPoll,  FaListUl, FaListOl, FaStrikethrough, FaTextHeight, FaFile, FaTextWidth,
+    FaPhone, FaEnvelope, FaFax, FaCommentDots, FaPaperPlane, FaMobileAlt, FaFilePowerpoint, FaFileImage, FaFileVideo, FaFileAudio, FaFileCode, FaFileCsv, FaFileDownload,
+    FaPen, FaAlignLeft, FaAlignRight, FaBold, FaItalic, FaQuoteLeft, FaClipboard, FaMouse,
+    FaFileAlt, FaFolder, FaFileArchive, FaFilePdf, FaFileWord, FaFileExcel, FaWind, FaCloudRain, FaDog, FaCat, FaSnowflake,
+    FaTree, FaLeaf, FaSun, FaCloud, FaMountain, FaWater, FaSeedling, FaGamepad, FaKeyboard, FaPrint, FaSatelliteDish, 
+    FaDesktop, FaLaptop, FaTabletAlt, FaHeadphones, FaCamera, FaTv, FaFrown, FaGrin, FaFemale,FaMale, FaUserNinja, FaUserShield,
+    FaUser, FaSmile, FaHandPaper, FaUserFriends, FaUsers, FaChild, FaEye, FaTrash, FaGlobe, FaQuestionCircle,
+    FaTools, FaCogs, FaHeart, FaStar, FaExclamationTriangle, FaLightbulb, FaUnlock, FaShieldAlt, FaCode, IoSettingsSharp}
+
+
+//MOTION BOX
+const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
+ 
+const IconsPicker = ({selectedIcon, setSelectedIcon, scrollRef, disabled = false}:{selectedIcon:string, setSelectedIcon:(value:string) => void, scrollRef?:any, disabled?:boolean}) => {
 
     const { t } = useTranslation('settings')
 
@@ -178,6 +198,8 @@ const IconsPicker = ({selectedIcon, setSelectedIcon}:{selectedIcon:string, setSe
             { name: 'FaTrash', icon: FaTrash, description: t('FaTrash') },
             { name: 'FaGlobe', icon: FaGlobe, description: t('FaGlobe') },
             { name: 'FaQuestionCircle', icon: FaQuestionCircle, description: t('FaQuestionCircle') },
+            { name: 'FaCode', icon: FaCode, description: t('FaCode') },
+
         ],
         
     }
@@ -197,29 +219,53 @@ const IconsPicker = ({selectedIcon, setSelectedIcon}:{selectedIcon:string, setSe
         [] as [string, {name:string, icon:IconType, description:string}[]][] 
       )
 
-    return (
-        <Box width={'350px'} p='20px' bg='white' borderRadius={'.7rem'} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' >
-            <Text mb='.5vh' fontSize={'.9em'} color='gray.600' fontWeight={'medium'}>{t('Search')}</Text>
-            <EditText value={searchTerm} setValue={setSearchTerm} searchInput placeholder={t('SearchIcons')}/>
-            <Box mt='2vh' mb='2vh' width={'100%'} height={'1px'} bg='gray.300'/>
-            <Box maxH='35vh' overflow={'scroll'}> 
-                {filteredIcons.map(([category, icons]) => (
-                    <Box key={`category-${category}`} mb={4}>
-                    <Text fontWeight="medium" fontSize={'.9em'} color='gray.600' mb={'.5vh'}>{t(category)}</Text>
-                    <Grid gap={'0'} templateColumns={'repeat(6, 1fr)'}>
-                        {icons.map((icon:{name:string, icon:IconType, description:string}, index2) => (
-                            <Box key={`icons-${category}-${index2}`}> 
-                            <Flex onClick={() => setSelectedIcon(icon.name)} alignItems={'center'} justifyContent={'center'} key={icon.name} textAlign="center" bg={selectedIcon === icon.name?'rgba(59, 90, 246, 0.3)':'transparent'} cursor={'pointer'} p='10px' display={'inline-flex'} borderRadius={'.5rem'} _hover={{bg:selectedIcon === icon.name?'rgba(59, 90, 246, 0.3)':'brand.gray_1', color:'brand.text_blue'}}>
-                                <Icon boxSize={'25px'} as={icon.icon}/>
-                            </Flex>
-                            </Box>
-                        ))}
-                    </Grid>
+    const iconsBoxRef = useRef<HTMLDivElement>(null)
+    const iconsSelectorRef = useRef<HTMLDivElement>(null)
+    const [settingsIconsBoxPosition, setSettingsIconsBoxPosition] = useState<{top?:number, bottom?:number, left:number} | null>(null)
+    useOutsideClick({ref1:iconsBoxRef, ref2:iconsSelectorRef, onOutsideClick:(b:boolean) => setSettingsIconsBoxPosition(null), containerRef:scrollRef})
+    const determineBoxPosition = (e:any) => {
+        if (!disabled) e.stopPropagation()
+        const boxLeft = (iconsBoxRef.current?.getBoundingClientRect().left || 0) 
+        const isTop = (iconsBoxRef.current?.getBoundingClientRect().bottom || 0) > window.innerHeight/2 
+        if (!isTop) setSettingsIconsBoxPosition({top:(iconsBoxRef.current?.getBoundingClientRect().bottom || 0) + 5, left:boxLeft})
+        else setSettingsIconsBoxPosition({bottom:window.innerHeight - (iconsBoxRef.current?.getBoundingClientRect().top || 0) + 5, left:boxLeft})
+    }    
+
+    return (<>
+
+        <Flex onClick={determineBoxPosition} ref={iconsBoxRef} justifyContent={'center'} alignItems={'center'} p='15px' bg='brand.gray_1' borderRadius={'.5rem'}> 
+            <Icon boxSize={'20px'}  as={(iconsMap as any)[selectedIcon]}/>
+        </Flex>
+
+        {(settingsIconsBoxPosition && !disabled) && 
+        <Portal> 
+            <MotionBox  onClick={(e) => e.stopPropagation()} ref={iconsSelectorRef} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.95 }}  transition={{ duration: '0.1', ease: 'easeOut'}}
+                style={{ transformOrigin: settingsIconsBoxPosition.top ? 'top left':'bottom left' }} overflow={'scroll'} left={settingsIconsBoxPosition.left}  top={settingsIconsBoxPosition.top || undefined}  bottom={settingsIconsBoxPosition.bottom ||undefined} position='absolute' bg='white'  zIndex={100000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.200' borderWidth='1px' borderRadius='.7rem'>
+                    <Box width={'350px'} p='20px' bg='white' borderRadius={'.7rem'} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' >
+                        <Text mb='.5vh' fontSize={'.9em'} color='gray.600' fontWeight={'medium'}>{t('Search')}</Text>
+                        <EditText value={searchTerm} setValue={setSearchTerm} searchInput placeholder={t('SearchIcons')}/>
+                        <Box mt='2vh' mb='2vh' width={'100%'} height={'1px'} bg='gray.300'/>
+                        <Box maxH='35vh' overflow={'scroll'}> 
+                            {filteredIcons.map(([category, icons]) => (
+                                <Box key={`category-${category}`} mb={4}>
+                                <Text fontWeight="medium" fontSize={'.9em'} color='gray.600' mb={'.5vh'}>{t(category)}</Text>
+                                <Grid gap={'0'} templateColumns={'repeat(6, 1fr)'}>
+                                    {icons.map((icon:{name:string, icon:IconType, description:string}, index2) => (
+                                        <Box key={`icons-${category}-${index2}`}> 
+                                        <Flex onClick={(e) => {setSelectedIcon(icon.name);setSettingsIconsBoxPosition(null)}} alignItems={'center'} justifyContent={'center'} key={icon.name} textAlign="center" bg={selectedIcon === icon.name?'rgba(59, 90, 246, 0.3)':'transparent'} cursor={'pointer'} p='10px' display={'inline-flex'} borderRadius={'.5rem'} _hover={{bg:selectedIcon === icon.name?'rgba(59, 90, 246, 0.3)':'brand.gray_1', color:'brand.text_blue'}}>
+                                            <Icon boxSize={'25px'} as={icon.icon}/>
+                                        </Flex>
+                                        </Box>
+                                    ))}
+                                </Grid>
+                                </Box>
+                            ))}
+                        </Box>
                     </Box>
-                ))}
-            </Box>
-        </Box>
-    )
+            </MotionBox >
+        </Portal>}
+
+    </>)
 }
 
 export default IconsPicker
