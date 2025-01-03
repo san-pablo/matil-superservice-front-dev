@@ -9,7 +9,7 @@ import '../styles.css'
 //MAIN FUNCTION
 const CustomCheckbox = ({id,  onChange, isChecked}:{id:string, onChange:() => void, isChecked:boolean}) => {
     return (
-        <Flex mt='4px'  > 
+        <Flex  > 
             <div className="checkbox-wrapper-4">
                 <input onChange={onChange} onFocus={(e) => e.stopPropagation()} className="inp-cbx" id={id} type="checkbox" checked={isChecked} />
                 <label className="cbx" htmlFor={id}>

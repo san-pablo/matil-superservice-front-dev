@@ -38,10 +38,10 @@ const CreateBusiness = ({setShowBox, actionTrigger}:{setShowBox:(key:boolean) =>
     return(<> 
         <Box p='20px' maxW='450px'> 
             <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('CreateBusiness')}</Text>
-            <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
-            <Text fontWeight={'medium'} mb='.5vh'>{t('Name')}</Text>
+            <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.200'/>
+            <Text fontWeight={'medium'} mb='.5vh' fontSize={'.9em'}>{t('Name')}</Text>
             <EditText value={businessName} setValue={setBusinessName} hideInput={false} placeholder='Ejemplo'/>
-            <Text mt='2vh' fontWeight={'medium'} mb='.5vh'>{t('Domain')}</Text>
+            <Text mt='2vh' fontWeight={'medium'} mb='.5vh' fontSize={'.9em'}>{t('Domain')}</Text>
             <EditText value={businessDomain} setValue={setBusinessDomain} hideInput={false} placeholder='ejemplo.com'/>
                         
         </Box>

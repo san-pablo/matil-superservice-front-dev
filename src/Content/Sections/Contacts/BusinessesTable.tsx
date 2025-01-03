@@ -1,32 +1,34 @@
 //REACT
-import { useState, useEffect, useRef, Fragment, useMemo } from "react"
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect, useMemo, Dispatch, SetStateAction, lazy } from "react"
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from "../../../AuthContext" 
 import { useTranslation } from "react-i18next"
+import { useAuth0 } from "@auth0/auth0-react"
+import { useSession } from "../../../SessionContext"
 //FETCH DATA
 import fetchData from "../../API/fetchData"
 //FRONT
-import { Flex, Box, Text, Tooltip, Button, IconButton, Skeleton } from '@chakra-ui/react'
-//COMPONENTS
+import { motion, isValidMotionProp } from 'framer-motion'
+import { Flex, Box, Text, Tooltip, Button, IconButton, Skeleton, chakra, shouldForwardProp  } from '@chakra-ui/react'
+ //COMPONENTS
 import EditText from "../../Components/Reusable/EditText"
-import ActionsButton from "../Conversations/ActionsButton"
 import Table from "../../Components/Reusable/Table"
+import ConfirmBox from "../../Components/Reusable/ConfirmBox"
+import CreateBusiness from "./CreateBusiness"
 //FUNCTIONS
 import timeAgo from "../../Functions/timeAgo"
 import timeStampToDate from "../../Functions/timeStampToString"
 //ICONS
-import { FaPlus, FaFilter } from "react-icons/fa6" 
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io"
-
 //TYPING
-import { ContactBusinessesProps,  HeaderSectionType } from "../../Constants/typing"
-import { useSession } from "../../../SessionContext"
-import ConfirmBox from "../../Components/Reusable/ConfirmBox"
-import CreateBusiness from "./CreateBusiness"
-import { useAuth0 } from "@auth0/auth0-react"
+import { ContactBusinessesProps } from "../../Constants/typing"
+  //SECTION
+const Business = lazy(() => import('./Business'))
+  
 
+//MOTION BOX
+const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
 
-    
 //GET THE CELL STYLE
 const CellStyle = ({ column, element }:{column:string, element:any}) => {
     
@@ -53,11 +55,12 @@ const CellStyle = ({ column, element }:{column:string, element:any}) => {
 }
 
 //MAIN FUNCTION
-function ContactBusinessesTable ({addHeaderSection}:{addHeaderSection:HeaderSectionType}) {
+function BusinessesTable ({showCreateBusiness, setShowCreateBusiness, socket}:{showCreateBusiness:boolean, setShowCreateBusiness:Dispatch<SetStateAction<boolean>>, socket:any}) {
 
     //AUTH CONSTANT
     const auth = useAuth()
     const session = useSession()
+    const location = useLocation().pathname
     const { t } = useTranslation('businesses')
     const navigate = useNavigate()
     const { getAccessTokenSilently } = useAuth0()
@@ -65,15 +68,13 @@ function ContactBusinessesTable ({addHeaderSection}:{addHeaderSection:HeaderSect
     //MAPPING CONSTANTS
     const columnsBusinessesMap:{[key:string]:[string, number]} = {name: [t('name'), 200], labels:  [t('labels'), 350], created_at:  [t('created_at'), 150], last_interaction_at:  [t('last_interaction_at'), 150], notes: [t('notes'), 350]}
 
-    //CONTAINER REF
-    const containerRef = useRef<HTMLDivElement>(null)
-    const tableBoxRef = useRef<HTMLDivElement>(null)
+    //EXPAND CLIENT
+    const [expandClient, setExpandClient] = useState<boolean>(false)
+    useEffect(() => {setExpandClient(location.split('/')[location.split('/').length - 1] === 'businesses')},[location])
 
     //BOOLEAN FOR WAIT THE INFO
     const [waitingInfo, setWaitingInfo] = useState<boolean>(true)
 
-    //CREATE NEW BUSINESS
-    const [showCreateBusiness, setShowCreateBusiness] = useState<boolean>(false)
     
     //SELECT DATA LOGIC
     const [businesses, setBusinesses] = useState<ContactBusinessesProps | null>(null)
@@ -128,7 +129,7 @@ function ContactBusinessesTable ({addHeaderSection}:{addHeaderSection:HeaderSect
 
     const rowClick = (row:any, index:number) => {
         session.dispatch({type:'UPDATE_BUSINESSES_TABLE_SELECTED_ITEM', payload:{index}})
-        navigate(`/contact-businesses/business/${row.id}`)
+        navigate(`${row.id}`)
     }
 
     
@@ -138,49 +139,38 @@ function ContactBusinessesTable ({addHeaderSection}:{addHeaderSection:HeaderSect
         </ConfirmBox>
     ), [showCreateBusiness])
 
+    const clientBoxWidth = expandClient ? Math.min(window.innerWidth * 0.6, window.innerWidth - 500) - 200 : Math.min(window.innerWidth * 0.6, window.innerWidth - 500)
+
+
     //FRONT
     return(<>
         {showCreateBusiness && memoizedCreateBusiness}
 
-        <Box bg='white' height={'calc(100vh - 60px)'} width={'calc(100vw - 55px)'} overflowX={'scroll'} overflowY={'hidden'} p='2vw'>
-    
-            {/*FILTRAR LA TABLA*/}
-            <Flex justifyContent={'space-between'}> 
-                <Text fontWeight={'medium'} fontSize={'1.5em'}>{t('ContactBusinesses')}</Text>
-                <Flex gap='15px'> 
-                    <Button variant={'common'} whiteSpace='nowrap'  leftIcon={<FaPlus/>} size='sm' onClick={() =>setShowCreateBusiness(true)}>{t('CreateBusiness')}</Button>
-                    <ActionsButton items={businesses ? businesses.page_data:[]} view={null} section={'clients'}/>
-                 </Flex>
-             </Flex>
-        
-            <Flex gap='15px' mt='2vh'> 
-                <Box width={'350px'}> 
-                    <EditText filterData={(text:string) => {fetchBusinessDataWithFilter({...filters, search:text})}} value={filters.search} setValue={(value) => setFilters(prev => ({...prev, search:value}))} searchInput={true}/>
-                </Box>
-            </Flex>
-        
-            <Flex  mt='2vh' justifyContent={'space-between'} alignItems={'center'}> 
-                <Skeleton isLoaded={!waitingInfo} >
-                    <Text  fontWeight={'medium'} color='gray.600' fontSize={'1.2em'}> {t('BusinessesCount', {count:businesses?.total_contact_businesses})}</Text> 
+        <MotionBox width={clientBoxWidth + 'px'}  overflowY={'scroll'} initial={{ width: clientBoxWidth + 'px', opacity: expandClient?1:0}} animate={{ width: clientBoxWidth + 'px',  opacity: expandClient?0:1  }} exit={{ width: clientBoxWidth + 'px',  opacity: expandClient?1:0}} transition={{ duration: '.2'}} 
+        bg='white' boxShadow="-4px 0 6px -2px rgba(0, 0, 0, 0.1)" top={0} right={0} pointerEvents={expandClient ?'none':'auto'} height={'100vh'}  p={expandClient ?'1vw':'0'} overflowX={'hidden'} position='absolute' zIndex={100} overflow={'hidden'} >
+            <Business socket={socket}/> 
+        </MotionBox>
+
+        <Box width={'calc(98vw - 55px)'} overflowX={'scroll'} overflowY={'hidden'} >
+            <Box width={'300px'}> 
+                <EditText filterData={(text:string) => {fetchBusinessDataWithFilter({...filters, search:text})}} value={filters.search} setValue={(value) => setFilters(prev => ({...prev, search:value}))} searchInput={true}/>
+            </Box>
+  
+            <Flex mt='1vh'  justifyContent={'space-between'} alignItems={'center'}> 
+                <Skeleton  isLoaded={!waitingInfo} >
+                    <Text fontWeight={'medium'} color='gray.600' > {t('BusinessesCount', {count:businesses?.total_contact_businesses})}</Text> 
                 </Skeleton>
-                <Flex alignItems={'center'} justifyContent={'end'} gap='10px' flexDir={'row-reverse'}>
-                    <IconButton isRound size='xs' aria-label='next-page' icon={<IoIosArrowForward />} isDisabled={filters.page_index >= Math.floor((businesses?.total_contact_businesses || 0)/ 50)} onClick={() => fetchBusinessDataWithFilter({...filters,page_index:filters.page_index + 1})}/>
-                        <Text fontWeight={'medium'} fontSize={'.9em'} color='gray.600'>{t('Page')} {filters.page_index}</Text>
-                    <IconButton isRound size='xs' aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={filters.page_index === 1} onClick={() => fetchBusinessDataWithFilter({...filters,page_index:filters.page_index - 1})}/>
+                <Flex  mb='1vh' alignItems={'center'} justifyContent={'end'} gap='10px' flexDir={'row-reverse'}>
+                    <IconButton isRound size='xs'  variant={'common'}  aria-label='next-page' icon={<IoIosArrowForward />} isDisabled={filters?.page_index > Math.floor((businesses?.total_contact_businesses || 0)/ 25)} onClick={() => fetchBusinessDataWithFilter({...filters,page_index:filters?.page_index + 1})}/>
+                    <Text fontWeight={'medium'} fontSize={'.8em'} color='gray.600'>{t('Page')} {filters?.page_index}</Text>
+                    <IconButton isRound size='xs' variant={'common'} aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={filters?.page_index === 1} onClick={() => fetchBusinessDataWithFilter({...filters,page_index:filters?.page_index - 1})}/>
                 </Flex>
             </Flex>
-            
-            {/*TABLA*/}
-            <Box>             
-                <Skeleton isLoaded={!waitingInfo}> 
-                    <Table data={businesses?.page_data || []} CellStyle={CellStyle} noDataMessage={t('NoBusinesses')} excludedKeys={['id']} columnsMap={columnsBusinessesMap} onClickRow={rowClick} requestSort={requestSort} getSortIcon={getSortIcon} currentIndex={selectedIndex}/>
-                </Skeleton>
-            </Box>
-    
+            <Table data={businesses?.page_data || []} CellStyle={CellStyle} noDataMessage={t('NoBusinesses')} excludedKeys={['id']} columnsMap={columnsBusinessesMap} onClickRow={rowClick} requestSort={requestSort} getSortIcon={getSortIcon} currentIndex={selectedIndex}/>
         </Box>
         </>)
 }
 
-export default ContactBusinessesTable
+export default BusinessesTable
 
  

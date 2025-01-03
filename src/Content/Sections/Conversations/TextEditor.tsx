@@ -63,7 +63,6 @@ function TextEditor({clientName, conversationData, updateData, takeConversationC
     const session = useSession()               
     const channels = session.sessionData.additionalData.channels
     const channel = (channels || []).find(ch => ch.id === conversationData?.channel_id)
-
     const navigate = useNavigate()
 
     //SEND PANEL REF, FOR HIDDING THE BOX ON SCROLL
@@ -79,7 +78,6 @@ function TextEditor({clientName, conversationData, updateData, takeConversationC
     const actionNoteRef = useRef<HTMLDivElement>(null)
     const actionBoxRef = useRef<HTMLDivElement>(null)
     const [showChangeAction, setShowChangeAction] = useState<boolean>(false)
-    //const [sendAction, setSendAction] = useState<'next' | 'close' | 'mantain'>(localStorage.getItem('sendAction')? localStorage.getItem('sendAction') as 'next' | 'close' | 'mantain':'mantain')
     const [sendAction, setSendAction] = useState<'next' | 'close' | 'mantain'>('mantain')
     
     useOutsideClick({ref1:actionNoteRef, ref2:actionBoxRef, containerRef:sendPanelRef, onOutsideClick:setShowChangeAction})
@@ -98,7 +96,7 @@ function TextEditor({clientName, conversationData, updateData, takeConversationC
     const [attachmentsFiles, setAttachmentsFiles] = useState<File[]>([])
 
     //EDITING THE BOX HEIGHT WITH THE CURSOR
-    const [height, setHeight] = useState<number>(channel?.channel_type === 'email' ? 400: 300)
+    const [height, setHeight] = useState<number>(channel?.channel_type === 'email' ? 300: 200)
     const handleMouseDown = useCallback((event:any) => {
         const startHeight = height
         const startY = event.pageY
@@ -130,6 +128,9 @@ function TextEditor({clientName, conversationData, updateData, takeConversationC
     const [showShortcuts, setShowShortcuts] = useState<boolean>(false)
     const [filteredShortcuts, setFilteredShortcuts] = useState<string[]>([])
     const [cursorPosition, setCursorPosition] = useState<{bottom:number, left:number}>({ bottom: 0, left: 0 })
+
+    //FOCUS BOX
+    const [isFocused, setIsFocused] = useState(false);
 
     //SHOW THE SHORTCUTS BOX
     const handleShortcuts = (content:string, selection:{index:number}) => {
@@ -487,7 +488,8 @@ function TextEditor({clientName, conversationData, updateData, takeConversationC
     }
     
 
-    const showBox = (conversationData?.user_id === 'matilda' || conversationData?.status === 'closed' || conversationData?.call_status === 'completed' )
+    const showBox = (conversationData?.user_id === 'matilda' && conversationData?.status !== 'closed'  && conversationData?.call_status !== 'completed'  )
+    
     //FRONT
     return (<> 
     <Box p={showBox ? '0':'0 15px 15px 15px'} > 
@@ -502,18 +504,27 @@ function TextEditor({clientName, conversationData, updateData, takeConversationC
             </defs>
         </svg>
 
-        <Box borderRadius={showBox?'0':'1rem'} overflow={'hidden'} borderColor={showBox?'':'gray.200'} borderWidth={showBox?'0':'1px'}  boxShadow={showBox?'':'0 0 10px 0px rgba(0, 0, 0, 0.1)'}> 
-            {(conversationData?.user_id === 'matilda' || conversationData?.status === 'closed' || conversationData?.call_status === 'completed' ) ?
-            <Flex flexDir={'column'} alignItems={'center'} justifyContent={'center'} h='150px' bg={ conversationData?.status !== 'closed'?'transparent':'gray.200'}> 
+        <Box borderRadius={showBox?'0':'1rem'} overflow={'hidden'} borderColor={showBox?'':'gray.200'} borderWidth={showBox?'0':'1px'} transition={'box-shadow 0.2s ease-in-out'}  boxShadow={showBox?'':   isFocused ? '0 0 0 2px rgb(59, 90, 246, 0.6)' : '0 0 10px 0px rgba(0, 0, 0, 0.1)'}> 
+            {showBox ?
+            <Flex flexDir={'column'} alignItems={'center'} justifyContent={'center'} h='150px'> 
                 <Flex mb='1vh' gap='10px' alignItems={'end'}> 
-                    {(conversationData?.status !== 'closed' && conversationData?.call_status !== 'completed') && <Icon fill="url(#gradient2)" as={BsStars} boxSize={'22px'}/>}
-                    <Text bgGradient={"linear(to-r, rgba(0, 102, 204, 0.8), rgba(102, 51, 255, 0.7))"} bgClip="text"  color={(conversationData?.status !== 'closed'  && conversationData?.call_status !== 'completed')?"transparent":'black' } fontWeight={'medium'} fontSize={'1.2em'} >{(conversationData?.status === 'closed' || conversationData?.call_status === 'completed') ?t('ConversationClosed')  :t('ConversationByMatilda')}</Text>
+                    <Icon fill="url(#gradient2)" as={BsStars} boxSize={'22px'}/>
+                    <Text bgGradient={"linear(to-r, rgba(0, 102, 204, 0.8), rgba(102, 51, 255, 0.7))"} bgClip="text"  color={'transparent'} fontWeight={'medium'} fontSize={'1.2em'} >{t('ConversationByMatilda')}</Text>
                 </Flex>
-                {(conversationData?.status !== 'closed'  && conversationData?.call_status !== 'completed') && <Button  leftIcon={<FaLockOpen/>} onClick={takeConversationControl} variant={'main'} size='sm'>{t('TakeControl')}</Button>}
-                {conversationData?.call_status === 'completed'  && <AudioRecord url={conversationData?.call_url} />}
+                <Button  leftIcon={<FaLockOpen/>} onClick={takeConversationControl} variant={'main'} size='sm'>{t('TakeControl')}</Button>
             </Flex>
             :
+            <> 
+            {conversationData?.call_status === 'completed'  ? 
+                <Flex flexDir={'column'} alignItems={'center'} justifyContent={'center'} h='150px'> 
+                <AudioRecord url={conversationData?.call_url} />
+                </Flex>
+            :
             <Box position={'relative'} transition={'background ease-in-out 0.1s'} bg={isInternalNote?'yellow.100':''} minH={'150px'} maxH={'600px'} height={`${height}px`} > 
+                {conversationData?.status === 'closed' && 
+                    <Flex alignItems={'center'} justifyContent={'center'} position={'absolute'} zIndex={10000} height={'100%'} w='100%' bg='rgba(200, 200, 200, 0.4)' backdropFilter={'blur(0.8px)'}>
+                        <Text fontSize={'1.2em'} fontWeight={'medium'} maxW={'60%'} textAlign={'center'}>{t('ClosedConversation')}</Text>
+                    </Flex>}
                 <Box height={'10px'}  onMouseDown={handleMouseDown} cursor='ns-resize'/>
                     <Flex pt='5px' gap='10px' pb='15px' px='15px' alignItems={'center'} justifyContent={'space-between'}> 
                         <Flex alignItems={'center'} gap='9px' maxW={'100%'}>
@@ -552,10 +563,10 @@ function TextEditor({clientName, conversationData, updateData, takeConversationC
                         </Box>
                         <Box height={'1px'} bg='gray.300' width={'100%'}/>
                     </>}
-                    <ReactQuill modules={modules} ref={quillRef} theme="snow" value={htmlValue} onChange={handleChange} className={toolbarVisible ? '' : 'hidden-toolbar'} style={{ height: '100%', display: 'flex', flexDirection: 'column-reverse'}} />
+                    <ReactQuill modules={modules} onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)} ref={quillRef} theme="snow" value={htmlValue} onChange={handleChange} className={toolbarVisible ? '' : 'hidden-toolbar'} style={{ height: '100%', display: 'flex', flexDirection: 'column-reverse'}} />
                     </>
                     :
-                    <textarea ref={textAreaRef} placeholder={t('PlaceholderShortcuts')} value={textValue} onChange={(e) => {setTextValue(e.target.value); handleShortcuts(e.target.value, {index: e.target.selectionStart}) }}  style={{ height: '100%', width: '100%', padding:'20px', background:'transparent', outline: 'none', border:'none', resize:'none', fontSize:'.9em'}} />
+                    <textarea ref={textAreaRef} placeholder={t('PlaceholderShortcuts')} value={textValue} onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)} onChange={(e) => {setTextValue(e.target.value); handleShortcuts(e.target.value, {index: e.target.selectionStart}) }}  style={{ height: '100%', width: '100%', padding:'20px', background:'transparent', outline: 'none', border:'none', resize:'none', fontSize:'.9em'}} />
                     }
 
                     <Flex overflowX={'scroll'}  ref={sendPanelRef} maxW={'100%'} justifyContent={'space-between'} position={'absolute'} bottom={0} px='15px' py='10px' gap='15px' alignItems={'center'}  width={'100%'}>
@@ -598,11 +609,13 @@ function TextEditor({clientName, conversationData, updateData, takeConversationC
                             </Flex>
                     </Flex>
             </Box>}
+            </>
+            }
         </Box>
 
         <Portal> 
             <Box position={'fixed'} pointerEvents={emojiVisible?'auto':'none'} transition='opacity 0.2s ease-in-out' opacity={emojiVisible ? 1:0} bottom={`${window.innerHeight - (emojiButtonRef?.current?.getBoundingClientRect().top || 0) + 5}px`} left={`${emojiButtonRef?.current?.getBoundingClientRect().left}px`} zIndex={1000} ref={emojiBoxRef}> 
-            <EmojiPicker onEmojiClick={handleEmojiClick} open={emojiVisible} allowExpandReactions={false}/>
+                <EmojiPicker onEmojiClick={handleEmojiClick} open={emojiVisible} allowExpandReactions={false}/>
             </Box>
         </Portal>
     </Box>

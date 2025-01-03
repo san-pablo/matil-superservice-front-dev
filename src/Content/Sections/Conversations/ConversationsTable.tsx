@@ -33,7 +33,7 @@ import parseMessageToBold from "../../Functions/parseToBold"
 import { IoIosArrowForward, IoIosArrowBack } from "react-icons/io"
 import { MdDeselect } from "react-icons/md"
 import { FaExclamationCircle, FaExclamationTriangle, FaInfoCircle, FaCheckCircle, FaRegEdit } from 'react-icons/fa'
-import { FaArrowRotateLeft } from "react-icons/fa6"
+import { FaArrowRotateLeft, FaPlus } from "react-icons/fa6"
 import { BiEditAlt } from "react-icons/bi"
 import { HiTrash } from "react-icons/hi2"
 //TYPING
@@ -110,7 +110,7 @@ const CellStyle = ({column, element}:{column:string, element:any}) => {
     else if (column === 'urgency_rating' && typeof element === 'number') {return <AlertLevel t={t} rating={element}/>}
     else if (column === 'created_at' || column === 'updated_at' || column === 'solved_at' || column === 'closed_at') {
         return(
-        <Tooltip  label={timeStampToDate(element as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='.8em' p='6px'> 
+        <Tooltip  label={timeStampToDate(element as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='0rem' fontSize='.8em' p='6px'> 
             <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(element as string, t_formats)}</Text>
         </Tooltip>)
     }
@@ -133,7 +133,7 @@ function ConversationsTable({socket}:{socket:any}) {
      //TRANSLATION
     const { t } = useTranslation('conversations')
     const t_formats = useTranslation('formats').t
-    const {  getAccessTokenSilently } = useAuth0()
+    const { getAccessTokenSilently } = useAuth0()
 
     //CONSTANTS
     const auth = useAuth()
@@ -244,6 +244,7 @@ function ConversationsTable({socket}:{socket:any}) {
     useEffect(() => {
         setIsConversationOpened(location.split('/')[location.split('/').length - 2] === 'conversation')
     },[location])
+    
      //NAVIGATE TO THE CLICKED CONVERSATIONS AND SHOW IT IN THE HEADER
     const [selectedElements, setSelectedElements] = useState<number[]>([])
     const handleClickRow  = (row:ConversationsTableProps, index:number) => {
@@ -383,7 +384,7 @@ function ConversationsTable({socket}:{socket:any}) {
         </ConfirmBox>
     ), [showConfirmDelete])
 
-    const conversationWidth = isConversationOpened ?Math.min(window.innerWidth * 0.6, window.innerWidth - 275 - 240):Math.min(window.innerWidth * 0.6, window.innerWidth - 275 - 240) - 200
+    const conversationWidth = isConversationOpened ?Math.min(window.innerWidth * 0.7, window.innerWidth - 550) : Math.max(window.innerWidth * 0.6, window.innerWidth - 275 - 240) - 200
     const sendBoxWidth = `calc(100vw - 55px - ${isConversationOpened ? conversationWidth:0}px)`
 
     //FRONT
@@ -392,39 +393,44 @@ function ConversationsTable({socket}:{socket:any}) {
 
             <MotionBox initial={{ width: sendBoxWidth  }} animate={{ width: sendBoxWidth}} exit={{ width: sendBoxWidth }} transition={{ duration: '.2' }}  
                 width={sendBoxWidth}    overflowY={'hidden'} >
-
+                
                 <Flex height={'100vh'}  color='black' >
-                    
                     {/*VIEWS SELECTION*/}
                     <Flex zIndex={100}  gap='20px' py='2vh' width={'220px'} flexDir={'column'} justifyContent={'space-between'} borderRightWidth={'1px'} borderRightColor='gray.200' >
                         <Flex justifyContent={'space-between'} flexDir={'column'} flex='1' minH={0}>  
-                            <Box  px='1vw'> 
-                                <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Views')}</Text>
-                                <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
-                            </Box>
+                           
                             <Box height={'100px'} flex='1' overflow={'scroll'}  px='1vw'>
-                                {(auth.authData.views && 'private_views' in auth.authData.views && auth.authData.views.private_views.length > 0 ) && <>
-                                    <Text fontSize='1.1em' fontWeight={'medium'} mb='1vh'>{t('PrivateViews')}</Text>
-                                    <Box mb='4vh'> 
+                                
+                                    <Text  fontWeight={'semibold'} mb='1vh'>{t('PrivateViews')}</Text>
+                                    
+                                     <Box mb='4vh'> 
+                                     {(auth.authData.views && 'private_views' in auth.authData.views && auth.authData.views.private_views.length > 0 ) ? <>
+
                                         {auth.authData.views.private_views.map((view, index) => {
                                             const isSelected = selectedView.index === index && selectedView.type === 'private'
                                             return(
-                                                <Flex gap='10px'  bg={isSelected?'white':'transparent'}  transition={'box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out, background-color 0.2s ease-in-out'}    boxShadow={isSelected ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''} borderWidth={'1px'} borderColor={isSelected ? 'gray.200':'transparent'} justifyContent='space-between' key={`shared-view-${index}`} onClick={() => {if (!isRetrievingData.current) setSelectedView({index:index, type:'private', name:(view?.name || '')}); localStorage.setItem('currentView', JSON.stringify({index:index, type:'shared', name:view.name}))}} _hover={{bg:isSelected?'white':'brand.gray_2'}}  fontWeight={isSelected? 'medium':'normal'}fontSize={'.9em'} cursor={'pointer'} borderRadius={'.5rem'} p='8px'>
-                                                    <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{view.name}</Text>
+                                                <Flex gap='10px'  bg={isSelected?'white':'transparent'}  transition={isSelected?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}    boxShadow={isSelected ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''} borderWidth={'1px'} borderColor={isSelected ? 'gray.200':'transparent'} justifyContent='space-between' key={`shared-view-${index}`} onClick={() => {if (!isRetrievingData.current) setSelectedView({index:index, type:'private', name:(view?.name || '')}); localStorage.setItem('currentView', JSON.stringify({index:index, type:'shared', name:view.name}))}} _hover={{bg:isSelected?'white':'brand.gray_2'}}  fontWeight={isSelected? 'medium':'normal'}fontSize={'.9em'} cursor={'pointer'} borderRadius={'.5rem'} p='8px'>
+                                                    <Text  transition={'transform .1s ease-in-out'}   transformOrigin="left center" transform={isSelected?'scale(1.02)':'scale(1)'} whiteSpace={'nowrap'} textOverflow={'ellipsis'}   overflow={'hidden'}>{view.name}</Text>
                                                     <Text>{auth.authData.views?.number_of_conversations_per_private_view?.[index] || 0}</Text>
                                                 </Flex>
                                                 )
                                         })}
+                                        </> :
+                                        <> 
+                                         <Button w='100%'  onClick={() => navigate(`/settings/workflows/edit-views/edit`)} leftIcon={<FaPlus/>} bg='transparent' borderColor={'gray.300'} borderWidth={'1px'} variant={'common'} size='xs'>{t('CreatePrivateView')}</Button>
+                                        </>
+                                        }
                                     </Box>
-                                </>}
+                                    
+                   
                                 {(auth.authData.views && 'shared_views' in auth.authData.views && auth.authData.views.shared_views.length > 0 ) &&   <>
-                                    <Text fontSize='1.1em' fontWeight={'medium'} mb='1vh' >{t('PublicViews')}</Text>
+                                    <Text fontWeight={'semibold'} mb='1vh' >{t('PublicViews')}</Text>
                                     <Box> 
                                         {auth.authData.views.shared_views.map((view, index) => {
                                         const isSelected = selectedView.index === index && selectedView.type === 'shared'
                                         return(
-                                            <Flex gap='10px' bg={isSelected?'white':'transparent'}  transition={'box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out, background-color 0.2s ease-in-out'}   boxShadow={isSelected ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''} borderWidth={'1px'} borderColor={isSelected ? 'gray.200':'transparent'} justifyContent='space-between' key={`shared-view-${index}`} onClick={() => {if (!isRetrievingData.current) setSelectedView({index:index, type:'shared', name:(view?.name || '')}); localStorage.setItem('currentView', JSON.stringify({index:index, type:'shared', name:view.name}))}} _hover={{bg:isSelected?'white':'brand.gray_2'}}fontWeight={isSelected? 'medium':'normal'}fontSize={'.9em'} cursor={'pointer'} borderRadius={'.5rem'} p='8px'>
-                                                <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{view.name}</Text>
+                                            <Flex gap='10px' bg={isSelected?'white':'transparent'}  transition={isSelected?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}   boxShadow={isSelected ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''} borderWidth={'1px'} borderColor={isSelected ? 'gray.200':'transparent'} justifyContent='space-between' key={`shared-view-${index}`} onClick={() => {if (!isRetrievingData.current) setSelectedView({index:index, type:'shared', name:(view?.name || '')}); localStorage.setItem('currentView', JSON.stringify({index:index, type:'shared', name:view.name}))}} _hover={{bg:isSelected?'white':'brand.gray_2'}}fontWeight={isSelected? 'medium':'normal'}fontSize={'.9em'} cursor={'pointer'} borderRadius={'.5rem'} p='8px'>
+                                                <Text  transition={'transform .1s ease-in-out'}   transformOrigin="left center" transform={isSelected?'scale(1.02)':'scale(1)'} whiteSpace={'nowrap'} textOverflow={'ellipsis'}   overflow={'hidden'}>{view.name}</Text>
                                                 <Text>{auth.authData.views?.number_of_conversations_per_shared_view?.[index] || 0}</Text>
                                             </Flex>
                                             )
@@ -435,11 +441,12 @@ function ConversationsTable({socket}:{socket:any}) {
                         </Flex>
                         <Box px='1vw'>
                             
-                            <Flex gap='10px' color='red' boxShadow={selectedView.type === 'deleted' ?'0 0 3px 0px rgba(0, 0, 0, 0.1)':''} borderWidth={'1px'} borderColor={selectedView.type === 'deleted' ? 'gray.200':'transparent'} justifyContent='space-between'  onClick={() => {if (!isRetrievingData.current) setSelectedView({index:0, type:'deleted', name:t('Trash')}); localStorage.setItem('currentView', JSON.stringify({index:0, type:'deleted', name:t('Trash')}))}} _hover={{bg:selectedView.type === 'deleted'? 'white':'brand.gray_2'}}  bg={selectedView.type === 'deleted'?'white':'transparent'}  transition={'box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out, background-color 0.2s ease-in-out'}   fontWeight={selectedView.type === 'deleted'?  'medium':'normal'}fontSize={'.9em'} cursor={'pointer'} borderRadius={'.5rem'} p='8px'>
+                            <Flex gap='10px' color='red' boxShadow={selectedView.type === 'deleted' ?'0 0 3px 0px rgba(0, 0, 0, 0.1)':''} borderWidth={'1px'} borderColor={selectedView.type === 'deleted' ? 'gray.200':'transparent'} justifyContent='space-between'  onClick={() => {if (!isRetrievingData.current) setSelectedView({index:0, type:'deleted', name:t('Trash')}); localStorage.setItem('currentView', JSON.stringify({index:0, type:'deleted', name:t('Trash')}))}} _hover={{bg:selectedView.type === 'deleted'? 'white':'brand.gray_2'}}  bg={selectedView.type === 'deleted'?'white':'transparent'}   transition={selectedView.type === 'deleted'?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}  fontWeight={selectedView.type === 'deleted'?  'medium':'normal'}fontSize={'.9em'} cursor={'pointer'} borderRadius={'.5rem'} p='8px'>
                                 <Flex gap='10px' alignItems={'center'}> 
                                     <Icon boxSize={'15px'} as={HiTrash}/>
-                                    <Text mt='2px' >{t('Trash')}</Text>
-                                </Flex>
+                                    <Text mt='2px' transition={'transform .1s ease-in-out'}   transformOrigin="left center" transform={selectedView.type === 'deleted' ?'scale(1.02)':'scale(1)'} whiteSpace={'nowrap'} textOverflow={'ellipsis'}   overflow={'hidden'}>{t('Trash')}</Text>
+
+                                 </Flex>
                                 <Text>{auth.authData.views?.number_of_conversations_in_bin || 0}</Text>
                             </Flex>
 
@@ -461,28 +468,28 @@ function ConversationsTable({socket}:{socket:any}) {
                         </Flex>
                                     
                         <Flex px='1vw' gap='15px' mt='1vh'> 
-                            <Box maxW={'100%'} maxWidth={'300px'}> 
+                            <Box maxW={'100%'} w={'300px'}> 
                                 <EditText filterData={(text:string) => {fetchConversationsDataWithFilter({...filters, search:text})}}  value={filters?.search || ''} setValue={(value) => setFilters(prev => ({...prev, search:value}))} searchInput={true}/>
                             </Box>
                         </Flex>
                             
-                        <Flex px='1vw' height={'20px'} ref={tableRef} mt='2vh' mb='1vh' alignItems={'end'} justifyContent={'space-between'}  > 
+                        <Flex px='1vw' height={'20px'} ref={tableRef} mt='2vh' alignItems={'end'} justifyContent={'space-between'}  > 
                             <Skeleton isLoaded={!waitingInfo} >
                                 <Text whiteSpace={'nowrap'}  fontWeight={'medium'} color='gray.600' > {t('ConversationsCount', {count:(conversations?.total_conversations || 0)})}</Text> 
                             </Skeleton>
                             <AnimatePresence> 
                                 <MotionBox display={'flex'} alignItems={'center'} gap='10px' flexDir={'row-reverse'} pointerEvents={!isConversationOpened?'none':'auto'} width={!isConversationOpened?0:'100%'} initial={{opacity:!isConversationOpened?1:0 }} animate={{opacity:!isConversationOpened?0:1}} exit={{opacity:!isConversationOpened?1:0}} overflow={'hidden'}  transition={{ duration: '0.2', delay:'.3' }} >
-                                    <Tooltip  label={t('Delete')}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='.8em' p='6px'> 
+                                    <Tooltip  label={t('Delete')}  placement='top' hasArrow bg='white' color='black'  borderRadius='0.3rem' fontSize='.8em' p='6px'> 
                                         <IconButton size='xs' opacity={selectedElements.length === 0 ? 0:1} pointerEvents={selectedElements.length === 0 ? 'none':'auto'} variant='delete'  aria-label='delete' icon={<HiTrash  size={'16px'}/>} onClick={() => {if (selectedView.type === 'deleted') setShowConfirmDelete(true);else{deleteConversations()}}} />
                                     </Tooltip>
-                                    <Tooltip  label={t('DeSelect')}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='.8em' p='6px'> 
+                                    <Tooltip  label={t('DeSelect')}  placement='top' hasArrow bg='white' color='black'  borderRadius='0.3rem' fontSize='.8em' p='6px'> 
                                         <IconButton size='xs'  opacity={selectedElements.length === 0 ? 0:1}  pointerEvents={selectedElements.length === 0 ? 'none':'auto'} variant='common'  aria-label='deselect' icon={<MdDeselect size={'16px'}/>} onClick={() => setSelectedElements([])} />
                                     </Tooltip>
                                 </MotionBox>
                                 
                                 <MotionBox display={'flex'} alignItems={'center'}  gap='10px' flexDir={'row-reverse'} pointerEvents={isConversationOpened?'none':'auto'} width={isConversationOpened?0:'100%'} initial={{opacity:isConversationOpened?1:0, }} animate={{opacity:isConversationOpened?0:1}} exit={{opacity:isConversationOpened?1:0}} overflow={'hidden'}  transition={{ duration: '0.2', delay:'.3' }} >
                                     <IconButton isRound size='xs'  variant='common'  aria-label='next-page' icon={<IoIosArrowForward />} isDisabled={filters.page_index > Math.floor((conversations?.total_conversations || 0)/ 25)} onClick={() => fetchConversationsDataWithFilter({...filters,page_index:filters.page_index + 1})}/>
-                                    <Text fontWeight={'medium'} fontSize={'.9em'} color='gray.600'>{t('Page')} {filters.page_index}</Text>
+                                    <Text fontWeight={'medium'} fontSize={'.8em'} color='gray.600'>{t('Page')} {filters.page_index}</Text>
                                     <IconButton isRound size='xs' variant='common' aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={filters.page_index === 1} onClick={() => fetchConversationsDataWithFilter({...filters,page_index:filters.page_index - 1})}/>
                                 </MotionBox>
                             </AnimatePresence> 
@@ -490,17 +497,17 @@ function ConversationsTable({socket}:{socket:any}) {
                         
                         <AnimatePresence> 
                             {isConversationOpened ?
-                            <MotionBox position='absolute' zIndex={1000} bg='brand.hover_gray' top={(tableRef.current?.getBoundingClientRect().bottom || 0) + window.innerWidth * 0.01 } p='0 1vw 2vw 1vw' key="conversationList"   display={'flex'} height={ window.innerHeight - (tableRef.current?.getBoundingClientRect().top || 0) - ( window.innerWidth * 0.01)} flexDir={'column'} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} overflow={'scroll'}  transition={{ duration: '.2' }} >
+                            <MotionBox position='absolute' zIndex={99} bg='brand.hover_gray' top={(tableRef.current?.getBoundingClientRect().bottom || 0) + window.innerWidth * 0.01 } p='0 1vw 2vw 1vw' key="conversationList"   display={'flex'} height={ window.innerHeight - (tableRef.current?.getBoundingClientRect().top || 0) - ( window.innerWidth * 0.01)} flexDir={'column'} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} overflow={'scroll'}  transition={{ duration: '.2' }} >
                                 {conversations?.page_data.map((con, index) => {
                                     const isSelected = parseInt(location.split('/')[location.split('/').length - 1]) === con.id
                                     return (
                                     <Skeleton isLoaded={!waitingInfo}> 
-                                        <Box w={`calc(${sendBoxWidth} - 220px - 2vw)`} position={'relative'} key={`conversations-${index}`} onClick={() => {navigate(`/conversations/conversation/${con.id}`)}}  p='10px' borderRadius={'.5rem'} cursor={'pointer'}  bg={ isSelected?'white':'transparent'}  transition={'box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out, background-color 0.2s ease-in-out'}   boxShadow={isSelected ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''} borderWidth={'1px'} borderColor={isSelected ? 'gray.200':'transparent'}  _hover={{bg:isSelected?'white':'brand.gray_2'}}>
+                                        <Box w={`calc(${sendBoxWidth} - 220px - 2vw)`} position={'relative'} key={`conversations-${index}`} onClick={() => {navigate(`/conversations/conversation/${con.id}`)}}  p='10px' borderRadius={'.1rem'} cursor={'pointer'}  bg={ isSelected?'white':'transparent'}   transition={isSelected?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}   boxShadow={isSelected ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''} borderWidth={'1px'} borderColor={isSelected ? 'gray.200':'transparent'}  _hover={{bg:isSelected?'white':'brand.gray_2'}}>
                                             <Flex alignItems={'center'} gap='10px'> 
-                                                <Flex w='18px' onClick={(e) => e.stopPropagation()}> 
+                                                <Flex w='18px'  onClick={(e) => e.stopPropagation()}> 
                                                     <CustomCheckbox id={`checkbox-${index}`}   isChecked={selectedElements.includes(index)} onChange={() => handleCheckboxChange(index, !selectedElements.includes(index))} />
                                                 </Flex>
-                                                <Text  maxWidth="100%"  flex='1' textOverflow={'ellipsis'} overflow={'hidden'}   whiteSpace={'nowrap'} fontWeight={parseInt(location.split('/')[location.split('/').length - 1])  === con.id ?'medium':'normal'} fontSize={'.9em'}>{con.title ? con.title:t('NoDescription')}</Text>
+                                                <Text mt='-6px' transition={'transform .1s ease-in-out'}   transformOrigin="left center" transform={isSelected?'scale(1.02)':'scale(1)'} maxWidth="100%"  flex='1' textOverflow={'ellipsis'} overflow={'hidden'}   whiteSpace={'nowrap'} fontWeight={parseInt(location.split('/')[location.split('/').length - 1])  === con.id ?'medium':'normal'} fontSize={'.8em'}>{con.title ? con.title:t('NoDescription')}</Text>
                                             </Flex>
                                    
                                             <Flex ml='28px' justifyContent={'space-between'} alignItems={'end'}>
@@ -512,7 +519,7 @@ function ConversationsTable({socket}:{socket:any}) {
                                     })}
                             </MotionBox>     
                             :
-                            <MotionBox top={(tableRef.current?.getBoundingClientRect().bottom || 0) + window.innerWidth * 0.01 } position='absolute'  px='1vw'   width={'calc(100vw - 55px - 220px)'} key="tableBox"initial={{opacity:0}} mt='1vh' animate={{opacity:1}} exit={{opacity:0}} overflow={'hidden'}  transition={{ duration: '.2', delay:'.3'}} >
+                            <MotionBox top={(tableRef.current?.getBoundingClientRect().bottom || 0)} mt='1vh' position='absolute'  px='1vw'   width={'calc(100vw - 55px - 220px)'} key="tableBox"initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} overflow={'hidden'}  transition={{ duration: '.2', delay:'.3'}} >
                                 {!isConversationOpened && <Table height={selectedElements.length > 0 ? window.innerHeight - (tableRef.current?.getBoundingClientRect().bottom || 0) - 170:undefined } data={conversations?.page_data} CellStyle={CellStyle} noDataMessage={t('NoConversations')} requestSort={requestSort} getSortIcon={getSortIcon} columnsMap={columnsConversationsMap} excludedKeys={['id', 'conversation_id', 'contact_id',  'is_matilda_engaged', 'state', 'organization_id',  'call_sid', 'call_url', 'channel_id', 'custom_attributes', ] } onClickRow={handleClickRow} selectedElements={selectedElements} setSelectedElements={setSelectedElements} onSelectAllElements={getAllConversationsIds} currentIndex={selectedIndex} waitingInfo={waitingInfo}/> }
                             </MotionBox >}    
                         </AnimatePresence>  
@@ -541,7 +548,7 @@ function ConversationsTable({socket}:{socket:any}) {
             </MotionBox>
 
             <MotionBox position={'absolute'} top={0} right={0}  pointerEvents={isConversationOpened?'auto':'none'} initial={{ width: conversationWidth, opacity:isConversationOpened? 0:1  }} animate={{ width: conversationWidth, opacity:isConversationOpened? 1:0 }} exit={{ width: conversationWidth, opacity:isConversationOpened? 0:1  }}  overflowY={'scroll'}  transition={{ duration: '.2'}} 
-                bg='white' height={'100vh'}  overflowX={'hidden'} borderLeftColor={'gray.200'} borderLeftWidth={'1px'}>
+                bg='white' zIndex={100} height={'100vh'} boxShadow="-4px 0 6px -2px rgba(0, 0, 0, 0.1)" overflowX={'hidden'} borderLeftColor={'gray.200'} borderLeftWidth={'1px'}>
                     <Conversation socket={socket}/>
             </MotionBox>
 

@@ -1,16 +1,16 @@
 //REACT
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, lazy } from "react"
 import { useTranslation } from "react-i18next"
 import { useAuth } from "../../../AuthContext"
 import { useSession } from "../../../SessionContext"
-import { useNavigate } from "react-router-dom"
+import { useLocation, useNavigate } from "react-router-dom"
 //FETCH DATA
 import fetchData from "../../API/fetchData"
 //FRONT
-import { Flex, Box, Text, Button, IconButton, Skeleton, Tooltip } from '@chakra-ui/react'
+import { motion, isValidMotionProp } from 'framer-motion'
+import { Flex, Box, Text, Button, IconButton, Skeleton, Tooltip, chakra, shouldForwardProp } from '@chakra-ui/react'
 //COMPONENTS
 import EditText from "../../Components/Reusable/EditText"
-import AccionesButton from "../Conversations/ActionsButton"
 import FilterButton from "../../Components/Reusable/FilterButton"
 import Table from "../../Components/Reusable/Table"
 //FUNCTIONS
@@ -25,11 +25,15 @@ import { IoMdMail, IoLogoWhatsapp } from "react-icons/io"
 import { IoChatboxEllipses, IoLogoGoogle } from "react-icons/io5"
 import { AiFillInstagram } from "react-icons/ai"
 import { FaCloud } from "react-icons/fa6"
-
 //TYPING
 import { Clients, Channels,  ClientColumn, languagesFlags } from "../../Constants/typing"
 import { useAuth0 } from "@auth0/auth0-react"
+//SECTION
+const Client = lazy(() => import('./Client'))
   
+//MOTION BOX
+const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
+
 interface ClientsFilters {
     page_index:number
     channel_types:Channels[]
@@ -78,12 +82,13 @@ const CellStyle = ({ column, element }:{column:string, element:any}) => {
 
 
 //MAIN FUNCTION
-function ClientsTable () {
+function ClientsTable ({socket}:{socket:any}) {
 
     //AUTH CONSTANT
     const auth = useAuth()
     const { getAccessTokenSilently } = useAuth0()
     const session = useSession()
+    const location = useLocation().pathname
     const navigate = useNavigate()
     const { t } = useTranslation('clients')
     const columnsClientsMap:{[key:string]:[string, number]} = {name: [t('name'), 200], contact: [t('contact'), 150], labels: [t('labels'), 350], last_interaction_at: [t('last_interaction_at'), 180], created_at: [t('created_at'), 150], rating: [t('rating'), 60], language: [t('language'), 150], notes: [t('notes'), 350],  is_blocked: [t('is_blocked'), 150]}
@@ -96,6 +101,10 @@ function ClientsTable () {
         'instagram': [t('instagram'), AiFillInstagram], 
         'phone':[ t('phone'), FaPhone]
     }
+
+    //EXPAND CLIENT
+    const [expandClient, setExpandClient] = useState<boolean>(false)
+    useEffect(() => {setExpandClient(location.split('/')[location.split('/').length - 1] === 'clients')},[location])
 
     //BOOLEAN FOR WAIT THE INFO
     const [waitingInfo, setWaitingInfo] = useState<boolean>(true)
@@ -141,7 +150,7 @@ function ClientsTable () {
 
     const clickRow = (client:any, index:number) => {
         session.dispatch({type:'UPDATE_CLIENTS_TABLE_SELECTED_ITEM', payload:{index}})
-        navigate(`/clients/client/${client.id}`)
+        navigate(`${client.id}`)
     }
 
    
@@ -162,40 +171,42 @@ function ClientsTable () {
         else setFilters({...filters, channel_types: [...channelsList, element]})
     }
 
-    
+    const clientBoxWidth = expandClient ? Math.min(window.innerWidth * 0.6, window.innerWidth - 500) - 200 : Math.min(window.innerWidth * 0.6, window.innerWidth - 500)
+
     //FRONT
     return(
-        <Box bg='white' height={'calc(100vh - 60px)'} width={'calc(100vw - 55px)'} overflowX={'scroll'} overflowY={'hidden'}  p='2vw'>
+        <>  
+        <MotionBox width={clientBoxWidth + 'px'}  overflowY={'scroll'} initial={{ width: clientBoxWidth + 'px', opacity: expandClient?1:0}} animate={{ width: clientBoxWidth + 'px',  opacity: expandClient?0:1  }} exit={{ width: clientBoxWidth + 'px',  opacity: expandClient?1:0}} transition={{ duration: '.2'}} 
+        bg='white' top={0} boxShadow="-4px 0 6px -2px rgba(0, 0, 0, 0.1)" right={0} pointerEvents={expandClient ?'none':'auto'} height={'100vh'}  p={expandClient ?'1vw':'0'} overflowX={'hidden'} position='absolute' zIndex={100} overflow={'hidden'} >
+            <Client socket={socket}/> 
+        </MotionBox>
+  
+        <Box height={'100%'} width={'calc(98vw - 55px)'} overflowX={'scroll'} overflowY={'hidden'} >
     
-            <Flex justifyContent={'space-between'} alignItems={'end'}> 
-                <Text fontWeight={'medium'} fontSize={'1.5em'}>{t('Clients')}</Text>
-                <AccionesButton items={clients ? clients.page_data:[]} view={null} section={'clients'}/>
-             </Flex>
-    
-            <Flex gap='15px' mt='2vh' > 
-                <Box width={'350px'}> 
+            <Flex gap='15px'  > 
+                <Box width={'300px'}> 
                     <EditText filterData={(text:string) => {fetchClientDataWithFilter({...filters, search:text})}} value={filters?.search} setValue={(value) => setFilters(prev => ({...prev, search:value}))} searchInput={true}/>
                 </Box>
                 <FilterButton selectList={Object.keys(logosMap)} itemsMap={logosMap} selectedElements={filters?.channel_types} setSelectedElements={(element) => toggleChannelsList(element as Channels)} icon={PiDesktopTowerFill} initialMessage={t('ClientsFilterMessage')}/>
-                <Button leftIcon={<FaFilter/>} size='sm' variant={'common'}  onClick={() => fetchClientDataWithFilter({...filters, page_index:1})}>{t('ApplyFilters')}</Button>
+                <Button leftIcon={<FaFilter/>} fontSize={'.9em'} size='sm' variant={'common'}  onClick={() => fetchClientDataWithFilter({...filters, page_index:1})}>{t('ApplyFilters')}</Button>
             </Flex>
 
-            <Flex mt='2vh'  justifyContent={'space-between'} alignItems={'center'}> 
+            <Flex mt='1vh'  justifyContent={'space-between'} alignItems={'center'}> 
                 <Skeleton  isLoaded={!waitingInfo} >
-                    <Text fontWeight={'medium'} color='gray.600' fontSize={'1.2em'}> {t('ClientsCount', {count:clients?.total_contacts})}</Text> 
+                    <Text fontWeight={'medium'} color='gray.600' > {t('ClientsCount', {count:clients?.total_contacts})}</Text> 
                 </Skeleton>
-                <Flex  alignItems={'center'} justifyContent={'end'} gap='10px' flexDir={'row-reverse'}>
-                    <IconButton isRound size='xs'  variant={'common'}  aria-label='next-page' icon={<IoIosArrowForward />} isDisabled={filters?.page_index >= Math.floor((clients?.total_contacts || 0)/ 50)} onClick={() => fetchClientDataWithFilter({...filters,page_index:filters?.page_index + 1})}/>
-                    <Text fontWeight={'medium'} fontSize={'.9em'} color='gray.600'>{t('Page')} {filters?.page_index}</Text>
+                <Flex  mb='1vh' alignItems={'center'} justifyContent={'end'} gap='10px' flexDir={'row-reverse'}>
+                    <IconButton isRound size='xs'  variant={'common'}  aria-label='next-page' icon={<IoIosArrowForward />} isDisabled={filters?.page_index > Math.floor((clients?.total_contacts || 0)/ 25)} onClick={() => fetchClientDataWithFilter({...filters,page_index:filters?.page_index + 1})}/>
+                    <Text fontWeight={'medium'} fontSize={'.8em'} color='gray.600'>{t('Page')} {filters?.page_index}</Text>
                     <IconButton isRound size='xs' variant={'common'} aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={filters?.page_index === 1} onClick={() => fetchClientDataWithFilter({...filters,page_index:filters?.page_index - 1})}/>
                 </Flex>
             </Flex>
 
-            <Skeleton isLoaded={!waitingInfo}> 
-                <Table data={clients?.page_data || []} CellStyle={CellStyle} noDataMessage={t('NoClients')} columnsMap={columnsClientsMap} requestSort={requestSort} getSortIcon={getSortIcon} onClickRow={clickRow} excludedKeys={['id', 'contact_business_id', 'phone_number', 'email_address', 'instagram_username', 'webchat_uuid', 'google_business_review_id']}  currentIndex={selectedIndex} />
-            </Skeleton>
+ 
+            <Table data={clients?.page_data || []} CellStyle={CellStyle} noDataMessage={t('NoClients')} columnsMap={columnsClientsMap} requestSort={requestSort} getSortIcon={getSortIcon} onClickRow={clickRow} excludedKeys={['id', 'contact_business_id', 'phone_number', 'email_address', 'instagram_username', 'webchat_uuid', 'google_business_review_id']}  currentIndex={selectedIndex} />
+ 
         </Box>
-        )
+        </>)
 }
 
 export default ClientsTable

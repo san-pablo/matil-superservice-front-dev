@@ -52,7 +52,7 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
     useEffect(() => {
         const updateHeight = () => {
             if (headerRef.current) {
-                const alturaCalculada =  ((window.innerHeight - headerRef.current?.getBoundingClientRect().top ) - window.innerWidth * 0.02 - 50)
+                const alturaCalculada =  ((window.innerHeight - headerRef.current?.getBoundingClientRect().top ) - window.innerWidth * 0.02 - 45)
                 setBoxHeight(alturaCalculada)
             }
         } 
@@ -67,19 +67,19 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
     //SCROLL ON CHANGING TO AN ELEMENT OUT OF THE SCROLL VIEW
     const scrollIntoView = (index: number) => {
         if (tableBoxRef.current) {
-          const item = tableBoxRef.current.querySelector(`[data-index="${index}"]`)
-          if (item) {
-            const itemTop = (item as HTMLElement).offsetTop - tableBoxRef.current.getBoundingClientRect().top
-            const itemBottom = itemTop + (item as HTMLElement).offsetHeight
-            const containerTop = tableBoxRef.current.scrollTop
-            const containerBottom = containerTop + tableBoxRef.current.offsetHeight
-            const buffer = 90
-            if (tableBoxRef.current.scrollHeight > tableBoxRef.current.offsetHeight) {
-                if (itemTop < containerTop) tableBoxRef.current.scrollTop = itemTop 
-                else if (itemBottom > containerBottom) tableBoxRef.current.scrollTop = itemBottom - tableBoxRef.current.offsetHeight + buffer
+            const item = tableBoxRef.current.querySelector(`[data-index="${index}"]`)
+            if (item) {
+                const container = tableBoxRef.current
+                const itemTop = (item as HTMLElement).offsetTop - container.getBoundingClientRect().top + container.scrollTop
+                const itemBottom = itemTop + (item as HTMLElement).offsetHeight
+                const containerTop = container.scrollTop
+                const containerBottom = containerTop + container.offsetHeight
+                if (itemTop < containerTop) container.scrollTop = itemTop
+                else if (itemBottom > containerBottom) container.scrollTop = Math.min(itemBottom - container.offsetHeight, container.scrollHeight - container.offsetHeight)
             }
         }
-      }}
+    }
+    
     
     
     //SHORTCUTS
@@ -101,7 +101,10 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
                     return newIndex
                 })
             }
-            else if (event.code === 'Space' && data && 0 <= selectedIndex && selectedIndex   <= data.length - 1 && selectedElements) handleCheckboxChange(selectedIndex, !selectedElements.includes(selectedIndex))
+            else if (event.code === 'Space' && data && 0 <= selectedIndex && selectedIndex   <= data.length - 1 && selectedElements) {
+                event.preventDefault()
+                handleCheckboxChange(selectedIndex, !selectedElements.includes(selectedIndex))
+            }
             else if (event.code === 'Enter' && data && onClickRow) onClickRow(data[selectedIndex], selectedIndex)
         }
         window.addEventListener('keydown', handleKeyDown)
@@ -190,7 +193,7 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
                     </Flex>
                     :        
                     <motion.div initial={{ opacity: 0 }}  animate={{ opacity: 1 }} transition={{ duration: 0.5, ease: "easeInOut" }} style={{ minWidth: `${totalWidth}px` }}> 
-                        <Flex position={'sticky'}minWidth={`${totalWidth}px`}  borderBottomWidth={'1px'} gap='20px' alignItems={'center'}  color='gray.600' p='10px' fontSize={'.9em'} bg='#f8f8f8' > 
+                        <Flex position={'sticky'}minWidth={`${totalWidth}px`}  borderBottomWidth={'1px'} gap='20px' alignItems={'center'}  color='gray.600' p='10px' fontSize={'.9em'} > 
                             {selectedElements && 
                             <Box onClick={(e) => e.stopPropagation()}> 
                                 <CustomCheckbox  id={`checkbox-${-1}`} isChecked={dataToWork.length > 0 && selectedElements.length >= dataToWork.length} onChange={() =>  {if (onSelectAllElements) (onSelectAllElements)()}}/>
@@ -209,8 +212,8 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
                         <Box position={'relative'} minWidth={`${totalWidth}px`} overflowX={'hidden'} ref={tableBoxRef} overflowY={'scroll'} maxH={height?height:boxHeight}> 
                             {dataToWork.map((row:any, index:number) => {  
                                 
-                                return (
-                                    <Flex height={'50px'} data-index={index}  position={'relative'} overflow={'hidden'} gap='20px' minWidth={`${totalWidth}px`}  borderWidth={'0 0px 1px 0px'}  cursor={onClickRow?'pointer':'normal'} onClick={() => {if (onClickRow) onClickRow(row, index)}} key={`row-${index}`}  bg={selectedIndex === index ? 'brand.blue_hover':(selectedElements || []).includes(index)?'brand.blue_hover':index%2 === 1?'#FCFCFC':'white'} alignItems={'center'}  fontSize={'.9em'} color='black' p='10px' borderColor={'gray.200'} _hover={{bg:(selectedElements || [] ).includes(index)?'brand.blue_hover':'brand.blue_hover'}}  > 
+                                return (<> 
+                                    <Flex height={'45px'} px='10px' data-index={index}  position={'relative'}  gap='20px' minWidth={`${totalWidth}px`}  cursor={onClickRow?'pointer':'normal'} onClick={() => {if (onClickRow) onClickRow(row, index)}} key={`row-${index}`}   bg={(selectedElements || []).includes(index)?'brand.gray_2':'transparent'} alignItems={'center'}  fontSize={'.9em'} color='black'   _hover={{bg:'brand.gray_2'}}  > 
                                         {selectedIndex === index && <Box position='absolute' left={0} top={0} height={'100%'} width={'2px'} bg='brand.text_blue'/>}
                                         {selectedElements &&
                                             <Flex onClick={(e) => e.stopPropagation()}> 
@@ -232,11 +235,13 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
                                                 <IconButton size={'sm'} color={'red.600'} bg='transparent' variant={'delete'} _hover={{bg:'red.100'}} icon={<HiTrash size={'20px'}/>} aria-label="delete-row" onClick={() => deletableFunction(row, index)}/>
                                             </Flex>
                                         }
-                                    </Flex>)
+                                    </Flex>
+                                    <Box bg='gray.200' h='1px' w='100%'/>
+                                    </>)
                                 })}
                                 
                                 {showAccRow && 
-                                    <Flex height={'50px'}zIndex={1000} fontSize={'.9em'}  bottom={0} bg='brand.gray_2' gap='20px'minWidth={`${totalWidth}px`}  borderRadius={'0 0 .5rem .5rem'} borderWidth={'0 1px 1px 1px'}  fontWeight={'medium'} alignItems={'center'} color='black' p='10px'>
+                                    <Flex height={'45px'}zIndex={1000} fontSize={'.9em'}  bottom={0} bg='brand.gray_2' gap='20px'minWidth={`${totalWidth}px`}  borderRadius={'0 0 .5rem .5rem'} borderWidth={'0 1px 1px 1px'}  fontWeight={'medium'} alignItems={'center'} color='black' p='10px'>
                                         <Text flex={`${(columnsMap?.[accColumn || '']?.[1] || 180) / 10} 0 ${(columnsMap?.[accColumn || '']?.[1] || 180)}px`}>{accMessage}</Text>
                                         {columns.filter(column => column !== accColumn).map((column: string, index: number) => {
                                             const sum = dataToWork.reduce((acc: number, row: any) => {
@@ -271,7 +276,7 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
             
                 <Box position="relative" minWidth={`${totalWidth}px`} overflowX="hidden" overflowY="scroll" maxH={height || boxHeight} >
                 {Array.from({ length: 20 }).map((_, rowIndex) => (
-                    <Flex key={`skeleton-row-${rowIndex}`} height="50px" gap="20px" minWidth={`${totalWidth}px`} borderWidth="0 0px 1px 0px" alignItems="center" p="10px" borderColor="gray.200" bg={rowIndex % 2 === 1 ? "#FCFCFC" : "white"}>
+                    <Flex key={`skeleton-row-${rowIndex}`} height="45px" gap="20px" minWidth={`${totalWidth}px`} borderWidth="0 0px 1px 0px" alignItems="center" p="10px" borderColor="gray.200" bg={'transparent'}>
                     {selectedElements && (
                         <Flex>
                         <Skeleton height="20px" width="20px" borderRadius="4px" />

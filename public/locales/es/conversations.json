@@ -1,7 +1,9 @@
 {
     "Views":"Vistas",
-    "PublicViews":"Vistas públicas",
-    "PrivateViews":"Vistas privadas",
+    "PublicViews":"Vistas Compartidas",
+    "PrivateViews":"Vistas Privadas",
+    "CreatePrivateView":"Crear vista",
+    "NoPrivateViews":"No hay vistas privadas",
     "NoConversations":"No hay conversaciones disponibles",
     "Trash":"Papelera",
     "EditViews":"Editar vistas",
@@ -32,7 +34,7 @@
     "channel_type": "Canal",
     
     "theme": "Tema",
-    "user_id": "Agente asignado",
+    "user_id": "Agente",
     "created_at": "Creado",
     "updated_at": "Última interacción",
     "solved_at": "Resuelta",
@@ -74,8 +76,8 @@
     "NoData":"No se ha extraído ninguna información relevante de la conversación",
     "ReturnConversation":"Volver a la conversación",
     "Merge":"Fusionar",
-    "MergeConversation":"Fusionar",
-    "Delete":"Eliminar",
+    "MergeConversation":"Fusionar conversación",
+    "Delete":"Eliminar conversación",
     "ExtractedData":"Datos extraídos",
     "InternalNote":"Nota Interna",
     "Conversations":"Historial de conversaciones",
@@ -120,7 +122,7 @@
     "NoSystemMessage":"Mensaje del sistema no reconocido.",
     "ConversationByMatilda":"Matilda está gestionando la conversación",
     "ConversationClosed":"La conversación está cerrada",
-    "ExportConversation":"Exportar",
+    "ExportConversation":"Exportar a archivo de texto",
     "OptionsMessage":"[MOSTRAR OPCIONES]",
     "ImageMessage":"[IMAGEN]",
     "FileMessage":"[ARCHIVO]",
@@ -136,7 +138,12 @@
     "Arguments":"Argumentos",
     "Output":"Resultado",
     "FunctionCall":"Llamada a la función:",
-    "PlaceholderShortcuts":"Pulsa / para ver los atajos"
+    "PlaceholderShortcuts":"Pulsa / para ver los atajos",
+    "ConversationData":"Conversación",
+    "ClientData":"Cliente",
+    "ClientConversations":"Historial de conversaciones"
+
+
 
 
 }

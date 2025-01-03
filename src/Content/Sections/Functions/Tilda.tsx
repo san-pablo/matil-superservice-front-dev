@@ -2,6 +2,8 @@
 import { Dispatch, SetStateAction, useRef, useState, CSSProperties, RefObject, useEffect, useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { useAuth } from "../../../AuthContext"
+import { useSession } from "../../../SessionContext"
+import { useAuth0 } from "@auth0/auth0-react"
 //FETCH DATA
 import fetchData from "../../API/fetchData"
 //FRONT
@@ -22,14 +24,12 @@ import parseMessageToBold from "../../Functions/parseToBold"
 //ICONS
 import { RxCross2 } from "react-icons/rx"
 import { FaPlus } from "react-icons/fa6"
-import { IoSettingsSharp } from "react-icons/io5"
 import { PiChatsBold } from "react-icons/pi"
 import { HiTrash } from "react-icons/hi2"
 import { IoIosArrowBack } from "react-icons/io"
 //TYPING
 import { MatildaConfigProps, FieldAction, FunctionTableData } from "../../Constants/typing"
-import { useSession } from "../../../SessionContext"
-import { useAuth0 } from "@auth0/auth0-react"
+ 
    
 //TYPING
 interface ConfigProps { 

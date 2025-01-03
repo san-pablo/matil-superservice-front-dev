@@ -3,7 +3,7 @@
 */
 
 //REACT
-import { useRef, useState, useEffect, useLayoutEffect, ElementType, Suspense, lazy, SetStateAction, Dispatch, useMemo, forwardRef, MutableRefObject } from 'react'
+import { useRef, useState, useEffect, useLayoutEffect, ElementType, Suspense, lazy, SetStateAction, Dispatch, useMemo, forwardRef } from 'react'
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom"
 import { useAuth } from '../AuthContext'
 import { useSession } from '../SessionContext'
@@ -15,7 +15,6 @@ import fetchData from './API/fetchData'
 import io from 'socket.io-client' 
 //FRONT
 import { Flex, Box, Icon, Avatar, Text, Tooltip, Button, chakra, shouldForwardProp, Image, Portal } from '@chakra-ui/react'
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import './Components/styles.css'
 import { motion, AnimatePresence, isValidMotionProp } from 'framer-motion' 
 //COMPONENTS
@@ -32,26 +31,22 @@ import useOutsideClick from './Functions/clickOutside'
 import DetermineConversationViews from './MangeData/DetermineConversationViews'
 //ICONS
 import { IconType } from 'react-icons'
-import { IoFileTrayFull, IoChatboxOutline, IoPersonOutline } from "react-icons/io5" 
-import { BsFillPersonLinesFill, BsBarChartFill, BsBuildings,BsStars,  BsFillTelephoneInboundFill, BsFillTelephoneMinusFill, BsFillTelephoneXFill, BsFillLayersFill } from "react-icons/bs"
-import { FaPlus, FaArrowRightToBracket } from "react-icons/fa6"
-import { IoIosSettings, IoIosArrowDown } from "react-icons/io"
-import { RxCross2 } from "react-icons/rx"
+import { IoFileTrayFull } from "react-icons/io5" 
+import { BsFillPersonLinesFill, BsBarChartFill ,BsStars,  BsFillTelephoneInboundFill, BsFillTelephoneMinusFill, BsFillTelephoneXFill, BsFillLayersFill } from "react-icons/bs"
+import { FaPlus, FaArrowRightToBracket, FaCheck } from "react-icons/fa6"
+import { IoIosSettings, IoIosArrowDown, IoIosArrowForward } from "react-icons/io"
 import { FiPlus } from "react-icons/fi"
 import { BiSolidBuildings } from 'react-icons/bi'
-import { PiBuildingApartmentFill, PiKeyReturn } from "react-icons/pi"
+import { PiKeyReturn } from "react-icons/pi"
 import { TbArrowBack } from 'react-icons/tb'
 import { VscFeedback } from "react-icons/vsc"
 //TYPING 
 import { Organization, ConversationsData, userInfo, Views } from './Constants/typing'
 //MAIN SECTIONS
 const ConversationsTable = lazy(() => import('./Sections/Conversations/ConversationsTable'))
-const ClientsTable = lazy(() => import('./Sections/Clients/ClientsTable'))
-const TildaMain = lazy(() => import('./Sections/Flows/TildaMain'))
-const ContactBusinessesTable = lazy(() => import('./Sections/Businesses/BusinessesTable'))
-const Conversation = lazy(() => import('./Sections/Conversations/Conversation'))
-const Client = lazy(() => import('./Sections/Clients/Client'))
-const Business = lazy(() => import('./Sections/Businesses/Business'))
+const Contacts = lazy(() => import('./Sections/Contacts/Contacts'))
+const FunctionsTable = lazy(() => import('./Sections/Functions/FunctionsTable'))
+ 
 const ReportsTable = lazy(() => import('./Sections/Stats/ReportsTable'))
 const Report = lazy(() => import('./Sections/Stats/Report'))
 const Settings = lazy(() => import('./Sections/Settings/Settings'))
@@ -60,7 +55,7 @@ const NotFound = lazy(() => import('./Components/Once/NotFound'))
 
  
 //TYPING
-type SectionKey = 'conversations' | 'clients' | 'contact-businesses' | 'functions'| 'knowledge' | 'stats' | 'settings'
+type SectionKey = 'conversations' | 'contacts' | 'functions'| 'knowledge' | 'stats' | 'settings'
 interface NavBarItemProps {
     icon: ElementType
     section: SectionKey
@@ -86,6 +81,7 @@ function Content ({userInfo}:{userInfo:userInfo}) {
  
     //TRANSLATION
     const { t } = useTranslation('main')
+    const { logout, getAccessTokenSilently } = useAuth0()
 
     //IMPORTANT REACT CONSTANTS
     const auth = useAuth()
@@ -304,9 +300,6 @@ function Content ({userInfo}:{userInfo:userInfo}) {
                 case 'KeyA':
                     navigate('settings')
                     break
-                case 'KeyW':    
-                    if (currentIndex !== -1) deleteHeaderSection(headerSections[currentIndex],currentIndex)
-                    break
     
                 case 'ArrowLeft': 
                     if (currentIndex > 0) {
@@ -342,80 +335,23 @@ function Content ({userInfo}:{userInfo:userInfo}) {
             window.removeEventListener('keydown', handleKeyDown)
         }
     },[headerSections, location])
-
-    //DRAGGING VISIBLE HEADER COMPONENTS
-    const onDragEnd = (result:any) => {
-      if (!result.destination) return
-      const items = Array.from(headerSections)
-      const [reorderedItem] = items.splice(result.source.index, 1)
-      items.splice(result.destination.index, 0, reorderedItem)
-      setHeaderSections(items)
-    }
-  
-    //ADD HEADER SECTION LOGIC
-    const addHeaderSection = (description:string, code:number, section:'conversation' | 'client' | 'contact-business', local_id?:number) => {
-        if (!headerSections.some(value => value.code === code && value.type === section)) {
-            setHeaderSections(prev => [...prev, {'description':description, 'code': code, local_id, 'type':section}])
-            if (section ===  'conversation') navigate(`conversations/conversation/${code}`)
-            else if (section === 'client')  navigate(`clients/client/${code}`)
-            else if (section === 'contact-business')  navigate(`contact-businesses/business/${code}`)
-        }
-    }
-   
-    //DELETE HEADER SECTION LOGIC
-    const deleteHeaderSection = (element: Section, indexToDelete?: number) => {
-        setHeaderSections((prevHeaderSections) => {
-            const index = indexToDelete !== undefined ? indexToDelete : prevHeaderSections.findIndex(e => e.code === element.code && e.type === element.type)
-            const filteredHeaderSections = prevHeaderSections.filter((e, idx) => idx !== index)
-            const currentLocation = location
-    
-            const isUserInSection = (prevHeaderSections[index].type === 'conversation' && location === `/conversations/conversation/${prevHeaderSections[index].code}`) || 
-                (prevHeaderSections[index].type === 'client' && location === `/clients/client/${prevHeaderSections[index].code}`) || 
-                (prevHeaderSections[index].type === 'contact-business' && location === `/contact-businesses/business/${prevHeaderSections[index].code}`)
-    
-            if (isUserInSection) {
-                if (filteredHeaderSections.length > 0) {
-                    const targetIndex = Math.max(index - 1, 0)
-                    if (prevHeaderSections[targetIndex].type === 'client') navigate(`/clients/client/${filteredHeaderSections[targetIndex].code}`)
-                    else if (prevHeaderSections[targetIndex].type === 'contact-business') navigate(`/contact-businesses/business/${filteredHeaderSections[targetIndex].code}`)
-                    else navigate(`/conversations/conversation/${filteredHeaderSections[targetIndex].code}`)
-                } else {
-                    if (currentLocation.startsWith('/clients')) navigate('/clients')
-                    else if (currentLocation.startsWith('/contact-businesses')) navigate('/contact-businesses')
-                    else navigate('/conversations')
-                }
-            }
-    
-            session.dispatch({type: 'UPDATE_HEADER_SECTIONS', payload: {action: 'remove', index}})
-            setVisibleSectionsIndex(prev => prev - 1)
-            return filteredHeaderSections
-        })
-    }
-
-    //SHOW INTRODUCE CODE BOX WHEN THERE IS NO ORGANIZATION
-    if (!auth.authData.organizationId) return (<OrganizationsBox userInfoApp={userInfoApp} isAdmin={false}  setUserInfoApp={setUserInfoApp} auth={auth}  session={session} setHeaderSections={setHeaderSections} authDataRef={authDataRef}/>)
-    
+ 
     //MEMOIZED CALL WIDGET
     const memoizedCallWidget = useMemo(() => <CallWidget />, [])
-
-    //SECTIONS WITH HEADER
-    const isHeaderSection =  location.startsWith('/conversation') || location.startsWith('/client') || location.startsWith('/contact-businesses')
-    
     const barRef = useRef<HTMLDivElement>(null)
 
     //REFS
     const conversationsRef = useRef<HTMLDivElement>(null)
     const clientsRef = useRef<HTMLDivElement>(null)
-    const businessesRef = useRef<HTMLDivElement>(null)
     const flowsRef = useRef<HTMLDivElement>(null)
     const knowledgeRef = useRef<HTMLDivElement>(null)
     const statsRef = useRef<HTMLDivElement>(null)
     const settingsRef = useRef<HTMLDivElement>(null)
-    const sectionsRefs = {conversations:conversationsRef, clients:clientsRef, 'contact-businesses':businessesRef, 'knowledge':knowledgeRef, 'functions':flowsRef, 'stats':statsRef, 'settings':settingsRef}
+    const sectionsRefs = {conversations:conversationsRef, contacts:clientsRef, 'knowledge':knowledgeRef, 'functions':flowsRef, 'stats':statsRef, 'settings':settingsRef}
 
     useEffect(() => {
         const updateBarPosition = () => {
-            const currentSection = location.split('/')[1] as 'conversations' | 'clients' | 'contact-businesses' | 'knowledge' | 'functions' | 'stats' | 'settings';
+            const currentSection = location.split('/')[1] as 'conversations' | 'contacts' | 'knowledge' | 'functions' | 'stats' | 'settings';
             if (sectionsRefs[currentSection]?.current && barRef.current) {
                 isFirstSection.current = false
                 const sectionTop = sectionsRefs[currentSection]?.current?.getBoundingClientRect().top || 0
@@ -428,6 +364,53 @@ function Content ({userInfo}:{userInfo:userInfo}) {
         return () => {window.removeEventListener('resize', updateBarPosition)}
     }, [location, sectionsRefs, barRef])
     
+
+    //JOIN TO AN ORGANIZATION FUNCTION
+    const addOrganization = async ({invitationCode, setInvitationCode}:{invitationCode:string, setInvitationCode:Dispatch<SetStateAction<string>>}) => {
+        setInvitationCode('')
+ 
+        navigate('/conversations')
+
+        const response = await fetchData({endpoint:`user/join/${invitationCode}`, method:'put', getAccessTokenSilently, auth:auth})
+
+        if (response?.status === 200) {
+            const response2 = await fetchData({endpoint:`user`, setValue:setUserInfoApp, getAccessTokenSilently, auth:auth})
+            if (response2?.status === 200){
+                changeOrganization(response2.data.organizations[response2.data.organizations.length - 1])
+            }
+            else {showToast({message:t('Join_Failed'), type:'failed'})}
+        }
+        else {showToast({message:t('Join_Failed'), type:'failed'})}
+    }
+    
+    //CHANGE ORGANIZATION LOGIC
+    const changeOrganization = async (org:Organization) => {
+
+        localStorage.removeItem('currentView')
+        localStorage.removeItem('currentSection')
+        localStorage.removeItem('currentSectionTop')
+        localStorage.setItem('currentOrganization', String(org.id))
+        
+        session.dispatch({type:'DELETE_ALL_SESSION'})
+        setHeaderSections([])
+        const responseOrg = await fetchData({endpoint:`${org.id}/user`, auth, getAccessTokenSilently})
+        const responseChannels = await  fetchData({endpoint:`${org.id}/admin/settings/channels`, auth, getAccessTokenSilently})
+        const responseThemes= await  fetchData({endpoint:`${org.id}/admin/settings/themes`, auth, getAccessTokenSilently})
+        session.dispatch({type:'ADD_CHANNELS', payload:responseChannels?.data})
+        if (responseOrg?.status === 200) {
+            const viewsToAdd = {
+            number_of_conversations_in_bin:responseOrg.data.number_of_conversations_in_bin, 
+            private_views:responseOrg.data.private_views, 
+            number_of_conversations_per_private_view:responseOrg.data.number_of_conversations_per_private_view,
+            shared_views:responseOrg.data.shared_views, 
+            number_of_conversations_per_shared_view:responseOrg.data.number_of_conversations_per_shared_view
+          }
+          authDataRef.current = viewsToAdd
+          auth.setAuthData({views: viewsToAdd, users:responseOrg.data.users, shortcuts:responseOrg.data.shortcuts, conversation_themes:responseThemes?.data.map((theme:{name:string, description:string}) => theme.name), organizationId:org.id, organizationName:org.name})
+        }
+        
+        navigate('/conversations')
+     }
 
     const NavBar = () => {
  
@@ -442,9 +425,7 @@ function Content ({userInfo}:{userInfo:userInfo}) {
                         {MatilImage}
                     </Flex>
                     <NavBarItem ref={conversationsRef} icon={IoFileTrayFull} section={'conversations'}/>
-                    <NavBarItem ref={clientsRef} icon={BsFillPersonLinesFill} section={'clients'}/>
-                    <NavBarItem ref={businessesRef} icon={PiBuildingApartmentFill} section={'contact-businesses'}/>
-                  
+                    <NavBarItem ref={clientsRef} icon={BsFillPersonLinesFill} section={'contacts'}/>
                 </Box>
             </Flex>
             <Flex  alignItems='center' flexDir='column' position={'relative'}>
@@ -453,12 +434,37 @@ function Content ({userInfo}:{userInfo:userInfo}) {
                 {isAdmin && <NavBarItem ref={knowledgeRef}  icon={BsFillLayersFill} section={'knowledge'}/>}
                 {isAdmin && <NavBarItem ref={settingsRef} icon={IoIosSettings} section={'settings'}/>}
                 <Flex width='40px' bg='gray.300' height='1px' mb='2vh' mt='2vh'/>
-                <LogoutBox userInfoApp={userInfoApp} auth={auth} />
+                <LogoutBox userInfoApp={userInfoApp} auth={auth} addOrganization={addOrganization} changeOrganization={changeOrganization}/>
             </Flex>
         </>
         )
     }
-    const memoizedNavbar = useMemo(() => <NavBar />, [])
+    const memoizedNavbar = useMemo(() => <NavBar />, [auth.authData.organizationId])
+
+    // SHOW WHEN THERE IS NO ORGANIZATION
+    const NoOrganizationBox = () => {
+
+         const [firstInvitationCode, setFirstInvitationCode] = useState<string>('')
+        
+         const [waitingNewOrganization, setWaitingNewOrganization] = useState<boolean>(false)
+
+        const addNewOrganization = async () => {
+            setWaitingNewOrganization(true)
+            await addOrganization({invitationCode:firstInvitationCode, setInvitationCode:setFirstInvitationCode})
+            setWaitingNewOrganization(false)
+        }
+        return (
+        <Flex width='100vw' bg='gray.100' height='100vh' alignItems={'center'} justifyContent={'center'}>
+            <Box maxW={'650px'} rounded={'lg'} bg='white' boxShadow={'lg'} p={8} >
+                <Text fontWeight='medium' fontSize={'1.2em'}>{t('NoOrganizationUser')}</Text>
+                <Text fontWeight='medium' fontSize={'1em'} mt='2vh' mb='.5vh'>{t('GetInvitationCode')}</Text>
+                <EditText value={firstInvitationCode} setValue={setFirstInvitationCode} placeholder='xxxxxxxx-xxxx-xxxx-xxxxxxxxxxxx' hideInput={false}/>
+                <Button variant={'main'} size='sm' leftIcon={waitingNewOrganization?<></>:<FaPlus />} mt='2vh' isDisabled={firstInvitationCode === ''} width='100%' onClick={addNewOrganization}>{waitingNewOrganization?<LoadingIconButton/>:t('Join')}</Button>
+            </Box>
+            <Button onClick={() => {logout({ logoutParams: { returnTo: window.location.origin } });auth.signOut()}} position='fixed' bottom='2vh' left='2vh' size='sm' variant={'main'} leftIcon={<TbArrowBack/>}>{t('Return')}</Button>
+        </Flex>)
+    }
+    if (!auth.authData.organizationId) return (<NoOrganizationBox/>)
 
     //FRONT 
     return(<> 
@@ -471,7 +477,7 @@ function Content ({userInfo}:{userInfo:userInfo}) {
             {memoizedCallWidget}
         
             {/*SIDEBAR*/}
-            <Flex flexDir='column'  alignItems='center'  borderRightColor={'gray.300'} borderRightWidth={'1px'} justifyContent='space-between' height={'100vh'} width='55px' py='3vh' bg='brand.gray_2' >
+            <Flex flexDir='column'  alignItems='center' justifyContent='space-between' height={'100vh'} width='55px' py='3vh' bg='brand.gray_1' >
                 {memoizedNavbar}
             </Flex>
 
@@ -481,14 +487,13 @@ function Content ({userInfo}:{userInfo:userInfo}) {
                     <Suspense fallback={<></>}>    
                         <Routes >
                             <Route path="/conversations/*" element={<ConversationsTable socket={socket}/>}/>
-                            <Route path="/clients" element={<ClientsTable/>}  />
-                            <Route path="/clients/client/:n" element={<Client socket={socket} comesFromConversation={false}  addHeaderSection={addHeaderSection} deleteHeaderSection={deleteHeaderSection}/>}/>
-                            <Route path="/contact-businesses" element={<ContactBusinessesTable  addHeaderSection={addHeaderSection}/>}/>
-                            <Route path="/contact-businesses/business/:n" element={<Business socket={socket} comesFromConversation={false} addHeaderSection={addHeaderSection}/>}/>
-                            <Route path="/functions/*" element={<TildaMain/>}/>
+                            <Route path="/contacts/*" element={<Contacts socket={socket}/>}/>
+                            <Route path="/functions/*" element={<FunctionsTable/>}/>
+ 
                             <Route path="/knowledge/*" element={<Knowledge/>}/>
                             <Route path="/stats" element={<ReportsTable/>}/>
                             <Route path="/stats/*" element={<Report/>}/>
+
                             <Route path="/settings/*" element={<Settings />}/>
                             <Route path="*" element={<NotFound />} />
                         </Routes>
@@ -511,29 +516,29 @@ const NavBarItem = forwardRef<HTMLDivElement, NavBarItemProps>(({icon, section }
     //NAVIGATE CONSTANT
     const navigate = useNavigate()
     const location = useLocation().pathname
-    const sectionsMap = {conversations: t('Conversations'), clients: t('Clients'), stats: t('Stats'), 'functions':t('Tilda'),'knowledge':t('Knowledge'), 'contact-businesses':t('Businesses'), settings: t('Settings')}
+    const sectionsMap = {conversations: t('Conversations'), contacts: t('Contacts'), stats: t('Stats'), 'functions':t('Tilda'),'knowledge':t('Knowledge'), settings: t('Settings')}
  
     //HOVER AND SELECT LOGIC
     const [isHovered, setIsHovered] = useState(false)
     const handleClick = () => {
-        if (section === 'conversations' || section === 'clients' || location.split('/')[1] !== section) {
+        if (location.split('/')[1] !== section) {
             navigate(section)
          }
     }
-    const isSelected = section === 'settings' ? location.split('/')[1] === 'settings': section === 'knowledge' ? location.split('/')[1] === 'knowledge' : section === 'stats' ? location.split('/')[1] === 'stats' : section === 'functions' ? location.split('/')[1] === 'functions' : location === `/${section}` 
+    const isSelected = section === 'settings' ? location.split('/')[1] === 'settings': section === 'knowledge' ? location.split('/')[1] === 'knowledge' : section === 'stats' ? location.split('/')[1] === 'stats' : section === 'functions' ? location.split('/')[1] === 'functions' : section === 'contacts' ? location.split('/')[1] === 'contacts':location === `/${section}` 
 
     //FRONT
     return (
         <Tooltip isOpen={isHovered} label={sectionsMap[section]} placement='right' color={'black'} bg='white' boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.15)'} borderWidth={'1px'} borderColor={'gray.200'} borderRadius='.4rem' fontSize='sm' fontWeight={'medium'} p='6px'>
-            <Flex ref={ref} justifyContent='center' alignItems='center' py='15px' width={'55px'} cursor='pointer'  bg={(isSelected) ? 'white': isHovered ? 'white':'transparent'} color={(isSelected) ? 'rgba(59, 90, 246)' : 'gray.600'} onClick={handleClick} onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
+            <Flex ref={ref} justifyContent='center' alignItems='center' py='15px' width={'55px'} cursor='pointer'  bg={(isSelected) ? 'brand.hover_gray': isHovered ? 'brand.hover_gray':'transparent'} color={(isSelected) ? 'rgba(59, 90, 246)' : 'gray.600'} onClick={handleClick} onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
                 <Icon as={icon} boxSize='21px'/>
             </Flex>
         </Tooltip>
     )
 })
-  
+   
 //LOGOUT BOX 
-const LogoutBox = ({ userInfoApp, auth }:{userInfoApp:userInfo, auth:any}) => {
+const LogoutBox = ({ userInfoApp, auth, addOrganization, changeOrganization }:{userInfoApp:userInfo, auth:any, addOrganization:any, changeOrganization:any}) => {
 
     const { logout } = useAuth0()
 
@@ -569,6 +574,91 @@ const LogoutBox = ({ userInfoApp, auth }:{userInfoApp:userInfo, auth:any}) => {
         </ConfirmBox>
     ), [showFeedback])
 
+    const OrganizationComponent = () => {
+
+        const [showOrganization, setShowOrganizations] = useState<boolean>(false)
+
+        const OrganizationsBox = () => {
+
+            const navigate = useNavigate()
+            const [showAddOrganization, setShowAddOrganization] = useState<boolean>(false)
+    
+            
+            const JoinOrganizationBox = () => {
+                const [invitationCode, setInvitationCode] = useState<string>('')
+                const [waitingNewOrganization, setWaitingNewOrganization] = useState<boolean>(false)
+
+                const addNewOrganization = async () => {
+                    setWaitingNewOrganization(true)
+                    await addOrganization({invitationCode, setInvitationCode})
+                    setWaitingNewOrganization(false)
+                }
+                
+                return(<> 
+                    <Box p='15px'> 
+                        <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('InvitationCode')}</Text>
+                        <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.200'/>
+                        <Text mt='2vh' mb='.5vh' fontSize='.9em' fontWeight='medium' whiteSpace='nowrap'>{t('GetInvitationCode')}</Text>
+                        <EditText value={invitationCode} setValue={setInvitationCode} hideInput={false} size='sm' placeholder='xxxx-xxxx-xxxx-xxxx' />
+                    </Box>
+                    <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+                        <Button  size='sm' variant={'main'} isDisabled={invitationCode === ''} onClick={addNewOrganization}>{waitingNewOrganization?<LoadingIconButton/>:t('Join')}</Button>
+                        <Button  size='sm' variant={'common'} onClick={()=>setShowAddOrganization(false)}>{t('Cancel')}</Button>
+                    </Flex>
+                </>)
+            }
+
+            return(<> 
+                {showAddOrganization &&     
+                <ConfirmBox setShowBox={setShowAddOrganization}> 
+                    <JoinOrganizationBox/>
+                </ConfirmBox>}
+                <Box>
+                    <Text fontSize='.9em' fontWeight='medium' whiteSpace='nowrap'>{t('Organizations')}</Text>
+                    <Box bg='gray.200' height='1px' width='100%' mb='1vh' mt='1vh' />
+
+                    {userInfoApp.organizations.length === 0 ? (
+                        <Text fontSize='.8em' fontWeight='normal'>{t('NoOrganizations')}</Text>
+                    ) : (
+                        userInfoApp.organizations.map((org) => (
+                        <Flex key={`organization-${org.id}`} justifyContent={'space-between'}  cursor={'pointer'} fontWeight={auth.authData.organizationId === org.id ? 'medium':'normal'} color={auth.authData.organizationId === org.id ?'brand.text_blue':'black'} alignItems='center' p='7px' fontSize='.9em' _hover={{ bg:'brand.gray_2' }} borderRadius='.4rem' onClick={() => {setShowLogout(false);changeOrganization(org)}}>
+                            {org.name}
+                            {auth.authData.organizationId === org.id && <Icon as={FaCheck} color='brand.text_blue'/>}
+                        </Flex>
+                        ))
+                    )}
+                </Box>
+                <Box bg='gray.200' height='1px' width='100%' mb='1vh' mt='2vh' />
+
+                <Flex justifyContent={'space-between'}gap='10px' alignItems={'center'} p='7px'  fontSize='.9em' borderRadius={'.5rem'} _hover={{bg:'brand.gray_2', color:'black'}} color='gray.600' cursor='pointer' onClick={() => {setShowOrganizations(false);setShowAddOrganization(true)}}>
+                    <Text whiteSpace={'nowrap'}>{t('AddOrganization')}</Text>
+                    <Icon as={FiPlus}/>
+                </Flex>
+                {auth.authData.organizationData.is_admin && <Flex justifyContent={'space-between'}gap='10px' alignItems={'center'} p='7px'  fontSize='.9em' borderRadius={'.5rem'} _hover={{bg:'brand.gray_2', color:'black'}} color='gray.600' cursor='pointer' onClick={() => {setShowLogout(false);navigate('/settings/organization/data')}}>
+                    <Text whiteSpace={'nowrap'}>{t('SeeOrganization')}</Text>
+                    <Icon as={BiSolidBuildings}/>
+                </Flex>}
+            </>)
+        }
+
+        return ( 
+        <Box position='relative' px='15px' onMouseEnter={() => {setShowOrganizations(true)}} onMouseLeave={() => {setShowOrganizations(false)}}> 
+            <Flex p='7px' gap='10px'  justifyContent={'space-between'} alignItems='center'  cursor='pointer' _hover={{ bg: 'brand.gray_2' }} borderRadius='.4rem'  >
+                <Text fontSize='.9em' whiteSpace='nowrap'><span style={{fontWeight:500}}>{t('Organization')}: </span>{auth.authData.organizationName}</Text>
+                <Icon as={IoIosArrowForward} />
+            </Flex>
+            {showOrganization && 
+            <MotionBox initial={{ opacity: 0, left:-30}} animate={{ opacity: 1, left: -20 }}  exit={{ opacity: 0, left: -30}} transition={{ duration: '0.2', ease: 'easeOut'}} 
+            overflow={'hidden'} p='15px' ml={'calc(100% + 5px)'} bottom={0} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={1000}   position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.200'}>
+                <OrganizationsBox/>
+            </MotionBox>}
+        </Box>
+
+        )
+    }
+
+    const memoizedOrganizationComponent = useMemo(() => (<OrganizationComponent/>),[])
+
     //FRONT
     return (<> 
 
@@ -585,17 +675,18 @@ const LogoutBox = ({ userInfoApp, auth }:{userInfoApp:userInfo, auth:any}) => {
             <AnimatePresence> 
             {showLogout && (
                 <MotionBox initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.95 }}  transition={{ duration: '0.1', ease: 'easeOut'}}
-                style={{ transformOrigin: 'bottom left' }}  minW='190px'  position='absolute' bg='white' p='15px' left='8px' bottom='30px' zIndex={1000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.300' borderWidth='1px' borderRadius='.5rem'>
-                    <Box>
+                style={{ transformOrigin: 'bottom left' }}  minW='190px'  position='absolute' bg='white' py='15px' left='8px' bottom='30px' zIndex={10000000000000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.200' borderWidth='1px' borderRadius='.5rem'>
+                    
+                    <Box  px='15px'>
                         <Text fontSize='.8em' fontWeight='medium' whiteSpace='nowrap'>{userInfoApp.name + ' ' + userInfoApp.surname}</Text>
                         <Text fontSize='.7em' color='gray.600' whiteSpace='nowrap'>{auth.authData.email}</Text>
                     </Box>
 
-                    <Box position='relative' mt='7px'> 
+                    <Box px='15px' position='relative' mt='7px'> 
 
                         {showStatusList &&
                             <MotionBox initial={{ opacity: 0, top: -10}} animate={{ opacity: 1, top: 0 }}  exit={{ opacity: 0, top: -10}} transition={{ duration: '0.2', ease: 'easeOut'}} 
-                            overflow={'hidden'} ml={'calc(100% + 5px)'} width={'100%'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={1000}   position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
+                            overflow={'hidden'} ml={'calc(100% + 5px)'} width={'100%'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={1000}   position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.200'}>
                             {['connected', 'out', 'disconnected'].map((status, index) => (
                                 <Flex key={`status-list-${index}`} bg={status === userStatus?'brand.blue_hover':''} color={phoneMap[status][2]} p='7px' gap='10px' alignItems='center' cursor='pointer' _hover={{ bg: status === userStatus?'brand.blue_hover':'brand.hover_gray' }} onClick={() => {setUserStatus(status);setShowStatusList(!showStatusList)}}>
                                     <Icon height={'12px'} width={'12px'} as={phoneMap[status][1]} />
@@ -610,29 +701,36 @@ const LogoutBox = ({ userInfoApp, auth }:{userInfoApp:userInfo, auth:any}) => {
                                     <Text fontWeight={'medium'} fontSize='.8em' whiteSpace='nowrap'>{phoneMap[userStatus][0]}</Text>
                                 </Flex>
                                 <Box color='gray.600' > 
-                                <IoIosArrowDown className={showStatusList ? "rotate-icon-up" : "rotate-icon-down"}/>
+                                    <IoIosArrowDown className={showStatusList ? "rotate-icon-up" : "rotate-icon-down"}/>
                                 </Box>
                             </Flex>
+                            <Box bg='gray.200' height='1px' width='100%' mb='7px' mt='10px' />
+
                     </Box>
 
-                    <Box bg='gray.200' height='1px' width='100%' mb='7px' mt='10px' />
+ 
+                    {memoizedOrganizationComponent}
 
-                    <Flex p='7px' gap='10px'  justifyContent={'space-between'} alignItems='center' color='gray.600' cursor='pointer' _hover={{ bg: 'brand.hover_gray', color:'black' }} borderRadius='.4rem' onClick={() => {setShowLogout(false);setShowShortcuts(true)}}>
-                         <Text fontSize='.9em' whiteSpace='nowrap'>{t('Shortcuts')}</Text>
-                         <Icon as={PiKeyReturn} />
-                    </Flex>
+                    <Box px='15px'> 
+                        <Box bg='gray.200' height='1px' width='100%' mb='7px' mt='10px' />
 
-                    <Flex p='7px' gap='10px'  justifyContent={'space-between'} alignItems='center' color='gray.600' cursor='pointer' _hover={{ bg: 'brand.hover_gray', color:'black' }} borderRadius='.4rem' onClick={() => {setShowLogout(false);setShowFeedback(true)}}>
-                         <Text fontSize='.9em' whiteSpace='nowrap'>{t('Feedback')}</Text>
-                         <Icon as={VscFeedback} />
-                    </Flex>
-                           
-                    <Box bg='gray.200' height='1px' width='100%' mb='7px' mt='10px' />
+                        <Flex p='7px' gap='10px'  justifyContent={'space-between'} alignItems='center' color='gray.600' cursor='pointer' _hover={{ bg: 'brand.gray_2', color:'black' }} borderRadius='.4rem' onClick={() => {setShowLogout(false);setShowShortcuts(true)}}>
+                            <Text fontSize='.9em' whiteSpace='nowrap'>{t('Shortcuts')}</Text>
+                            <Icon as={PiKeyReturn} />
+                        </Flex>
 
-                    <Flex p='7px' gap='10px'  justifyContent={'space-between'} alignItems='center' color='red.500' cursor='pointer' _hover={{ bg: 'red.50', color:'red.600' }} borderRadius='.4rem' onClick={() =>{logout({ logoutParams: { returnTo: window.location.origin } });auth.signOut()}}>
-                         <Text fontSize='.9em' whiteSpace='nowrap'>{t('SignOut')}</Text>
-                         <Icon boxSize={'13px'} as={FaArrowRightToBracket} />
-                    </Flex>
+                        <Flex p='7px' gap='10px'  justifyContent={'space-between'} alignItems='center' color='gray.600' cursor='pointer' _hover={{ bg: 'brand.gray_2', color:'black' }} borderRadius='.4rem' onClick={() => {setShowLogout(false);setShowFeedback(true)}}>
+                            <Text fontSize='.9em' whiteSpace='nowrap'>{t('Feedback')}</Text>
+                            <Icon as={VscFeedback} />
+                        </Flex>
+                            
+                        <Box bg='gray.200' height='1px' width='100%' mb='7px' mt='10px' />
+
+                        <Flex p='7px' gap='10px'  justifyContent={'space-between'} alignItems='center' color='red.500' cursor='pointer' _hover={{ bg: 'red.50', color:'red.600' }} borderRadius='.4rem' onClick={() =>{logout({ logoutParams: { returnTo: window.location.origin } });auth.signOut()}}>
+                            <Text fontSize='.9em' whiteSpace='nowrap'>{t('SignOut')}</Text>
+                            <Icon boxSize={'13px'} as={FaArrowRightToBracket} />
+                        </Flex>
+                    </Box>
                 </MotionBox>
                 )}
             </AnimatePresence>
@@ -640,167 +738,4 @@ const LogoutBox = ({ userInfoApp, auth }:{userInfoApp:userInfo, auth:any}) => {
         </>)
 }
 
-interface OrganizationsBoxProps {
-    userInfoApp:userInfo
-    isAdmin:boolean
-    setUserInfoApp:Dispatch<SetStateAction<userInfo>>
-    auth:any
-    session:any
-    setHeaderSections:Dispatch<SetStateAction<Section[]>>
-    authDataRef:MutableRefObject<Views>
-}
-//CHANGE AND ACCESS TO AN ORGANIZATION BOX. IT RENDERS THE JOIN ORGANIZATION FULL SCREEN, WHERE THERE IS NOT ORGANIZATION
-const OrganizationsBox = ({ userInfoApp, isAdmin, setUserInfoApp, auth, session, setHeaderSections, authDataRef }:OrganizationsBoxProps) => {    
-
-    const { logout, getAccessTokenSilently } = useAuth0()
-
-    //JOIN ORGANIZATION WHEN THERE IS MORE ORGANIZATIONS
-    const JoinOrganizationBox = () => {
-        const [invitationCode, setInvitationCode] = useState<string>('')
-        return(<> 
-            <Box p='15px'> 
-                <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('InvitationCode')}</Text>
-                <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
-                <Text mt='2vh' mb='.5vh' fontSize='.9em' fontWeight='medium' whiteSpace='nowrap'>{t('GetInvitationCode')}</Text>
-                <EditText value={invitationCode} setValue={setInvitationCode} hideInput={false} size='sm' placeholder='xxxx-xxxx-xxxx-xxxx' />
-            </Box>
-            <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-                <Button  size='sm' variant={'main'} isDisabled={invitationCode === ''} onClick={() => addOrganization({invitationCode, setInvitationCode})}>{waitingNewOrganization?<LoadingIconButton/>:t('Join')}</Button>
-                <Button  size='sm' variant={'common'} onClick={()=>setShowAddOrganization(false)}>{t('Cancel')}</Button>
-            </Flex>
-        </>)
-    }
-    //NAVIGATE CONSTANT
-    const navigate = useNavigate()
  
-
-    //SHOW AND HIDE ORGANIZATIONS BOX ON HOVER LOGIC
-    const [showOrganizations, setShowOrganizations] = useState<boolean>(false)
-    const timeoutRef = useRef<NodeJS.Timeout | null>(null)
-    const handleMouseEnter = () => {
-        if (timeoutRef.current) clearTimeout(timeoutRef.current)
-        setShowOrganizations(true)
-    }
-    const handleMouseLeave = () => {timeoutRef.current = setTimeout(() => {setShowOrganizations(false)}, 100)}
-
-    //SHOW JOIN ORGANIZTION BOX
-    const [showAddOrganization, setShowAddOrganization] = useState<boolean>(false)
-
-    //BOOLEAN FOR SHOW THE LOADING ICON IN THE BUTTON
-    const [waitingNewOrganization, setWaitingOrganization] = useState<boolean>(false)
-
-    //INVITATION CODE, WHEN THERE IS NO ORGANIZATION
-    const [firstInvitationCode, setFirstInvitationCode] = useState<string>('')
-
-    //JOIN TO AN ORGANIZATION FUNCTION
-    const addOrganization = async ({invitationCode, setInvitationCode}:{invitationCode:string, setInvitationCode:Dispatch<SetStateAction<string>>}) => {
-        setInvitationCode('')
-        setShowOrganizations(false)
-        setWaitingOrganization(true)
-        navigate('/conversations')
-
-        const response = await fetchData({endpoint:`user/join/${invitationCode}`, method:'put', getAccessTokenSilently, auth:auth})
-
-        if (response?.status === 200) {
-            const response2 = await fetchData({endpoint:`user`, setValue:setUserInfoApp, getAccessTokenSilently, auth:auth})
-            if (response2?.status === 200){
-                changeOrganization(response2.data.organizations[response2.data.organizations.length - 1])
-            }
-            else {setWaitingOrganization(false);showToast({message:t('Join_Failed'), type:'failed'})}
-        }
-        else {setWaitingOrganization(false);showToast({message:t('Join_Failed'), type:'failed'})}
-    }
-
-
-    //CHANGE ORGANIZATION LOGIC
-    const changeOrganization = async (org:Organization) => {
-
-        localStorage.removeItem('currentView')
-        localStorage.removeItem('currentSection')
-        localStorage.removeItem('currentSectionTop')
-        localStorage.setItem('currentOrganization', String(org.id))
-        
-        session.dispatch({type:'DELETE_ALL_SESSION'})
-        setHeaderSections([])
-        const responseOrg = await fetchData({endpoint:`${org.id}/user`, auth, getAccessTokenSilently})
-        const responseChannels = await  fetchData({endpoint:`${org.id}/admin/settings/channels`, auth, getAccessTokenSilently})
-        const responseThemes= await  fetchData({endpoint:`${org.id}/admin/settings/themes`, auth, getAccessTokenSilently})
-        session.dispatch({type:'ADD_CHANNELS', payload:responseChannels?.data})
-        if (responseOrg?.status === 200) {
-            const viewsToAdd = {
-            number_of_conversations_in_bin:responseOrg.data.number_of_conversations_in_bin, 
-            private_views:responseOrg.data.private_views, 
-            number_of_conversations_per_private_view:responseOrg.data.number_of_conversations_per_private_view,
-            shared_views:responseOrg.data.shared_views, 
-            number_of_conversations_per_shared_view:responseOrg.data.number_of_conversations_per_shared_view
-          }
-          authDataRef.current = viewsToAdd
-          auth.setAuthData({views: viewsToAdd, users:responseOrg.data.users, shortcuts:responseOrg.data.shortcuts, conversation_themes:responseThemes?.data.map((theme:{name:string, description:string}) => theme.name), organizationId:org.id, organizationName:org.name})
-        }
-        
-        navigate('/conversations')
-     }
-
-    //FRONT
-    return (
-        <> 
-        {showAddOrganization &&     
-        <ConfirmBox setShowBox={setShowAddOrganization}> 
-            <JoinOrganizationBox/>
-        </ConfirmBox>}
-
-      {auth.authData.organizationId ?
-      <Flex zIndex={1000} height='100%'gap='1vw' width={'250px'} justifyContent='end' alignItems='center' borderColor='gray.200' borderBottomWidth='1px' > 
-        <Flex  zIndex={1000}  paddingLeft='20px'  onMouseEnter={handleMouseEnter}  onMouseLeave={handleMouseLeave} height={'100%'} alignItems={'center'}> 
-            <Text cursor={'pointer'} onClick={() => setShowOrganizations(!showAddOrganization)} _hover={{color:'gray.600'}} whiteSpace={'nowrap'}  mr='2vw' fontWeight='medium'>
-            {auth.authData.organizationName}
-            </Text>
-       
-            <AnimatePresence>     
-            {showOrganizations && (
-                <Portal> 
-                <MotionBox initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.9 }}  transition={{ duration: '0.1', ease: 'easeOut'}}
-                style={{ transformOrigin: 'top' }}position='fixed' bg='white' p='15px' right='2vw' top='50px' zIndex={1000000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.300' borderWidth='1px' borderRadius='.5rem' >
-                    <Box>
-                    <Text fontSize='.9em' fontWeight='medium' whiteSpace='nowrap' mb='1vh'>{t('Organizations')}</Text>
-                    {userInfoApp.organizations.length === 0 ? (
-                        <Text fontSize='.8em' fontWeight='normal'>{t('NoOrganizations')}</Text>
-                    ) : (
-                        userInfoApp.organizations.map((org) => (
-                        <Flex key={`organization-${org.id}`} cursor={'pointer'} bg={auth.authData.organizationId === org.id ? 'brand.blue_hover':'transparent'} alignItems='center' p='7px' fontSize='.8em' _hover={{ bg:auth.authData.organizationId === org.id ?'brand.blue_hover': 'brand.hover_gray' }} borderRadius='.7rem' onClick={() => changeOrganization(org)}>
-                            {org.name}
-                        </Flex>
-                        ))
-                    )}
-                    </Box>
-                    <Box bg='gray.300' height='1px' width='100%' mb='1vh' mt='2vh' />
-
-                    <Flex justifyContent={'space-between'}gap='10px' alignItems={'center'} p='7px'  fontSize='.9em' borderRadius={'.5rem'} _hover={{bg:'brand.hover_gray', color:'black'}} color='gray.600' cursor='pointer' onClick={() => {setShowOrganizations(false);setShowAddOrganization(true)}}>
-                        <Text>{t('AddOrganization')}</Text>
-                        <Icon as={FiPlus}/>
-                    </Flex>
-                    {isAdmin && <Flex justifyContent={'space-between'}gap='10px' alignItems={'center'} p='7px'  fontSize='.9em' borderRadius={'.5rem'} _hover={{bg:'brand.hover_gray', color:'black'}} color='gray.600' cursor='pointer' onClick={() => {setShowOrganizations(false);navigate('/settings/organization/data')}}>
-                        <Text>{t('SeeOrganization')}</Text>
-                        <Icon as={BiSolidBuildings}/>
-                    </Flex>}
-                </MotionBox>
-                </Portal>
-            )}
-            </AnimatePresence>
-    
-        </Flex>
-      </Flex>: 
-      
-        <Flex width='100vw' bg='gray.100' height='100vh' alignItems={'center'} justifyContent={'center'}>
-            <Box maxW={'650px'} rounded={'lg'} bg='white' boxShadow={'lg'} p={8} >
-                <Text fontWeight='medium' fontSize={'1.2em'}>{t('NoOrganizationUser')}</Text>
-                <Text fontWeight='medium' fontSize={'1em'} mt='2vh' mb='.5vh'>{t('GetInvitationCode')}</Text>
-                <EditText value={firstInvitationCode} setValue={setFirstInvitationCode} placeholder='xxxxxxxx-xxxx-xxxx-xxxxxxxxxxxx' hideInput={false}/>
-                <Button variant={'main'} size='sm' leftIcon={waitingNewOrganization?<></>:<FaPlus />} mt='2vh' isDisabled={firstInvitationCode === ''} width='100%' onClick={() => addOrganization({invitationCode:firstInvitationCode, setInvitationCode:setFirstInvitationCode})}>{waitingNewOrganization?<LoadingIconButton/>:t('Join')}</Button>
-            </Box>
-            <Button onClick={() => {logout({ logoutParams: { returnTo: window.location.origin } });auth.signOut()}} position='fixed' bottom='2vh' left='2vh' size='sm' variant={'main'} leftIcon={<TbArrowBack/>}>{t('Return')}</Button>
-        </Flex>}
-        </>
-    )
-}
-  

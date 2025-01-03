@@ -31,13 +31,14 @@ interface CustomSelectProps<T extends string | number>  {
     disabledOptions?:T[]
     includeNull?:boolean
     variant?:'common' | 'styled' | 'title'
+    fontSize?:string
 }
 
 //MOTION BOX
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
 
 //MAIN FUNCTION
-const CustomSelect = <T extends string | number>({options, selectedItem, setSelectedItem, hide, updateData=() => {},  labelsMap=null ,iconsMap=null, containerRef, isDisabled = false, disabledOptions, includeNull = false, variant = 'common'}: CustomSelectProps<T>) => {
+const CustomSelect = <T extends string | number>({options, selectedItem, setSelectedItem, hide, updateData=() => {},  labelsMap=null ,iconsMap=null, containerRef, isDisabled = false, disabledOptions, includeNull = false, variant = 'common', fontSize = '.8em'}: CustomSelectProps<T>) => {
 
     //REFS
     const { t } = useTranslation('stats')
@@ -54,22 +55,23 @@ const CustomSelect = <T extends string | number>({options, selectedItem, setSele
 
     //FRONT
     return(
-        <Box position={'relative'}>
+        <Box position={'relative'} w='100%' fontSize={fontSize}>
           
-            {variant === 'common' ? <Flex bg={isDisabled ? 'brand.gray_1':'transaprent'} cursor={isDisabled ? 'not-allowed':'pointer'} alignItems={'center'} ref={buttonRef} height={'37px'} fontSize={'.9em'}  onClick={()=>{if (!isDisabled) setShowList(!showList)}} border={showList ? "3px solid rgb(59, 90, 246)": hide ? "1px solid transparent": "1px solid #CBD5E0"} justifyContent={'space-between'} px={hide?showList?'5px':'7px':showList?'11px':'13px'} py={showList ? "5px" : "7px"} borderRadius='.5rem' _hover={{border:showList?'3px solid rgb(59, 90, 246)':'1px solid #CBD5E0'}}>
-                <Text color={isDisabled ? 'gray.600':'black'}  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{selectedItem === null ? t('Any'):(labelsMap && selectedItem !== undefined)?labelsMap[selectedItem]:iconsMap?.[selectedItem as T]?iconsMap[selectedItem][0]:selectedItem}</Text>
+            {variant === 'common' ? 
+            <Flex  bg={isDisabled ? 'brand.gray_1':'transaprent'} transition={'border-color .2s ease-in-out, box-shadow .2s ease-in-out'} cursor={isDisabled ? 'not-allowed':'pointer'} alignItems={'center'} ref={buttonRef}  onClick={()=>{if (!isDisabled) setShowList(!showList)}} justifyContent={'space-between'} p={'7px'} borderRadius='.5rem'   boxShadow={ showList ? '0 0 0 2px rgb(59, 90, 246)' : ''} border={showList ? '1px solid rgb(59, 90, 246)':hide ? '1px solid transparent' : '1px solid #CBD5E0'} _hover={{border:showList ? '1px solid rgb(59, 90, 246)':'1px solid #CBD5E0'}}>
+                <Text color={isDisabled ? 'gray.600':'black'}  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{(selectedItem === null ? t('Any'):(labelsMap && selectedItem !== undefined)?labelsMap[selectedItem]:iconsMap?.[selectedItem as T]?iconsMap[selectedItem][0]:selectedItem) || '-'}</Text>
                 <Icon boxSize='14px' className={showList ? "rotate-icon-up" : "rotate-icon-down"} as={TiArrowSortedDown}/>
             </Flex>: 
             variant === 'title' ? 
-            <Flex bg={showList?'brand.gray_1':'brand.gray_2' } _hover={{color:'brand.text_blue', bg:'brand.gray_1'}} cursor={isDisabled ? 'not-allowed':'pointer'} alignItems={'center'} ref={buttonRef} height={'37px'} fontSize={'.9em'}  onClick={()=>{if (!isDisabled) setShowList(!showList)}} justifyContent={'space-between'} px={'11px'} py={ "5px" } borderRadius='.5rem' >
+            <Flex bg={showList?'brand.gray_1':'brand.gray_2' } _hover={{color:'brand.text_blue', bg:'brand.gray_1'}} cursor={isDisabled ? 'not-allowed':'pointer'} alignItems={'center'} ref={buttonRef} height={'37px'}   onClick={()=>{if (!isDisabled) setShowList(!showList)}} justifyContent={'space-between'} px={'11px'} py={ "5px" } borderRadius='.5rem' >
                 <Flex gap='10px' alignItems={'center'} > 
                     {iconsMap && <>{(typeof(iconsMap[selectedItem][1]) === 'string') ? <Text>{iconsMap[selectedItem]?.[1] as string}</Text>:<Icon boxSize={'16px'} color={iconsMap?.[selectedItem]?.[2]?iconsMap?.[selectedItem]?.[2]:'currentColor'} as={iconsMap?.[selectedItem]?.[1] as IconType}/>}</>}
-                    <Text fontWeight={'medium'} color={showList?'brand.text_blue':''} fontSize={'1.2em'}  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{ selectedItem=== null ? t('Any'):(labelsMap && selectedItem !== undefined)?labelsMap[selectedItem]:iconsMap?.[selectedItem as T]?iconsMap[selectedItem][0]:selectedItem}</Text>
+                    <Text fontWeight={'medium'} color={showList?'brand.text_blue':''}  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{ selectedItem=== null ? t('Any'):(labelsMap && selectedItem !== undefined)?labelsMap[selectedItem]:iconsMap?.[selectedItem as T]?iconsMap[selectedItem][0]:selectedItem}</Text>
                 </Flex>
              </Flex>
             :
-            <Flex bg={showList?'brand.gray_1':'brand.gray_2' } _hover={{color:'brand.text_blue', bg:'brand.gray_1'}} cursor={isDisabled ? 'not-allowed':'pointer'} alignItems={'center'} ref={buttonRef} height={'37px'} fontSize={'.9em'}  onClick={()=>{if (!isDisabled) setShowList(!showList)}} justifyContent={'space-between'} px={'11px'} py={ "5px" } borderRadius='.5rem' >
-                <Text color={showList?'brand.text_blue':''}  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{selectedItem === null ? t('Any'):(labelsMap && selectedItem !== undefined)?labelsMap[selectedItem]:iconsMap?.[selectedItem as T]?iconsMap[selectedItem][0]:selectedItem}</Text>
+            <Flex  bg={showList?'brand.gray_1':'brand.gray_2' }  transition={'border-color .2s ease-in-out, box-shadow .2s ease-in-out'}  cursor={isDisabled ? 'not-allowed':'pointer'} alignItems={'center'} ref={buttonRef}  onClick={()=>{if (!isDisabled) setShowList(!showList)}} justifyContent={'space-between'} p={'7px'} borderRadius='.5rem'   boxShadow={ showList ? '0 0 0 2px rgb(59, 90, 246)' : ''} border={showList ? '1px solid rgb(59, 90, 246)':hide ? '1px solid transparent' : '1px solid #CBD5E0'} _hover={{color:'brand.text_blue', bg:'brand.gray_1', border:showList ? '1px solid rgb(59, 90, 246)':'1px solid #CBD5E0'}}>
+                 <Text color={showList?'brand.text_blue':''}  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{selectedItem === null ? t('Any'):(labelsMap && selectedItem !== undefined)?labelsMap[selectedItem]:iconsMap?.[selectedItem as T]?iconsMap[selectedItem][0]:selectedItem}</Text>
                 <Icon boxSize='14px' className={showList ? "rotate-icon-up" : "rotate-icon-down"} as={TiArrowSortedDown}/>
             </Flex>
             }
@@ -77,8 +79,8 @@ const CustomSelect = <T extends string | number>({options, selectedItem, setSele
             <AnimatePresence> 
                 {showList && 
                     <Portal>
-                        <MotionBox  id="custom-portal"  initial={{ opacity: 0, marginTop:-10, marginBottom:-10 }} animate={{ opacity: 1, marginTop: 0,marginBottom:0 }}  exit={{ opacity: 0,marginTop:-10,marginBottom:-10}} transition={{ duration: '.2', ease: 'easeOut'}}
-                        top={boxStyle.top} bottom={boxStyle.bottom}left={boxStyle.left} width={boxStyle.width} maxH='40vh' overflow={'scroll'} gap='10px' ref={boxRef} fontSize={'.9em'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000}   position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
+                        <MotionBox  id="custom-portal"  initial={{ opacity: 0, marginTop:-10, marginBottom:-10 }} animate={{ opacity: 1, marginTop: 2,marginBottom:0 }}  exit={{ opacity: 0,marginTop:-10,marginBottom:-10}} transition={{ duration: '.2', ease: 'easeOut'}}
+                        top={boxStyle.top} fontSize={fontSize} bottom={boxStyle.bottom}left={boxStyle.left} width={boxStyle.width} maxH='40vh' overflow={'scroll'} gap='10px' ref={boxRef} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000}   position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
                             
                             {includeNull && 
                              <Flex px='10px'    py='7px' cursor={'pointer'} justifyContent={'space-between'} alignItems={'center'} color={selectedItem === null?'brand.text_blue':'black'} _hover={{bg:selectedItem === null?'gray.200':'brand.hover_gray'}}

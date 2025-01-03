@@ -23,7 +23,7 @@ import { View, ConversationColumn, Condition } from '../../../Constants/typing'
 //MOTION BOX
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)}) 
 
-
+ 
 //MAIN FUNCTION
 function EditViewComponent ({scrollRef, viewData, editViewData}:{scrollRef:RefObject<HTMLDivElement>, viewData:View, editViewData:(view:View) => void}) {
 

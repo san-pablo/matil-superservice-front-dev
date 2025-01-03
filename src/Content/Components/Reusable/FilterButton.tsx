@@ -74,7 +74,7 @@ const FilterButton = ({selectList, selectedElements, setSelectedElements, icon, 
                         style={{ transformOrigin: boxStyle.top ? 'top':'bottom' }}  fontSize={'.8em'} width={boxStyle.width} left={boxStyle.left} marginTop={'5px'} marginBottom={'5px'}  top={boxStyle.top || undefined}  bottom={boxStyle.bottom ||undefined} position='absolute' bg='white' p='8px'  zIndex={1000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.200' borderWidth='1px' borderRadius='.7rem'>
 
                         {selectList.map((element, index) => (
-                            <Flex key={`select-list-${index}`} borderRadius={'.5rem'} p='7px' cursor='pointer' onClick={()=>{setSelectedElements(element)}} gap='10px'  justifyContent={'space-between'} alignItems={'center'} color={selectedElements.includes(element)?'brand.text_blue':'black'} _hover={{bg:'brand.hover_gray'}}>
+                            <Flex key={`select-list-${index}`} borderRadius={'.5rem'} p='7px' cursor='pointer' onClick={()=>{setSelectedElements(element)}} gap='10px'  justifyContent={'space-between'} alignItems={'center'} color={selectedElements.includes(element)?'brand.text_blue':'black'} _hover={{bg:'brand.gray_2'}}>
                                 <Flex alignItems={'center'} gap='10px'> 
                                     {itemsMap[element][1] && <Icon color={selectedElements.includes(element)?'brand.text_blue':'gray.600'} as={itemsMap[element][1] as IconType}/>}
                                     <Text> {itemsMap[element][0]}</Text>

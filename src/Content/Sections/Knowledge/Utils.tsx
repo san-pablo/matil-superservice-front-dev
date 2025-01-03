@@ -132,7 +132,6 @@ export const CreateFolder= ({currentFolder, type, setShowCreate, parentId, onFol
 //SIDE BAR OF THE SOURCES
 const TypesComponent = ({t,  type }:{t:any, type:'internal_article' | 'public_article' | 'folder' | 'pdf' | 'snippet' | 'subpage'  | 'website'}) => {
     
-    console.log(type)
     const getAlertDetails = (type:'internal_article' | 'public_article' | 'folder' | 'pdf' | 'snippet' | 'subpage' | 'website') => {
         switch (type) {
             case 'internal_article':

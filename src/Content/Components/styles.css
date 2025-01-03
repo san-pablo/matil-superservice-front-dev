@@ -1715,16 +1715,7 @@
 
 
 
-@keyframes gradient-animation {
-  0% {
-      background-position: 0%;
-  }
-
-  100% {
-      background-position: 500% ;
-  }
-}
-
+ 
 @keyframes translate-animation-2 {
   0% {
     transform: translate(0px, 0px) ;
@@ -1761,24 +1752,7 @@
   }
 }
 
-
-
-
-.gradient-box {
-  content:'';
-  inset:0;
-  background: linear-gradient(90deg, #3386FF, #005CFF, #00E0FF, #3386FF, #005CFF, #00E0FF, #00E0FF, #0066FF, #3386FF);
-  animation: gradient-animation 20s linear infinite;
-  background-size: 300%;
-  rotate: -40deg;
-  height: 200%;
-  left: -50%;
-  top: -50%;
-  width: 200%;
-  position: absolute;
-  opacity: 0.05;
-}
-
+ 
 .mask-box {
   mask-image: radial-gradient(circle, transparent 40px, black 41px);
   mask-position: center;
@@ -1967,88 +1941,34 @@ label.star:hover {transform: rotate(-15deg) scale(1.3);}
 }
 
 
-
-
-
-
-
-
-
-
 .fondoAnimado {
   position: relative;
-  background: linear-gradient(-25deg, rgba(135, 206, 250, 0.8), rgba(255, 250, 250, 0.9), rgba(255, 255, 255, 1));
+  background: linear-gradient(-15deg, rgba(135, 206, 250, 0.8), rgba(255, 250, 250, 0.9), rgba(255, 255, 255, 1));
   background-size: 100% 100%;
-  animation: gradientAnimation 15 ease-in-out infinite;
+  animation: gradient-animation 6s ease-in-out infinite;
+}
+ 
+@keyframes gradient-animation {
+  0% {background-position: 0% 100%}
+  50% {background-position: 0% 0%}
+  100% {background-position: 0% 100%}
+}
+@keyframes rotation-animation {
+  0% {transform: rotate(0deg)}
+  100% {transform: rotate(360deg)}
 }
 
-@keyframes gradientAnimation {
-  0% {
-    background-position: 0% 50%;
-  }
-  25% {
-    background-position: 50% 30%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  75% {
-    background-position: 50% 70%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-.particle {
+.gradient-box {
+  content:'';
+  inset:0;
+  background: linear-gradient(0deg, #3386FF, #005CFF, #00E0FF, #3386FF, #005CFF, #00E0FF, #00E0FF, #0066FF, #3386FF);
+  animation: gradient-animation 5s linear infinite, rotation-animation 10s linear infinite;
+  background-size: 200% 200%;
+  rotate: -40deg;
+  height: 200%;
+  left: -50%;
+  top: -50%;
+  width: 200%;
   position: absolute;
-  width: 150px;
-  height: 200px;
-  bottom:0;
-  background: rgba(135, 206, 250, 0.8);
-  border-radius: 50%;
-  opacity: 0.7;
-  animation: smokeAnimation 10s ease-in-out infinite, particleColorAnimation 15s ease-in-out infinite, particleAppear 2s ease-out forwards;
-}
-
-@keyframes smokeAnimation {
-  0% {
-    transform: translateY(0) scale(0.5);
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(-100vh) scale(1.2); 
-    opacity: 0; 
-  }
-}
-
-@keyframes particleColorAnimation {
-  0% {
-    background: rgba(135, 206, 250, 0.8); /* Azul claro */
-    box-shadow: 0 0 15px rgba(135, 206, 250, 0.6);
-  }
-  25% {
-    background: rgba(255, 250, 250, 0.8); /* Blanco claro */
-    box-shadow: 0 0 15px rgba(255, 250, 250, 0.6);
-  }
-  50% {
-    background: rgba(255, 255, 255, 1); /* Blanco */
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
-  }
-  75% {
-    background: rgba(135, 206, 250, 0.8); /* Azul claro nuevamente */
-    box-shadow: 0 0 15px rgba(135, 206, 250, 0.6);
-  }
-  100% {
-    background: rgba(135, 206, 250, 0.8); /* Azul claro */
-    box-shadow: 0 0 15px rgba(135, 206, 250, 0.6);
-  }
-}
-@keyframes particleAppear {
-  0% {
-    opacity: 0;  /* Al principio, invisibles */
-  }
-  100% {
-    opacity: 0.7;  /* Después de la animación de aparición, la opacidad es de 0.7 */
-  }
+  opacity: 0.08;
 }

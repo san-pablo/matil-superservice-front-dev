@@ -19,9 +19,10 @@ import CustomSelect from "../../Components/Reusable/CustomSelect"
 import Table from "../../Components/Reusable/Table"
 import EditText from "../../Components/Reusable/EditText"
 import ConfirmmBox from "../../Components/Reusable/ConfirmBox"
-import CreateBusiness from "../Businesses/CreateBusiness" 
+import CreateBusiness from "./CreateBusiness" 
 import StateMap from "../../Components/Reusable/StateMap"
 import CustomAttributes from "../../Components/Reusable/CustomAttributes"
+import CollapsableSection from "../../Components/Reusable/CollapsableSection"
 //FUNCTIONS
 import useOutsideClick from "../../Functions/clickOutside"
 import timeAgo from "../../Functions/timeAgo"
@@ -30,7 +31,7 @@ import parseMessageToBold from "../../Functions/parseToBold"
 //ICONS
 import { FaPlus, FaArrowRight, FaBuilding } from "react-icons/fa6"
 import { RxCross2 } from "react-icons/rx"
-import { BsPersonFill } from "react-icons/bs"
+import { TiArrowSortedDown } from "react-icons/ti"
 import { TbArrowMerge, TbKey } from 'react-icons/tb'
 import { MdBlock } from "react-icons/md"
 import { FaExclamationCircle, FaExclamationTriangle, FaInfoCircle, FaCheckCircle } from 'react-icons/fa'
@@ -41,21 +42,10 @@ import showToast from "../../Components/Reusable/ToastNotification"
 import { useAuth0 } from "@auth0/auth0-react"
  
 //COMPONENTS    
-const Business = lazy(() => import('../Businesses/Business'))
+const Business = lazy(() => import('./Business'))
 
 //TYPING
 interface ClientProps {
-    comesFromConversation:boolean
-    addHeaderSection:HeaderSectionType
-    deleteHeaderSection: DeleteHeaderSectionType
-    clientData?:ClientData | null
-    setClientData?:Dispatch<SetStateAction<ClientData | null>>
-    clientConversations?:Conversations | null
-    setClientConversations?:Dispatch<SetStateAction<Conversations | null>>
-    businessData?:ContactBusinessesTable | null
-    setBusinessData?:Dispatch<SetStateAction<ContactBusinessesTable | null>>
-    businessClients?:Clients | null
-    setBusinessClients?:Dispatch<SetStateAction<Clients | null>>
     socket:any
 }
 type Status = 'new' | 'open' | 'solved' | 'pending' | 'closed'
@@ -129,11 +119,12 @@ const CellStyle = ({column, element}:{column:string, element:any}) => {
 }
 
 //MAIN FUNCTION
-function Client ({comesFromConversation,  socket, addHeaderSection, deleteHeaderSection, clientData, setClientData, clientConversations, setClientConversations, businessData, setBusinessData, businessClients, setBusinessClients}: ClientProps) {
+function Client ( {socket}:{socket:any}) {
     
     //TRANSLATION
     const { t } = useTranslation('clients')
-    const t_conver = useTranslation('conversations').t
+    const t_con = useTranslation('conversations').t
+
     const t_formats = useTranslation('formats').t
     const { getAccessTokenSilently } = useAuth0() 
 
@@ -151,19 +142,18 @@ function Client ({comesFromConversation,  socket, addHeaderSection, deleteHeader
     }
 
     //TABLE MAPPING
-    const columnsConversationsMap:{[key in ConversationColumn]:[string, number]} = {id: [t('id'), 50], local_id: [t('local_id'), 50], status:  [t('status'), 100], channel_type: [t('channel_type'), 150], theme:  [t('theme'), 200], user_id: [t('user_id'), 200], created_at: [t('created_at'), 150],updated_at: [t('updated_at'), 180], solved_at: [t('solved_at'), 150],closed_at: [t('closed_at'), 150],title: [t('title'), 300], urgency_rating: [t('urgency_rating'), 130], deletion_scheduled_at: [t('deletion_date'), 180], unseen_changes: [t('unseen_changes'), 200],  call_status: [t('call_status'), 150], call_duration: [t('call_duration'), 150], }
+    const columnsConversationsMap:{[key in ConversationColumn]:[string, number]} = {id: [t_con('id'), 50], local_id: [t_con('local_id'), 50], status:  [t_con('status'), 100], channel_type: [t_con('channel_type'), 150], theme:  [t_con('theme'), 200], user_id: [t_con('user_id'), 200], created_at: [t_con('created_at'), 150],updated_at: [t_con('updated_at'), 180], solved_at: [t_con('solved_at'), 150],closed_at: [t_con('closed_at'), 150],title: [t_con('title'), 300], urgency_rating: [t_con('urgency_rating'), 130], deletion_scheduled_at: [t_con('deletion_date'), 180], unseen_changes: [t_con('unseen_changes'), 200],  call_status: [t_con('call_status'), 150], call_duration: [t_con('call_duration'), 150], }
     
     //WEBSOCKET ACTIONS, THEY TRIGEGR ONLY IF THE USER IS INSIDE THE SECTION
     useEffect(() =>  {
         socket?.current.on('client', (data:any) => {
             if (data.data.id === clientDataEditRef.current?.id) {
-                if (setClientData) setClientData(data.data)
-                else setClientDataEdit(data.data)
+                setClientDataEdit(data.data)
             }
         })
 
         socket?.current.on('conversation', (data:any) => {
-            if (data.contact_id === clientDataEditRef.current?.id && !setClientConversations) {
+            if (data.contact_id === clientDataEditRef.current?.id ) {
                 setClientConversationsEdit(prev => {
                     if (!prev) return prev
                     const elementToAdd = {created_at:data.new_data.created_at, id:data.new_data.id, local_id:data.new_data.local_id, status:data.new_data.status, title:data.new_data.title, updated_at:data.new_data.updated_at }
@@ -194,38 +184,28 @@ function Client ({comesFromConversation,  socket, addHeaderSection, deleteHeader
     const [showAddBusiness, setShowAddBusiness] = useState<boolean>(false)
 
     //CLIENT DATA
-    const [clientDataEdit, setClientDataEdit] = useState<ClientData | null>(comesFromConversation ? clientData ?? null : null)
-    const clientDataEditRef = useRef<ClientData | null>(comesFromConversation ? clientData ?? null : null)
-    useEffect(() => {
-        if (clientData) {
-            clientDataEditRef.current = clientData
-            setClientDataEdit(clientData)
-        }
-    }, [clientData])
+    const [clientDataEdit, setClientDataEdit] = useState<ClientData | null>(null)
+    const clientDataEditRef = useRef<ClientData | null>(null)
+ 
 
     //CONVERSATION DATA
-    const [clientConversationsEdit, setClientConversationsEdit] = useState<Conversations | null>(comesFromConversation ? clientConversations ?? null : null)
-    useEffect(() => {
-        if (clientConversations) setClientConversationsEdit(clientConversations)
-    }, [clientConversations])
+    const [clientConversationsEdit, setClientConversationsEdit] = useState<Conversations | null>(null)
     const [conversationsFilters, setConversationsFilters ] = useState<{page_index:number, sort_by?:ConversationColumn | 'not_selected', search?:string, order?:'asc' | 'desc'}>({page_index:1}) 
    
     //BUSINESS DATA
-    const [businessDataEdit, setBusinessDataEdit] = useState<ContactBusinessesTable | null>(comesFromConversation ? businessData ?? null : null)
+    const [businessDataEdit, setBusinessDataEdit] = useState<ContactBusinessesTable | null>(null)
    
-    //BUSINESS CLIENTS
-    const [businessClientsEdit, setBusinessClientsEdit] = useState<Clients | null>(comesFromConversation ? businessClients ?? null : null)
-
-    //CHANGE SECTION AND CREATE CONTACT BUSINESS LOGIC (INLY IF COMES FROM CLIENT TABLE)
-    const [clientSection, setClientSection ] = useState<'business' | 'client'>('client')
-  
+    //EXPAND SECTIONS
+    const [sectionsExpanded, setSectionsExpanded] = useState<string[]>(['contact', 'info', 'custom-attributes'])
+    const onSectionExpand = (section: string) => {
+        setSectionsExpanded((prevSections) => {
+        if (prevSections.includes(section))return prevSections.filter((s) => s !== section)
+        else return [...prevSections, section]
+        })
+      }
     //REQUEST CLIENT, CONVERSATIONS AND CLIENT INFO
     useEffect(() => { 
         const loadData = async () => {
-
-            //ONLY CALL IF IT COMES FROM CLIENTS TABLE
-            if (!comesFromConversation) {
-
                 //FIND IF THERE IS A CLIENT IN HEADER SECTIONS
                 const clientId = parseInt(location.split('/')[location.split('/').length - 1])
                 const headerSectionsData = session.sessionData.headerSectionsData
@@ -240,7 +220,6 @@ function Client ({comesFromConversation,  socket, addHeaderSection, deleteHeader
                     setClientDataEdit(clientElement.data.clientData)
                     clientDataEditRef.current = clientElement.data.clientData
 
-                    console.log(clientElement)
                     if (clientElement.data.clientConversations) setClientConversationsEdit(clientElement.data.clientConversations)
                     else {
                         const reponse = await fetchData({endpoint:`${auth.authData.organizationId}/conversations`,getAccessTokenSilently, params:{page_index:1, view_index:0,view_type:'', retrieve_exclusively_for_contact:true, contact_id:clientId}, setValue:setClientConversationsEdit, auth })         
@@ -248,7 +227,6 @@ function Client ({comesFromConversation,  socket, addHeaderSection, deleteHeader
                     }
 
                      setBusinessDataEdit(clientElement.data.businessData)
-                    setBusinessClientsEdit(clientElement.data.businessClients)
                 }
                 
                 //CALL THE API AND REQUEST (CLIENT DATA, CLIENT CONVERSATIONS AND CONTACT BUSINESS)
@@ -256,7 +234,6 @@ function Client ({comesFromConversation,  socket, addHeaderSection, deleteHeader
                     const clientResponse = await fetchData({endpoint:`${auth.authData.organizationId}/contacts/${clientId}`,getAccessTokenSilently, setValue:setClientDataEdit,  auth})
                      
                     if (clientResponse?.status === 200) {
-                        addHeaderSection(clientResponse.data.name , clientResponse.data.id, 'client')
                         clientDataEditRef.current = clientResponse.data
 
                         const conversationsResponse = await fetchData({endpoint:`${auth.authData.organizationId}/conversations`,getAccessTokenSilently, params:{page_index:1, view_index:0,view_type:'', retrieve_exclusively_for_contact:true, contact_id:clientId}, setValue:setClientConversationsEdit, auth })         
@@ -271,8 +248,7 @@ function Client ({comesFromConversation,  socket, addHeaderSection, deleteHeader
                             session.dispatch({type:'UPDATE_HEADER_SECTIONS',payload:{action:'add', data:{id:clientId, type:'client', data:{clientData:clientResponse.data, clientConversations:conversationsResponse?.data, businessData:businessDict}}}})
                         }
                     }
-                    else navigate('/clients')
-                }
+                    else navigate('/contacts/clients')
             }
         }
         loadData()
@@ -299,8 +275,7 @@ function Client ({comesFromConversation,  socket, addHeaderSection, deleteHeader
             const updateResponse = await fetchData({endpoint:`${auth.authData.organizationId}/contacts/${compareData?.id}`,getAccessTokenSilently, auth:auth, requestForm:compareData, method:'put', toastMessages:{'works':`El cliente /{${clientDataEdit?.name}}/ se actualizó correctamente.`,'failed':`Hubo un problema al actualizar la información.`}})
             if (updateResponse?.status === 200) {
                 clientDataEditRef.current = compareData
-                if (comesFromConversation && setClientData) setClientData(compareData)
-                else setClientDataEdit(compareData)
+                setClientDataEdit(compareData)
             }
         }
     }
@@ -322,10 +297,7 @@ function Client ({comesFromConversation,  socket, addHeaderSection, deleteHeader
         textarea.style.height = 'auto'
         textarea.style.height = textarea.scrollHeight + 'px'
     }
-    const handleInputNotasChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
-        setClientDataEdit(prevData => prevData ? ({ ...prevData, notes:DOMPurify.sanitize(event.target.value)}) as ClientData : null)
-
-    }
+    
     useEffect(() =>{if (clientDataEdit) adjustTextareaHeight(textareaNotasRef.current)}, [clientDataEdit?.notes])
 
     //TAGS LOGIC
@@ -440,38 +412,38 @@ function Client ({comesFromConversation,  socket, addHeaderSection, deleteHeader
  
      return (
          <Box position={'relative'}>
-            <Flex bg={'transaprent'} cursor={'pointer'} alignItems={'center'} onClick={() => setShowSearch(!showSearch)} ref={buttonRef} height={'37px'} fontSize={'.9em'}  border={showSearch ? "3px solid rgb(59, 90, 246)":"1px solid #CBD5E0"} justifyContent={'space-between'} px={showSearch?'5px':'7px'} py={showSearch ? "5px" : "7px"} borderRadius='.5rem' _hover={{border:showSearch?'3px solid rgb(59, 90, 246)':'1px solid #CBD5E0'}}>
+            <Flex  bg={'transaprent'} transition={'border-color .2s ease-in-out, box-shadow .2s ease-in-out'} cursor={'pointer'} alignItems={'center'} ref={buttonRef}  onClick={()=>{setShowSearch(true)}} justifyContent={'space-between'} p={'7px'} borderRadius='.4rem'   boxShadow={ showSearch ? '0 0 0 2px rgb(59, 90, 246)' : ''} border={showSearch ? '1px solid rgb(59, 90, 246)': '1px solid transparent'} _hover={{border:showSearch ? '1px solid rgb(59, 90, 246)':'1px solid #CBD5E0'}}>
                 <Text>{businessDataEdit?.name}</Text>
-                 <IoIosArrowDown className={showSearch ? "rotate-icon-up" : "rotate-icon-down"}/>
+                 <TiArrowSortedDown className={showSearch ? "rotate-icon-up" : "rotate-icon-down"}/>
             </Flex>
             
             <AnimatePresence> 
                 {showSearch && 
                 <MotionBox initial={{ opacity: 5, marginTop: -5 }} animate={{ opacity: 1, marginTop: 5 }}  exit={{ opacity: 0,marginTop:-5}} transition={{ duration: '0.2',  ease: 'easeOut'}}
-                 maxH='30vh' overflow={'scroll'} width='100%' gap='10px' ref={boxRef} fontSize={'.9em'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000} position={'absolute'} right={0} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
-                    <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Buscar..." style={{border:'none', outline:'none', background:'transparent', padding:'10px'}}/>
+                 maxH='30vh' overflow={'scroll'} minW='100%' gap='10px' ref={boxRef} fontSize={'.8em'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000} position={'absolute'} right={0} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
+                    <input value={text} onChange={(e) => setText(e.target.value)} placeholder={t('Search')} style={{border:'none', outline:'none', background:'transparent', padding:'10px'}}/>
                     <Box height={'1px'} width={'100%'} bg='gray.200'/>
                    
                     {(showResults && 'page_data' in elementsList) ? <>
                         <Box maxH='30vh'>
                             {elementsList.page_data.length === 0? 
-                            <Box p='15px'><Text fontSize={'.9em'} color='gray.600'>{waitingResults?<LoadingIconButton/>:'No hay ninguna coincidencia'}</Text></Box>
+                            <Box p='15px'><Text color='gray.600' whiteSpace={'nowrap'}>{waitingResults?<LoadingIconButton/>:t('NoCoincidence')}</Text></Box>
                             :<> {elementsList.page_data.map((business:ContactBusinessesTable, index:number) => (
                                 <Flex _hover={{bg:'gray.50'}} cursor={'pointer'} alignItems={'center'} onClick={() => {setText('');handleCreateContactBusiness(business);setShowResults(false)}} key={`user-${index}`} p='10px' gap='10px' >
                                     <Icon boxSize={'12px'} color='gray.700' as={FaBuilding}/>
                                     <Box>
-                                        <Text fontSize={'.9em'}>{business.name}</Text>
+                                        <Text >{business.name}</Text>
                                     </Box>
                                 </Flex>
                             ))}</>}
                         </Box>
                       
-                    </>:<Box p='15px'><Text fontSize={'.9em'} color='gray.600'>{waitingResults?<LoadingIconButton/>:t('NoCoincidence')}</Text></Box>}
+                    </>:<Box p='15px'><Text color='gray.600' whiteSpace={'nowrap'}>{waitingResults?<LoadingIconButton/>:t('NoCoincidence')}</Text></Box>}
                     <Box height={'1px'} width={'100%'} bg='gray.200'/>
                         <Flex _hover={{bg:'gray.50'}} cursor={'pointer'} alignItems={'center'} onClick={() => {setText('');setShowResults(false);setShowAddBusiness(true)}}  p='10px' gap='15px' >
-                            <Icon boxSize={'12px'} color='gray.700' as={FaPlus}/>
+                            <Icon boxSize={'12px'} color='gray.600' as={FaPlus}/>
                             <Box>
-                                <Text fontSize={'.9em'}>{t('CreateNewBusiness')}</Text>
+                                <Text whiteSpace={'nowrap'}>{t('CreateNewBusiness')}</Text>
                             </Box>
                         </Flex>
                 </MotionBox>} 
@@ -488,7 +460,7 @@ function Client ({comesFromConversation,  socket, addHeaderSection, deleteHeader
 
         const blockClient = async() => {
             updateData({...clientDataEditRef.current as ClientData, is_blocked:true})
-            showToast({message:'Cliente bloqueado con éxito'})
+            showToast({message:t('SuccessBlocked')})
             setShowBlock(false)
         }
 
@@ -513,7 +485,7 @@ function Client ({comesFromConversation,  socket, addHeaderSection, deleteHeader
 
     const memoizedMergeBox = useMemo(() => (
         <ConfirmmBox setShowBox={setShowMerge}> 
-            <MergeBox clientData={clientDataEdit} setShowMerge={setShowMerge} deleteHeaderSection={deleteHeaderSection}/>
+            <MergeBox clientData={clientDataEdit} setShowMerge={setShowMerge}/>
         </ConfirmmBox>
     ), [showMerge])
 
@@ -529,122 +501,18 @@ function Client ({comesFromConversation,  socket, addHeaderSection, deleteHeader
      
     <Suspense fallback={<></>} >    
 
-        {!comesFromConversation && 
-            <Flex px='30px' height='60px' bg='#e8e8e8' borderBottomWidth={'1px'} borderBottomColor='gray.200' flex='1' alignItems={'center'} >
-                <Flex borderRadius={'.3rem'} height={'70%'}  alignItems={'center'} borderWidth={'1px 1px 1px 1px'}  borderColor='gray.300'> 
-                    
-                    <Flex alignItems='center' gap='6px'  onClick={() => {if (businessDataEdit?.id !== -1) setClientSection('business')}} cursor={'pointer'}  bg={clientSection === 'business' ?  'gray.300':'transparent' } height={'100%'}  borderRightWidth={'1px'} borderRightColor='gray.300'  px={{md:'10px',lg:'20px'}}> 
-                        <Icon as={FaBuilding} boxSize={'14px'} />
-                        <Skeleton isLoaded={businessDataEdit !== null}> <Text whiteSpace={'nowrap'} fontSize={{md:'.8em',lg:'1em'}}>{businessDataEdit?.id === -1?t('NoBusiness'):businessDataEdit?.name}</Text></Skeleton>
-                    </Flex> 
-                    <Flex alignItems='center' gap='6px' onClick={() => setClientSection('client')}  cursor={'pointer'} bg={clientSection === 'client'?'brand.blue_hover':'transparent'} height={'100%'} px={{md:'10px',lg:'20px'}}> 
-                        <Icon as={BsPersonFill} boxSize={'17px'} />
-                        <Skeleton isLoaded={clientDataEdit !== null}> 
-                            <Text whiteSpace={'nowrap'} fontSize={{md:'.8em',lg:'1em'}} >{clientDataEdit?.name === ''? t('WebClient'):clientDataEdit?.name}</Text>
-                        </Skeleton>
-                    </Flex>
-                </Flex>
-        </Flex>}
-
         {showAddBusiness && memoizedAddBusiness}
+        {showMerge && memoizedMergeBox}
+        {showBlock && memoizedBlockBox}
 
-
-        {clientSection === 'client'?
-         <>
-            <Flex height={'calc(100vh - 120px)'}  width={'100%'}>
-                <Box ref={scrollRef1} p='2vw' width={'280px'} bg='#f1f1f1' borderRightWidth={'1px'} borderRightColor='gray.200' overflow={'scroll'}  >
-                    <Skeleton isLoaded={clientData !== null}> 
-                        {Object.keys(clientDataEdit || {}).map((con, index) => (
-                        <Fragment key={`channel-${index}`}> 
-                            {(Object.keys(contactDicRegex).includes(con)) && clientDataEdit?.[con as ContactChannel] && clientDataEdit?.[con as ContactChannel] !== '' &&
-                                <Flex mt='1vh' alignItems={'center'} gap='10px' key={`contact_type-2-${index}`}> 
-                                    <Box width={'70px'}> 
-                                        <Text fontSize='.8em' fontWeight={'medium'} >{t(con)}</Text>
-                                    </Box>
-                                    <Box flex='1'> 
-                                        <EditText fontSize={'.8em'} updateData={(text:string | undefined) => updateData({...clientDataEdit as ClientData, [con]:text as string})}  focusOnOpen={clientDataEdit?.[con as ContactChannel] === '-'} maxLength={contactDicRegex[con as ContactChannel][1]} regex={contactDicRegex[con as ContactChannel][0]} value={clientDataEdit?.[con as ContactChannel]} setValue={(value:string) => handleChangeChannel(value, con as ContactChannel)} />
-                                    </Box>
-                                </Flex>}
-                        </Fragment>))}
-                    </Skeleton>
-                    <Box position={'relative'}> 
-                        <Flex ref={addNewChannelButtonRef} mt='2vh'  alignItems={'center'} gap='7px' color={'brand.text_blue'} _hover={{opacity:0.8}}  cursor={'pointer'}>
-                            <Icon as={FaPlus} boxSize={'11px'} />
-                            <Text fontWeight={'medium'} fontSize={'.85em'} onClick={() => setShowAddNewChannel(!showAddNewChannel)}>{t('AddContact')}</Text>
-                        </Flex>
-                        {showAddNewChannel && 
-                            <MotionBox initial={{ opacity: 0, height:0}} animate={{ opacity: 1, height:'auto' }}  transition={{ duration: '0.15',  ease: 'easeOut'}}
-                             maxH={'40vh'} overflowY={'scroll'} mt='5px' position='absolute' ref={addNewChannelBoxRef} bg='white'  zIndex={1000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.300' borderWidth='1px' borderRadius='.5rem'>         
-                                {Object.keys(contactDicRegex).map((con, index) => (
-                                <Fragment key={`select-channel-${index}`}> 
-                                    {(clientDataEdit?.[con as ContactChannel] === null || clientDataEdit?.[con as ContactChannel] === '')&&
-                                        <Flex color='gray.600' fontSize={'.9em'} onClick={() => addNewChannel(con as ContactChannel)} key={`channels-${index}`}  px='15px' py='10px' cursor={'pointer'} gap='10px' alignItems={'center'} _hover={{bg:'gray.100'}}>
-                                            <Icon as={logosMap[contactDicRegex[con as ContactChannel][2]][0]}/>
-                                            <Text>{t(contactDicRegex[con as ContactChannel][2])}</Text>
-                                        </Flex>
-                                    }
-                                </Fragment>))}
-                            </MotionBox>
-                        }
-                    </Box>
-                    <Box width={'100%'} mt='2vh' mb='2vh' height={'1px'} bg='gray.300'/>
-                   
-                    <Text mb='.5vh'fontWeight={'medium'} mt='2vh' fontSize='.9em'>{t('contact_business_id')}</Text>
-                    <Skeleton isLoaded={clientDataEdit !== null}>
-                        <SearchBusiness/>
-                    </Skeleton>
-
-                    <Text mb='.5vh'fontWeight={'medium'} mt='2vh' fontSize='.9em'>{t('language')}</Text>
-                    <Skeleton isLoaded={clientDataEdit !== null}>
-                        <CustomSelect labelsMap={languagesMap} containerRef={scrollRef1} selectedItem={clientDataEdit?.language}  setSelectedItem={updateLanguage} options={Object.keys(languagesMap)} hide={false} />
-                    </Skeleton>
-
-                    <Text mb='.5vh'fontWeight={'medium'} mt='2vh' fontSize='.9em'>{t('labels')}</Text>
-                    <Skeleton isLoaded={clientDataEdit !== null}>
-                        <Box flex='1'> 
-                            <Box   minHeight="30px" maxH="300px" border="1px solid #CBD5E0"   p="5px" _focusWithin={{ borderColor:'transparent', boxShadow:'0 0 0 2px rgb(59, 90, 246)'}} borderRadius=".5rem" overflow="auto" display="flex" flexWrap="wrap" alignItems="center" onKeyDown={handleKeyDown}  tabIndex={0}>
-                                {(!clientDataEdit?.labels || clientDataEdit?.labels === '') ? <></>:
-                                <> 
-                                    {((clientDataEdit?.labels || '').split(',')).map((label, index) => (
-                                        <Flex key={`label-${index}`} borderRadius=".4rem" p='4px' fontSize={'.75em'} alignItems={'center'} m="1" bg='brand.gray_2' borderWidth={'1px'} borderColor={'gray.300'} gap='5px'>
-                                            <Text>{label}</Text>
-                                            <Icon as={RxCross2} onClick={() => removeTag(index)} cursor={'pointer'} />
-                                        </Flex>
-                                    ))}
-                                </>
-                                }
-                                <Textarea  maxLength={20} p='5px'  resize={'none'} borderRadius='.5rem' rows={1} fontSize={'.9em'}  borderColor='transparent' borderWidth='0px' _hover={{borderColor:'transparent',borderWidth:'0px'}} focusBorderColor={'transparent'}  value={inputValue}  onChange={(event) => {setInputValue(event.target.value)}}/>
-                            </Box>
-                        </Box>                    
-                    </Skeleton>
-                   
-                    <Text mb='.5vh'fontWeight={'medium'} mt='2vh' fontSize='.9em'>{t('notes')}</Text>
-                    <Skeleton isLoaded={clientDataEdit !== null}>
-                        <Textarea  maxLength={1000} onBlur={() => updateData()} minHeight={'37px'} placeholder="Notas..." maxH='300px' value={clientDataEdit?.notes} ref={textareaNotasRef} onChange={handleInputNotasChange} size='sm' p='10px'  resize={'none'} borderRadius='.5rem' rows={1} fontSize={'.9em'}  borderColor='#CBD5E0'_focus={{p:'9px',borderColor: "brand.text_blue", borderWidth: "2px"}}/>
-                    </Skeleton>
-
-                    <Text mb='.5vh'fontWeight={'medium'} mt='2vh' fontSize='.9em'>{t('created_at')}</Text>
-                    <Skeleton isLoaded={clientDataEdit !== null}>
-                           <Text fontSize={'.9em'}>{timeAgo(clientDataEdit?.created_at, t_formats)}</Text>
-                    </Skeleton>
-                   
-                    <Text mb='.5vh'fontWeight={'medium'} mt='2vh' fontSize='.9em'>{t('last_interaction_at')}</Text>
-                    <Skeleton isLoaded={clientDataEdit !== null}>
-                           <Text fontSize={'.9em'}>{timeAgo(clientDataEdit?.last_interaction_at, t_formats)}</Text>
-                    </Skeleton>
-
-                    <Skeleton isLoaded={clientDataEdit !== null}>
-                        <CustomAttributes motherstructureType="contact" customAttributes={clientDataEdit?.custom_attributes || {}} updateCustomAttributes={updateCustomAttributes}/>
-                    </Skeleton>
-
-                </Box>
-
-                <Box bg='white' p='2vw' width="calc(100vw - 335px)" overflow={'scroll'}>
-                <Flex gap='3vw' justifyContent={'space-between'}> 
+        
+        <Flex flexDir={'column'} height={'100vh'}   width={'100%'}>
+            <Box px='1vw' pt='1vw' > 
+                <Flex   gap='3vw' justifyContent={'space-between'}> 
                     <Flex  flex='1' gap='20px'  alignItems={'center'}>
-                        <Avatar />
+                        <Avatar  name={clientDataEdit?.name}/>
                         <Skeleton width={'100%'} isLoaded={clientDataEdit !== null}> 
-                            <EditText nameInput={true} size='md' maxLength={70} updateData={(text:string | undefined) => updateData({...clientDataEdit as ClientData, name:text as string})} value={clientDataEdit?.name === ''? t('WebClient'):clientDataEdit?.name} setValue={handelChangeName}/>
+                            <EditText fontSize="1.2em" nameInput={true} size='md' maxLength={70} updateData={(text:string | undefined) => updateData({...clientDataEdit as ClientData, name:text as string})} value={clientDataEdit?.name === ''? t('WebClient'):clientDataEdit?.name} setValue={handelChangeName}/>
                         </Skeleton>
                     </Flex>
                     <Flex alignItems={'center'} gap='10px'>
@@ -652,30 +520,130 @@ function Client ({comesFromConversation,  socket, addHeaderSection, deleteHeader
                         <Button leftIcon={<TbArrowMerge/>}  size='sm' variant={'common'} onClick={() => setShowMerge(true)}>{t('Merge')}</Button>
                     </Flex>
                 </Flex>
-                <Box width={'100%'} mt='3vh' mb='3vh' height={'1px'} bg='gray.300'/>
-                <Flex alignItems={'end'} justifyContent={'space-between'} >
-                    <Skeleton isLoaded={clientDataEdit !== null}> 
-                        <Text fontWeight={'medium'} color='gray.600'>{t('Conversations', {count:clientConversationsEdit?.page_data.length})}</Text>
-                    </Skeleton>
-                    <Flex alignItems={'center'}  gap='10px' flexDir={'row-reverse'}>
-                        <IconButton isRound size='xs' variant={'common'} aria-label='next-page' icon={<IoIosArrowForward />} isDisabled={conversationsFilters.page_index > Math.floor((clientConversationsEdit?.total_conversations || 0)/ 25)} onClick={() => updateTable({...conversationsFilters,page_index:conversationsFilters.page_index + 1})}/>
-                        <Text fontWeight={'medium'} fontSize={'.9em'} color='gray.600'>{t('Page')} {conversationsFilters.page_index}</Text>
-                        <IconButton isRound size='xs' variant={'common'} aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={conversationsFilters.page_index === 1} onClick={() => updateTable({...conversationsFilters,page_index:conversationsFilters.page_index - 1})}/>
-                    </Flex>
-                </Flex>
+                <Box h='1px' w='100%' bg='gray.200' mt='2vh'/>
+            </Box>
 
-                <Skeleton isLoaded={clientConversationsEdit !== null}> 
-                    <Table data={clientConversationsEdit?.page_data || []} CellStyle={CellStyle} noDataMessage={t('NoConversations')} columnsMap={columnsConversationsMap} excludedKeys={['id', 'conversation_id', 'contact_id',  'is_matilda_engaged']} onClickRow={(row:any, index:number) => {navigate(`/conversations/conversation/${row.id}`)}}/>
-                </Skeleton>
+            <Flex flex='1' > 
+                <Box flex='1' py='2vh'  ref={scrollRef1} px='1vw' borderRightColor={'gray.200'} borderRightWidth={'1px'}  overflow={'scroll'}  >
+                    <CollapsableSection section={'contact'} isExpanded={sectionsExpanded.includes('contact')} onSectionExpand={onSectionExpand} sectionsMap={{'contact':t('ContactData'), 'info':t('Info'), 'custom-attributes':t('CustomAttributes')}}> 
+                        <Skeleton isLoaded={clientDataEdit !== null}> 
+                            {Object.keys(clientDataEdit || {}).map((con, index) => (
+                            <Fragment key={`channel-${index}`}> 
+                                {(Object.keys(contactDicRegex).includes(con)) && clientDataEdit?.[con as ContactChannel] && clientDataEdit?.[con as ContactChannel] !== '' &&
+                                    <Flex mt='1vh' alignItems={'center'} gap='10px' key={`contact_type-2-${index}`}> 
+                                        <Text fontSize='.8em' whiteSpace={'nowrap'} flex='1' textOverflow={'ellipsis'} overflow={'hidden'}  fontWeight={'medium'} color='gray.600'>{t(con)}</Text>
+                                        <Box flex='2'> 
+                                            <EditText fontSize={'.8em'} updateData={(text:string | undefined) => updateData({...clientDataEdit as ClientData, [con]:text as string})}  focusOnOpen={clientDataEdit?.[con as ContactChannel] === '-'} maxLength={contactDicRegex[con as ContactChannel][1]} regex={contactDicRegex[con as ContactChannel][0]} value={clientDataEdit?.[con as ContactChannel]} setValue={(value:string) => handleChangeChannel(value, con as ContactChannel)} />
+                                        </Box>
+                                    </Flex>
+                                    }
+                            </Fragment>))}
+                        </Skeleton>
+                        
+                        <Box position={'relative'}> 
+                            <Flex ref={addNewChannelButtonRef} mt='2vh'  alignItems={'center'} gap='7px' color={'brand.text_blue'} _hover={{opacity:0.8}}  cursor={'pointer'}>
+                                <Icon as={FaPlus} boxSize={'11px'} />
+                                <Text fontWeight={'medium'} fontSize={'.85em'} onClick={() => setShowAddNewChannel(!showAddNewChannel)}>{t('AddContact')}</Text>
+                            </Flex>
+                            {showAddNewChannel && 
+                                <MotionBox initial={{ opacity: 0, height:0}} animate={{ opacity: 1, height:'auto' }}  transition={{ duration: '0.15',  ease: 'easeOut'}}
+                                    maxH={'40vh'} overflowY={'scroll'} mt='5px' position='absolute' ref={addNewChannelBoxRef} bg='white'  zIndex={1000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.200' borderWidth='1px' borderRadius='.5rem'>         
+                                    {Object.keys(contactDicRegex).map((con, index) => (
+                                    <Fragment key={`select-channel-${index}`}> 
+                                        {(clientDataEdit?.[con as ContactChannel] === null || clientDataEdit?.[con as ContactChannel] === '')&&
+                                            <Flex color='gray.600' fontSize={'.9em'} onClick={() => addNewChannel(con as ContactChannel)} key={`channels-${index}`}  px='15px' py='10px' cursor={'pointer'} gap='10px' alignItems={'center'} _hover={{bg:'brand.gray_2'}}>
+                                                <Icon as={logosMap[contactDicRegex[con as ContactChannel][2]][0]}/>
+                                                <Text>{t(contactDicRegex[con as ContactChannel][2])}</Text>
+                                            </Flex>
+                                        }
+                                    </Fragment>))}
+                                </MotionBox>
+                            }
+                        </Box>
+                    </CollapsableSection>
+
+                    <CollapsableSection mt='3vh' section={'info'} isExpanded={sectionsExpanded.includes('info')} onSectionExpand={onSectionExpand} sectionsMap={{'contact':t('ContactData'), 'info':t('Info'), 'custom-attributes':t('CustomAttributes')}}> 
+                        <Flex mt='1vh' alignItems={'center'} gap='10px' > 
+                            <Text fontSize='.8em' whiteSpace={'nowrap'} flex='1' textOverflow={'ellipsis'} overflow={'hidden'}  fontWeight={'medium'} color='gray.600'>{t('contact_business_id')}</Text>
+                            <Skeleton isLoaded={clientDataEdit !== null} style={{flex:2}}> 
+                                <SearchBusiness/>
+                            </Skeleton>
+                        </Flex>
+
+                
+                        <Flex mt='1vh' alignItems={'center'} gap='10px' > 
+                            <Text fontSize='.8em' whiteSpace={'nowrap'} flex='1' textOverflow={'ellipsis'} overflow={'hidden'}  fontWeight={'medium'} color='gray.600'>{t('language')}</Text>
+                            <Skeleton isLoaded={clientDataEdit !== null} style={{flex:2}}> 
+                                <CustomSelect  labelsMap={languagesMap} containerRef={scrollRef1} selectedItem={clientDataEdit?.language}  setSelectedItem={updateLanguage} options={Object.keys(languagesMap)} hide />
+                            </Skeleton>
+                        </Flex>
+
+                        <Flex mt='1vh'  gap='10px' > 
+                            <Text mt='10px' fontSize='.8em' whiteSpace={'nowrap'} flex='1' textOverflow={'ellipsis'} overflow={'hidden'}  fontWeight={'medium'} color='gray.600'>{t('labels')}</Text>
+                            <Skeleton isLoaded={clientDataEdit !== null} style={{flex:2}}>
+                       
+                                <Box  minHeight="30px" maxH="300px" border="1px solid transparent" _hover={{border:"1px solid #CBD5E0"}} transition={'border-color .2s ease-in-out, box-shadow .2s ease-in-out'}  p="5px" _focusWithin={{ borderColor:'transparent', boxShadow:'0 0 0 3px rgb(59, 90, 246)'}} borderRadius=".5rem" overflow="auto" display="flex" gap='5px' flexWrap="wrap" alignItems="center" onKeyDown={handleKeyDown}  tabIndex={0}>
+                                    {(!clientDataEdit?.labels || clientDataEdit?.labels === '') ? <></>:
+                                    <> 
+                                        {((clientDataEdit?.labels || '').split(',')).map((label, index) => (
+                                            <Flex key={`label-${index}`}  borderRadius=".4rem" p='4px' fontSize={'.75em'} alignItems={'center'}  bg='brand.gray_1'  gap='5px'>
+                                                <Text>{label}</Text>
+                                                <Icon as={RxCross2} onClick={() => removeTag(index)} cursor={'pointer'} />
+                                            </Flex>
+                                        ))}
+                                    </>
+                                    }
+                                    <Textarea  maxLength={20} p='2px' placeholder={t('labels') + '...'} resize={'none'} borderRadius='.5rem' rows={1} fontSize={'.8em'}  borderColor='transparent' borderWidth='0px' _hover={{borderColor:'transparent',borderWidth:'0px'}} focusBorderColor={'transparent'}  value={inputValue}  onChange={(event) => {setInputValue(event.target.value)}}/>
+                                </Box>
+                            </Skeleton>
+                        </Flex>
+
+                        <Flex mt='2vh' alignItems={'center'}  gap='10px'  > 
+                            <Text flex='1' fontSize='.8em' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}  fontWeight={'medium'} color='gray.600'>{t('notes')}</Text>
+                            <Skeleton isLoaded={clientDataEdit !== null} style={{flex:2}}>
+                                <EditText placeholder={t('notes') + '...'} value={clientDataEdit?.notes} setValue={(value:string) => setClientDataEdit(prevData => prevData ? ({ ...prevData, notes:value}) as ClientData : null)           }/>
+                            </Skeleton>
+                        </Flex>
+                        
+
+                        <Flex mt='2vh' alignItems={'center'}  gap='10px'  > 
+                            <Text flex='1' fontSize='.8em' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}  fontWeight={'medium'} color='gray.600'>{t('created_at')}</Text>
+                            <Text flex='2' p='7px' ml='7px' fontSize={'.8em'}>{timeAgo(clientDataEdit?.created_at, t_formats)}</Text>
+                        </Flex>
+
+                        <Flex mt='2vh' alignItems={'center'}  gap='10px'  > 
+                            <Text flex='1' fontSize='.8em' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}  fontWeight={'medium'} color='gray.600'>{t('last_interaction_at')}</Text>
+                            <Text flex='2' p='7px' ml='7px' fontSize={'.8em'}>{timeAgo(clientDataEdit?.last_interaction_at, t_formats)}</Text>
+                        </Flex>
+                    </CollapsableSection>
+
+                    <CollapsableSection mt='3vh' section={'custom-attributes'} isExpanded={sectionsExpanded.includes('custom-attributes')} onSectionExpand={onSectionExpand} sectionsMap={{'contact':t('ContactData'), 'info':t('Info'), 'custom-attributes':t('CustomAttributes')}}> 
+                        <CustomAttributes motherstructureType="contact" customAttributes={clientDataEdit?.custom_attributes || {}} updateCustomAttributes={updateCustomAttributes}/>
+                    </CollapsableSection>
                 </Box>
+                
+                <Flex flex='2' overflow={'hidden'} py='2vh'  flexDir={'column'} px='1vw'> 
+                    <Flex mb='1vh' justifyContent={'space-between'} >
+                        <Skeleton isLoaded={clientDataEdit !== null}> 
+                            <Text fontWeight={'medium'} color='gray.600'>{t('Conversations', {count:clientConversationsEdit?.page_data.length})}</Text>
+                        </Skeleton>
+                        <Flex alignItems={'center'}  gap='10px' flexDir={'row-reverse'}>
+                            <IconButton isRound size='xs' variant={'common'} aria-label='next-page' icon={<IoIosArrowForward />} isDisabled={conversationsFilters.page_index > Math.floor((clientConversationsEdit?.total_conversations || 0)/ 25)} onClick={() => updateTable({...conversationsFilters,page_index:conversationsFilters.page_index + 1})}/>
+                            <Text fontWeight={'medium'} fontSize={'.9em'} color='gray.600'>{t('Page')} {conversationsFilters.page_index}</Text>
+                            <IconButton isRound size='xs' variant={'common'} aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={conversationsFilters.page_index === 1} onClick={() => updateTable({...conversationsFilters,page_index:conversationsFilters.page_index - 1})}/>
+                        </Flex>
+                    </Flex>
+                    <Table data={clientConversationsEdit?.page_data || []} CellStyle={CellStyle} noDataMessage={t('NoConversations')} columnsMap={columnsConversationsMap} excludedKeys={['id', 'conversation_id', 'contact_id',  'is_matilda_engaged']} onClickRow={(row:any, index:number) => {navigate(`/conversations/conversation/${row.id}`)}}/>
+                </Flex>
             </Flex>
+          
+             
 
-            {showMerge && memoizedMergeBox}
-            {showBlock && memoizedBlockBox}
-        </>:
-        <> 
-            {!comesFromConversation && <Business  socket={socket} comesFromConversation={true} businessData={businessData ? businessData:businessDataEdit} setBusinessData={setBusinessData? setBusinessData:setBusinessDataEdit} businessClients={businessClients?businessClients:businessClientsEdit} setBusinessClients={setBusinessClients?setBusinessClients:setBusinessClientsEdit}  addHeaderSection={addHeaderSection}/>}
-        </>}
+      
+    
+        </Flex>
+
+       
         
     </Suspense>)
     }
@@ -687,10 +655,9 @@ export default Client
 interface MergeBoxProps {
     clientData:ClientData | null
     setShowMerge: Dispatch<SetStateAction<boolean>>
-    deleteHeaderSection: DeleteHeaderSectionType
 }
 
-const MergeBox = ({clientData, setShowMerge, deleteHeaderSection}:MergeBoxProps) => {
+const MergeBox = ({clientData, setShowMerge}:MergeBoxProps) => {
 
     //AUTH CONSTANT
     const { t } = useTranslation('clients')
@@ -730,15 +697,14 @@ const MergeBox = ({clientData, setShowMerge, deleteHeaderSection}:MergeBoxProps)
         const response = await fetchData({endpoint: `${auth.authData.organizationId}/contacts/merge/${clientData?.id}/${selectedClient?.id}`, getAccessTokenSilently, method:'put', setWaiting:setWaitingConfirmMerge, params: { new_name:clientData?.name}, auth: auth, toastMessages:{'works':`${clientData?.name} y ${selectedClient?.name} se han fusionado correctamente`,'failed':'Hubo un fallo al fusionar los clientes'}})
         if (response?.status === 200) {
             session.dispatch({type:'DELETE_VIEW_FROM_CLIENT_LIST'})
-            deleteHeaderSection({code:clientData?.id || 0, type:'client', description:'' })
-            navigate('/clients')
+            navigate('/contacts/clients')
         }
     }
 
      return(<>
             <Box p='20px'> 
                 <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('MergeUser')}</Text>
-                <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>  
+                <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.200'/>  
                 
                 {showConfirmMerge ? 
                 <ConfirmmBox setShowBox={setShowConfirmMerge}> 
@@ -754,7 +720,7 @@ const MergeBox = ({clientData, setShowMerge, deleteHeaderSection}:MergeBoxProps)
                 </ConfirmmBox>
                 :
                 <> 
-                <Text mb='1vh' fontWeight={'medium'}>{t('SearchToMerge')}</Text>
+                <Text mb='1vh' fontSize={'.9em'} fontWeight={'medium'}>{t('SearchToMerge')}</Text>
                 <Box position={'relative'}> 
                     <EditText waitingResult={waitingResult} value={text} setValue={setText} searchInput={true}/>
                 
@@ -763,7 +729,7 @@ const MergeBox = ({clientData, setShowMerge, deleteHeaderSection}:MergeBoxProps)
                             {elementsList.page_data.length === 0? 
                             <Box p='15px'><Text>{t('NoCoincidence')}</Text></Box>
                             :<> {elementsList.page_data.map((client:ClientData, index:number) => (
-                                <Flex _hover={{bg:'gray.50'}} cursor={'pointer'} alignItems={'center'} onClick={() => {setText('');setSelectedClient({id:client.id, name:client.name});setShowResults(false)}} key={`user-${index}`} p='10px' gap='15px' >
+                                <Flex _hover={{bg:'brand.gray_2'}} cursor={'pointer'} alignItems={'center'} onClick={() => {setText('');setSelectedClient({id:client.id, name:client.name});setShowResults(false)}} key={`user-${index}`} p='10px' gap='15px' >
                                     <Avatar size='xs' name={client.name}/>
                                     <Box>
                                         <Text fontWeight={'medium'}>{client.name}</Text>
@@ -775,16 +741,16 @@ const MergeBox = ({clientData, setShowMerge, deleteHeaderSection}:MergeBoxProps)
                 </Box>
 
                 <Flex mt='20vh' justifyContent={'center'} gap='20px' alignItems={'center'}>
-                    <Flex alignItems={'center'} p='10px' gap='15px' bg='gray.50' borderColor={'gray.300'} borderWidth='1px' borderRadius={'.5rem'}>
-                        <Avatar size='sm'/>
+                    <Flex alignItems={'center'} p='10px' gap='15px' boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.1)'}  borderColor={'gray.200'} borderWidth='1px' borderRadius={'.5rem'}>
+                        <Avatar name={clientData?.name} size='sm'/>
                         <Box>
                             <Text fontWeight={'medium'}>{clientData?.name}</Text>
                         </Box>
                     </Flex>
                     <Icon as={FaArrowRight} boxSize={'25px'}/>
                     {selectedClient === null ? <Text fontSize={'.9em'} width={'150px'} textAlign={'center'}>{t('SelectMergeClient')}</Text>
-                    :<Flex alignItems={'center'} p='10px' gap='15px' bg='gray.50' borderColor={'gray.300'} borderWidth='1px' borderRadius={'.5rem'}>
-                        <Avatar size='sm'/>
+                    :<Flex alignItems={'center'} p='10px' gap='15px' boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.1)'}  borderColor={'gray.200'} borderWidth='1px' borderRadius={'.5rem'}>
+                        <Avatar size='sm' name={selectedClient?.name}/>
                         <Box>
                             <Text fontWeight={'medium'}>{selectedClient?.name}</Text>
                         </Box>
