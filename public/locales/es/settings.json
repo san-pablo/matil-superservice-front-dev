@@ -623,7 +623,7 @@
     "Id":"ID",
     "Code":"Código",
     "NumberErrors":"Número de errores",
-    "Test":"Testear Función",
+    "Test":"Probar",
     "SeeMoreData":"Ver más información",
     "CorrectAddedFunction":"Función añadida con éxito",
     "FailedAddedFunction":"Hubo un error al añadir la función",
@@ -661,8 +661,8 @@
     "FunctionData":"Información de la función",
     "ActiveChannels":"Configuraciones habilitadas",
     "AddParameter":"Añadir parámetro",
-    "AvailableTilda":"Activar para Tilda",
-    "AvailableTildaDes":"Al activarlo, Tilda comnezará a usar esta función para todos los ususarios",
+    "AvailableTilda":"Tilda",
+    "AvailableTildaDes":"Al activarlo, Tilda comnezará a usar esta función en su flujo de trabajo.",
     "list":"Lista",
     "AllowedValues":"Valores permitidos:",
     "Required":"Parámetro obligatorio",
@@ -678,7 +678,7 @@
     "CreateParameter":"Crear parámetro",
     "GoBack":"Volver atrás",
     "AddConfig":"Añadir configuración de Tilda",
-    "CorrectAddedChannel":"Canal añadido con éxito",
+    "CorrectAddedChannel":"Ca añadido con éxito",
     "FailedAddedChannel":"Hubo un error al añadir el canal",
     "TildaActive":"Activar para Tilda",
     "SaveChannelsWarning":"Debes guardar los cambios para poder añadir canales a la función",
@@ -926,5 +926,8 @@
     "IsLive":"En vivo",
     "TryWeb":"Probar chat",
     "SaveHelpCenterWarning":"Debes guardar la configuración antes de añadir un centro de ayuda",
-    "SaveFunctionWarning":"Debes guardar la configuración antes de añadir una función"
+    "SaveFunctionWarning":"Debes guardar la configuración antes de añadir una función",
+    "Stats":"Estadísticas globales",
+    "Secrets":"Secretos",
+    "Double":"Duplicar"
  }

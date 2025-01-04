@@ -41,6 +41,7 @@ const Contacts = ({socket}:{socket:any}) => {
                     </Flex>
                 </Flex>
                 <Box h='40px' mb='2vh' > 
+                    
                     <SectionSelector notSection sections={['clients', 'businesses']} selectedSection={selectedSection} onChange={(section) => navigate(section)} sectionsMap={{'clients':[t('Clients'),<IoPeopleSharp/> ], 'businesses':[t('Businesses'),<FaBuilding/>]}}/>
                     <Box bg='gray.300' h='1px' w='100%'/>
                 </Box>

@@ -92,7 +92,7 @@ function Whatsapp () {
                 </Flex>
             </Skeleton>
         :
-        <>
+        <> 
            <Box>
             <Flex justifyContent={'space-between'}> 
                 <Text fontSize={'1.4em'} fontWeight={'medium'}>Whatsapp</Text>

@@ -110,46 +110,39 @@ const VariableTypeChanger = ({inputType, value, setValue, operation, customType,
         if (!customType) fetchInitialData()
     }, [])
    
-    const [currentValue, setCurrentValue] = useState<string>((value && value !== undefined) ? typeof(value) === 'string'?value:String(value):'') 
-    useEffect(() => {if (value !== currentValue) setCurrentValue((value && value !== undefined) ? typeof(value) === 'string'?value:String(value):'')}, [value])
-
-    if (operation === 'exists') return <></>
+     if (operation === 'exists') return <></>
 
     if (customType) {
 
          switch(inputType) {
+                case 'int':
+                case 'integer': 
+                    {  
+                        return (
+                        <NumberInput value={value? value:''} w='100%'onChange={(valueString) => setValue(parseInt(valueString))} pattern={'(?:0|[1-9]\d*)'} >
+                            <NumberInputField placeholder={'-'} px='7px'  height={'32px'}  border={'1px solid #EDF2F7'} bg={disabled ? 'brand.gray_1':'transaprent'}  cursor={disabled ? 'not-allowed':'pointer'} transition={'border-color .2s ease-in-out, box-shadow .2s ease-in-out'}  borderRadius='.5rem'  fontSize={'.8em'} _focus={{  boxShadow:'0 0 0 2px rgb(59, 90, 246)', border: '1px solid rgb(59, 90, 246)'}} sx={{'&:focus:hover': {border: '1px solid rgb(59, 90, 246)'}}} _hover={{border:'1px solid #CBD5E0'}} />
+                        </NumberInput>)
+                   }   
+                case 'number': 
+                case 'float':
+                    return (
+                        <NumberInput value={value? value:''} w='100%' onBlur={() => {if (typeof(value) === 'string') setValue(Number(value))}}  onChange={(valueString) => {
+                            const parsedValue = Number(valueString)
+                            if (valueString.endsWith('.')) setValue(valueString)
+                            else if (!isNaN(parsedValue)) setValue(parsedValue)
+                            else setValue('')
+                          }}  pattern="^[+\-]?(?:\d+)(?:\.\d*)?$|^[+\-]?(?:\d*)(?:\.\d+)$">
+                            <NumberInputField placeholder={'-'} px='7px'  height={'32px'}  border={'1px solid #EDF2F7'} bg={disabled ? 'brand.gray_1':'transaprent'}  cursor={disabled ? 'not-allowed':'pointer'} transition={'border-color .2s ease-in-out, box-shadow .2s ease-in-out'}  borderRadius='.5rem'  fontSize={'.8em'} _focus={{  boxShadow:'0 0 0 2px rgb(59, 90, 246)', border: '1px solid rgb(59, 90, 246)'}} sx={{'&:focus:hover': {border: '1px solid rgb(59, 90, 246)'}}} _hover={{border:'1px solid #CBD5E0'}} />
+                        </NumberInput>)
             case 'bool': 
             case 'boolean': 
                 const boolDict = {'true':t('true'), 'false':t('false')}
                 return <CustomSelect variant={variant} isDisabled={disabled} hide={false} selectedItem={value} setSelectedItem={(value) => setValue(value)}  options={[true, false]} labelsMap={boolDict}/>
-            case 'int':
-            case 'integer': 
-            case 'number': 
-            case 'float':
-                {  
-                    const handleBlur = () => { 
-                
-                        if (currentValue !== value) {
-                            const normalizedValueString = currentValue?.replace(',', '.')
-                             if (normalizedValueString ) {
-                                console.log(normalizedValueString)
-                                console.log(parseInt(normalizedValueString))
-                                console.log(isNaN(parseFloat(normalizedValueString)))
-                                if ((normalizedValueString && !isNaN(parseFloat(normalizedValueString)))) setValue('')
-                                if (inputType === 'int') setValue(parseInt(normalizedValueString))
-                                else if (inputType === 'float') return setValue(parseInt(normalizedValueString))
-                            }
-                        }
-                   } 
-                   return (
-                   <NumberInput   value={currentValue || undefined} onBlur={handleBlur} onChange={(value) => setCurrentValue(value) } clampValueOnBlur={false} min={min} max={max}>
-                       <NumberInputField borderRadius='.5rem'  fontSize={'.9em'} height={'37px'}  borderColor={'gray.300'} bg={disabled?'brand.gray_1':'transparent'} _hover={{ border:'1px solid #CBD5E0'}} _focus={{ px:'11px', borderColor: "brand.text_blue", borderWidth: "2px" }} px='12px' />
-                   </NumberInput>)
-               }    
+          
             case 'str':
             case 'string':
             case 'list':
-                return <EditText isDisabled={disabled}  value={currentValue} setValue={(value) => setCurrentValue(value) } updateData={() => {if (currentValue !== value) setValue(currentValue)}} hideInput={false} />
+                return <EditText placeholder='-' isDisabled={disabled}  value={value} setValue={(value) => setValue(value) } hideInput={false} />
             case 'timestamp':
                 const datesMap = {'{today}':t('Today'), '{yesterday}':t('Yesterday'), '{start_of_week}':t('WeekStart'),'{start_of_month}':t('StartMonth')}
                 return <CustomSelect hide={false} selectedItem={value}  setSelectedItem={(value) => setValue(value)}  options={Object.keys(datesMap)} labelsMap={datesMap}/>

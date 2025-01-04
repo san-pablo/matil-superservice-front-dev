@@ -97,11 +97,11 @@ const CellStyle = ({column, element}:{column:string, element:any}) => {
     const { t } = useTranslation('conversations')
     const t_formats = useTranslation('formats').t
 
-    if (column === 'local_id') return  <Text color='gray' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>#{element}</Text>
-     else if (column === 'user_id')  return  <Text fontWeight={'medium'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element === 'matilda' ?'Matilda':element === 'no_user' ? t('NoAgent'):(auth?.authData?.users?.[element as string | number]?.name || t('NoAgent')) }</Text>
+    if (column === 'local_id') return  <Text fontSize={'.9em'} color='gray' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>#{element}</Text>
+     else if (column === 'user_id')  return  <Text fontSize={'.9em'} fontWeight={'medium'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element === 'matilda' ?'Matilda':element === 'no_user' ? t('NoAgent'):(auth?.authData?.users?.[element as string | number]?.name || t('NoAgent')) }</Text>
     else if (column === 'unseen_changes') 
         return(
-        <Flex color={element?'red':'green'} alignItems={'center'} gap='5px'> 
+        <Flex fontSize={'.9em'} color={element?'red':'green'} alignItems={'center'} gap='5px'> 
             <Icon as={element?FaExclamationCircle:FaCheckCircle} />
             <Text>{element?t('NotRead'):t('Any')}</Text>
         </Flex>)
@@ -111,20 +111,20 @@ const CellStyle = ({column, element}:{column:string, element:any}) => {
     else if (column === 'created_at' || column === 'updated_at' || column === 'solved_at' || column === 'closed_at') {
         return(
         <Tooltip  label={timeStampToDate(element as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='0rem' fontSize='.8em' p='6px'> 
-            <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(element as string, t_formats)}</Text>
+            <Text fontSize={'.9em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(element as string, t_formats)}</Text>
         </Tooltip>)
     }
-    else if (column === 'deletion_date'  && typeof element === 'string' ) return <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeStampToDate(element, t_formats)}</Text>
+    else if (column === 'deletion_date'  && typeof element === 'string' ) return <Text fontSize={'.9em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeStampToDate(element, t_formats)}</Text>
     else if (column === 'channel_type') {
         return(
-        <Flex gap='7px' alignItems={'center'}>
+        <Flex fontSize={'.9em'} gap='7px' alignItems={'center'}>
             <Icon color='gray.600' as={typeof element === 'string' && element in logosMap ?logosMap[element as Channels][0]:FaInfoCircle}/>
             <Text >{t(element as string)}</Text>
          </Flex>)
     }     
-    else if (column === 'call_duration') return ( <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element?t('Duration', {seconds:element}):''}</Text>)
+    else if (column === 'call_duration') return ( <Text fontSize={'.9em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element?t('Duration', {seconds:element}):''}</Text>)
     
-    else return ( <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element}</Text>)
+    else return ( <Text fontSize={'.9em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element}</Text>)
 }
 
 //MAIN FUNCTION
@@ -409,7 +409,7 @@ function ConversationsTable({socket}:{socket:any}) {
                                         {auth.authData.views.private_views.map((view, index) => {
                                             const isSelected = selectedView.index === index && selectedView.type === 'private'
                                             return(
-                                                <Flex gap='10px'  bg={isSelected?'white':'transparent'}  transition={isSelected?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}    boxShadow={isSelected ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''} borderWidth={'1px'} borderColor={isSelected ? 'gray.200':'transparent'} justifyContent='space-between' key={`shared-view-${index}`} onClick={() => {if (!isRetrievingData.current) setSelectedView({index:index, type:'private', name:(view?.name || '')}); localStorage.setItem('currentView', JSON.stringify({index:index, type:'shared', name:view.name}))}} _hover={{bg:isSelected?'white':'brand.gray_2'}}  fontWeight={isSelected? 'medium':'normal'}fontSize={'.9em'} cursor={'pointer'} borderRadius={'.5rem'} p='8px'>
+                                                <Flex gap='10px'  bg={isSelected?'white':'transparent'}  transition={isSelected?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}    boxShadow={isSelected ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''} borderWidth={'1px'} borderColor={isSelected ? 'gray.200':'transparent'} justifyContent='space-between' key={`shared-view-${index}`} onClick={() => {if (!isRetrievingData.current) setSelectedView({index:index, type:'private', name:(view?.name || '')}); localStorage.setItem('currentView', JSON.stringify({index:index, type:'shared', name:view.name}))}} _hover={{bg:isSelected?'white':'brand.gray_2'}}  fontWeight={isSelected? 'medium':'normal'}fontSize={'.9em'} cursor={'pointer'} borderRadius={'.5rem'} p='6px'>
                                                     <Text  transition={'transform .1s ease-in-out'}   transformOrigin="left center" transform={isSelected?'scale(1.02)':'scale(1)'} whiteSpace={'nowrap'} textOverflow={'ellipsis'}   overflow={'hidden'}>{view.name}</Text>
                                                     <Text>{auth.authData.views?.number_of_conversations_per_private_view?.[index] || 0}</Text>
                                                 </Flex>
@@ -429,7 +429,7 @@ function ConversationsTable({socket}:{socket:any}) {
                                         {auth.authData.views.shared_views.map((view, index) => {
                                         const isSelected = selectedView.index === index && selectedView.type === 'shared'
                                         return(
-                                            <Flex gap='10px' bg={isSelected?'white':'transparent'}  transition={isSelected?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}   boxShadow={isSelected ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''} borderWidth={'1px'} borderColor={isSelected ? 'gray.200':'transparent'} justifyContent='space-between' key={`shared-view-${index}`} onClick={() => {if (!isRetrievingData.current) setSelectedView({index:index, type:'shared', name:(view?.name || '')}); localStorage.setItem('currentView', JSON.stringify({index:index, type:'shared', name:view.name}))}} _hover={{bg:isSelected?'white':'brand.gray_2'}}fontWeight={isSelected? 'medium':'normal'}fontSize={'.9em'} cursor={'pointer'} borderRadius={'.5rem'} p='8px'>
+                                            <Flex gap='10px' bg={isSelected?'white':'transparent'}  transition={isSelected?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}   boxShadow={isSelected ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''} borderWidth={'1px'} borderColor={isSelected ? 'gray.200':'transparent'} justifyContent='space-between' key={`shared-view-${index}`} onClick={() => {if (!isRetrievingData.current) setSelectedView({index:index, type:'shared', name:(view?.name || '')}); localStorage.setItem('currentView', JSON.stringify({index:index, type:'shared', name:view.name}))}} _hover={{bg:isSelected?'white':'brand.gray_2'}}fontWeight={isSelected? 'medium':'normal'}fontSize={'.9em'} cursor={'pointer'} borderRadius={'.5rem'} p='6px'>
                                                 <Text  transition={'transform .1s ease-in-out'}   transformOrigin="left center" transform={isSelected?'scale(1.02)':'scale(1)'} whiteSpace={'nowrap'} textOverflow={'ellipsis'}   overflow={'hidden'}>{view.name}</Text>
                                                 <Text>{auth.authData.views?.number_of_conversations_per_shared_view?.[index] || 0}</Text>
                                             </Flex>
@@ -441,7 +441,7 @@ function ConversationsTable({socket}:{socket:any}) {
                         </Flex>
                         <Box px='1vw'>
                             
-                            <Flex gap='10px' color='red' boxShadow={selectedView.type === 'deleted' ?'0 0 3px 0px rgba(0, 0, 0, 0.1)':''} borderWidth={'1px'} borderColor={selectedView.type === 'deleted' ? 'gray.200':'transparent'} justifyContent='space-between'  onClick={() => {if (!isRetrievingData.current) setSelectedView({index:0, type:'deleted', name:t('Trash')}); localStorage.setItem('currentView', JSON.stringify({index:0, type:'deleted', name:t('Trash')}))}} _hover={{bg:selectedView.type === 'deleted'? 'white':'brand.gray_2'}}  bg={selectedView.type === 'deleted'?'white':'transparent'}   transition={selectedView.type === 'deleted'?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}  fontWeight={selectedView.type === 'deleted'?  'medium':'normal'}fontSize={'.9em'} cursor={'pointer'} borderRadius={'.5rem'} p='8px'>
+                            <Flex gap='10px' color='red' boxShadow={selectedView.type === 'deleted' ?'0 0 3px 0px rgba(0, 0, 0, 0.1)':''} borderWidth={'1px'} borderColor={selectedView.type === 'deleted' ? 'gray.200':'transparent'} justifyContent='space-between'  onClick={() => {if (!isRetrievingData.current) setSelectedView({index:0, type:'deleted', name:t('Trash')}); localStorage.setItem('currentView', JSON.stringify({index:0, type:'deleted', name:t('Trash')}))}} _hover={{bg:selectedView.type === 'deleted'? 'white':'brand.gray_2'}}  bg={selectedView.type === 'deleted'?'white':'transparent'}   transition={selectedView.type === 'deleted'?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}  fontWeight={selectedView.type === 'deleted'?  'medium':'normal'}fontSize={'.9em'} cursor={'pointer'} borderRadius={'.5rem'} p='6px'>
                                 <Flex gap='10px' alignItems={'center'}> 
                                     <Icon boxSize={'15px'} as={HiTrash}/>
                                     <Text mt='2px' transition={'transform .1s ease-in-out'}   transformOrigin="left center" transform={selectedView.type === 'deleted' ?'scale(1.02)':'scale(1)'} whiteSpace={'nowrap'} textOverflow={'ellipsis'}   overflow={'hidden'}>{t('Trash')}</Text>

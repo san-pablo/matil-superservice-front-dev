@@ -26,6 +26,8 @@ const FacebookLoginButton = ({ name, loadDataFunc }: { name: string, loadDataFun
   const { getAccessTokenSilently } = useAuth0()
   const [waitingInfo, setWaitingInfo] = useState<boolean>(false)
   const handleSendNewChannel = async (data: any) => {
+      console.log()
+      
       data['name'] = name
       const response = await fetchData({
         endpoint: `${auth.authData.organizationId}/admin/settings/channels/whatsapp`,

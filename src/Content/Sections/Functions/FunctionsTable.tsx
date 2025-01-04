@@ -1,35 +1,26 @@
 //REACT
-import { useEffect, useRef, useState, lazy } from "react"
+import { useEffect, useRef, useState, lazy, Suspense } from "react"
 import { useAuth } from "../../../AuthContext"
 import { useTranslation } from "react-i18next"
+import { Routes, Route, useNavigate, useLocation } from "react-router-dom"
 import { useSession } from "../../../SessionContext"
-import { useLocation, useNavigate } from "react-router-dom"
 //FETCH DATA
 import fetchData from "../../API/fetchData"
 //FRONT
-import { motion, isValidMotionProp, AnimatePresence } from 'framer-motion'
-import { Text, Box, Flex, Button, Textarea, Skeleton, Tooltip, IconButton, chakra, shouldForwardProp, Icon, Switch, Radio, Spinner } from "@chakra-ui/react"
-//PYTHON CODE EDITOR
-import CodeMirror from "@uiw/react-codemirror"
-import { python } from "@codemirror/lang-python"
-import { oneDark } from "@codemirror/theme-one-dark"
+import { motion, isValidMotionProp } from 'framer-motion'
+import { Text, Box, Flex, Button, Skeleton,chakra, shouldForwardProp, Icon, IconButton } from "@chakra-ui/react"
 //COMPONENTS
-import LoadingIconButton from "../../Components/Reusable/LoadingIconButton"
-import EditText from "../../Components/Reusable/EditText"
-import '../../Components/styles.css'
-//FUNCTIONS
-import copyToClipboard from "../../Functions/copyTextToClipboard"
-import useOutsideClick from "../../Functions/clickOutside"
-import parseMessageToBold from "../../Functions/parseToBold"
-//ICONS
-import { IconType } from "react-icons"
-
-import { FaPlus, FaCircleExclamation ,FaCircleQuestion, FaCircleDot, FaCode  } from "react-icons/fa6"
+ import '../../Components/styles.css'
+import { FaPlus, FaCircleDot, FaChartSimple, FaEye } from "react-icons/fa6"
 //TYPING
-import { FunctionsData, FunctionTableData, ConfigProps } from "../../Constants/typing"
+import { FunctionTableData } from "../../Constants/typing"
 import { useAuth0 } from "@auth0/auth0-react"
 //COMPONENTS
 const Function = lazy(() => import('./Function'))
+const FunctionsStats = lazy(() => import('./FunctionsStats'))
+const Secrets = lazy(() => import('./Secrets'))
+
+
   
 const tryData = {is_active:false, uuid:'', icon:'',name:'Hola', description:'Hola'}
 
@@ -84,10 +75,10 @@ const FunctionsTable = () => {
     }, [text, functionsData])
 
 
-    const functionsWidth = hideFunctions ? 0 : 300
-    const functionBoxWidth = `calc(100vw - 55px - ${hideFunctions ? functionsWidth:0}px)`
+    const functionsWidth = hideFunctions ? 0 : 260
+    const functionBoxWidth = `calc(100vw - 55px - ${functionsWidth}px)`
 
-    console.log(functionBoxWidth)
+    
     return (<> 
 
         <Flex position={'relative'} width={'calc(100vw - 55px)'} bg='brand.hover_gray' height={'100vh'}> 
@@ -95,19 +86,29 @@ const FunctionsTable = () => {
             <MotionBox initial={{ width: functionsWidth  }} animate={{ width: functionsWidth}} exit={{ width: functionsWidth }} transition={{ duration: '.2' }}  
                 width={functionsWidth}    overflow={'hidden'} >
 
-                <Flex bg='brand.hover_gray' px='1vw' w='300px' zIndex={100} h='100vh' gap='20px' py='2vh' flexDir={'column'} justifyContent={'space-between'} borderRightWidth={'1px'} borderRightColor='gray.200' >
+                <Flex bg='brand.hover_gray' px='1vw' w='260px' zIndex={100} h='100vh'  py='2vh' flexDir={'column'} justifyContent={'space-between'} borderRightWidth={'1px'} borderRightColor='gray.200' >
                     <Box> 
-                        <Text mb='1vh' fontWeight={'medium'} fontSize={'1.2em'}>{t('Functions')}</Text>
-                        <EditText value={text} setValue={(value) => setText(value)} searchInput={true}/>
-                    </Box>
+                        <Flex  alignItems={'center'} justifyContent={'space-between'}> 
+                            <Text  fontWeight={'medium'} fontSize={'1.2em'}>{t('Functions')}</Text>
+                            <IconButton boxShadow={'0 0 7px 0px rgba(0, 0, 0, 0.25)'} bg='white' _hover={{bg:'brand.gray_2', color:'brand.text_blue'}} variant={'common'} icon={<FaPlus size={'16px'}/>} aria-label="create-function" size='xs'  onClick={() => navigate('/functions/function/new')}/>
+                        </Flex>
+                        <Box h='1px' w='100%' bg='gray.300' mt='2vh' mb='2vh'/>
+
+                        <Flex gap='10px' alignItems={'center'}  bg={location.endsWith('functions')?'white':'transparent'}  transition={location.endsWith('functions')?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}    boxShadow={location.endsWith('functions') ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''} borderWidth={'1px'} borderColor={location.endsWith('functions') ? 'gray.200':'transparent'}  onClick={() => navigate('/functions')} _hover={{bg:location.endsWith('functions')?'white':'brand.gray_2'}}  fontWeight={location.endsWith('functions')? 'medium':'normal'}fontSize={'.9em'} cursor={'pointer'} borderRadius={'.5rem'} p='6px'>
+                            <Icon as={FaChartSimple}/>
+                            <Text transition={'transform .1s ease-in-out'}   transformOrigin="left center" transform={location.endsWith('functions')?'scale(1.02)':'scale(1)'} whiteSpace={'nowrap'} textOverflow={'ellipsis'}   overflow={'hidden'}>{t('Stats')}</Text>
+                         </Flex>
+                        <Flex gap='10px' alignItems={'center'}  bg={location.endsWith('functions')?'white':'transparent'}  transition={location.endsWith('functions')?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}    boxShadow={location.endsWith('functions') ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''} borderWidth={'1px'} borderColor={location.endsWith('secrets') ? 'gray.200':'transparent'}  onClick={() => navigate('secrets')} _hover={{bg:location.endsWith('functions')?'white':'brand.gray_2'}}  fontWeight={location.endsWith('functions')? 'medium':'normal'}fontSize={'.9em'} cursor={'pointer'} borderRadius={'.5rem'} p='6px'>
+                            <Icon as={FaEye}/>
+                            <Text transition={'transform .1s ease-in-out'}   transformOrigin="left center" transform={location.endsWith('functions')?'scale(1.02)':'scale(1)'} whiteSpace={'nowrap'} textOverflow={'ellipsis'}   overflow={'hidden'}>{t('Secrets')}</Text>
+                         </Flex>
+
+                     </Box>
+
+
                     <Box ref={scrollRef} flex='1' > 
                         {functionsData?.length === 0 ? 
-                            <Flex height={'100%'} top={0} left={0} width={'100%'} alignItems={'center'} justifyContent={'center'}> 
-                                <Box maxW={'580px'} textAlign={'center'}> 
-                                    <Text fontWeight={'medium'} fontSize={'2em'} mb='2vh'>{t('NoFunctions')}</Text>               
-                                    <Button  variant={'main'} leftIcon={<FaPlus/>}  onClick={() => navigate('/functions/new')}>{t('CreateFunction')}</Button>
-                                </Box>
-                            </Flex> 
+                            <Button w='100%'  mt='2vh' onClick={() => navigate('/functions/function/new')} leftIcon={<FaPlus/>} bg='transparent' borderColor={'gray.300'} borderWidth={'1px'} variant={'common'} size='xs'>{t('CreateFunction')}</Button>
                             :
                             <> 
                                 {(functionsData ? filteredFunctions: [tryData, tryData, tryData])?.map((func, index) => {
@@ -115,10 +116,11 @@ const FunctionsTable = () => {
 
                                     return (
                                     <Skeleton key={`function-${index}`} isLoaded={functionsData !== null} style={{borderRadius:'.5rem'}}> 
-                                        <Flex gap='10px' alignItems={'center'} bg={isSelected?'white':'transparent'}  transition={isSelected?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}    boxShadow={isSelected ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''} borderWidth={'1px'} borderColor={isSelected ? 'gray.200':'transparent'} key={`shared-view-${index}`} onClick={() => navigate(func.uuid)} _hover={{bg:isSelected?'white':'brand.gray_2'}}  fontWeight={isSelected? 'medium':'normal'}fontSize={'.9em'} cursor={'pointer'} borderRadius={'.5rem'} p='8px'>
+                                        <Flex gap='10px' alignItems={'center'}  bg={isSelected?'white':'transparent'}  transition={isSelected?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}    boxShadow={isSelected ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''} borderWidth={'1px'} borderColor={isSelected ? 'gray.200':'transparent'} key={`shared-view-${index}`} onClick={() => navigate(func.uuid)} _hover={{bg:isSelected?'white':'brand.gray_2'}}  fontWeight={isSelected? 'medium':'normal'}fontSize={'.9em'} cursor={'pointer'} borderRadius={'.5rem'} p='6px'>
                                             <Icon color={func?.is_active?'#68D391':'#ECC94B'} as={FaCircleDot}/>
-                                            <Text transition={'transform .1s ease-in-out'}   transformOrigin="left center" transform={isSelected?'scale(1.02)':'scale(1)'} whiteSpace={'nowrap'} textOverflow={'ellipsis'}   overflow={'hidden'}>{func.name}</Text>
-                                        </Flex>
+
+                                             <Text transition={'transform .1s ease-in-out'}   transformOrigin="left center" transform={isSelected?'scale(1.02)':'scale(1)'} whiteSpace={'nowrap'} textOverflow={'ellipsis'}   overflow={'hidden'}>{func.name}</Text>
+                                         </Flex>
                                     </Skeleton>)
                                 })}
                         </>
@@ -129,7 +131,14 @@ const FunctionsTable = () => {
 
             <MotionBox  initial={{ width: functionBoxWidth }} animate={{ width: functionBoxWidth,}} exit={{ width: functionBoxWidth, }}  overflowY={'scroll'}  transition={{ duration: '.2'}} 
                 zIndex={100} height={'100vh'} overflowX={'hidden'}>
-                <Function setHideFunctions={setHideFunctions}/>
+                <Suspense fallback={<></>}>    
+                        <Routes >
+                            <Route path="/" element={<FunctionsStats  setHideFunctions={setHideFunctions}/>}/>
+                            <Route path="/secrets" element={<Secrets  setHideFunctions={setHideFunctions}/>}/>
+                            <Route path="/function/*" element={<Function setHideFunctions={setHideFunctions}/>}/>
+                        </Routes>
+                    </Suspense>
+
             </MotionBox>
         </Flex>
 

@@ -89,7 +89,7 @@ const EditText  = ({ value = '', setValue, hideInput = true, maxLength, regex, t
             height={'auto'}
             placeholder={placeholder}
             size={size}
-            minH={'32px'}
+            minH={'70px'}
             maxH={'300px'}
             rows={1}
             resize={'none'}

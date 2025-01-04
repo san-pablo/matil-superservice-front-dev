@@ -37,7 +37,7 @@ const CellStyle = ({ column, element }:{column:string, element:any}) => {
     if (column === 'created_at' || column === 'last_interaction_at' )  
     return(
         <Tooltip  label={timeStampToDate(element as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
-            <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(element as string, t_formats)}</Text>
+            <Text fontSize={'.9em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(element as string, t_formats)}</Text>
         </Tooltip>)
     else if (column === 'labels') {
         return(<> 
@@ -51,7 +51,7 @@ const CellStyle = ({ column, element }:{column:string, element:any}) => {
             </Flex>}
         </>)
     }
-    else return ( <Text whiteSpace={'nowrap'} fontWeight={column === 'name'?'medium':'normal' } textOverflow={'ellipsis'} overflow={'hidden'}>{element === ''?'-':element}</Text>)
+    else return ( <Text fontSize={'.9em'} whiteSpace={'nowrap'} fontWeight={column === 'name'?'medium':'normal' } textOverflow={'ellipsis'} overflow={'hidden'}>{element === ''?'-':element}</Text>)
 }
 
 //MAIN FUNCTION

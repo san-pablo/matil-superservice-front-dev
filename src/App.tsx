@@ -71,7 +71,10 @@ const theme = extendTheme({
         }
       },
       Button: { 
-          baseStyle: {fontWeight:600, bg:'#f1f1f1', _hover:{bg:'#e8e8e8'}},
+          baseStyle: {fontWeight:600, bg:'#f1f1f1', _hover:{bg:'#e8e8e8'}, height:'30px'},
+          sizes: {
+            sm: {h: '28px', minW: '28px',  fontSize: '.85em', px: '8px'},
+          },
           variants:{
             main:{bg:'#222', _hover:{bg:'blackAlpha.800'}, color:'white',   _disabled: {bg: '#222', color: 'white', pointerEvents: 'none', cursor: 'not-allowed',opacity: 0.6}},
             delete:{fontWeight:500, bg:'red.100', color:'red.600', _hover:{bg:'red.200'}},

@@ -1,5 +1,5 @@
 //REACT
-import { useEffect, useRef, useState, useMemo, Fragment, ReactNode, Dispatch, SetStateAction } from "react"
+import { useEffect, useRef, useState, useMemo, Fragment, ReactNode, Dispatch, SetStateAction, ReactElement } from "react"
 import { useAuth } from "../../../AuthContext"
 import { useTranslation } from "react-i18next"
 import { useLocation, useNavigate } from "react-router-dom"
@@ -7,7 +7,7 @@ import { useLocation, useNavigate } from "react-router-dom"
 import fetchData from "../../API/fetchData"
 //FRONT
 import { motion, isValidMotionProp, AnimatePresence } from 'framer-motion'
-import { Text, Box, Flex, Button, Skeleton, Tooltip, IconButton, chakra, shouldForwardProp, Icon, Switch, Spinner } from "@chakra-ui/react"
+import { Text, Box, Flex, Button, Skeleton, Tooltip, IconButton, chakra, shouldForwardProp, Icon, Switch, Spinner, Portal } from "@chakra-ui/react"
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 //PYTHON CODE EDITOR
 import CodeMirror from "@uiw/react-codemirror"
@@ -17,7 +17,7 @@ import { oneDark } from "@codemirror/theme-one-dark"
 import LoadingIconButton from "../../Components/Reusable/LoadingIconButton"
 import EditText from "../../Components/Reusable/EditText"
 import ConfirmBox from "../../Components/Reusable/ConfirmBox"
-import CustomSelect from "../../Components/Reusable/CustomSelect"
+import SectionSelector from "../../Components/Reusable/SectionSelector"
 import VariableTypeChanger from "../../Components/Reusable/VariableTypeChanger"
 import CollapsableSection from "../../Components/Reusable/CollapsableSection"
 import '../../Components/styles.css'
@@ -27,18 +27,18 @@ import useOutsideClick from "../../Functions/clickOutside"
 import parseMessageToBold from "../../Functions/parseToBold"
 //ICONS
 import { IconType } from "react-icons"
-import { FaPlus, FaCircleExclamation ,FaCircleQuestion, FaCircleDot, FaCode  } from "react-icons/fa6"
+import { FaPlus, FaEye } from "react-icons/fa6"
 import { FaCheckCircle, FaTimesCircle, FaEdit } from "react-icons/fa"
-import { IoIosArrowDown, IoIosArrowBack,  } from "react-icons/io"
-import { IoWarning, IoSettingsSharp } from "react-icons/io5"
-import { BsTrash3Fill, BsClipboard2Check } from "react-icons/bs"
+import { IoIosArrowDown,  } from "react-icons/io"
+import { IoWarning, IoChatbubbleEllipses } from "react-icons/io5"
+import {  BsClipboard2Check, BsThreeDots, BsThreeDotsVertical } from "react-icons/bs"
 import { RxCross2 } from "react-icons/rx"
 import { PiSidebarSimpleBold } from "react-icons/pi"
 import { AiOutlineCheckCircle, AiOutlineCalendar } from "react-icons/ai"
-import { MdOutlineFormatListBulleted } from "react-icons/md"
 import { FiHash, FiType } from "react-icons/fi"
-import { TbMathFunction } from "react-icons/tb"
 import { HiTrash } from "react-icons/hi2"
+import { TbCopyPlusFilled, TbMathFunction } from "react-icons/tb"
+import { MdOutlineFormatListBulleted } from "react-icons/md"
 //TYPING
 import { FunctionsData, FunctionTableData, ConfigProps } from "../../Constants/typing"
 import { useAuth0 } from "@auth0/auth0-react"
@@ -88,6 +88,9 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
     }
 
     
+    //OPEN OPTIONS
+    const [openOptions, setOpenOptions] = useState<boolean>(false)
+
     //SHOW NOT SAVED DATA WARNING
     const [showNoSaveWarning, setShowNoSaveWarning] = useState<boolean>(false)
 
@@ -114,8 +117,6 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
           else return [...prevSections, section]
         })
     }
-
-    
 
     //FUNCTION DATA
     const functionDataRef = useRef<FunctionsData | null>(null)
@@ -174,7 +175,6 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
             const updatedFunction = { ...prev as FunctionsData }
         
             const list = updatedFunction[keyToEdit as 'parameters']
-            
             if (keyToEdit === 'parameters' || keyToEdit === 'channels_basic_data') {
                 if (type === 'add') {
                   list.push(value)
@@ -313,17 +313,17 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
         const filteredChannels = (internalChannelsData || []).filter(internalChannel => {return !functionData?.matilda_configurations_uuids.some(basicChannel => basicChannel === internalChannel.uuid)})
 
         return (<> 
-            <Box p='20px' > 
-                <Text  fontSize='1.4em' fontWeight={'medium'}>{t('AddConfig')}</Text>
+            <Box p='15px' > 
+                <Text fontWeight={'medium'}>{t('AddConfig')}</Text>
             </Box>
-            <Box p='20px'  overflow={'scroll'} flexDir={'row-reverse'}  borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+            <Box p='15px'  overflow={'scroll'} flexDir={'row-reverse'}  borderTopWidth={'1px'} borderTopColor={'gray.200'}>
                 {internalChannelsData === null? <Flex justifyContent={'center'}> <Spinner/></Flex>:
                 <Skeleton isLoaded={internalChannelsData !== null}> 
-                    {filteredChannels?.length === 0 ? <Text>{t('NoAvailableConfigs')}</Text>:<>
+                    {filteredChannels?.length === 0 ? <Text fontSize={'.9em'} color='gray.600'>{t('NoAvailableConfigs')}</Text>:<>
                     {filteredChannels.map((cha, index) => (
-                        <Box cursor={'pointer'} _hover={{bg:'brand.blue_hover'}} p='10px' borderRadius={'.7rem'} key={`add-channel-${index}`} onClick={() => addChannel(cha)} > 
-                            <Text   minWidth={0}  fontWeight={'medium'}  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{cha.name}</Text>
-                            <Text  color='gray.600'fontSize={'.9em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{cha.description}</Text>
+                        <Box cursor={'pointer'} _hover={{bg:'brand.gray_2'}} p='10px' borderRadius={'.5rem'} key={`add-channel-${index}`} onClick={() => addChannel(cha)} > 
+                            <Text  fontSize={'.9em'}  minWidth={0}  fontWeight={'medium'}  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{cha.name}</Text>
+                            <Text  color='gray.600'fontSize={'.8em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{cha.description}</Text>
                         </Box>
                     ))}</>}
                 </Skeleton>
@@ -347,6 +347,38 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
         if (JSON.stringify(functionData) !== JSON.stringify(functionDataRef.current) && functionData?.code !== '' && pythonRegex.test(functionData?.name || '')) setShowNoSaveWarning(true)
         else navigate('/functions')
     }   
+
+    //EDIT ACTIONS BUTTON
+    const ActionsButton = () => {
+
+        const [showList, setShowList] = useState<boolean>(false)
+        const buttonRef = useRef<HTMLButtonElement>(null)
+        const boxRef = useRef<HTMLDivElement>(null)
+        useOutsideClick({ref1:buttonRef, ref2:boxRef, onOutsideClick:setShowList})
+
+        return(
+            <Flex position={'relative'} flexDir='column' alignItems={'end'}>  
+                <IconButton ref={buttonRef}  aria-label="open-options" variant={'common'} size='sm' icon={<BsThreeDots size={'18px'}/>} onClick={() =>setShowList(true)}/>
+                <AnimatePresence> 
+                    {showList &&  
+                        <Portal> 
+                            <MotionBox ref={boxRef} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.95 }}  transition={{ duration: '0.1', ease: 'easeOut'}}
+                                style={{ transformOrigin: 'top' }} minW={buttonRef.current?.getBoundingClientRect().width } right={window.innerWidth - (buttonRef.current?.getBoundingClientRect().right || 0)} mt='5px'  top={buttonRef.current?.getBoundingClientRect().bottom }  position='absolute' bg='white' p='5px'  zIndex={1000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.200' borderWidth='1px' borderRadius='.5rem'>
+                            
+                               <Flex fontSize={'.8em'} p='7px' gap='10px'  borderRadius='.5rem'  cursor={'pointer'} onClick={() => {setShowList(false)}} alignItems={'center'} _hover={{bg:'brand.gray_2'}}>
+                                    <Icon color='gray.600' as={TbCopyPlusFilled}/>
+                                    <Text whiteSpace={'nowrap'}>{t('Double')}</Text>
+                                </Flex>
+                                <Flex  fontSize={'.8em'}  p='7px' gap='10px'  borderRadius='.5rem'  color='red' cursor={'pointer'} onClick={() => {setShowConfirmDelete(true);setShowList(false)}} alignItems={'center'} _hover={{bg:'red.100'}}>
+                                    <Icon as={HiTrash}/>
+                                    <Text whiteSpace={'nowrap'}>{t('Delete')}</Text>
+                                </Flex>
+                            </MotionBox >
+                        </Portal>}
+                </AnimatePresence>
+            </Flex>
+        )
+    }
 
     const memoizedNoSavedWarning = useMemo(() => (<> 
         <ConfirmBox setShowBox={setShowNoSaveWarning} > 
@@ -378,7 +410,10 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
         </ConfirmBox>
     </>), [showAddChannels])
 
-     const sendBoxWidth = `calc(100vw - 55px - ${clientBoxWidth}px)`
+    //MEMOIZED ACTIONS BUTTON
+    const memoizedActionsButton = useMemo(() => (<ActionsButton/>), [])
+
+    const sendBoxWidth = `calc(100vw - 55px - ${clientBoxWidth}px)`
 
     //FRONT
     return(<>
@@ -390,36 +425,36 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
         <Flex flex='1'  width={'100%'} height={'100vh'} top={0} left={0} bg='white'>
             <MotionBox   initial={{ width: sendBoxWidth  }} animate={{ width: sendBoxWidth}} exit={{ width: sendBoxWidth }} transition={{ duration: '.2' }}  
             width={sendBoxWidth} overflowY={'hidden'}  borderRightWidth={'1px'} borderRightColor='gray.200' >
-                <Flex px='1vw' gap='2vw' height={'60px'} alignItems={'center'} justifyContent={'space-between'}  borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
+                <Flex px='1vw' gap='2vw' height={'50px'} alignItems={'center'} justifyContent={'space-between'}  borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
 
                     <Flex flex={1} gap='20px' alignItems={'center'}> 
                         <IconButton  aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'20px'}/>} onClick={() =>setHideFunctions(prev => (!prev))}/>
-
                         <EditText  regex={pythonRegex} placeholder={t('name')}  value={functionData?.name} setValue={(value) => setFunctionData(prev => ({...prev as FunctionsData, name:value}))} className={'title-textarea-collections'}/>
                     </Flex>
                     
-                    <Flex gap='15px'>
-                        {selectedUuid !== '-1' && <Button fontSize={'.9em'} leftIcon={<BsTrash3Fill/>} variant={'delete'}  size='sm' onClick={() => setShowConfirmDelete(true)}>{t('Delete')}</Button>}
-                        <Button fontSize={'.9em'} variant={'common'} size='sm' onClick={() => setShowTestFunction(true)}>{t('Test')}</Button>
-                        <Button fontSize={'.9em'} variant={'main'} size='sm' isDisabled={JSON.stringify(functionData) === JSON.stringify(functionDataRef.current) || functionData?.code === '' || !pythonRegex.test(functionData?.name || '')} onClick={handleEditFunctions}>{waitingEdit?<LoadingIconButton/>:selectedUuid !== '-1'?t('SaveChanges'):t('CreateFunction')}</Button>
+                    <Flex gap='10px'>                        
+                        {selectedUuid !== '-1' && memoizedActionsButton}
+                        <Button variant={'common'} size='sm' leftIcon={<IoChatbubbleEllipses/>} onClick={() => setShowTestFunction(true)}>{t('Test')}</Button>
+                         <Button  variant={'main'} size='sm' isDisabled={JSON.stringify(functionData) === JSON.stringify(functionDataRef.current) || functionData?.code === '' || !pythonRegex.test(functionData?.name || '')} onClick={handleEditFunctions}>{waitingEdit?<LoadingIconButton/>:selectedUuid !== '-1'?t('SaveChanges'):t('CreateFunction')}</Button>
                         {clientBoxWidth === 0 && <IconButton  aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'20px'}/>} onClick={() =>setClientBoxWidth(400)}/>}
                     </Flex>
+                    
                 </Flex>
                 <Flex width={'100%'} height={'100%'} justifyContent={'center'} overflow={'scroll'} >
                     <Box  width={'100%'} height={'100%'}  >
                         <Skeleton isLoaded={functionData !== null} style={{overflow:'hidden'}}> 
-                            <CodeMirror value={functionData?.code} height={`${window.innerHeight - 60}px`} extensions={[python()]} onChange={(value) => setFunctionData(prev => ({...prev as FunctionsData, code:value}))} theme={oneDark}/>
+                            <CodeMirror value={functionData?.code} height={`${window.innerHeight - 50}px`} extensions={[python()]} onChange={(value) => setFunctionData(prev => ({...prev as FunctionsData, code:value}))} theme={oneDark}/>
                         </Skeleton>
                     </Box>
                 </Flex>
             </MotionBox>
 
-            <MotionBox width={clientBoxWidth + 'px'}  whiteSpace={'nowrap'} initial={{ width: clientBoxWidth + 'px' }} animate={{ width: clientBoxWidth + 'px' }} exit={{ width: clientBoxWidth + 'px' }} transition={{ duration: '.2'}}> 
-                <Flex  p='1vw'  height={'60px'} justifyContent={'space-between'} alignItems={'center'} borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
+            <MotionBox display={'flex'} flexDir={'column'} h='100vh' width={clientBoxWidth + 'px'}  whiteSpace={'nowrap'} initial={{ width: clientBoxWidth + 'px' }} animate={{ width: clientBoxWidth + 'px' }} exit={{ width: clientBoxWidth + 'px' }} transition={{ duration: '.2'}}> 
+                <Flex  p='1vw'  height={'50px'} justifyContent={'space-between'} alignItems={'center'} borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
                     <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('FunctionData')}</Text>
                     <IconButton aria-label="close-tab" variant={'common'} bg='transparent' size='sm' icon={<RxCross2 size={'20px'}/>} onClick={() =>setClientBoxWidth(0)}/>
                 </Flex>
-                <Box p='1vw' pb='10vh' height={'100%'} overflow={'scroll'}> 
+                <Box flex='1' p='1vw' pb='10vh' height={'100%'} overflow={'scroll'}> 
                     <Text mb='.5vh' fontWeight={'semibold'}  fontSize={'.9em'}>{t('Description')}</Text>
                     <EditText  maxLength={2000} hideInput={false} isTextArea placeholder={`${t('Description')}...`}  value={functionData?.description} setValue={(value) => setFunctionData((prev) => ({...prev as FunctionsData, description:value}))}/>
 
@@ -432,10 +467,9 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
                                                 {(functionData?.parameters || []).map((param, index) => (
                                                     <Draggable  key={`column-view-${index}`} draggableId={`column-view-${index}`} index={index}>
                                                         {(provided, snapshot) => (
-                                                            <Box  ref={provided.innerRef}  {...provided.draggableProps} {...provided.dragHandleProps}     >
+                                                            <Box mt='1vh' boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.1)'} borderWidth={'1px'} borderColor={'gray.200'} borderRadius={'.5rem'} p='10px' ref={provided.innerRef}  {...provided.draggableProps} {...provided.dragHandleProps}     >
                                                                 <ParameterBox variableData={param} index={index} setIndex={setSelectedParameter} editFunctionData={editFunctionData}/>
-                                                                {index !== (functionData?.parameters?.length || 0) - 1 && <Box height={'1px'} width={'100%'} bg='gray.200' mt='1vh' mb='1vh'/>}
-                                                            </Box>)}
+                                                             </Box>)}
                                                     </Draggable>
                                                 ))}
                                                 {provided.placeholder}
@@ -453,10 +487,11 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
                             <Switch isChecked={functionData?.is_active}  onChange={(e) => setFunctionData(prev => ({...prev as FunctionsData, is_active:e.target.checked}))} />
                             <Text mt='.5vh' fontSize={'.9em'} fontWeight={'medium'} >{t('AvailableTilda')}</Text>
                         </Flex>
-                        <Text color='gray.600'whiteSpace='pre-wrap' fontSize={'.8em'}>{t('AvailableTildaDes')}</Text>
-                    </CollapsableSection>
+                        <Text color='gray.600' whiteSpace='pre-wrap' fontSize={'.8em'}>{t('AvailableTildaDes')}</Text>
 
-                    <CollapsableSection mt='3vh' sectionsMap={{'Parameters':t('Parameters'), 'TildaActive':t('TildaActive'), 'ActiveChannels':t('ActiveChannels')}} section={'ActiveChannels'} isExpanded={sectionsExpanded.includes('ActiveChannels')} onSectionExpand={onSectionExpand}> 
+                         {functionData?.is_active && <>
+                        <Text mt='3vh' fontWeight={'medium'} fontSize={'.9em'}>{t('ActiveChannels')}</Text>
+
                         <Skeleton isLoaded={functionData !== null && internalChannelsData !== null}> 
                             {(functionData?.matilda_configurations_uuids || []).map((cha, index) => (
                                 <Flex  gap='10px' mt='12px' key={`channel-${index}`} alignItems={'start'}> 
@@ -471,7 +506,12 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
                         </Skeleton>
                         <Button variant={'common'} isDisabled={functionData?.uuid === '-1'} leftIcon={<FaPlus/>} onClick={() => setShowAddChannels(true)} size='xs' mt='2vh'>{t('AddConfig')}</Button>
                         {functionData?.uuid === '-1' && <Text mt='1vh' color='red' fontSize={'.8em'}>{t('SaveChannelsWarning')}</Text>}
+                        
+                        </>}
+                    
                     </CollapsableSection>
+
+                
                 </Box>
             </MotionBox>
         </Flex>
@@ -524,10 +564,12 @@ export default Function
 const CreateVariable = ({variableData,  index, setIndex, editFunctionData}:{variableData:parameterType | undefined, index:number, setIndex:Dispatch<SetStateAction<number | null>>, editFunctionData:(keyToEdit:'parameters' ,value:any, type?:'add' | 'delete' | 'edit', index?:number, secondKey?:'name' | 'type' | 'default' | 'required' | 'confirm' | 'is_active' | '' ) => void }) => {
 
     const { t } = useTranslation('settings')
-    const variablesMap:{[key:string]:string} = {'boolean':t('bool'), 'integer':t('int'), 'number':t('float'), 'string':t('str'), 'timestamp':t('timestamp'), 'list':t('list')}
+    const variablesMap:{[key:string]:[string, ReactElement]} = {'boolean':[t('bool'), <AiOutlineCheckCircle/>], 'integer':[t('int'), <FiHash/>], 'number':[t('float'), <TbMathFunction/>], 'string':[t('str'), <FiType/>], 'timestamp':[t('timestamp'), <AiOutlineCalendar/>], 'list':[t('list'), <MdOutlineFormatListBulleted/>]}
 
     const [currentVariable, setCurrentVariable] = useState<parameterType>((index === -1 || variableData === undefined)?{name:'', type:'boolean', description:'', default:false, required:false, confirm:false, enum:[]}:variableData)
     const [currentExample, setCurrentExample] = useState<any>('')
+
+    useEffect(() => {setCurrentExample(''), setCurrentVariable((prev) => ({...prev, enum:[], default:''}))}, [currentVariable.type])
 
     const editList = (action:'add' | 'delete', index?:number) => {
         if (action === 'add') {
@@ -541,40 +583,37 @@ const CreateVariable = ({variableData,  index, setIndex, editFunctionData}:{vari
         editFunctionData('parameters', currentVariable, index === -1 ? 'add':'edit', index)
         setIndex(null)
     }
+
     return (<> 
         <Box p='15px' minW={'400px'}>
 
-            <Text fontSize={'.9em'} fontWeight={'medium'} mb='.5vh'>{t('Name')}</Text>
-            <Box w={'350px'}> 
-                <EditText  maxLength={70} hideInput={false}  value={currentVariable.name} placeholder={`${t('Name')}...`} setValue={(value) => setCurrentVariable((prev) => ({...prev, name:value})) }/>
-            </Box>
-            
-            <Text  fontSize={'.9em'} mb='.5vh' mt='1.5vh' fontWeight={'medium'}>{t('Description')}</Text>
-            <Box w={'350px'}> 
-                <EditText  maxLength={70} isTextArea hideInput={false}   value={currentVariable.description} placeholder={`${t('Description')}...`} setValue={(value) => setCurrentVariable((prev) => ({...prev, description:value})) }/>
-            </Box>
-                        
-            <Text fontSize={'.9em'}  mb='.5vh' mt='1.5vh' fontWeight={'medium'}>{t('Type')}</Text>
-            <Box w={'350px'}> 
-                <CustomSelect hide={false} selectedItem={currentVariable.type} setSelectedItem={(value) => setCurrentVariable((prev) => ({...prev, type:value, enum:[], default:null}))} options={Object.keys(variablesMap)} labelsMap={variablesMap}/>
-            </Box>
-            <Text fontSize={'.9em'}  mt='1.5vh' mb='.5vh' fontWeight={'medium'}>{t('DefaultValue')}</Text>
-            <Box w={'350px'}> 
+            <Text fontSize={'.8em'} fontWeight={'medium'} mb='.5vh'>{t('Name')}</Text>
+            <EditText  maxLength={70} hideInput={false}  value={currentVariable.name} placeholder={`${t('Name')}...`} setValue={(value) => setCurrentVariable((prev) => ({...prev, name:value})) }/>
+           
+            <Text  fontSize={'.8em'} mb='.5vh' mt='1.5vh' fontWeight={'medium'}>{t('Description')}</Text>
+            <EditText  maxLength={70} isTextArea hideInput={false}   value={currentVariable.description} placeholder={`${t('Description')}...`} setValue={(value) => setCurrentVariable((prev) => ({...prev, description:value})) }/>
+        
+            <Text fontSize={'.8em'}  mb='.5vh' mt='1.5vh' fontWeight={'medium'}>{t('Type')}</Text>
+            <SectionSelector size='xs' onChange={(value) => setCurrentVariable((prev) => ({...prev, type:value, enum:[], default:null}))} selectedSection={currentVariable.type} sections={Object.keys(variablesMap)} sectionsMap={ variablesMap}/>
+
+            <Text fontSize={'.8em'}  mt='1.5vh' mb='.5vh' fontWeight={'medium'}>{t('DefaultValue')}</Text>
+            <Box maxW={'300px'}> 
                 <VariableTypeChanger customType inputType={currentVariable.type} value={currentVariable.default} setValue={(value) => setCurrentVariable((prev) => ({...prev, default:value}))}/>
             </Box>
-
-            <Text fontSize={'.9em'}   mt='1.5vh' fontWeight={'medium'}>{t('AllowedValues')}</Text>
+            
+            <Text fontSize={'.8em'}   mt='1.5vh' fontWeight={'medium'}>{t('AllowedValues')}</Text>
             <Flex flexWrap="wrap" gap='5px' mt='.5vh' alignItems="center" >
-                {(!currentVariable?.enum || currentVariable?.enum?.length === 0)?<Text fontSize={'.8em'}>{t('NoValues')}</Text>:
+                {(!currentVariable?.enum || currentVariable?.enum?.length === 0)?<Text fontSize={'.75em'}>{t('NoValues')}</Text>:
                 currentVariable.enum.map((variable, index) => (
-                    <Flex key={`vallue-${index}`} borderRadius=".4rem" p='5px' fontSize={'.75em'} alignItems={'center'} m="1" bg='gray.100' shadow={'sm'} borderColor={'gray.300'} borderWidth={'1px'} gap='5px'>
+                    <Flex key={`value-${index}`} borderRadius=".4rem" p='5px' fontSize={'.75em'} alignItems={'center'}  bg='brand.gray_1'  shadow={'sm'} gap='5px'>
                         <Text>{t(variable)}</Text>
                         <Icon as={RxCross2} onClick={() => editList('delete', index)} cursor={'pointer'} />
                     </Flex>
                 ))}
             </Flex>     
+
             <Flex mt='1vh' gap='20px' alignItems={'end'}> 
-                <Box w={'350px'}> 
+                <Box w={'300px'}> 
                     <VariableTypeChanger customType inputType={currentVariable.type} value={currentExample} setValue={(value) => setCurrentExample(value)}/>
                 </Box>
                 <Button isDisabled={currentExample === ''} leftIcon={<FaPlus/>} variant={'common'} size='xs' onClick={() => editList('add')}>{t('Add')}</Button>
@@ -582,12 +621,12 @@ const CreateVariable = ({variableData,  index, setIndex, editFunctionData}:{vari
 
             <Flex mt='3vh' gap='10px'alignItems={'center'}>
                 <Switch isChecked={currentVariable.required} onChange={(e) => setCurrentVariable((prev) => ({...prev, required:e.target.checked}))}/>
-                <Text fontSize={'.9em'}  fontWeight={'medium'}>{t('Required')}</Text>  
+                <Text fontSize={'.8em'}  fontWeight={'medium'}>{t('Required')}</Text>  
             </Flex>  
 
             <Flex mt='3vh' gap='10px'alignItems={'center'}>
                 <Switch isChecked={currentVariable.confirm} onChange={(e) => setCurrentVariable((prev) => ({...prev, confirm:e.target.checked}))}/>
-                <Text fontSize={'.9em'} fontWeight={'medium'}>{t('AskConfirmation')}</Text>  
+                <Text fontSize={'.8em'} fontWeight={'medium'}>{t('AskConfirmation')}</Text>  
             </Flex>  
         </Box>
  
@@ -605,18 +644,18 @@ const ParameterBox = ({variableData,  index, setIndex, editFunctionData}:{variab
     const { t }  = useTranslation('settings')
 
     //MAPPING CONSTANTS
-    const variablesMap:{[key:string]:[string, IconType]} = {'boolean':[t('bool'),AiOutlineCheckCircle ], 'integer':[t('int'), FiHash], 'number':[t('float'), TbMathFunction], 'string':[t('str'), FiType], 'timestamp':[t('timestamp'), AiOutlineCalendar], 'list':[t('list'), MdOutlineFormatListBulleted]}
- 
+    const variablesMap:{[key:string]:[string, string]} = {'boolean': ['bool', 'green'], 'integer': ['int', 'blue'], 'number': ['float', 'purple'], 'string': ['str', 'orange'],        'timestamp': ['timestamp', 'teal'], 'list': ['list', 'red']}
+    
+    //IS HOVERING
+    const [isHovering, setIsHovering] = useState<boolean>(false)
+
     return (
-        <Box position={'relative'}  w={'100%'} cursor={'pointer'} mt={'1.5vh'} >
+        <Box position={'relative'}  w={'100%'} cursor={'pointer'} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} >
+             <Icon opacity={isHovering?1:0} transition={'opacity 0.2s ease-in-out'} pointerEvents={'none'} as={BsThreeDotsVertical} position={'absolute'} left={'-12px'} top={'4px'}/>
+         
             <Flex alignItems={'center'} justifyContent={'space-between'} gap='10px'> 
                 <Flex  gap='5px' alignItems={'center'} >
-                    <Text fontWeight={'medium'}  fontSize={'.9em'} >{variableData.name} <span style={{fontSize:'.7em'}}>({variablesMap[variableData.type][0]})</span></Text>
-                    -
-                    <Flex gap='5px' fontSize={'.8em'} color={variableData?.required?'red':'orange'}justifyContent={'space-between'} alignItems={'center'}>
-                        <Text flex={1}>{variableData?.required?t('RequiredParam'):t('NoRequiredParam')}</Text>
-                        <Icon as={variableData.required?FaCircleExclamation:FaCircleQuestion} />
-                    </Flex>
+                    <Text fontWeight={'medium'}  fontSize={'.9em'}>{variableData.name}{variableData.required ? ':':'?: '} <span style={{color:variablesMap[variableData.type][1]}}>{variablesMap[variableData.type][0]}</span> {variableData.required ? '':'='} <span style={{color:'#2B6CB0'}}>{!variableData.required ? variableData.default === null ? 'null':String(variableData.default):''}</span></Text>
                 </Flex>
                 <Flex gap='5px'> 
                     <IconButton size='xs' variant={'common'} icon={<FaEdit/>}  onClick={() => setIndex(index)} aria-label="edit-param"/>
@@ -624,15 +663,12 @@ const ParameterBox = ({variableData,  index, setIndex, editFunctionData}:{variab
                 </Flex>
             </Flex>
             
-            <Text flex={1} mt='.5vh' whiteSpace='pre-wrap'fontSize={'.8em'} color='gray.600'>{variableData.description === ''?t('NoDescription'):variableData.description }</Text>
-            <Text flex={1} mt='.5vh' fontSize={'.8em'} fontWeight={500} >{t('ConfirmRequest')}: <span > {(variableData.confirm?t('YES'):t('NO')).toLocaleUpperCase()}</span></Text>
-            <Text flex={1} mt='.5vh' fontSize={'.8em'} ><span style={{fontWeight:500}} > {t('DefaultValue')}:</span> {variableData.default?variableData.default:'-'}</Text>
-
+            <Text flex={1} mt='.5vh' whiteSpace={'break-spaces'} fontSize={'.75em'} color='gray.600'>{variableData.description === ''?t('NoDescription'):variableData.description }</Text>
+            
             {variableData.enum && 
             <Flex  mt='.5vh' gap='5px' justifyContent={'space-between'}>
                 <Box flex='1'>
-                    <Text fontSize={'.8em'}  fontWeight={'medium'} flex={1}>{t('AllowedValues')}</Text>
-                    <Text color='gray.600' fontSize={'.8em'} flex={1}>{variableData.enum.length === 0?t('NoValues'):variableData.enum.map((value, index) => (<span key={`value-${index}`}>{t(value)} {index < (variableData?.enum || []).length - 1 && ' - '}</span>))}</Text>
+                    <Text fontSize={'.8em'} flex={1}><span style={{fontWeight:500}}> {t('AllowedValues')}</span> <span style={{color:'#4A5568'}}>{variableData.enum.length === 0?t('NoValues'):variableData.enum.map((value, index) => (<span key={`value-${index}`} >{t(value)} {index < (variableData?.enum || []).length - 1 && ', '}</span>))}</span></Text>
                 </Box>
             </Flex>}
         </Box>
