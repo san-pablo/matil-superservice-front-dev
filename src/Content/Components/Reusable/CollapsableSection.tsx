@@ -2,7 +2,7 @@
 import { ReactNode } from "react"
 //FRONT
 import { Box, Flex, Text } from "@chakra-ui/react"
-import { motion } from 'framer-motion'
+import '../styles.css'
 //ICONS
 import { IoIosArrowDown } from "react-icons/io"
 
@@ -14,9 +14,9 @@ const CollapsableSection = ({ section, isExpanded, onSectionExpand, children, se
                 <Text fontWeight={'semibold'}  fontSize={'.9em'}>{sectionsMap[section]}</Text>
                 <IoIosArrowDown  className={isExpanded ? "rotate-icon-up" : "rotate-icon-down"}/>
             </Flex>
-            <motion.div initial={false} animate={{height:isExpanded?'auto':0, opacity:isExpanded?1:0 }} exit={{height:isExpanded?0:'auto',  opacity:isExpanded?0:1 }} transition={{duration:.2}} style={{overflow:isExpanded?'visible':'hidden'}}>           
-                {children}
-            </motion.div>
+            <div className={`expandable-container ${isExpanded ? 'expanded' : 'collapsed'}`} style={{ overflow: isExpanded ? 'visible' : 'hidden',   transition: isExpanded ?'max-height .2s ease-in-out, opacity 0.2s ease-in-out': 'max-height .2s ease-out, opacity 0.2s ease-out'}}>      
+                      {children}
+            </div>
         </Box>
     )
 }

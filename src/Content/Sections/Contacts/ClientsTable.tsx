@@ -7,7 +7,7 @@ import { useLocation, useNavigate } from "react-router-dom"
 //FETCH DATA
 import fetchData from "../../API/fetchData"
 //FRONT
-import { motion, isValidMotionProp } from 'framer-motion'
+import { motion, isValidMotionProp, AnimatePresence } from 'framer-motion'
 import { Flex, Box, Text, Button, IconButton, Skeleton, Tooltip, chakra, shouldForwardProp } from '@chakra-ui/react'
 //COMPONENTS
 import EditText from "../../Components/Reusable/EditText"
@@ -51,7 +51,7 @@ const CellStyle = ({ column, element }:{column:string, element:any}) => {
 
     if (column === 'created_at' ||  column === 'last_interaction_at' )  
     return(
-        <Tooltip label={timeStampToDate(element as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
+        <Tooltip label={timeStampToDate(element as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='.8em' p='6px'> 
             <Text whiteSpace={'nowrap'} fontSize={'.9em'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(element as string, t_formats)}</Text>
         </Tooltip>)
     else if (column === 'labels') {
@@ -104,7 +104,8 @@ function ClientsTable ({socket}:{socket:any}) {
 
     //EXPAND CLIENT
     const [expandClient, setExpandClient] = useState<boolean>(false)
-    useEffect(() => {setExpandClient(location.split('/')[location.split('/').length - 1] === 'clients')},[location])
+    useEffect(() => {setExpandClient(location.split('/')[location.split('/').length - 2] !== 'clients')},[location])
+
 
     //BOOLEAN FOR WAIT THE INFO
     const [waitingInfo, setWaitingInfo] = useState<boolean>(true)
@@ -151,16 +152,21 @@ function ClientsTable ({socket}:{socket:any}) {
     const clickRow = (client:any, index:number) => {
         session.dispatch({type:'UPDATE_CLIENTS_TABLE_SELECTED_ITEM', payload:{index}})
         navigate(`${client.id}`)
+        setSelectedIndex(index)
     }
-
-   
-
+    
     //FETCH NEW DATA ON FILTERS CHANGE
-    const fetchClientDataWithFilter = async (filters:{page_index:number, channel_types:Channels[], sort_by?:ClientColumn, search?:string, order?:'asc' | 'desc'}) => {
-        setFilters(filters)
-        const response = await fetchData({endpoint:`${auth.authData.organizationId}/contacts`, getAccessTokenSilently,setValue:setClients, setWaiting:setWaitingInfo, params:filters, auth})
+    const fetchClientDataWithFilter = async (selectedFilters?:{page_index:number, channel_types:Channels[], sort_by?:ClientColumn, search?:string, order?:'asc' | 'desc'}) => {
+        let filtersToFetch:{page_index:number, channel_types:Channels[], sort_by?:ClientColumn, search?:string, order?:'asc' | 'desc'} | null = null
+
+        if (selectedFilters) { 
+            filtersToFetch = selectedFilters
+            setFilters(selectedFilters)
+        }
+        else filtersToFetch = filters
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/contacts`, getAccessTokenSilently,setValue:setClients, setWaiting:setWaitingInfo, params:filtersToFetch, auth})
         if (response?.status === 200) {            
-            session.dispatch({ type: 'UPDATE_CLIENTS_TABLE', payload: {data:response.data, filters:filters, selectedIndex} })
+            session.dispatch({ type: 'UPDATE_CLIENTS_TABLE', payload: {data:response.data, filters:filtersToFetch, selectedIndex} })
          }
     }
 
@@ -171,15 +177,16 @@ function ClientsTable ({socket}:{socket:any}) {
         else setFilters({...filters, channel_types: [...channelsList, element]})
     }
 
-    const clientBoxWidth = expandClient ? Math.min(window.innerWidth * 0.6, window.innerWidth - 500) - 200 : Math.min(window.innerWidth * 0.6, window.innerWidth - 500)
 
     //FRONT
     return(
         <>  
-        <MotionBox width={clientBoxWidth + 'px'}  overflowY={'scroll'} initial={{ width: clientBoxWidth + 'px', opacity: expandClient?1:0}} animate={{ width: clientBoxWidth + 'px',  opacity: expandClient?0:1  }} exit={{ width: clientBoxWidth + 'px',  opacity: expandClient?1:0}} transition={{ duration: '.2'}} 
-        bg='white' top={0} boxShadow="-4px 0 6px -2px rgba(0, 0, 0, 0.1)" right={0} pointerEvents={expandClient ?'none':'auto'} height={'100vh'}  p={expandClient ?'1vw':'0'} overflowX={'hidden'} position='absolute' zIndex={100} overflow={'hidden'} >
-            <Client socket={socket}/> 
-        </MotionBox>
+        <AnimatePresence> 
+            {!expandClient && <MotionBox  overflowY={'scroll'} initial={{ width: Math.min(window.innerWidth * 0.6, window.innerWidth - 500) - 200  + 'px', opacity: expandClient?1:0}} animate={{ width: Math.min(window.innerWidth * 0.6, window.innerWidth - 500) + 'px',  opacity: expandClient?0:1  }} exit={{ width: Math.min(window.innerWidth * 0.6, window.innerWidth - 500) - 200  + 'px',  opacity: expandClient?1:0}} transition={{ duration: '.2'}} 
+            bg='white' top={0}     minHeight="100vh" maxHeight="100vh" boxShadow="-4px 0 6px -2px rgba(0, 0, 0, 0.1)" right={0} pointerEvents={expandClient ?'none':'auto'} height={'100vh'}   position='absolute' zIndex={100} overflow={'hidden'} >
+                <Client socket={socket} fetchClientDataWithFilter={fetchClientDataWithFilter}/> 
+            </MotionBox>}
+        </AnimatePresence>
   
         <Box height={'100%'} width={'calc(98vw - 55px)'} overflowX={'scroll'} overflowY={'hidden'} >
     
@@ -203,7 +210,7 @@ function ClientsTable ({socket}:{socket:any}) {
             </Flex>
 
  
-            <Table data={clients?.page_data || []} CellStyle={CellStyle} noDataMessage={t('NoClients')} columnsMap={columnsClientsMap} requestSort={requestSort} getSortIcon={getSortIcon} onClickRow={clickRow} excludedKeys={['id', 'contact_business_id', 'phone_number', 'email_address', 'instagram_username', 'webchat_uuid', 'google_business_review_id']}  currentIndex={selectedIndex} />
+            <Table data={clients?.page_data || []} CellStyle={CellStyle} noDataMessage={t('NoClients')} columnsMap={columnsClientsMap} requestSort={requestSort} getSortIcon={getSortIcon} onClickRow={clickRow} excludedKeys={['id', 'contact_business_id', 'phone_number', 'email_address', 'instagram_username', 'webchat_uuid', 'google_business_review_id']} waitingInfo={waitingInfo} currentIndex={selectedIndex} />
  
         </Box>
         </>)

@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, Dispatch, SetStateAction, useMemo, Fragmen
 import { useTranslation } from "react-i18next"
 import { useAuth } from "../../../AuthContext"
 import { useLocation, useNavigate } from "react-router-dom"
+import { useAuth0 } from "@auth0/auth0-react"
 //FETCH DATA
 import fetchData from "../../API/fetchData"
 //FRONT
@@ -13,7 +14,6 @@ import ReactQuill, { Quill } from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
 import 'quill-divider'
 import TurndownService from 'turndown';
-
 //import QuillTable from 'quill-table'
 //COMPONENTS
 import ConfirmBox from "../../Components/Reusable/ConfirmBox"
@@ -32,8 +32,7 @@ import { HiTrash } from "react-icons/hi2"
 //TYPING
 import { ContentData, Folder } from "../../Constants/typing" 
 import LoadingIconButton from "../../Components/Reusable/LoadingIconButton"
-import { useAuth0 } from "@auth0/auth0-react"
-
+ 
 //MOTION BOX
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)}) 
 
@@ -110,7 +109,7 @@ const Article = ({folders}:{folders:Folder[]}) => {
     const [showDeleteBox, setShowDeleteBox] = useState<boolean>(false)
 
     const [clientBoxWidth, setClientBoxWidth] = useState(400)
-    const sendBoxWidth = `calc(100vw - 335px - ${clientBoxWidth}px)`
+    const sendBoxWidth = `calc(100vw - 315px - ${clientBoxWidth}px)`
     
     //DELETE A FOLDER
     const DeleteArticle = () => {
@@ -123,15 +122,15 @@ const Article = ({folders}:{folders:Folder[]}) => {
             if (response?.status === 200) navigate(-1)
         }
         return(<> 
-              <Box p='20px'> 
+              <Box p='15px'> 
                     <Text fontWeight={'medium'} fontSize={'1.2em'}>{parseMessageToBold(t('DeleteArticleAnswer', {name:articleData?.title}))}</Text>
-                    <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
-                    <Text >{parseMessageToBold(t('DeleteFolderWarning'))}</Text>
+                     <Text mt='2vh' fontSize={'.8em'} >{parseMessageToBold(t('DeleteFolderWarning'))}</Text>
+          
+                    <Flex mt='2vh' gap='15px' flexDir={'row-reverse'} >
+                        <Button  size='sm' variant='delete' onClick={deleteArticle}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
+                        <Button size='sm'  variant={'common'} onClick={() => setShowDeleteBox(false)}>{t('Cancel')}</Button>
+                    </Flex>
                 </Box>
-                <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-                    <Button  size='sm' variant='delete' onClick={deleteArticle}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
-                    <Button size='sm'  variant={'common'} onClick={() => setShowDeleteBox(false)}>{t('Cancel')}</Button>
-                </Flex>
         </>)
     }
 
@@ -147,12 +146,12 @@ const Article = ({folders}:{folders:Folder[]}) => {
     return (<>
     {showDeleteBox && DeleteBox}
  
-    <Flex flex='1' position='absolute' width={'calc(100vw - 335px)'} height={'100vh'} top={0} left={0} bg='white'>
+    <Flex flex='1' position='absolute' width={'calc(100vw - 315px)'} height={'100vh'} top={0} left={0} bg='white'>
         <MotionBox   initial={{ width: sendBoxWidth  }} animate={{ width: sendBoxWidth}} exit={{ width: sendBoxWidth }} transition={{ duration: '.2' }}  
         width={sendBoxWidth} overflowY={'hidden'}  borderRightWidth={'1px'} borderRightColor='gray.200' >
-            <Flex px='2vw' height={'70px'} alignItems={'center'} justifyContent={'space-between'}  borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
+            <Flex px='1vw' height={'60px'} alignItems={'center'} justifyContent={'space-between'}  borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
                 <Skeleton isLoaded={articleData !== null}> 
-                    <Text fontSize={'1.5em'} fontWeight={'medium'}>{articleData?.type === 'public_article'?t('PublicArticle'):t('InternalArticle')}</Text>
+                    <Text fontSize={'1.2em'} fontWeight={'medium'}>{articleData?.type === 'public_article'?t('PublicArticle'):t('InternalArticle')}</Text>
                 </Skeleton>
                 <Flex gap='15px'>
                     <Button leftIcon={<HiTrash/>} variant={'delete'} isDisabled={location.split('/')[3].startsWith('create')} size='sm' onClick={() => setShowDeleteBox(true)}>{t('Delete')}</Button>
@@ -409,7 +408,7 @@ const EditorComponent = ({articleData, setArticleData}:{articleData:ContentData 
     const avaiableCharacters = 140 -  (articleData?.description || '').length 
 
     return (
-        <Flex height={'calc(100vh - 70px)'} justifyContent={'start'} overflow={'scroll'}  py='2vw' flexDir={'column'}>
+        <Flex height={'calc(100vh)'} justifyContent={'start'} overflow={'scroll'}  py='2vw' flexDir={'column'}>
             <input type="file" accept="image/*" id={'uploadIcon'}    style={{ display: 'none' }} onChange={insertImage}/>
             <Box  px='20px' position={'relative'}> 
                 <textarea ref={textAreaTitleRef} value={articleData?.title} className="title-textarea"  onChange={(e) => {setArticleData(prev => ({...prev as ContentData, title:e.target.value}))}}  placeholder={t('NoTitle')} rows={1}  />

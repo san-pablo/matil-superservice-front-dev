@@ -114,17 +114,17 @@ const Section = ({ folder, level, onFolderUpdate, handleFoldersDisabled}: { fold
             if (businessData?.status === 200) onFolderUpdate('delete', folder, null)
             setShowCreate(false)
         }
-        return(<> 
-              <Box p='20px'> 
+        return( 
+              <Box p='15px'> 
                     <Text fontWeight={'medium'} fontSize={'1.2em'}>{parseMessageToBold(t('DeleteFolderAnswer', {name:folder.name}))}</Text>
-                    <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
-                    <Text >{parseMessageToBold(t('DeleteFolderWarning'))}</Text>
-                </Box>
-                <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+                     <Text mt='2vh' fontSize={'.8em'} >{parseMessageToBold(t('DeleteFolderWarning'))}</Text>
+            
+                <Flex mt='2vh' gap='15px' flexDir={'row-reverse'}>
                     <Button  size='sm' variant='delete' onClick={deleteFolder}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
                     <Button size='sm'  variant={'common'} onClick={() => setShowDelete(false)}>{t('Cancel')}</Button>
                 </Flex>
-        </>)
+            </Box>
+        )
     }
 
     //CREATE AND EDIT FOLDERS
@@ -139,7 +139,7 @@ const Section = ({ folder, level, onFolderUpdate, handleFoldersDisabled}: { fold
             setShowCreate(false)
         }
         return(<> 
-            <Box p='20px' maxW='450px'> 
+            <Box p='15px' maxW='450px'> 
                 <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('MoveFolderName', {name:folder.name})}</Text>
                 <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
                 {handleFoldersDisabled(folder).map((folder, index) => (
@@ -147,11 +147,12 @@ const Section = ({ folder, level, onFolderUpdate, handleFoldersDisabled}: { fold
                         <MoveSection folder={folder}  level={0} selectedFolder={selectedFolder} setSelectedFolder={setSelectedFolder}/> 
                     </Fragment>
                 ))}
+            
+                <Flex  maxW='450px'mt='2vh' gap='15px' flexDir={'row-reverse'} >
+                    <Button  size='sm' variant={'main'} isDisabled={selectedFolder === ''} onClick={createFolder}>{waitingCreate?<LoadingIconButton/>:t('MoveFolder')}</Button>
+                    <Button  size='sm' variant={'common'} onClick={() => {setShowCreate(false); setShowEdit(false)}}>{t('Cancel')}</Button>
+                </Flex>
             </Box>
-            <Flex  maxW='450px' p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-                <Button  size='sm' variant={'main'} isDisabled={selectedFolder === ''} onClick={createFolder}>{waitingCreate?<LoadingIconButton/>:t('MoveFolder')}</Button>
-                <Button  size='sm' variant={'common'} onClick={() => {setShowCreate(false); setShowEdit(false)}}>{t('Cancel')}</Button>
-            </Flex>
         </>)
     }
 
@@ -190,10 +191,10 @@ const Section = ({ folder, level, onFolderUpdate, handleFoldersDisabled}: { fold
       {showDelete && DeleteBox}
       {showMove && MoveBox}
 
-        <Flex  gap="10px" justifyContent={'space-between'} p="5px" pl={`${(level + 1) * 20}px`} _hover={{ color: "black" }} color={selectedSection === folder.uuid ? "black" : "gray.600"} bg={selectedSection === folder.uuid ?'white':'transparent'}  fontWeight={selectedSection === folder.uuid ? "medium" : "normal"} onClick={() => { navigateToSection(`${folder.uuid}`)}} cursor="pointer" alignItems="center" borderRadius=".5rem" onMouseLeave={() => setIsHovering(false)} onMouseEnter={() => setIsHovering(true)}>
+        <Flex  borderColor={selectedSection === folder.uuid ? 'gray.200':'transparent'}  fontWeight={selectedSection === folder.uuid ? 'medium':'normal'} bg={selectedSection === folder.uuid ?'white':'transparent'}  transition={selectedSection === folder.uuid ?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}    boxShadow={selectedSection === folder.uuid  ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''}  gap="10px" justifyContent={'space-between'} p="5px" ml={`${(level + 1) * 20}px`} _hover={{bg:selectedSection === folder.uuid ?'white':'brand.gray_2'}}  onClick={() => { navigateToSection(`${folder.uuid}`)}} cursor="pointer" alignItems="center" borderRadius=".5rem" onMouseLeave={() => setIsHovering(false)} onMouseEnter={() => setIsHovering(true)}>
             <Flex flex='1' gap="10px" alignContent={'center'}> 
                 {folder.emoji ? <Text>{folder.emoji}</Text>:<Icon boxSize="16px" as={FaFolder} />}
-                <Text  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{folder.name}</Text>
+                <Text  transition={'transform .1s ease-in-out'}   transformOrigin="left center" transform={selectedSection === folder.uuid?'scale(1.02)':'scale(1)'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{folder.name}</Text>
             </Flex>
             <Box width={'15px'} ref={buttonRef}> 
                 {(isHovering || (settingsBoxPosition?.id === folder.uuid)) && <BsThreeDots size='15px' onClick={(e) => {e.stopPropagation();determineBoxPosition(folder.uuid) }}/>}
@@ -204,7 +205,7 @@ const Section = ({ folder, level, onFolderUpdate, handleFoldersDisabled}: { fold
             </Box>
             }
         </Flex>
-        <motion.div initial={{height:showFolders?'auto':0}} animate={{height:showFolders?0:'auto' }} exit={{height:showFolders?'auto':0 }} transition={{duration:.2}} style={{overflow:'hidden', padding:'5px', maxHeight:1000}}>           
+        <motion.div initial={{height:showFolders?'auto':0}} animate={{height:showFolders?0:'auto' }} exit={{height:showFolders?'auto':0 }} transition={{duration:.2}} style={{overflow:(!showFolders || folder.children.length === 0)?'auto':'hidden', maxHeight:1000}}>           
             {folder.children &&folder.children.map((childFolder) => (<Section key={childFolder.uuid} folder={childFolder} level={level + 1} onFolderUpdate={onFolderUpdate} handleFoldersDisabled={handleFoldersDisabled}/>))}
         </motion.div>
 
@@ -213,19 +214,21 @@ const Section = ({ folder, level, onFolderUpdate, handleFoldersDisabled}: { fold
             <MotionBox ref={boxRef} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.95 }}  transition={{ duration: '0.1', ease: 'easeOut'}}
                 style={{ transformOrigin: settingsBoxPosition.top ? 'top left':'bottom left' }} left={settingsBoxPosition.left}  top={settingsBoxPosition.top || undefined}  bottom={settingsBoxPosition.bottom ||undefined} position='absolute' bg='white' p='8px'  zIndex={1000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.200' borderWidth='1px' borderRadius='.7rem'>
 
-                <Flex px='15px' borderRadius='.5rem'  onClick={() => {setShowCreate(true); setSettingsBoxPosition(null)}} py='10px' cursor={'pointer'} gap='10px' alignItems={'center'} _hover={{bg:'brand.gray_2'}}>
+                <Flex fontSize={'.8em'} p='7px' gap='10px'  borderRadius='.5rem'  cursor={'pointer'}  onClick={() => {setShowCreate(true); setSettingsBoxPosition(null)}}alignItems={'center'} _hover={{bg:'brand.gray_2'}}>
+
                     <Icon as={FaPlus}/>
                     <Text whiteSpace={'nowrap'}>{t('CreateSubFolder')}</Text>
                 </Flex>
-                <Flex px='15px'  borderRadius='.5rem'   onClick={() => {setShowEdit(true); setSettingsBoxPosition(null)}} py='10px' cursor={'pointer'} gap='10px' alignItems={'center'} _hover={{bg:'brand.gray_2'}}>
+                <Flex fontSize={'.8em'} p='7px' gap='10px'  borderRadius='.5rem'  cursor={'pointer'}  onClick={() => {setShowEdit(true); setSettingsBoxPosition(null)}}alignItems={'center'} _hover={{bg:'brand.gray_2'}}>
                     <Icon as={FiEdit}/>
                     <Text whiteSpace={'nowrap'}>{t('EditFolder')}</Text>
                 </Flex>
                 {/*<Flex px='15px' borderRadius='.5rem' onClick={() => {setShowMove(true);setSettingsBoxPosition(null)}} py='10px' cursor={'pointer'} gap='10px' alignItems={'center'} _hover={{bg:'brand.gray_2'}}>
                     <Icon as={BsFillFolderSymlinkFill}/>
                     <Text whiteSpace={'nowrap'}>{t('MoveFolder')}</Text>
+                    
                 </Flex>*/}
-                <Flex  px='15px' borderRadius='.5rem'  color='red' py='10px'cursor={'pointer'} onClick={() => {setShowDelete(true);setSettingsBoxPosition(null)}}gap='10px' alignItems={'center'} _hover={{bg:'red.50'}}>
+                <Flex  fontSize={'.8em'}  p='7px' gap='10px'  borderRadius='.5rem'  color='red' cursor={'pointer'} onClick={() => {setShowDelete(true);setSettingsBoxPosition(null)}} alignItems={'center'} _hover={{bg:'red.100'}}>
                     <Icon as={HiTrash}/>
                     <Text whiteSpace={'nowrap'}>{t('DeleteFolder')}</Text>
                 </Flex>
@@ -336,39 +339,39 @@ function Knowledege () {
         {showCreate && CreateBox}
  
         <Flex>  
-            <Flex flexDir="column" height={'100vh'} py="5vh" px='15px'  bg='#f1f1f1' width='280px' borderRightWidth="1px" borderRightColor="gray.200">
-                <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('Knowledge')}</Text>
-                <Box height={'1px'} width={'100%'} bg='gray.300' mt='2vh' mb='2vh'/>
+            <Flex flexDir="column" height={'100vh'}   bg='brand.hover_gray' width='260px' pt='1vw' borderRightWidth="1px" borderRightColor="gray.200">
+                <Box px='1vw'> 
+                    <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('Knowledge')}</Text>
+                    <Box height={'1px'} width={'100%'} bg='gray.300' mt='2vh' mb='2vh'/>
 
-                <Flex mt="1vh" gap="10px" p="5px"  _hover={{ color: "black" }} color={location.split('/')[2] === 'fonts' ? "black" : "gray.600"}  bg={location.split('/')[2] === 'fonts' ?'white':'transparent'} fontWeight={location.split('/')[2] === 'fonts'? "medium" : "normal"} onClick={() => navigate('fonts')} cursor="pointer" alignItems="center" borderRadius=".5rem">
-                    <Icon boxSize="16px" as={FaBox} />
-                    <Text>{t('Fonts')}</Text>
-                </Flex>
-                <Flex onMouseEnter={() => setHoverMain(true)}  onMouseLeave={() => setHoverMain(false)} mt="1vh"  p="5px"  cursor="pointer" alignItems="center" borderRadius=".5rem" justifyContent={'space-between'}   _hover={{ color: "black" }} bg={location.split('/')[2] === 'content' ?'white':'transparent'} color={location.split('/')[2] === 'content' ? "black" : "gray.600"} fontWeight={location.split('/')[2] === 'fonts'? "medium" : "normal"} onClick={() => navigate('content')}>
-                    <Flex gap="10px" alignItems={'center'}> 
-                        <Icon boxSize="16px" as={BsFillLayersFill} />
-                        <Text>{t('Content')}</Text>
+                    <Flex mt="1vh" gap="10px" p="5px"  _hover={{bg:location.split('/')[2] === 'fonts' ?'white':'brand.gray_2'}}   borderColor={location.split('/')[2] === 'fonts' ? 'gray.200':'transparent'}  fontWeight={location.split('/')[2] === 'fonts'? 'medium':'normal'} bg={location.split('/')[2] === 'fonts'?'white':'transparent'}  transition={location.split('/')[2] === 'fonts'?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}    boxShadow={location.split('/')[2] === 'fonts' ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''}  onClick={() => navigate('fonts')} cursor="pointer" alignItems="center" borderRadius=".5rem">
+                        <Icon boxSize="16px" as={FaBox} />
+                        <Text  transition={'transform .1s ease-in-out'}   transformOrigin="left center" transform={location.split('/')[2] === 'fonts'?'scale(1.02)':'scale(1)'}>{t('Fonts')}</Text>
                     </Flex>
-                    <Flex gap="10px" alignContent={'center'}> 
-                        {hoverMain && <FaPlus onClick={() => setShowCreate(true)} />}
-                        <IoIosArrowDown onClick={() => setShowFolders(!showFolders)} className={showFolders ? "rotate-icon-up" : "rotate-icon-down"}/>
+                    <Flex onMouseEnter={() => setHoverMain(true)}  _hover={{bg:location.split('/')[2] === 'content' ?'white':'brand.gray_2'}}  onMouseLeave={() => setHoverMain(false)} mt="1vh"  p="5px"   cursor="pointer" alignItems="center" borderRadius=".5rem" justifyContent={'space-between'}    borderColor={location.split('/')[2] === 'content' ? 'gray.200':'transparent'}  fontWeight={location.split('/')[2] === 'content'? 'medium':'normal'} bg={location.split('/')[2] === 'content'?'white':'transparent'}  transition={location.split('/')[2] === 'content'?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}    boxShadow={location.split('/')[2] === 'content' ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''}   onClick={() => navigate('content')}>
+                        <Flex gap="10px" alignItems={'center'}> 
+                            <Icon boxSize="16px" as={BsFillLayersFill} />
+                            <Text transition={'transform .1s ease-in-out'}   transformOrigin="left center" transform={location.split('/')[2] === 'content'?'scale(1.02)':'scale(1)'}>{t('Content')}</Text>
+                        </Flex>
+                        <Flex gap="10px" alignContent={'center'}> 
+                            {hoverMain && <FaPlus onClick={() => setShowCreate(true)} />}
+                            <IoIosArrowDown onClick={() => setShowFolders(!showFolders)} className={showFolders ? "rotate-icon-up" : "rotate-icon-down"}/>
+                        </Flex>
                     </Flex>
-
-                </Flex>
-
-                <motion.div initial={{height:showFolders?'auto':0}} animate={{height:showFolders?0:'auto' }} exit={{height:showFolders?'auto':0 }} transition={{duration:.2}} style={{overflow:'hidden', maxHeight:1000}}>           
+                </Box>
+                <motion.div initial={{height:showFolders?'auto':0}} animate={{height:showFolders?0:'auto' }} exit={{height:showFolders?'auto':0 }} transition={{duration:.2}} style={{overflow:'hidden', padding:'0 1vw 1vw 1vw', maxHeight:1000}}>           
                     <Skeleton isLoaded={folders !== null}>
                         {folders.map((folder, index) => (
-                        <Fragment key={`settings-section-${folder.uuid}`}>
-                            <Section folder={folder} level={0} onFolderUpdate={handleFolderUpdate} handleFoldersDisabled={handleFoldersDisabled}/> 
-                        </Fragment>
+                            <Fragment key={`settings-section-${folder.uuid}`}>
+                                <Section folder={folder} level={0} onFolderUpdate={handleFolderUpdate} handleFoldersDisabled={handleFoldersDisabled}/> 
+                            </Fragment>
                         ))}
                     </Skeleton>
                 </motion.div>
             </Flex>
 
-            <Box width={'calc(100vw - 335px)'} position={'relative'} bg='white' px='2vw' height={'100vh'} ref={scrollRef}>
-                <Flex height={'100vh'}flexDir={'column'} justifyContent={'space-between'} py='3vh'> 
+            <Box width={'calc(100vw - 315px)'} position={'relative'} bg='brand.hover_gray' p='1vw' height={'100vh'} ref={scrollRef}>
+                <Flex height={'100vh'}flexDir={'column'} justifyContent={'space-between'}> 
                     <Suspense fallback={<></>}>    
                         <Routes >
                             <Route path="/content" element={<Content folders={folders} handleFolderUpdate={handleFolderUpdate} />} />

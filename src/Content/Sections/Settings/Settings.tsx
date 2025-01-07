@@ -3,10 +3,12 @@
 */
 
 //REACT
-import  React, { Suspense, useEffect, lazy, useRef, Fragment, useState, Dispatch, SetStateAction } from "react"
+import  { Suspense, useEffect, lazy, useRef, Fragment, useState, Dispatch, SetStateAction } from "react"
 import { Routes, Route,  useNavigate, useLocation } from "react-router-dom" 
 import { useAuth } from "../../../AuthContext"
 import { useTranslation } from 'react-i18next'
+//FETCH DATA
+import fetchData from "../../API/fetchData"
 //FRONT
 import { Box, Flex, Text, Icon } from '@chakra-ui/react'
 import '../../Components/styles.css'
@@ -17,13 +19,15 @@ import { IconType } from "react-icons"
 import { IoLogoWhatsapp, IoIosArrowDown } from "react-icons/io"
 import {  IoChatboxEllipses, IoMail } from "react-icons/io5";
 import { RiInstagramFill } from "react-icons/ri";
-import { FaHeadset, FaCartShopping, FaCreditCard,FaCloud, FaShopify, FaDatabase, FaBars, FaUserGroup,FaPhone,  FaPeopleGroup, FaUser, FaTicket, FaRectangleList, FaArrowsSplitUpAndLeft, FaShapes, FaBookmark, FaClock } from "react-icons/fa6"
+import { FaHeadset, FaCartShopping, FaCreditCard,FaCloud,FaBookOpen, FaShopify, FaDatabase, FaBars, FaUserGroup,FaPhone,  FaPeopleGroup, FaUser, FaTicket, FaRectangleList, FaArrowsSplitUpAndLeft, FaShapes, FaBookmark, FaClock } from "react-icons/fa6"
 import { HiViewColumns } from "react-icons/hi2"
 import { MdKeyboardCommandKey, MdWebhook } from "react-icons/md"
 import { SiGooglemybusiness } from "react-icons/si"
 
 //TYPING
-import { IconKey, SubSectionProps, SectionsListProps } from "../../Constants/typing"
+import { IconKey, SubSectionProps } from "../../Constants/typing"
+import { useSession } from "../../../SessionContext"
+import { useAuth0 } from "@auth0/auth0-react"
  
   
 //MAIN
@@ -72,6 +76,7 @@ interface ExpandableSectionProps {
   }
   
   
+   
 //SECTION COMPONENT
 const Section = ({ section, subSections, expandedSections, setExpandedSections, subSectionsMap }: ExpandableSectionProps) => {
     
@@ -85,8 +90,17 @@ const Section = ({ section, subSections, expandedSections, setExpandedSections, 
     const selectedSection = useLocation().pathname.split('/')[2]
     const selectedSubSection = useLocation().pathname.split('/')[3]
     //onst sectionsList: SectionsListProps = {'organization':t('Organization'), 'users':t('Users'), 'support':t('Support'),  'workflows':t('BusinessRules'),  'actions':t('Actions'),  'channels': t('Channels'), 'integrations':t('Integrations'),'main':t('Main')}
-    const sectionsList: any = {'organization':t('Organization'), 'users':t('Users'), 'support':t('Support'),  'workflows':t('BusinessRules'),  'actions':t('Actions'),  'channels': t('Channels'), 'main':t('Main')}
-
+    
+    const sectionsList: any = {'organization':t('Organization'), 'users':t('Users'), 'help-centers':t('HelpCenters'),  'workflows':t('BusinessRules'),  'actions':t('Actions'),  'channels': t('Channels'), 'main':t('Main')}
+    const channelsDict = {
+        'webchat':IoChatboxEllipses,
+        'whatsapp':IoLogoWhatsapp,
+        'instagram':RiInstagramFill,
+        'google-business':SiGooglemybusiness,
+        'mail':IoMail,
+        'phone': FaPhone,
+        'voip': FaCloud,
+    }
 
     //NAVIGATE
     const navigateToSection = (sectionPath:string) => {
@@ -121,12 +135,15 @@ const Section = ({ section, subSections, expandedSections, setExpandedSections, 
         </Flex>}
  
         <motion.div initial={false} animate={{height:isExpanded?'auto':0, opacity:isExpanded?1:0 }} exit={{height:isExpanded?0:'auto',  opacity:isExpanded?0:1 }} transition={{duration:.2}} style={{overflow:isExpanded?'visible':'hidden'}}>           
-            {subSections.map((sec, index) => (
-                <Flex ml='15px' gap='10px'   key={`${section}-${sec}-${index}`} mt='2px' py='4px' pl='8px' transition={'box-shadow 0.3s ease-out'}  boxShadow={selectedSubSection === sec[1]?'rgb(228, 229, 225) 0px 0px 0px 1px, rgba(20, 20, 20, 0.15) 0px 1px 4px 0px':''} color={selectedSubSection === sec[1]?'black':'gray.600'} fontWeight={selectedSubSection === sec[1]?'medium':'normal'}  bg={selectedSubSection === sec[1]?'white':'transparent'} _hover={{color:'black'}} onClick={() => navigateToSection(`${section}/${sec[1]}`)} alignItems={'center'} cursor={'pointer'} borderRadius='.3rem'fontSize={'.9em'}     >
-                    <Icon as={subSectionsMap[sec[1]][1]}/>
-                    <Text fontSize={'.95em'} >{sec[0]}</Text>
-                </Flex>  
-            ))}
+            {subSections.map((sec:any, index:number) => {
+                console.log(section)
+                console.log(sec)
+
+                return (<Flex ml='15px' gap='10px'   key={`${section}-${sec}-${index}`} mt='2px' py='4px' pl='8px' transition={'box-shadow 0.3s ease-out'}  boxShadow={selectedSubSection === sec[1]?'rgb(228, 229, 225) 0px 0px 0px 1px, rgba(20, 20, 20, 0.15) 0px 1px 4px 0px':''} color={selectedSubSection === sec[1]?'black':'gray.600'} fontWeight={selectedSubSection === sec[1]?'medium':'normal'}  bg={selectedSubSection === sec[1]?'white':'transparent'} _hover={{color:'black'}} onClick={() => navigateToSection(`${section}/${sec[1]}`)} alignItems={'center'} cursor={'pointer'} borderRadius='.3rem'fontSize={'.9em'}     >
+                    <Icon as={((section === 'help-centers' && index !== 0)) ? FaBookOpen : ((section === 'channels' && index !== 0)) ?  (channelsDict as any)[sec.channel_type] : subSectionsMap[sec[1]][1]}/>
+                    <Text fontSize={'.95em'} >{((section === 'help-centers' && index !== 0) || (section === 'channels' && index !== 0)) ?  sec.name :sec[0]}</Text>
+                </Flex>)  
+            })}
         </motion.div>
     </>)
     }
@@ -139,8 +156,24 @@ function Settings () {
 
     //SECTIONS
     const auth = useAuth()
+    const session = useSession()
+    const { getAccessTokenSilently } = useAuth0()
     const isAdmin = auth.authData.users?.[auth.authData?.userId || '']?.is_admin
+
+    //const integrationsList = auth.authData.active_integrations.map((integration) => {return[t(integration), integration]})
+    const channelsList = (session.sessionData.additionalData.channels || [])
+    const [helpCentersList, setHelpCentersList] = useState<any[]>([])
+    useEffect(() => {
+        document.title = `${t('Settings')} - ${t('HelpCenters')} - ${auth.authData.organizationName} - Matil`
+        const fetchInitialData = async() => {
+            const helpCentersData = await fetchData({endpoint:`${auth.authData.organizationId}/admin/help_centers`, auth, getAccessTokenSilently})
+            if (helpCentersData?.status === 200) setHelpCentersList(helpCentersData.data)
+        }
+        fetchInitialData()
+    }, [])
+
     const subSectionsMap: {[key:string]:[string, IconType]} = {
+
         'general':[t('GeneralDes'), FaBars],
         'data':[t('DataDes'), FaDatabase],
         'hours':[t('HoursDes'), FaClock],
@@ -157,15 +190,10 @@ function Settings () {
         'surveys':[t('SurveysDes'), FaRectangleList],
         'automations':[t('AutomationsDes'), FaArrowsSplitUpAndLeft],
         'triggers':[t('TriggersDes'), MdWebhook],
-        'web':[t('WebDes'), IoChatboxEllipses],
-        'whatsapp':[t('WhatsappDes'), IoLogoWhatsapp],
-        'instagram':[t('InstagramDes'), RiInstagramFill],
-        'google-business':[t('GoogleDes'), SiGooglemybusiness],
-        'mail':[t('MailDes'), IoMail],
-        'phone':[t('PhoneDes'), FaPhone],
-        'voip':[t('VoipDes'), FaCloud],
-        'store':[t('StoreDes'), FaCartShopping],
 
+        'all-channels':[t('AllChannels'), IoChatboxEllipses],
+    
+        'store':[t('StoreDes'), FaCartShopping],
         'shopify':[t('ShopifyDes'), FaShopify]
     }
     
@@ -175,17 +203,17 @@ function Settings () {
     const [expandedSections, setExpandedSections] =  useState<IconKey[]>(localStorage.getItem('currentSettingsSection')?[localStorage.getItem('currentSettingsSection')?.split('/')[0] as IconKey] :[])
 
     //const sectionsList: (IconKey | '')[] = isAdmin ? ['organization', 'users', 'support', 'workflows', 'actions', 'channels', 'integrations'] : ['users']
-    const sectionsList: (IconKey | '')[] = isAdmin ? ['organization', 'users', 'support', 'workflows', 'actions', 'channels'] : ['users']
+    const sectionsList: (IconKey | '')[] = isAdmin ? ['organization','channels', 'help-centers', 'users', 'workflows', 'actions', ] : ['users']
     
-    const integrationsList = auth.authData.active_integrations.map((integration) => {return[t(integration), integration]})
     const subSections: SubSectionProps[] = [
-        [[t('General'), 'general'],[t('Data'), 'data'], [t('Hours'), 'hours']],
+        [[t('General'), 'general'],[t('Data'), 'data'], [t('Hours'), 'hours'], [t('Surveys'), 'surveys']],
+        [[t('AllChannels'), 'all-channels'], ...channelsList as any],
+        [[t('HelpCenter'), 'help-center'], ...helpCentersList],
+
         [[t('Profile'), 'user'], [t('Users'),'admin-users'], [t('Groups'),'groups']],
-        [[t('HelpCenter'), 'help-center'], [t('Surveys'), 'surveys']],
-        [[t('Views'), 'edit-views'], [t('Themes'), 'themes'], [t('Fields'), 'fields'], [t('Shortcuts'), 'shortcuts'], [t('Conversations'), 'conversations']],
+         [[t('Views'), 'edit-views'], [t('Themes'), 'themes'], [t('Fields'), 'fields'], [t('Shortcuts'), 'shortcuts'], [t('Conversations'), 'conversations']],
         [[t('Triggers'), 'triggers'], [t('Automations'), 'automations']],
-        [ [t('Web'),'web'], ['Whatsapp','whatsapp'],['Instagram','instagram'], ['Google Business','google-business'], [t('Mail'),'mail'], [t('voip'), 'voip']],
-        //[[t('Store'), 'store'], ...integrationsList]
+         //[[t('Store'), 'store'], ...integrationsList]
     ] 
  
     //CONSTANTS
@@ -245,7 +273,7 @@ function Settings () {
                         <Route path="/actions/triggers" element={<Triggers scrollRef={scrollRef}/>} />
                         <Route path="/actions/automations" element={<Automations scrollRef={scrollRef}/>} />
 
-                         <Route path="/channels/web" element={<Chatbot />} />
+                        <Route path="/channels/web" element={<Chatbot />} />
                         <Route path="/channels/whatsapp" element={<Whatsapp />} />
                         <Route path="/channels/phone" element={<Phone />} />
                         <Route path="/channels/instagram/*" element={<Instagram />} />

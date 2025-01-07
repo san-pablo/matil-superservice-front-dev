@@ -308,6 +308,10 @@
     "CardsStyleDes":"Los artículos y colecciones pueden verse como cartas o como secciones flotantes",
     "BorderRadius":"Radio de curva de las cartas", 
     "FooterMessage":"Campo de texto",
+    "FooterHero":"Título",
+    "FooterSubHero":"Subtítulo",
+    "ShowChat":"Activar chat",
+
     "Colors":"Colores",
     "SocialNetworkButtons":"Botones de redes sociales",
     "AddSocialNetwork":"Añadir redes sociales",
@@ -929,5 +933,10 @@
     "SaveFunctionWarning":"Debes guardar la configuración antes de añadir una función",
     "Stats":"Estadísticas globales",
     "Secrets":"Secretos",
-    "Double":"Duplicar"
+    "Double":"Duplicar",
+
+
+    "SecretsWarning":"Como administrador de esta organización, puedes ver y gestionar todos los secretos utilizados por las funciones. \n . Estos secretos incluyen claves API, tokens y otros datos sensibles, así que no los compartas. \n",
+    "CreateSecret":"Crear secreto"
+
  }

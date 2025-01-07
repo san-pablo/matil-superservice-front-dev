@@ -521,9 +521,12 @@ const NavBarItem = forwardRef<HTMLDivElement, NavBarItemProps>(({icon, section }
     //HOVER AND SELECT LOGIC
     const [isHovered, setIsHovered] = useState(false)
     const handleClick = () => {
-        if (location.split('/')[1] !== section) {
+        if (section === 'contacts') {
+            navigate(`contacts/${localStorage.getItem('contactsSection')?localStorage.getItem('contactsSection') as 'clients' | 'businesses':'clients'}`)
+        }
+        else if (location.split('/')[1] !== section) {
             navigate(section)
-         }
+        }
     }
     const isSelected = section === 'settings' ? location.split('/')[1] === 'settings': section === 'knowledge' ? location.split('/')[1] === 'knowledge' : section === 'stats' ? location.split('/')[1] === 'stats' : section === 'functions' ? location.split('/')[1] === 'functions' : section === 'contacts' ? location.split('/')[1] === 'contacts':location === `/${section}` 
 

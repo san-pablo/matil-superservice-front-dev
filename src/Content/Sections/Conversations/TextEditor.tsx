@@ -492,134 +492,118 @@ function TextEditor({clientName, conversationData, updateData, takeConversationC
     
     //FRONT
     return (<> 
-    <Box p={showBox ? '0':'0 15px 15px 15px'} > 
-        {showShortcuts && (<ShortCutsBox shortcuts={filteredShortcuts} onSelect={handleSelectShortcut} position={cursorPosition}/>)}
-        <input id='selectFile' type="file" multiple={channel?.channel_type === 'email'} style={{display:'none'}}   onChange={(e) =>  handleFileSelect(e)} accept=".pdf, .doc, .docx, image/*" />
-        <svg width="0" height="0">
-            <defs>
-                <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" style={{ stopColor: 'rgba(0, 102, 204, 0.8)', stopOpacity: 1 }} />
-                    <stop offset="100%" style={{ stopColor: 'rgba(102, 51, 255, 0.7)', stopOpacity: 1 }} />
-                </linearGradient>
-            </defs>
-        </svg>
-
-        <Box borderRadius={showBox?'0':'1rem'} overflow={'hidden'} borderColor={showBox?'':'gray.200'} borderWidth={showBox?'0':'1px'} transition={'box-shadow 0.2s ease-in-out'}  boxShadow={showBox?'':   isFocused ? '0 0 0 2px rgb(59, 90, 246, 0.6)' : '0 0 10px 0px rgba(0, 0, 0, 0.1)'}> 
-            {showBox ?
-            <Flex flexDir={'column'} alignItems={'center'} justifyContent={'center'} h='150px'> 
-                <Flex mb='1vh' gap='10px' alignItems={'end'}> 
-                    <Icon fill="url(#gradient2)" as={BsStars} boxSize={'22px'}/>
-                    <Text bgGradient={"linear(to-r, rgba(0, 102, 204, 0.8), rgba(102, 51, 255, 0.7))"} bgClip="text"  color={'transparent'} fontWeight={'medium'} fontSize={'1.2em'} >{t('ConversationByMatilda')}</Text>
-                </Flex>
-                <Button  leftIcon={<FaLockOpen/>} onClick={takeConversationControl} variant={'main'} size='sm'>{t('TakeControl')}</Button>
-            </Flex>
-            :
-            <> 
-            {conversationData?.call_status === 'completed'  ? 
-                <Flex flexDir={'column'} alignItems={'center'} justifyContent={'center'} h='150px'> 
-                <AudioRecord url={conversationData?.call_url} />
-                </Flex>
-            :
-            <Box position={'relative'} transition={'background ease-in-out 0.1s'} bg={isInternalNote?'yellow.100':''} minH={'150px'} maxH={'600px'} height={`${height}px`} > 
-                {conversationData?.status === 'closed' && 
-                    <Flex alignItems={'center'} justifyContent={'center'} position={'absolute'} zIndex={10000} height={'100%'} w='100%' bg='rgba(200, 200, 200, 0.4)' backdropFilter={'blur(0.8px)'}>
-                        <Text fontSize={'1.2em'} fontWeight={'medium'} maxW={'60%'} textAlign={'center'}>{t('ClosedConversation')}</Text>
-                    </Flex>}
-                <Box height={'10px'}  onMouseDown={handleMouseDown} cursor='ns-resize'/>
-                    <Flex pt='5px' gap='10px' pb='15px' px='15px' alignItems={'center'} justifyContent={'space-between'}> 
-                        <Flex alignItems={'center'} gap='9px' maxW={'100%'}>
-                            <Portal > 
-                                {showSelector &&
-                                    <MotionBox ref={boxRef} initial={{ opacity: 0, marginBottom: -10}} animate={{ opacity: 1, marginBottom: 0 }}  exit={{ opacity: 0, marginBottom: -10}} transition={{ duration: '0.2',  ease: 'easeOut'}} 
-                                    fontSize={'.8em'} overflow={'hidden'} bottom={window.innerHeight -  (noteRef.current?.getBoundingClientRect().top || 0) + 10}  left={noteRef.current?.getBoundingClientRect().left} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.1)'} bg='white' zIndex={100000}   position={'absolute'} borderRadius={'.5rem'} borderWidth={'1px'} borderColor={'gray.200'}>
-                                        <Flex p='10px' alignItems={'center'} gap='7px' cursor={'pointer'} _hover={{bg:'brand.hover_gray'}} onClick={() => {setIsInternalNote(true);setShowSelector(false)}}>
-                                            <Icon as={MdNoteAlt}/>
-                                            <Text whiteSpace={'nowrap'}>{t('InternalNote')}</Text>
-                                        </Flex>
-                                        <Flex p='10px' alignItems={'center'} gap='7px' cursor={'pointer'} _hover={{bg:'brand.hover_gray'}} onClick={() => {setIsInternalNote(false);setShowSelector(false)}}>
-                                            <Icon as={IoArrowUndoSharp}/>
-                                            <Text whiteSpace={'nowrap'}>{t('Public')}</Text>
-                                        </Flex>
-                                    </MotionBox>
-                                }
-                            </Portal> 
-                            <Flex ref={noteRef} cursor={'pointer'} gap='5px' alignItems={'center'} onClick={() => setShowSelector(!showSelector)}> 
-                                <Icon as={isInternalNote?MdNoteAlt:IoArrowUndoSharp} color='gray.400' boxSize={'16px'}/>
-                                <Text color='gray.600' fontSize={'.8em'} fontWeight={'medium'} whiteSpace={'nowrap'}>{isInternalNote?t('InternalNote'):t('Public')}</Text>
-                                <Icon  color='gray.600'className={ showSelector? "rotate-icon-up" : "rotate-icon-down"} as={IoIosArrowDown} boxSize={'14px'}/>
-                            </Flex>
-                        </Flex>
+    {((conversationData?.status !== 'closed'  && conversationData?.user_id !== 'matilda')   || ( conversationData?.call_status === 'completed')) && 
+        <Box p={showBox ? '0':'0 15px 15px 15px'} > 
+            {showShortcuts && (<ShortCutsBox shortcuts={filteredShortcuts} onSelect={handleSelectShortcut} position={cursorPosition}/>)}
+            <input id='selectFile' type="file" multiple={channel?.channel_type === 'email'} style={{display:'none'}}   onChange={(e) =>  handleFileSelect(e)} accept=".pdf, .doc, .docx, image/*" />
+            <Box borderRadius={showBox?'0':'1rem'} overflow={'hidden'} borderColor={showBox?'':'gray.200'} borderWidth={showBox?'0':'1px'} transition={'box-shadow 0.2s ease-in-out'}  boxShadow={showBox?'':   isFocused ? '0 0 0 2px rgb(59, 90, 246, 0.6)' : '0 0 10px 0px rgba(0, 0, 0, 0.1)'}> 
+               
+                <> 
+                {conversationData?.call_status === 'completed'  ? 
+                    <Flex flexDir={'column'} alignItems={'center'} justifyContent={'center'} h='150px'> 
+                    <AudioRecord url={conversationData?.call_url} />
                     </Flex>
-                    {channel?.channel_type === 'email' ? 
-                    <> 
-                    {attachmentsFiles.length > 0 && <>
-                        <Box px='20px'  > 
-                            <Flex  overflowX={'scroll'} width={'100%'}> 
-                                <Flex  gap='10px' >
-                                    {attachmentsFiles.map((file, index) => (<Fragment key={`attachment-${index}`}> <AttachmentFilesComponent file={file} index={index}/></Fragment>))}
-                                </Flex>
-                            </Flex>
-                            <Text mt='1vh' color={totalSize > 10 * 1024 * 1024 ? 'red':'black'} mb='1vh' fontSize={'.9em'}>Tamaño del correo: <span style={{fontWeight:'500'}}> {formatFileSize(totalSize)}</span> {totalSize > 10 * 1024 * 1024 && '(sólo se permite enviar un máximo de 10 MB)'}</Text>
-                        </Box>
-                        <Box height={'1px'} bg='gray.300' width={'100%'}/>
-                    </>}
-                    <ReactQuill modules={modules} onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)} ref={quillRef} theme="snow" value={htmlValue} onChange={handleChange} className={toolbarVisible ? '' : 'hidden-toolbar'} style={{ height: '100%', display: 'flex', flexDirection: 'column-reverse'}} />
-                    </>
-                    :
-                    <textarea ref={textAreaRef} placeholder={t('PlaceholderShortcuts')} value={textValue} onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)} onChange={(e) => {setTextValue(e.target.value); handleShortcuts(e.target.value, {index: e.target.selectionStart}) }}  style={{ height: '100%', width: '100%', padding:'20px', background:'transparent', outline: 'none', border:'none', resize:'none', fontSize:'.9em'}} />
-                    }
-
-                    <Flex overflowX={'scroll'}  ref={sendPanelRef} maxW={'100%'} justifyContent={'space-between'} position={'absolute'} bottom={0} px='15px' py='10px' gap='15px' alignItems={'center'}  width={'100%'}>
-                        <Flex gap='10px'> 
-                            {channel?.channel_type === 'email' && <IconButton aria-label='edit-text' bg='transparent' icon={<PiTextTBold/>} size='sm' onClick={() => {setEmojiVisible(false);setToolbarVisible(!toolbarVisible)}} />}
-                            <IconButton aria-label='edit-text' icon={<HiOutlinePaperClip/>} size='sm' bg='transparent' variant={'common'} onClick={() => document.getElementById('selectFile')?.click()}/>
-                            <IconButton ref={emojiButtonRef} aria-label='edit-text' icon={<HiOutlineEmojiHappy/>} size='sm'  bg='transparent'  variant={'common'} onClick={()=>{setToolbarVisible(false);setEmojiVisible(!emojiVisible)}}  />
-                        </Flex>
-                        <Flex gap='10px' alignItems={'center'}  > 
-                          
-
-                            <Box position={'relative'} >  
-                                {showSendLike &&  
-                                    <Portal > 
-                                        <MotionBox bottom={window.innerHeight - (sendLikeButtonRef.current?.getBoundingClientRect().top || 0) + 10}  right={window.innerWidth - (sendLikeButtonRef.current?.getBoundingClientRect().right || 0)} ref={sendLikeBoxRef} initial={{ opacity: 0, marginBottom: -10}} animate={{ opacity: 1, marginBottom: 0 }}  exit={{ opacity: 0, marginBottom: -10}} transition={{ duration: '0.2',  ease: 'easeOut'}} 
-                                            fontSize={'.8em'} overflow={'hidden'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={1000}   position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
-                                        {Object.keys(statesMap).filter((state) => {if (channel?.channel_type !== 'voip') return state !== 'completed' && state !== 'ongoing';return true}).map((state, index) => (
-                                            (state !== 'closed' && state !== 'new') && 
-                                                <Flex alignItems='center' key={`state-${index}`}  onClick={() => handleButtonClick(state as 'new' | 'open' | 'pending' | 'solved' | 'closed')} py='7px' px='20px' gap='10px' cursor={'pointer'} _hover={{bg:'brand.hover_gray'}} >
-                                                    <Box height={'10px'} width={'10px'} borderRadius={'.1rem'} bg={statesMap[state as 'new' | 'open' | 'pending' | 'solved' | 'closed'][1]}/>
-                                                    <Text fontWeight={'medium'} whiteSpace={'nowrap'}>{t(state)}</Text>
-                                                </Flex>
-                                            ))}
+                :
+                <Box position={'relative'} transition={'background ease-in-out 0.1s'} bg={isInternalNote?'yellow.100':''} minH={'150px'} maxH={'600px'} height={`${height}px`} > 
+                    {conversationData?.status === 'closed' && 
+                        <Flex alignItems={'center'} justifyContent={'center'} position={'absolute'} zIndex={10000} height={'100%'} w='100%' bg='rgba(200, 200, 200, 0.4)' backdropFilter={'blur(0.8px)'}>
+                            <Text fontSize={'1.2em'} fontWeight={'medium'} maxW={'60%'} textAlign={'center'}>{t('ClosedConversation')}</Text>
+                        </Flex>}
+                    <Box height={'10px'}  onMouseDown={handleMouseDown} cursor='ns-resize'/>
+                        <Flex pt='5px' gap='10px' pb='15px' px='15px' alignItems={'center'} justifyContent={'space-between'}> 
+                            <Flex alignItems={'center'} gap='9px' maxW={'100%'}>
+                                <Portal > 
+                                    {showSelector &&
+                                        <MotionBox ref={boxRef} initial={{ opacity: 0, marginBottom: -10}} animate={{ opacity: 1, marginBottom: 0 }}  exit={{ opacity: 0, marginBottom: -10}} transition={{ duration: '0.2',  ease: 'easeOut'}} 
+                                        fontSize={'.8em'} overflow={'hidden'} bottom={window.innerHeight -  (noteRef.current?.getBoundingClientRect().top || 0) + 10}  left={noteRef.current?.getBoundingClientRect().left} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.1)'} bg='white' zIndex={100000}   position={'absolute'} borderRadius={'.5rem'} borderWidth={'1px'} borderColor={'gray.200'}>
+                                            <Flex p='10px' alignItems={'center'} gap='7px' cursor={'pointer'} _hover={{bg:'brand.hover_gray'}} onClick={() => {setIsInternalNote(true);setShowSelector(false)}}>
+                                                <Icon as={MdNoteAlt}/>
+                                                <Text whiteSpace={'nowrap'}>{t('InternalNote')}</Text>
+                                            </Flex>
+                                            <Flex p='10px' alignItems={'center'} gap='7px' cursor={'pointer'} _hover={{bg:'brand.hover_gray'}} onClick={() => {setIsInternalNote(false);setShowSelector(false)}}>
+                                                <Icon as={IoArrowUndoSharp}/>
+                                                <Text whiteSpace={'nowrap'}>{t('Public')}</Text>
+                                            </Flex>
                                         </MotionBox>
-                                    </Portal > }
-
-                                <Flex cursor={'pointer'} gap='1px' >
-                                    <Flex  onClick={() => handleButtonClick('pending')} bg={'#222'} px='10px' py='5px' borderRadius={'.5em 0 0 .5em'} color='white' _hover={{bg:'blackAlpha.800'}}>
-                                        {waitingSend?<LoadingIconButton/> :
-                                        <Flex alignItems={'center'} gap='10px'>
-                                            <Text whiteSpace={'nowrap'}  fontWeight={'medium'} fontSize={'.9em'} color='gray.200'>{t('SendLike')} <span style={{fontWeight:'500', color:'white'}}>{t(conversationData.status)}</span></Text>
-                                        </Flex>}
-                                    </Flex>
-                                    <Flex ref={sendLikeButtonRef} onClick={() => {setShowSendLike(!showSendLike)}}bg={'#222'} justifyContent={'center'} px='7px'  borderRadius={'0 .5rem .5rem 0'} alignItems={'center'} color='white' _hover={{bg:'blackAlpha.800'}}>
-                                        <Icon className={ showSendLike? "rotate-icon-up" : "rotate-icon-down"} as={IoIosArrowDown} boxSize={'13px'}/>
-                                    </Flex>         
+                                    }
+                                </Portal> 
+                                <Flex ref={noteRef} cursor={'pointer'} gap='5px' alignItems={'center'} onClick={() => setShowSelector(!showSelector)}> 
+                                    <Icon as={isInternalNote?MdNoteAlt:IoArrowUndoSharp} color='gray.400' boxSize={'16px'}/>
+                                    <Text color='gray.600' fontSize={'.8em'} fontWeight={'medium'} whiteSpace={'nowrap'}>{isInternalNote?t('InternalNote'):t('Public')}</Text>
+                                    <Icon  color='gray.600'className={ showSelector? "rotate-icon-up" : "rotate-icon-down"} as={IoIosArrowDown} boxSize={'14px'}/>
                                 </Flex>
-
-                            </Box>
                             </Flex>
-                    </Flex>
-            </Box>}
-            </>
-            }
-        </Box>
+                        </Flex>
+                        {channel?.channel_type === 'email' ? 
+                        <> 
+                        {attachmentsFiles.length > 0 && <>
+                            <Box px='20px'  > 
+                                <Flex  overflowX={'scroll'} width={'100%'}> 
+                                    <Flex  gap='10px' >
+                                        {attachmentsFiles.map((file, index) => (<Fragment key={`attachment-${index}`}> <AttachmentFilesComponent file={file} index={index}/></Fragment>))}
+                                    </Flex>
+                                </Flex>
+                                <Text mt='1vh' color={totalSize > 10 * 1024 * 1024 ? 'red':'black'} mb='1vh' fontSize={'.9em'}>Tamaño del correo: <span style={{fontWeight:'500'}}> {formatFileSize(totalSize)}</span> {totalSize > 10 * 1024 * 1024 && '(sólo se permite enviar un máximo de 10 MB)'}</Text>
+                            </Box>
+                            <Box height={'1px'} bg='gray.300' width={'100%'}/>
+                        </>}
+                        <ReactQuill modules={modules} onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)} ref={quillRef} theme="snow" value={htmlValue} onChange={handleChange} className={toolbarVisible ? '' : 'hidden-toolbar'} style={{ height: '100%', display: 'flex', flexDirection: 'column-reverse'}} />
+                        </>
+                        :
+                        <textarea ref={textAreaRef} placeholder={t('PlaceholderShortcuts')} value={textValue} onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)} onChange={(e) => {setTextValue(e.target.value); handleShortcuts(e.target.value, {index: e.target.selectionStart}) }}  style={{ height: '100%', width: '100%', padding:'20px', background:'transparent', outline: 'none', border:'none', resize:'none', fontSize:'.9em'}} />
+                        }
 
-        <Portal> 
-            <Box position={'fixed'} pointerEvents={emojiVisible?'auto':'none'} transition='opacity 0.2s ease-in-out' opacity={emojiVisible ? 1:0} bottom={`${window.innerHeight - (emojiButtonRef?.current?.getBoundingClientRect().top || 0) + 5}px`} left={`${emojiButtonRef?.current?.getBoundingClientRect().left}px`} zIndex={1000} ref={emojiBoxRef}> 
-                <EmojiPicker onEmojiClick={handleEmojiClick} open={emojiVisible} allowExpandReactions={false}/>
+                        <Flex overflowX={'scroll'}  ref={sendPanelRef} maxW={'100%'} justifyContent={'space-between'} position={'absolute'} bottom={0} px='15px' py='10px' gap='15px' alignItems={'center'}  width={'100%'}>
+                            <Flex gap='10px'> 
+                                {channel?.channel_type === 'email' && <IconButton aria-label='edit-text' bg='transparent' icon={<PiTextTBold/>} size='sm' onClick={() => {setEmojiVisible(false);setToolbarVisible(!toolbarVisible)}} />}
+                                <IconButton aria-label='edit-text' icon={<HiOutlinePaperClip/>} size='sm' bg='transparent' variant={'common'} onClick={() => document.getElementById('selectFile')?.click()}/>
+                                <IconButton ref={emojiButtonRef} aria-label='edit-text' icon={<HiOutlineEmojiHappy/>} size='sm'  bg='transparent'  variant={'common'} onClick={()=>{setToolbarVisible(false);setEmojiVisible(!emojiVisible)}}  />
+                            </Flex>
+                            <Flex gap='10px' alignItems={'center'}  > 
+                            
+
+                                <Box position={'relative'} >  
+                                    {showSendLike &&  
+                                        <Portal > 
+                                            <MotionBox bottom={window.innerHeight - (sendLikeButtonRef.current?.getBoundingClientRect().top || 0) + 10}  right={window.innerWidth - (sendLikeButtonRef.current?.getBoundingClientRect().right || 0)} ref={sendLikeBoxRef} initial={{ opacity: 0, marginBottom: -10}} animate={{ opacity: 1, marginBottom: 0 }}  exit={{ opacity: 0, marginBottom: -10}} transition={{ duration: '0.2',  ease: 'easeOut'}} 
+                                                fontSize={'.8em'} overflow={'hidden'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={1000}   position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
+                                            {Object.keys(statesMap).filter((state) => {if (channel?.channel_type !== 'voip') return state !== 'completed' && state !== 'ongoing';return true}).map((state, index) => (
+                                                (state !== 'closed' && state !== 'new') && 
+                                                    <Flex alignItems='center' key={`state-${index}`}  onClick={() => handleButtonClick(state as 'new' | 'open' | 'pending' | 'solved' | 'closed')} py='7px' px='20px' gap='10px' cursor={'pointer'} _hover={{bg:'brand.hover_gray'}} >
+                                                        <Box height={'10px'} width={'10px'} borderRadius={'.1rem'} bg={statesMap[state as 'new' | 'open' | 'pending' | 'solved' | 'closed'][1]}/>
+                                                        <Text fontWeight={'medium'} whiteSpace={'nowrap'}>{t(state)}</Text>
+                                                    </Flex>
+                                                ))}
+                                            </MotionBox>
+                                        </Portal > }
+
+                                    <Flex cursor={'pointer'} gap='1px' >
+                                        <Flex  onClick={() => handleButtonClick('pending')} bg={'#222'} px='10px' py='5px' borderRadius={'.5em 0 0 .5em'} color='white' _hover={{bg:'blackAlpha.800'}}>
+                                            {waitingSend?<LoadingIconButton/> :
+                                            <Flex alignItems={'center'} gap='10px'>
+                                                <Text whiteSpace={'nowrap'}  fontWeight={'medium'} fontSize={'.9em'} color='gray.200'>{t('SendLike')} <span style={{fontWeight:'500', color:'white'}}>{t(conversationData.status)}</span></Text>
+                                            </Flex>}
+                                        </Flex>
+                                        <Flex ref={sendLikeButtonRef} onClick={() => {setShowSendLike(!showSendLike)}}bg={'#222'} justifyContent={'center'} px='7px'  borderRadius={'0 .5rem .5rem 0'} alignItems={'center'} color='white' _hover={{bg:'blackAlpha.800'}}>
+                                            <Icon className={ showSendLike? "rotate-icon-up" : "rotate-icon-down"} as={IoIosArrowDown} boxSize={'13px'}/>
+                                        </Flex>         
+                                    </Flex>
+
+                                </Box>
+                                </Flex>
+                        </Flex>
+                </Box>}
+                </>
+                
             </Box>
-        </Portal>
-    </Box>
-        </>)
+
+            <Portal> 
+                <Box position={'fixed'} pointerEvents={emojiVisible?'auto':'none'} transition='opacity 0.2s ease-in-out' opacity={emojiVisible ? 1:0} bottom={`${window.innerHeight - (emojiButtonRef?.current?.getBoundingClientRect().top || 0) + 5}px`} left={`${emojiButtonRef?.current?.getBoundingClientRect().left}px`} zIndex={1000} ref={emojiBoxRef}> 
+                    <EmojiPicker onEmojiClick={handleEmojiClick} open={emojiVisible} allowExpandReactions={false}/>
+                </Box>
+            </Portal>
+        </Box>}
+    </>)
 }
 
 export default TextEditor

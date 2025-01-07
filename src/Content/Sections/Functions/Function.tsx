@@ -86,11 +86,6 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
         errors:[],
         matilda_configurations_uuids:[]
     }
-
-    
-    //OPEN OPTIONS
-    const [openOptions, setOpenOptions] = useState<boolean>(false)
-
     //SHOW NOT SAVED DATA WARNING
     const [showNoSaveWarning, setShowNoSaveWarning] = useState<boolean>(false)
 
@@ -137,7 +132,7 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
             const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/matilda_configurations`, getAccessTokenSilently,auth, setValue:setInternalChannelsData})
         }
         fetchInitialData()
-    }, [])
+    }, [location])
 
     //BOOLEAN FOR WAITIGN THE EDIT
     const [showConfirmDelete, setShowConfirmDelete] = useState<boolean>(false) 
@@ -425,7 +420,7 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
         <Flex flex='1'  width={'100%'} height={'100vh'} top={0} left={0} bg='white'>
             <MotionBox   initial={{ width: sendBoxWidth  }} animate={{ width: sendBoxWidth}} exit={{ width: sendBoxWidth }} transition={{ duration: '.2' }}  
             width={sendBoxWidth} overflowY={'hidden'}  borderRightWidth={'1px'} borderRightColor='gray.200' >
-                <Flex px='1vw' gap='2vw' height={'50px'} alignItems={'center'} justifyContent={'space-between'}  borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
+                <Flex px='1vw' gap='2vw' height={'60px'} alignItems={'center'} justifyContent={'space-between'}  borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
 
                     <Flex flex={1} gap='20px' alignItems={'center'}> 
                         <IconButton  aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'20px'}/>} onClick={() =>setHideFunctions(prev => (!prev))}/>
@@ -443,14 +438,14 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
                 <Flex width={'100%'} height={'100%'} justifyContent={'center'} overflow={'scroll'} >
                     <Box  width={'100%'} height={'100%'}  >
                         <Skeleton isLoaded={functionData !== null} style={{overflow:'hidden'}}> 
-                            <CodeMirror value={functionData?.code} height={`${window.innerHeight - 50}px`} extensions={[python()]} onChange={(value) => setFunctionData(prev => ({...prev as FunctionsData, code:value}))} theme={oneDark}/>
+                            <CodeMirror value={functionData?.code} height={`${window.innerHeight - 60}px`} extensions={[python()]} onChange={(value) => setFunctionData(prev => ({...prev as FunctionsData, code:value}))} theme={oneDark}/>
                         </Skeleton>
                     </Box>
                 </Flex>
             </MotionBox>
 
             <MotionBox display={'flex'} flexDir={'column'} h='100vh' width={clientBoxWidth + 'px'}  whiteSpace={'nowrap'} initial={{ width: clientBoxWidth + 'px' }} animate={{ width: clientBoxWidth + 'px' }} exit={{ width: clientBoxWidth + 'px' }} transition={{ duration: '.2'}}> 
-                <Flex  p='1vw'  height={'50px'} justifyContent={'space-between'} alignItems={'center'} borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
+                <Flex  p='1vw'  height={'60px'} justifyContent={'space-between'} alignItems={'center'} borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
                     <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('FunctionData')}</Text>
                     <IconButton aria-label="close-tab" variant={'common'} bg='transparent' size='sm' icon={<RxCross2 size={'20px'}/>} onClick={() =>setClientBoxWidth(0)}/>
                 </Flex>

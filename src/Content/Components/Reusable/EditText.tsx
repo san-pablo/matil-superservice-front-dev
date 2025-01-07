@@ -70,10 +70,12 @@ const EditText  = ({ value = '', setValue, hideInput = true, maxLength, regex, t
 
     //SANITIZE AND CHANGE THE INPUT
     const handleInputChange = (event: ChangeEvent<HTMLTextAreaElement> | ChangeEvent<HTMLInputElement> ) => {
-        let inputValue = typeof(event) === 'string'?event: event.target.value
-        inputValue = DOMPurify.sanitize(inputValue)
-        if (maxLength && inputValue.length > maxLength) {inputValue = inputValue.substring(0, maxLength)}
-        setTempValue(inputValue)
+        if (!isDisabled) {
+            let inputValue = typeof(event) === 'string'?event: event.target.value
+            inputValue = DOMPurify.sanitize(inputValue)
+            if (maxLength && inputValue.length > maxLength) {inputValue = inputValue.substring(0, maxLength)}
+            setTempValue(inputValue)
+        }
     }
 
     //BLUR ON ENTER KEY PRESS
@@ -144,7 +146,6 @@ const EditText  = ({ value = '', setValue, hideInput = true, maxLength, regex, t
                 fontSize={fontSize}
                 bg={isDisabled?'brand.gray_1':'transparent'}
                 onChange={handleInputChange}
-                isDisabled={isDisabled}
                 onKeyDown={handleKeyPress}/>
         </Box>}
             </>

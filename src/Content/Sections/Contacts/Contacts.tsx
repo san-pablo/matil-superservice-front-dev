@@ -27,7 +27,7 @@ const Contacts = ({socket}:{socket:any}) => {
     //CREATE BUSINESS
     const [showCreateBusiness, setShowCreateBusiness] = useState<boolean>(false)
 
-    useEffect(() => {navigate(localStorage.getItem('contactsSection')?localStorage.getItem('contactsSection') as 'clients' | 'businesses':'clients')},[])
+ 
     useEffect(() => {setSelectedSection(location.split('/')[2] as 'clients' | 'businesses')},[location])
 
      return (

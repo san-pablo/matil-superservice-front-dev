@@ -2,11 +2,10 @@
     MAIN CLIENT FUNCTION (clients/client/{contact_id} or conversations/conversation/{conversation_id}/client)
 */
 
-import { useState, useRef, useEffect, ChangeEvent, KeyboardEvent, Dispatch, SetStateAction, Fragment, lazy, Suspense, useMemo } from "react"
+import { useState, useRef, useEffect, KeyboardEvent, Dispatch, SetStateAction, Fragment, lazy, Suspense, useMemo } from "react"
 import { useAuth } from "../../../AuthContext"
 import { useSession } from "../../../SessionContext"
 import { useLocation, useNavigate } from "react-router-dom"
-import DOMPurify from 'dompurify'
 import { useTranslation } from 'react-i18next'
 //FRONT
 import { Flex, Box, Text, Icon, Textarea, Avatar, Button, Skeleton, IconButton, Tooltip, chakra, shouldForwardProp } from '@chakra-ui/react'
@@ -19,7 +18,6 @@ import CustomSelect from "../../Components/Reusable/CustomSelect"
 import Table from "../../Components/Reusable/Table"
 import EditText from "../../Components/Reusable/EditText"
 import ConfirmmBox from "../../Components/Reusable/ConfirmBox"
-import CreateBusiness from "./CreateBusiness" 
 import StateMap from "../../Components/Reusable/StateMap"
 import CustomAttributes from "../../Components/Reusable/CustomAttributes"
 import CollapsableSection from "../../Components/Reusable/CollapsableSection"
@@ -36,6 +34,7 @@ import { TbArrowMerge, TbKey } from 'react-icons/tb'
 import { MdBlock } from "react-icons/md"
 import { FaExclamationCircle, FaExclamationTriangle, FaInfoCircle, FaCheckCircle } from 'react-icons/fa'
 import { IoIosArrowForward, IoIosArrowBack, IoIosArrowDown } from "react-icons/io"
+import { PiSidebarSimpleBold } from "react-icons/pi"
 //TYPING
 import { ClientData, Conversations, contactDicRegex, ContactChannel, Channels, logosMap, HeaderSectionType, DeleteHeaderSectionType, languagesFlags, ContactBusinessesTable, ConversationColumn, Clients } from "../../Constants/typing"
 import showToast from "../../Components/Reusable/ToastNotification"
@@ -90,21 +89,21 @@ const CellStyle = ({column, element}:{column:string, element:any}) => {
     const { t } = useTranslation('conversations')
     const t_formats = useTranslation('formats').t
 
-    if (column === 'local_id') return  <Text color='gray' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>#{element}</Text>
-    else if (column === 'user_id') return  <Text fontWeight={'medium'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element === 'matilda' ?'Matilda':element === 'no_user' ? t('NoAgent'):(auth?.authData?.users?.[element as string | number].name || '')}</Text>
+    if (column === 'local_id') return  <Text fontSize={'.9em'} color='gray' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>#{element}</Text>
+    else if (column === 'user_id') return  <Text fontSize={'.9em'} fontWeight={'medium'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element === 'matilda' ?'Matilda':element === 'no_user' ? t('NoAgent'):(auth?.authData?.users?.[element as string | number].name || '')}</Text>
     else if (column === 'unseen_changes') 
         return(
         <Flex color={element?'red':'green'} alignItems={'center'} gap='5px'> 
             <Icon as={element?FaExclamationCircle:FaCheckCircle} />
-            <Text>{element?t('NotRead'):t('Any')}</Text>
+            <Text fontSize={'.9em'}>{element?t('NotRead'):t('Any')}</Text>
         </Flex>)
     
     else if (column === 'status' && typeof element === 'string' && validStatuses.includes(element as Status)) return  <StateMap state={element as Status}/>
     else if (column === 'urgency_rating' && typeof element === 'number') {return <AlertLevel t={t} rating={element}/>}
     else if (column === 'created_at' || column === 'updated_at' || column === 'solved_at' || column === 'closed_at') {
         return(
-        <Tooltip  label={timeStampToDate(element as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
-            <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(element as string, t_formats)}</Text>
+        <Tooltip  label={timeStampToDate(element as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='.8em' p='6px'> 
+            <Text fontSize={'.9em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(element as string, t_formats)}</Text>
         </Tooltip>)
     }
     else if (column === 'deletion_date'  && typeof element === 'string' ) return <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeStampToDate(element, t_formats)}</Text>
@@ -112,14 +111,14 @@ const CellStyle = ({column, element}:{column:string, element:any}) => {
         return(
         <Flex gap='7px' alignItems={'center'}>
             <Icon color='gray.600' as={typeof element === 'string' && element in logosMap ?logosMap[element as Channels][0]:FaInfoCircle}/>
-            <Text >{t(element as string)}</Text>
+            <Text fontSize={'.9em'}>{t(element as string)}</Text>
          </Flex>)
     }     
-    else return ( <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element}</Text>)
+    else return ( <Text fontSize={'.9em'}whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element}</Text>)
 }
 
 //MAIN FUNCTION
-function Client ( {socket}:{socket:any}) {
+function Client ( {socket, fetchClientDataWithFilter}:{socket:any, fetchClientDataWithFilter:any}) {
     
     //TRANSLATION
     const { t } = useTranslation('clients')
@@ -199,10 +198,11 @@ function Client ( {socket}:{socket:any}) {
     const [sectionsExpanded, setSectionsExpanded] = useState<string[]>(['contact', 'info', 'custom-attributes'])
     const onSectionExpand = (section: string) => {
         setSectionsExpanded((prevSections) => {
-        if (prevSections.includes(section))return prevSections.filter((s) => s !== section)
+        if (prevSections.includes(section)) return prevSections.filter((s) => s !== section)
         else return [...prevSections, section]
         })
-      }
+    }
+      
     //REQUEST CLIENT, CONVERSATIONS AND CLIENT INFO
     useEffect(() => { 
         const loadData = async () => {
@@ -248,8 +248,7 @@ function Client ( {socket}:{socket:any}) {
                             session.dispatch({type:'UPDATE_HEADER_SECTIONS',payload:{action:'add', data:{id:clientId, type:'client', data:{clientData:clientResponse.data, clientConversations:conversationsResponse?.data, businessData:businessDict}}}})
                         }
                     }
-                    else navigate('/contacts/clients')
-            }
+             }
         }
         loadData()
     }, [location])
@@ -465,27 +464,20 @@ function Client ( {socket}:{socket:any}) {
         }
 
         return(<> 
-            <Box p='20px'> 
+        <Box p='15px'> 
             <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('ConfirmBlock')}</Text>
-            <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
-            <Text>{parseMessageToBold(t('BlockClient', {name_id:`#${clientDataEdit?.id} ${clientDataEdit?.name}`}))}</Text>
+             <Text mt='2vh' fontSize={'.9em'}>{parseMessageToBold(t('BlockClient', {name_id:`#${clientDataEdit?.id} ${clientDataEdit?.name}`}))}</Text>
+ 
+            <Flex mt='2vh' gap='15px' flexDir={'row-reverse'}>
+                <Button  size='sm'variant={'delete'} onClick={blockClient}>{waitingConfirmBlock?<LoadingIconButton/>:t('Block')}</Button>
+                <Button  size='sm' variant={'common'} onClick={() => setShowBlock(false)}>{t('Cancel')}</Button>
+            </Flex>
         </Box>
-        <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-            <Button  size='sm'variant={'delete'} onClick={blockClient}>{waitingConfirmBlock?<LoadingIconButton/>:t('Block')}</Button>
-            <Button  size='sm' variant={'common'} onClick={() => setShowBlock(false)}>{t('Cancel')}</Button>
-        </Flex>
         </>)
     }
-
-    const memoizedAddBusiness = useMemo(() => (
-        <ConfirmmBox setShowBox={setShowAddBusiness}> 
-            <CreateBusiness setShowBox={setShowAddBusiness} actionTrigger={(data:any) => handleCreateContactBusiness(data)}/>
-        </ConfirmmBox>
-    ), [showAddBusiness])
-
     const memoizedMergeBox = useMemo(() => (
         <ConfirmmBox setShowBox={setShowMerge}> 
-            <MergeBox clientData={clientDataEdit} setShowMerge={setShowMerge}/>
+            <MergeBox clientData={clientDataEdit} setShowMerge={setShowMerge} fetchClientDataWithFilter={fetchClientDataWithFilter}/>
         </ConfirmmBox>
     ), [showMerge])
 
@@ -501,7 +493,6 @@ function Client ( {socket}:{socket:any}) {
      
     <Suspense fallback={<></>} >    
 
-        {showAddBusiness && memoizedAddBusiness}
         {showMerge && memoizedMergeBox}
         {showBlock && memoizedBlockBox}
 
@@ -510,13 +501,16 @@ function Client ( {socket}:{socket:any}) {
             <Box px='1vw' pt='1vw' > 
                 <Flex   gap='3vw' justifyContent={'space-between'}> 
                     <Flex  flex='1' gap='20px'  alignItems={'center'}>
-                        <Avatar  name={clientDataEdit?.name}/>
-                        <Skeleton width={'100%'} isLoaded={clientDataEdit !== null}> 
-                            <EditText fontSize="1.2em" nameInput={true} size='md' maxLength={70} updateData={(text:string | undefined) => updateData({...clientDataEdit as ClientData, name:text as string})} value={clientDataEdit?.name === ''? t('WebClient'):clientDataEdit?.name} setValue={handelChangeName}/>
-                        </Skeleton>
+                        <IconButton  aria-label='expand-data' icon={<PiSidebarSimpleBold size='18px'/>} size='sm'  variant={'common'} bg='transparent'  onClick={() => navigate('/contacts/clients') }/>
+                        <Flex gap='10px'  flex='1'  alignItems={'center'}>
+                            <Avatar size='sm' name={clientDataEdit?.name}/>
+                            <Skeleton width={'100%'} isLoaded={clientDataEdit !== null}> 
+                                <EditText fontSize="1.2em" nameInput={true} size='md' maxLength={70} updateData={(text:string | undefined) => updateData({...clientDataEdit as ClientData, name:text as string})} value={clientDataEdit?.name === ''? t('WebClient'):clientDataEdit?.name} setValue={handelChangeName}/>
+                            </Skeleton>
+                        </Flex>
                     </Flex>
                     <Flex alignItems={'center'} gap='10px'>
-                        <Button variant={'common'}  leftIcon={clientDataEdit?.is_blocked?<TbKey/>:<MdBlock/>} onClick={() => {if (!clientDataEdit?.is_blocked) setShowBlock(true); else updateData({...clientDataEditRef.current as ClientData, is_blocked:false})}} color={clientDataEdit?.is_blocked?'black':'red'} fontSize={'1em'} size='sm' fontWeight={'medium'}  _hover={{color:clientDataEdit?.is_blocked?'blue.500':'red.600'}}>{clientDataEdit?.is_blocked?'Desbloquear':'Bloquear'}</Button>
+                        <Button variant={'common'}  leftIcon={clientDataEdit?.is_blocked?<TbKey/>:<MdBlock/>} onClick={() => {if (!clientDataEdit?.is_blocked) setShowBlock(true); else updateData({...clientDataEditRef.current as ClientData, is_blocked:false})}} color={clientDataEdit?.is_blocked?'black':'red'}  size='sm'   _hover={{color:clientDataEdit?.is_blocked?'blue.500':'red.600'}}>{clientDataEdit?.is_blocked?t('Deblock'):t('Block')}</Button>
                         <Button leftIcon={<TbArrowMerge/>}  size='sm' variant={'common'} onClick={() => setShowMerge(true)}>{t('Merge')}</Button>
                     </Flex>
                 </Flex>
@@ -636,28 +630,19 @@ function Client ( {socket}:{socket:any}) {
                     <Table data={clientConversationsEdit?.page_data || []} CellStyle={CellStyle} noDataMessage={t('NoConversations')} columnsMap={columnsConversationsMap} excludedKeys={['id', 'conversation_id', 'contact_id',  'is_matilda_engaged']} onClickRow={(row:any, index:number) => {navigate(`/conversations/conversation/${row.id}`)}}/>
                 </Flex>
             </Flex>
-          
-             
-
-      
-    
         </Flex>
-
-       
-        
     </Suspense>)
     }
 
 export default Client
 
-
- 
 interface MergeBoxProps {
     clientData:ClientData | null
     setShowMerge: Dispatch<SetStateAction<boolean>>
+    fetchClientDataWithFilter:any
 }
 
-const MergeBox = ({clientData, setShowMerge}:MergeBoxProps) => {
+const MergeBox = ({clientData, setShowMerge, fetchClientDataWithFilter}:MergeBoxProps) => {
 
     //AUTH CONSTANT
     const { t } = useTranslation('clients')
@@ -669,8 +654,7 @@ const MergeBox = ({clientData, setShowMerge}:MergeBoxProps) => {
 
     //SHOW CONFIRM
     const [showConfirmMerge, setShowConfirmMerge] = useState<boolean>(false)
-    const [waitingConfirmMerge, setWaitingConfirmMerge] = useState<boolean>(false)
-
+ 
     //SHOW BOX ON WRITE TEXT AND FIND COINCIDENCE, MAKING CALLS TO CLIENTS ENDPOINT
     const [waitingResult, setWaitingResult] = useState<boolean>(false)
     const boxRef = useRef<HTMLDivElement>(null) 
@@ -693,34 +677,52 @@ const MergeBox = ({clientData, setShowMerge}:MergeBoxProps) => {
     }, [text])
 
 
-    const confirmMerge = async () => {
-        const response = await fetchData({endpoint: `${auth.authData.organizationId}/contacts/merge/${clientData?.id}/${selectedClient?.id}`, getAccessTokenSilently, method:'put', setWaiting:setWaitingConfirmMerge, params: { new_name:clientData?.name}, auth: auth, toastMessages:{'works':`${clientData?.name} y ${selectedClient?.name} se han fusionado correctamente`,'failed':'Hubo un fallo al fusionar los clientes'}})
-        if (response?.status === 200) {
-            session.dispatch({type:'DELETE_VIEW_FROM_CLIENT_LIST'})
-            navigate('/contacts/clients')
+    
+
+    const ConfirmBox = () => {
+
+        const [waitingConfirmMerge, setWaitingConfirmMerge] = useState<boolean>(false)
+
+        const confirmMerge = async () => {
+            const response = await fetchData({endpoint: `${auth.authData.organizationId}/contacts/merge/${clientData?.id}/${selectedClient?.id}`, getAccessTokenSilently, method:'put', setWaiting:setWaitingConfirmMerge, params: { new_name:clientData?.name}, auth: auth, toastMessages:{'works':`${clientData?.name} y ${selectedClient?.name} se han fusionado correctamente`,'failed':'Hubo un fallo al fusionar los clientes'}})
+            if (response?.status === 200) {
+                session.dispatch({type:'DELETE_VIEW_FROM_CLIENT_LIST'})
+                navigate('/contacts/clients')
+                setShowConfirmMerge(false)
+                setShowMerge(false)
+                fetchClientDataWithFilter(null)
+            }
         }
+
+        return (
+        <Box p='15px'> 
+        <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('ConfirmMerge')}</Text>
+        <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
+        <Text fontSize={'.9em'}>{parseMessageToBold(t('MergeUsersConfirm', {user_1:clientData?.name,user_2:selectedClient?.name}))}</Text>
+
+        <Flex mt='2vh' gap='15px' flexDir={'row-reverse'} >
+            <Button  size='sm' variant='main' onClick={confirmMerge}>{waitingConfirmMerge?<LoadingIconButton/>:'Fusionar'}</Button>
+            <Button  size='sm' variant={'common'} onClick={()=>setShowConfirmMerge(false)}>{t('Cancel')}</Button>
+        </Flex>
+        </Box>
+        )
     }
 
-     return(<>
-            <Box p='20px'> 
+    const memoizedConfirmBox = useMemo(() => (
+        <ConfirmmBox setShowBox={setShowConfirmMerge}> 
+            <ConfirmBox/>
+        </ConfirmmBox>
+    ), [showConfirmMerge])
+
+    return(<>
+            <Box p='15px'> 
                 <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('MergeUser')}</Text>
-                <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.200'/>  
-                
+                 
                 {showConfirmMerge ? 
-                <ConfirmmBox setShowBox={setShowConfirmMerge}> 
-                    <Box p='15px'> 
-                        <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('ConfirmMerge')}</Text>
-                        <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
-                        <Text>{parseMessageToBold(t('MergeUsersConfirm', {user_1:clientData?.name,user_2:selectedClient?.name}))}</Text>
-                    </Box>
-                    <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-                        <Button  size='sm' variant='main' onClick={confirmMerge}>{waitingConfirmMerge?<LoadingIconButton/>:'Fusionar'}</Button>
-                        <Button  size='sm' variant={'common'} onClick={()=>setShowConfirmMerge(false)}>{t('Cancel')}</Button>
-                    </Flex>
-                </ConfirmmBox>
+                    <> {memoizedConfirmBox}</>
                 :
                 <> 
-                <Text mb='1vh' fontSize={'.9em'} fontWeight={'medium'}>{t('SearchToMerge')}</Text>
+                <Text mb='1vh' mt='2vh' fontSize={'.9em'} fontWeight={'medium'}>{t('SearchToMerge')}</Text>
                 <Box position={'relative'}> 
                     <EditText waitingResult={waitingResult} value={text} setValue={setText} searchInput={true}/>
                 
@@ -757,12 +759,13 @@ const MergeBox = ({clientData, setShowMerge}:MergeBoxProps) => {
                     </Flex>}
                 </Flex>
                 </>}
-            </Box>
           
-            <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+          
+            <Flex mt='2vh' gap='15px' flexDir={'row-reverse'} >
                 <Button  size='sm'variant='main' isDisabled={selectedClient === null} onClick={()=>setShowConfirmMerge(true)}>{showConfirmMerge?t('ConfirmAndMerge'):t('Merge')}</Button>
                 <Button  size='sm'   variant={'common'} onClick={()=>setShowMerge(false)}>{t('Cancel')}</Button>
             </Flex>
+            </Box>
         </>
     )
 }

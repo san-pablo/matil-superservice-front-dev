@@ -91,7 +91,7 @@
     "InsertBullet":"Insertar bullet list",
     "InsertNumber":"Insertar numeración",
     "InsertVideoUrl":"Inserta la URL del video...",
-    "DeleteArticleAnswer":"¿Estás seguro que desea eliminar el artículo con {{name}}?",
+    "DeleteArticleAnswer":"¿Estás seguro que desea eliminar el artículo con título/{ {{name}}}/?",
 
     "CorrectCreatedFolder":"Carpeta creado con éxito",
     "FailedCreatedFolder":"Hubo un error al crear la carpeta",

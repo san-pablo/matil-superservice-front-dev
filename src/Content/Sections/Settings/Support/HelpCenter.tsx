@@ -29,7 +29,7 @@ import determineBoxStyle from '../../../Functions/determineBoxStyle'
 import { IconType } from 'react-icons'
 import { FaBookBookmark, FaPaintbrush, FaCircleDot } from "react-icons/fa6"
 import { TbWorld } from 'react-icons/tb'
-import { IoMdArrowRoundForward, IoIosArrowDown, IoIosArrowForward } from 'react-icons/io'
+import { IoMdArrowRoundForward, IoIosArrowDown, IoIosArrowForward, IoLogoWhatsapp, IoMdMail } from 'react-icons/io'
 import { FaMagnifyingGlass }  from "react-icons/fa6"
 import { FaPlus, FaFacebook, FaInstagram, FaLinkedin, FaYoutube, FaTiktok, FaPinterest, FaGithub, FaReddit, FaDiscord, FaTwitch, FaTelegram, FaSpotify } from "react-icons/fa"
 import { TbBrandX } from "react-icons/tb"
@@ -52,6 +52,7 @@ import {
     FaTools, FaCogs, FaHeart, FaStar, FaExclamationTriangle, FaLightbulb, FaUnlock, FaShieldAlt
 } from 'react-icons/fa'
  import { languagesFlags } from '../../../Constants/typing'
+import { useSession } from '../../../../SessionContext'
 const iconsMap = {FaArrowRight, FaArrowLeft, FaArrowUp, FaArrowDown,  FaLongArrowAltRight, FaLongArrowAltLeft, FaLongArrowAltUp, FaLongArrowAltDown, FaCaretRight, FaCaretLeft, FaCaretUp,
     FaArrowCircleRight, FaArrowCircleLeft, FaArrowCircleUp, FaArrowCircleDown, FaCaretDown, FaChevronLeft, FaChevronRight,FaChevronDown,FaChevronUp,
     FaChartLine, FaMoneyBill, FaBriefcase, FaCreditCard, FaPiggyBank,FaFileContract, FaBriefcaseMedical,FaClipboardList,FaUserTie,FaHandHoldingUsd,FaMoneyCheck,FaStore,
@@ -83,7 +84,7 @@ interface CollectionsData {
 }
 
 type ArticleData = {uuid:string, title:string, description:string, public_article_help_center_collections:string[], public_article_status:string, public_article_common_uuid:string }
-type socialNetworks = 'facebook' | 'linkedin' | 'x' | 'instagram' | 'youtube' | 'pinterest' | 'github' |  'reddit' | 'discord' | 'tiktok' | 'twitch' | 'telegram' | 'spotify'
+type socialNetworks = 'whatsapp' | 'mail' | 'facebook' | 'linkedin' | 'x' | 'instagram' | 'youtube' | 'pinterest' | 'github' |  'reddit' | 'discord' | 'tiktok' | 'twitch' | 'telegram' | 'spotify'
 type sectionsTypes = '' | 'header' | 'common' | 'hero' | 'collections' | 'sections' | 'footer' | 'other'
 interface StylesConfig {
     
@@ -145,66 +146,13 @@ interface StylesConfig {
     footer_color:string
     social_networks:{[key:string]:string}
     footer_message:string
- }
-const MatilStyles:StylesConfig = {
-    show_header:false,
-    logo:'',
-    title:'',
-    links:[],
-    header_background:'#000000',
-    header_color:'#FFFFFF',
+    footer_message_2:string
 
-    favicon:'',
-    text_background:'#f1f1f1',
-    text_color:'#000000',
-    actions_color:'#0565ff',
-    floating_cards:false,
-    cards_borderradius:10,
+    enable_chat:boolean
+    chat_config:{org_id:string, chatbot_uuid:string}
+
+ }
  
-    welcome_message:'',
-    hero_background:['#0565ff', '#0565ff'],
-    hero_color:'#FFFFFF',
-    show_image:false,
-    hero_image: '', 
-    blurred_hero:true,
-    search_placeholder:'',
-
-    show_collections:true,
-    collections_columns:2,
-    collections_icons_text_align:'column',
-    show_collections_description:true,
-    show_icons:true,
-    icons_color:'rgb(59, 90, 246)',
-    show_icons_background:true,
-    show_icons_background_image:false,
-    icons_background_color:[ '#e0e0e0','#c0c0c0'],
-    icons_background_image:'',
-
-    show_article_section:false,
-    article_section_title:'Algunos artículos que te pueden interesar',
-    article_section_columns:1,
-    article_section: [],
-
-    show_content_section:false, 
-    content_section_title:'',
-    content_section_description:'',
-    content_section_show_background_image:false,
-    content_section_background_image:'',
-    content_section_is_card:true,
-    content_section_background:['#FFFFFF', '#232323'], 
-    content_section_text_color:'#000000', 
-    content_section_add_button:false, 
-    content_section_button_title:'',
-    content_section_button_background:'#0565ff', 
-    content_section_button_color:'#FFFFFF', 
-    content_section_button_link:'', 
-    content_section_button_borderradius:10,
-
-    footer_background:'#222',
-    footer_color:'#FFFFFF',
-    social_networks:{},
-    footer_message:'',
- }
 
  const GetColumsIcon = ({ count, isVertical }: { count: number, isVertical?:boolean }) => {
     return (
@@ -256,11 +204,12 @@ function HelpCenters ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
 
         //FUNCTION FOR DELETING AN AUTOMATION
         const createHelpCenter = async () => {
-             const newData = {...newHelpCenter, is_live:false, style:MatilStyles, languages:[auth.authData.userData?.language], created_by:auth.authData.userId, updated_by:auth.authData.userId}
+             const newData = {...newHelpCenter, is_live:false, style:{}, languages:[auth.authData.userData?.language], created_by:auth.authData.userId, updated_by:auth.authData.userId}
             const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/help_centers`, getAccessTokenSilently, method:'post', setWaiting:setWaitingCreate, requestForm:newData,  auth, toastMessages:{works:t('CorrectCreatedHelpCenter'), failed:t('FailedCreatedHelpCenter')}})
             if (response?.status === 200) setHelpCentersData(prev => [...prev as {name: string, is_live: boolean, id: string}[], {name: newData.name, is_live: false, id: newData.id} ])
             setShowCreate(false)
         }
+
         //FRONT
         return(<>
             <Box p='20px' > 
@@ -372,7 +321,6 @@ function HelpCenter ({scrollRef, helpCenterId, setHelpCenterId, setHelpCentersDa
     const stylesRef = useRef<StylesConfig | null>(null)
     const stylesHeaderRef = useRef<HTMLDivElement>(null)
 
-    const [waitingStyles, setWaitingStyles] = useState<boolean>(false)
 
     //EDIT HELP CENTER
     const [showCreateCollection, setShowCreateCollection] = useState<boolean>(false)
@@ -956,6 +904,75 @@ const EditStyles = ({currentStyles, currentCollections, stylesRef, publicArticle
 
     //SCROLL REF
     const containerRef = useRef<HTMLDivElement>(null)
+    const session = useSession()
+    const channels = session.sessionData.additionalData.channels?.filter(channel => channel.channel_type === 'webchat') || []
+    const webchatChannel = channels?.length === 0 ?'':channels?.[0]?.uuid
+
+    console.log(channels)
+    const MatilStyles:StylesConfig = {
+        show_header:false,
+        logo:'',
+        title:'',
+        links:[],
+        header_background:'#000000',
+        header_color:'#FFFFFF',
+    
+        favicon:'',
+        text_background:'#f1f1f1',
+        text_color:'#000000',
+        actions_color:'#0565ff',
+        floating_cards:false,
+        cards_borderradius:10,
+     
+        welcome_message:'',
+        hero_background:['#0565ff', '#0565ff'],
+        hero_color:'#FFFFFF',
+        show_image:false,
+        hero_image: '', 
+        blurred_hero:true,
+        search_placeholder:'',
+    
+        show_collections:true,
+        collections_columns:2,
+        collections_icons_text_align:'column',
+        show_collections_description:true,
+        show_icons:true,
+        icons_color:'rgb(59, 90, 246)',
+        show_icons_background:true,
+        show_icons_background_image:false,
+        icons_background_color:[ '#e0e0e0','#c0c0c0'],
+        icons_background_image:'',
+    
+        show_article_section:false,
+        article_section_title:'Algunos artículos que te pueden interesar',
+        article_section_columns:1,
+        article_section: [],
+    
+        show_content_section:false, 
+        content_section_title:'',
+        content_section_description:'',
+        content_section_show_background_image:false,
+        content_section_background_image:'',
+        content_section_is_card:true,
+        content_section_background:['#FFFFFF', '#232323'], 
+        content_section_text_color:'#000000', 
+        content_section_add_button:false, 
+        content_section_button_title:'',
+        content_section_button_background:'#0565ff', 
+        content_section_button_color:'#FFFFFF', 
+        content_section_button_link:'', 
+        content_section_button_borderradius:10,
+    
+        footer_background:'#222',
+        footer_color:'#FFFFFF',
+        social_networks:{},
+        footer_message:'',
+        footer_message_2:'',
+    
+        enable_chat:false,
+        chat_config:{org_id:String(auth.authData.organizationId), chatbot_uuid:webchatChannel || ''}
+     }
+
 
     //STYLES DATA
     const [configStyles, setConfigStyles] = useState<StylesConfig>(Object.keys(currentStyles).length === 0?MatilStyles:currentStyles)
@@ -1048,10 +1065,26 @@ const EditStyles = ({currentStyles, currentCollections, stylesRef, publicArticle
                 </CollapsableSection>
 
                 <CollapsableSection section={'sections'} setSectionExpanded={setSectionExpanded} sectionExpanded={sectionExpanded}>
+                    <Box mt='2vh'> 
+                     <EditBool configStyles={configStyles} setConfigStyles={setConfigStyles} keyToEdit='enable_chat' title={t('ShowChat')} />
+                     </Box>
+                     {configStyles.enable_chat && 
+                        <Box>
+                        {channels.map((cha, index) => (
+                            <Flex mt='1vh' cursor={'pointer'} borderWidth={'1px'} transition={'box-shadow 0.2s ease-in-out, background  0.2s ease-in-out'} boxShadow={configStyles?.chat_config?.chatbot_uuid === cha.id ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''} bg={configStyles?.chat_config?.chatbot_uuid === cha.id ? 'brand.blue_hover':'white'} borderColor={'gray.200'} borderRadius={'.5rem'} flexDir={'column'} key={`channel-${index}`} p='8px' onClick={() => setConfigStyles(prev => ({...prev, chat_config:{org_id:String(auth.authData.organizationId), chatbot_uuid:cha.id}}))}>
+                                <Text fontSize={'.9em'} fontWeight={'medium'}>{cha.name}</Text>
+                                <Text  fontSize={'.8em'} color='gray.600'>{cha.id}</Text>
+
+                            </Flex>
+                        ))}
+                        </Box>
+                     }
+
                     <Text  fontSize={'1.2em'} fontWeight={'medium'} mt='2vh' mb='2vh'>{t('ArticlesSection')}</Text>
                     <EditBool configStyles={configStyles} setConfigStyles={setConfigStyles} keyToEdit='show_article_section' title={t('ShowArticles')} />
                     {configStyles.show_article_section && <EditArticles configStyles={configStyles} setConfigStyles={setConfigStyles}  containerRef={containerRef} publicArticlesData={publicArticlesData}/>}
                     <Box height={'1px'} mt='2vh' mb='2vh' width={'100%'} bg='gray.200'/>
+                    
                     <Text  mb='2vh' fontSize={'1.2em'} fontWeight={'medium'}>{t('Content')}</Text>
                     <EditBool configStyles={configStyles} setConfigStyles={setConfigStyles} keyToEdit='show_content_section' title={t('ShowContent')} />
                     {configStyles.show_content_section && <>
@@ -1105,7 +1138,10 @@ const EditStyles = ({currentStyles, currentCollections, stylesRef, publicArticle
 
                 <CollapsableSection section={'footer'} setSectionExpanded={setSectionExpanded} sectionExpanded={sectionExpanded}>
                     <Box mt='2vh'> 
-                        <EditStr configStyles={configStyles} setConfigStyles={setConfigStyles} keyToEdit='footer_message' title={t('FooterMessage')} />
+                        <EditStr configStyles={configStyles} setConfigStyles={setConfigStyles} keyToEdit='footer_message' title={t('FooterHero')} />
+                    </Box>
+                    <Box mt='2vh'> 
+                        <EditStr configStyles={configStyles} setConfigStyles={setConfigStyles} keyToEdit='footer_message_2' title={t('FooterSubHero')} />
                     </Box>
                     <Box height={'1px'} mt='2vh' mb='2vh' width={'100%'} bg='gray.200'/>
                     <Text  mb='2vh' fontWeight={'medium'}>{t('Colors')}</Text>
@@ -1302,7 +1338,7 @@ const EditLinks = ({keyToEdit,  title, configStyles, setConfigStyles, descriptio
         ))}
         
         <Button mt='2vh' size='xs' variant={'common'} leftIcon={<FaPlus/>} isDisabled={Object.keys(configStyles[keyToEdit]).length === 3} onClick={handleAddLink}>{t('AddLink')}</Button>
-        
+
     </>)
 }
 
@@ -1311,8 +1347,8 @@ const EditSocialNetworks = ({configStyles, setConfigStyles}:{configStyles:Styles
     const { t } = useTranslation('settings')
  
  
-    const options: socialNetworks[] = ["facebook", "x", "instagram", "linkedin", "youtube", "tiktok", "pinterest", "github", "reddit", "discord", "twitch", "telegram", "spotify"]
-    const socialIconsMap:{[key in socialNetworks]:[string, IconType]} = {facebook: ["Facebook", FaFacebook],x: ["X", TbBrandX], instagram: ["Instagram", FaInstagram],linkedin: ["LinkedIn", FaLinkedin],youtube: ["YouTube", FaYoutube], tiktok: ["TikTok", FaTiktok], pinterest: ["Pinterest", FaPinterest], github: ["GitHub", FaGithub], reddit: ["Reddit", FaReddit], discord: ["Discord", FaDiscord], twitch: ["Twitch", FaTwitch], telegram: ["Telegram", FaTelegram], spotify: ["Spotify", FaSpotify]}
+    const options: socialNetworks[] = ["whatsapp", "mail", "facebook", "x", "instagram", "linkedin", "youtube", "tiktok", "pinterest", "github", "reddit", "discord", "twitch", "telegram", "spotify"]
+    const socialIconsMap:{[key in socialNetworks]:[string, IconType]} = {whatsapp:["Whatsapp", IoLogoWhatsapp], mail:["Email", IoMdMail], facebook: ["Facebook", FaFacebook],x: ["X", TbBrandX], instagram: ["Instagram", FaInstagram],linkedin: ["LinkedIn", FaLinkedin],youtube: ["YouTube", FaYoutube], tiktok: ["TikTok", FaTiktok], pinterest: ["Pinterest", FaPinterest], github: ["GitHub", FaGithub], reddit: ["Reddit", FaReddit], discord: ["Discord", FaDiscord], twitch: ["Twitch", FaTwitch], telegram: ["Telegram", FaTelegram], spotify: ["Spotify", FaSpotify]}
  
     const boxRef = useRef<HTMLDivElement>(null)
     const buttonRef = useRef<HTMLButtonElement>(null)
@@ -1344,9 +1380,9 @@ const EditSocialNetworks = ({configStyles, setConfigStyles}:{configStyles:Styles
         </Flex>
         {Object.keys(configStyles.social_networks).map((company, index) => (
         <Flex  width={'100%'} key={`link-edit-${index}`} alignItems={'center'} gap='10px' mt='1vh' >
-            <Flex  >
+            <Flex flex='1' >
                 <Flex alignItems={'center'} px='5px' color='gray.600' borderRadius={'.5rem 0 0 .5rem'}  borderWidth={'1px 0px 1px 1px'} borderColor={'gray.300'} flex='4    ' bg='brand.gray_2'>
-                    <Text fontSize={'.8em'}>{`https://${company}.com/`}</Text>
+                    <Text fontSize={'.8em'}>{company === 'whatsapp' ? `https://wa.me/` :  company === 'mail'? 'mailto:':`https://${company}.com/`}</Text>
                 </Flex>
                 <Box flex='5'>
                     <EditText borderRadius={'0 .5rem .5rem 0'} hideInput={false} value={configStyles.social_networks[company]}  setValue={(newValue: string) => handleEditUrl(company as socialNetworks, newValue)}/>
@@ -1511,7 +1547,7 @@ const EditArticles = ({configStyles, setConfigStyles, containerRef, publicArticl
 
 const GetHelpCenter = ({configStyles, currentCollections}:{configStyles:StylesConfig, currentCollections:{name:string, icon:string, description:string}[]}) => {
 
-    const socialIconsMap:{[key in socialNetworks]:[string, IconType]} = {facebook: ["Facebook", FaFacebook],x: ["X", TbBrandX], instagram: ["Instagram", FaInstagram],linkedin: ["LinkedIn", FaLinkedin],youtube: ["YouTube", FaYoutube], tiktok: ["TikTok", FaTiktok], pinterest: ["Pinterest", FaPinterest], github: ["GitHub", FaGithub], reddit: ["Reddit", FaReddit], discord: ["Discord", FaDiscord], twitch: ["Twitch", FaTwitch], telegram: ["Telegram", FaTelegram], spotify: ["Spotify", FaSpotify]}
+    const socialIconsMap:{[key in socialNetworks]:[string, IconType]} = {whatsapp:["Whatsapp", IoLogoWhatsapp], mail:["Email", IoMdMail], facebook: ["Facebook", FaFacebook],x: ["X", TbBrandX], instagram: ["Instagram", FaInstagram],linkedin: ["LinkedIn", FaLinkedin],youtube: ["YouTube", FaYoutube], tiktok: ["TikTok", FaTiktok], pinterest: ["Pinterest", FaPinterest], github: ["GitHub", FaGithub], reddit: ["Reddit", FaReddit], discord: ["Discord", FaDiscord], twitch: ["Twitch", FaTwitch], telegram: ["Telegram", FaTelegram], spotify: ["Spotify", FaSpotify]}
 
     const getHoverColor = (bgColor:string) => {
         if (bgColor === 'white' || bgColor === '#ffffff' || bgColor === 'rgba(255, 255, 255, 1)') return '#d3d3d3'
@@ -1600,6 +1636,24 @@ const GetHelpCenter = ({configStyles, currentCollections}:{configStyles:StylesCo
 
                 <Flex flexDir={'column'} alignItems={'center'} flexGrow={1} mt={configStyles?.blurred_hero?'-60px':'30px'}  px='20px'  bg={configStyles?.text_background} color={configStyles?.text_color}> 
                     
+                        {/* Articles Section */}
+                        {configStyles?.show_article_section && 
+                        <Flex flexDir={'column'}  padding={configStyles?.floating_cards?'0':'35px'} mt='40px' maxW={configStyles.content_section_is_card?'960px':'100%'} width={'100%'}  bg={configStyles?.floating_cards? 'transparent':configStyles?.text_background} zIndex={10000}  p='20px' gap='15px' borderRadius={configStyles?.cards_borderradius}  boxShadow={configStyles?.floating_cards?'':'0 0 10px 1px rgba(0, 0, 0, 0.15)'} >
+                            <Heading  as="h2" fontSize={'20px'}  fontWeight={'500'}>{configStyles.article_section_title}</Heading>
+                            <Grid mt='15px' gap={(isComputerWidth || configStyles?.article_section_columns === 1)?'10px':'20px'}  width={'100%'} justifyContent={'space-between'} templateColumns={`repeat(${isComputerWidth ? configStyles?.article_section_columns:1}, 1fr)`}> 
+                                {configStyles.article_section?.map((article, index) => (
+                                  
+                                     <Flex minW={0} justifyContent={'space-between'} alignItems={'center'} key={`article-styles-${index}`} fontSize={'14px'} p='7px' gap='10px'  _hover={{bg:getHoverColor(configStyles?.text_background)}} borderRadius={'.5rem'} cursor={'pointer'} >
+                                        <Box flex='1' minW={0}> 
+                                            <Text cursor={'pointer'} fontSize={'16px'} fontWeight={'600'}>{article.name}</Text>
+                                            <Text minW={0} fontSize={'14px'} overflow={'hidden'} whiteSpace={'nowrap'} textOverflow={'ellipsis'}>{article.description}</Text>
+                                        </Box>
+                                        <Icon as={IoIosArrowForward}/>
+                                    </Flex>
+                                ))}
+                            </Grid>
+                        </Flex>}
+
                     {/* Collections Section */}
                     {configStyles.show_collections && <Box width={'100%'} maxW={'960px'}  > 
                         <Grid mt='15px' gap={'20px'}  width={'100%'} justifyContent={'space-between'} templateColumns={`repeat(${isComputerWidth ? configStyles?.collections_columns:1}, 1fr)`}> 
@@ -1618,22 +1672,7 @@ const GetHelpCenter = ({configStyles, currentCollections}:{configStyles:StylesCo
                         </Grid>
                     </Box>}
 
-                    {/* Articles Section */}
-                    {configStyles?.show_article_section && 
-                        <Flex flexDir={'column'}  padding={configStyles?.floating_cards?'0':'35px'} mt='40px' maxW={configStyles.content_section_is_card?'960px':'100%'} width={'100%'}  bg={configStyles?.floating_cards? 'transparent':configStyles?.text_background} zIndex={10000}  p='20px' gap='15px' borderRadius={configStyles?.cards_borderradius}  boxShadow={configStyles?.floating_cards?'':'0 0 10px 1px rgba(0, 0, 0, 0.15)'} >
-                            <Heading  as="h2" fontSize={'20px'}  fontWeight={'500'}>{configStyles.article_section_title}</Heading>
-                    <Grid mt='15px' gap={(isComputerWidth || configStyles?.article_section_columns === 1)?'10px':'20px'}  width={'100%'} justifyContent={'space-between'} templateColumns={`repeat(${isComputerWidth ? configStyles?.article_section_columns:1}, 1fr)`}> 
-                        {configStyles.article_section?.map((article, index) => (
-                            <Flex justifyContent={'space-between'} alignItems={'center'} key={`article-styles-${index}`} fontSize={'14px'} p='7px' _hover={{bg:getHoverColor(configStyles?.text_background)}} borderRadius={'.5rem'} cursor={'pointer'} >
-                                <Box> 
-                                    <Text cursor={'pointer'} fontSize={'16px'} fontWeight={'600'}>{article.name}</Text>
-                                    <Text maxW='100%' fontSize={'14px'} overflow={'hidden'} whiteSpace={'nowrap'} textOverflow={'ellipsis'}>{article.description}</Text>
-                                </Box>
-                                <Icon as={IoIosArrowForward}/>
-                            </Flex>
-                        ))}
-                    </Grid>
-                </Flex>}
+                 
         </Flex>
             {/* Content Section */}
             {configStyles?.show_content_section && (
@@ -1651,11 +1690,11 @@ const GetHelpCenter = ({configStyles, currentCollections}:{configStyles:StylesCo
             )}
         {/* Footer */}
         <Box mt='40px' backgroundColor={configStyles?.footer_background} color={configStyles?.footer_color} padding={'30px'} textAlign="center">
-            <Text fontSize={'16px'}>{configStyles?.footer_message}</Text>
-            <Box marginY={2} />
+            <Text fontSize={'24px'} fontWeight={500}>{configStyles?.footer_message}</Text>
+            <Text  mt='15px' fontSize={'16px'}>{configStyles?.footer_message_2}</Text>
             <HStack justify="center" gap='15px' mt='30px'>
                 {Object.entries(configStyles?.social_networks || {}).map(([key, value], index) => (
-                    <Icon key={`icons-${index}`} cursor={'pointer'} boxSize={'20px'} as={socialIconsMap[key as socialNetworks][1]}/>
+                    <Icon cursor={'pointer'}   onClick={() => {if (key === "whatsapp") window.open(`https://wa.me/${value}`, '_blank'); else if (key === "mail") window.open(`mailto:${value}`, '_self'); else window.open(`https://www.${key}.com/${value}`, '_blank') }} boxSize={'20px'} as={socialIconsMap[key as socialNetworks][1]}/>
                 ))}
             </HStack>
             <Flex mt='30px' justifyContent={'center'} alignItems={'center'} gap={'5px'} color={configStyles?.footer_color} >

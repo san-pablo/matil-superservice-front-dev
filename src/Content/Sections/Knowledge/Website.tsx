@@ -12,7 +12,7 @@ import "../../Components/styles.css"
 //COMPONENTS
 import EditText from "../../Components/Reusable/EditText"
 import Table from "../../Components/Reusable/Table"
-import { SourceSideBar } from "./Utils"
+import { SourceSideBar, CellStyle } from "./Utils"
 import LoadingIconButton from "../../Components/Reusable/LoadingIconButton"
 import ConfirmBox from "../../Components/Reusable/ConfirmBox"
 //FUNCTIONS
@@ -26,52 +26,7 @@ import { PiSidebarSimpleBold } from "react-icons/pi"
 import { ContentData, languagesFlags, Folder } from "../../Constants/typing"
 import { useAuth0 } from "@auth0/auth0-react"
 
-//GET THE CELL STYLES
-const CellStyle = ({ column, element }:{column:string, element:any}) => {
-     
-    //TRANSLATION
-    const { t } = useTranslation('knowledge')
-    const  { getAccessTokenSilently } = useAuth0()
-
-    if (column === 'tags' || column === 'public_article_help_center_collections') {
-        return(<> 
-        <Flex minH={'35px'} alignItems={'center'}> 
-        {element ? 
-            <Flex gap='5px' flexWrap={'wrap'}>
-                {element.map((label:string, index:number) => (
-                    <Flex bg='gray.200' borderColor={'gray.300'} borderWidth={'1px'} p='4px' borderRadius={'.5rem'} fontSize={'.8em'} key={`tags-label-${index}`}>
-                        <Text>{label}</Text>
-                    </Flex>
-                ))}
-            </Flex>:
-            <Text>-</Text>
-        }
-        </Flex>
-    </>)
-    }
-    else if (column === 'is_available_to_tilda') return <Icon boxSize={'25px'} color={element?'green.600':'red.600'} as={element?RxCheck:RxCross2}/>
-    else if (column === 'language') {
-        return(
-        <Flex gap='5px' alignItems={'center'}>
-            <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{typeof element === 'string' && element in languagesFlags ?languagesFlags[element][0]:'No detectado'}</Text>
-            <Text fontSize={'.8em'}>{typeof element === 'string' && element in languagesFlags ?languagesFlags[element][1]:'🏴󠁥󠁳󠁣󠁴󠁿'}</Text>
-        </Flex>)
-    }   
-
-    else if (column === 'content') {
-        return <Text flex='1' whiteSpace={'nowrap'} textOverflow={'ellipsis'}  fontWeight={'medium'}  overflow={'hidden'} >{element.url}</Text>
-    }
-   
-    else if (column === 'type') return (
-        <Flex   gap='10px' alignItems="center" borderRadius={'1rem'} borderColor={'gray.300'} borderWidth={'1px'} py='2px' px='5px' bg={'brand.gray_1'}>
-            <Icon as={BiWorld} />
-            <Text >
-                {t(element)}
-            </Text>
-        </Flex>)
-    else return ( <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'}  fontWeight={column === 'title'?'medium':'normal'}  overflow={'hidden'} >{element === ''?'-':element}</Text>)
-}
-
+ 
 //MOTION BOX
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)}) 
  

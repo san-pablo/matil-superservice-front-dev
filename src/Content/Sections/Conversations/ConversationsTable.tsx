@@ -14,7 +14,7 @@ import { useAuth0 } from "@auth0/auth0-react"
 import fetchData from "../../API/fetchData"
 import LoadingIconButton from "../../Components/Reusable/LoadingIconButton"
 //FRONT
-import { Flex, Box, Text, Icon, Button, IconButton, Skeleton, Tooltip, Portal, chakra, shouldForwardProp } from '@chakra-ui/react'
+import { Flex, Box, Text, Icon, Button, IconButton, Skeleton, Tooltip, Portal, chakra, shouldForwardProp, Spinner } from '@chakra-ui/react'
 import { motion, AnimatePresence, isValidMotionProp } from 'framer-motion'
 //COMPONENTS
 import ActionsButton from "./ActionsButton"
@@ -40,7 +40,7 @@ import { HiTrash } from "react-icons/hi2"
 import { Conversations, ConversationColumn, Views, ViewType, ConversationsTableProps, logosMap, Channels, statesMap  } from "../../Constants/typing"
   
 
-const Conversation = lazy(() => import('./Conversation'))
+const ConversationResponse = lazy(() => import('./ConversationResponse'))
 
 //MOTION BOX
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
@@ -146,6 +146,77 @@ function ConversationsTable({socket}:{socket:any}) {
     const columnsConversationsMap:{[key in ConversationColumn]:[string, number]} = {id: [t('id'), 50], local_id: [t('local_id'), 50], status:  [t('status'), 100], channel_type: [t('channel_type'), 150], theme:  [t('theme'), 200], user_id: [t('user_id'), 200], created_at: [t('created_at'), 150],updated_at: [t('updated_at'), 180], solved_at: [t('solved_at'), 150],closed_at: [t('closed_at'), 150],title: [t('title'), 300], urgency_rating: [t('urgency_rating'), 130], deletion_scheduled_at: [t('deletion_date'), 180], unseen_changes: [t('unseen_changes'), 200],  call_status: [t('call_status'), 150], call_duration: [t('call_duration'), 150], }
     
     const [isConversationOpened,setIsConversationOpened] = useState<boolean>(location.split('/')[location.split('/').length - 2] === 'conversation')
+    const [conversationWidth,setConversationWidth ] = useState<Number>(isConversationOpened ?Math.min(window.innerWidth * 0.7, window.innerWidth - 550) : Math.max(window.innerWidth * 0.6, window.innerWidth - 275 - 240) - 200)
+    useEffect(() => {
+        const handleResize = () => {
+            setConversationWidth(isConversationOpened ?Math.min(window.innerWidth * 0.7, window.innerWidth - 550) : Math.max(window.innerWidth * 0.6, window.innerWidth - 275 - 240) - 200)
+        }
+        handleResize()
+        window.addEventListener('resize', handleResize);
+        return () => {window.removeEventListener('resize', handleResize)}
+    }, [isConversationOpened])
+
+    //WAITING NEW CONVERSATIONS ON LIST
+    const debounce = (func:any, delay:any) => {
+        let timeout:any;
+        return (...args:any) => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func(...args), delay);
+        };
+    };
+    
+    const [waitingInfoList, setWaitingInfoList] = useState<boolean>(false)
+
+    {/*
+    const listRef = useRef<HTMLDivElement>(null);
+ 
+    const handleScroll = () => {
+        if (listRef.current) {
+            const { scrollTop, scrollHeight, clientHeight } = listRef.current;
+            if (scrollTop + clientHeight >= scrollHeight - 10 && !waitingInfoList) {
+                setWaitingInfoList(true)
+                fetchConversationsDataScroll().finally(() => {
+                    setWaitingInfoList(false)
+                })
+            }
+        }
+    }
+
+    const fetchConversationsDataScroll = async () => {
+
+         if ( Math.floor((conversationsRef.current?.page_data.length || 0)/ 25)  <= Math.floor((conversationsRef.current?.total_conversations || 0)/ 25)) {
+            
+            //APPLY FILTERS 
+            const selectedFilters = {...filters, page_index:Math.floor((conversationsRef.current?.page_data.length || 0)/ 25) + 1}
+
+            //CHOOSE CONFIGURATION DEPENDING ON ITS BIN OR A NORMAL VIEW
+            let endpoint = `${auth.authData.organizationId}/conversations`
+            let viewsToSend:{view_type:string, view_index:number} | {} = {view_type:selectedView.type, view_index:selectedView.index}
+            if (selectedView.type === 'deleted') {endpoint = `${auth.authData.organizationId}/conversations/bin`;viewsToSend = {}}
+            
+            //API CALL
+            const response = await fetchData({endpoint, getAccessTokenSilently, params:{...viewsToSend, ...selectedFilters}, auth})
+            if (response?.status === 200) {
+                setConversations(prev => ({...prev as Conversations, page_data:[...prev?.page_data || [], ...response.data.page_data]} ))
+            }
+        }
+    }
+    
+    useEffect(() => {
+        const listElement = listRef.current
+        const debounceScroll = debounce(handleScroll, 300)
+         if (listElement ) {
+             listElement.addEventListener('scroll', debounceScroll);
+        }
+        return () => {
+            const listElement = listRef.current;
+            if (listElement) {
+                listElement.removeEventListener('scroll', debounceScroll)
+            }
+         }
+    }, [])
+    */}
+ 
 
     //WAIT INFO AND FORCE TH REUPDATE OF THE TABLE ON DELETE
     const [waitingInfo, setWaitingInfo] = useState<boolean>(true)
@@ -153,9 +224,15 @@ function ConversationsTable({socket}:{socket:any}) {
 
     //CONVERSATION DATA AND SELECTED VIEW
     const [conversations, setConversations] = useState<Conversations | null>(null)
+    const conversationsRef = useRef(conversations);
+    useEffect(() => {
+        conversationsRef.current = conversations;
+    }, [conversations])
+
     const [selectedView, setSelectedView] = useState<ViewType>((localStorage.getItem('currentView') && JSON.parse(localStorage.getItem('currentView') as string)) || getFirstView(auth.authData.views as Views))
     const allConversationsIdsRef = useRef<number[]>([])
     const [selectedIndex, setSelectedIndex] = useState<number>(-1)
+ 
  
     //SHOW FILTERS AND FILTERS INFO
     const isRetrievingData = useRef<boolean>(false)
@@ -163,11 +240,9 @@ function ConversationsTable({socket}:{socket:any}) {
     const filtersRef = useRef<ConversationFilters>({page_index:1, search:''}) 
     useEffect(() => {filtersRef.current = filters}, [filters])
 
-
     //SOCKET FOR RELOADING VIEWS ON A NEW CONVERSATION
     useEffect(() => {
 
-        document.title = `${t('Conversations')} - ${selectedView.name} - ${auth.authData.organizationName} - Matil`
         localStorage.setItem('currentSection', 'conversations')
 
         setSelectedView(localStorage.getItem('currentView') && JSON.parse(localStorage.getItem('currentView') as string) || getFirstView(auth.authData.views as Views))
@@ -192,8 +267,12 @@ function ConversationsTable({socket}:{socket:any}) {
         })
     },[JSON.stringify(auth.authData.organizationId)])
 
+    useEffect(() => {if (location.endsWith('conversations')) document.title = `${t('Conversations')} - ${selectedView.name} - ${auth.authData.organizationName} - Matil`},[selectedView, location])
+   
     //FETCH NEW DATA WHEN THE VIEW CHANGE
     useEffect(() => {
+
+        setSelectedElements([])
         const fetchConversationData = async() => {
 
             //FIND IF THE SECTION IS OPENED
@@ -235,12 +314,9 @@ function ConversationsTable({socket}:{socket:any}) {
                 }
             }
         }
-        navigate('/conversations')
         fetchConversationData()
     }, [selectedView])
 
-   
-   
     useEffect(() => {
         setIsConversationOpened(location.split('/')[location.split('/').length - 2] === 'conversation')
     },[location])
@@ -304,6 +380,7 @@ function ConversationsTable({socket}:{socket:any}) {
     const fetchConversationsDataWithFilter = async (applied_filters:{page_index:number, sort_by?:ConversationColumn | 'not_selected', search?:string, order?:'asc' | 'desc'} | null) => {
         
         setSelectedElements([])
+
         //APPLY FILTERS
         let selectedFilters:ConversationFilters
         if (applied_filters === null) selectedFilters = filtersRef.current
@@ -384,10 +461,11 @@ function ConversationsTable({socket}:{socket:any}) {
         </ConfirmBox>
     ), [showConfirmDelete])
 
-    const conversationWidth = isConversationOpened ?Math.min(window.innerWidth * 0.7, window.innerWidth - 550) : Math.max(window.innerWidth * 0.6, window.innerWidth - 275 - 240) - 200
-    const sendBoxWidth = `calc(100vw - 55px - ${isConversationOpened ? conversationWidth:0}px)`
+    
 
-    //FRONT
+     const sendBoxWidth = `calc(100vw - 55px - ${isConversationOpened ? conversationWidth:0}px)`
+
+     //FRONT
     return(
         <Flex position={'relative'} width={'calc(100vw - 55px)'} bg='brand.hover_gray' height={'100vh'}> 
 
@@ -409,7 +487,7 @@ function ConversationsTable({socket}:{socket:any}) {
                                         {auth.authData.views.private_views.map((view, index) => {
                                             const isSelected = selectedView.index === index && selectedView.type === 'private'
                                             return(
-                                                <Flex gap='10px'  bg={isSelected?'white':'transparent'}  transition={isSelected?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}    boxShadow={isSelected ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''} borderWidth={'1px'} borderColor={isSelected ? 'gray.200':'transparent'} justifyContent='space-between' key={`shared-view-${index}`} onClick={() => {if (!isRetrievingData.current) setSelectedView({index:index, type:'private', name:(view?.name || '')}); localStorage.setItem('currentView', JSON.stringify({index:index, type:'shared', name:view.name}))}} _hover={{bg:isSelected?'white':'brand.gray_2'}}  fontWeight={isSelected? 'medium':'normal'}fontSize={'.9em'} cursor={'pointer'} borderRadius={'.5rem'} p='6px'>
+                                                <Flex gap='10px' borderColor={isSelected ? 'gray.200':'transparent'}  fontWeight={isSelected? 'medium':'normal'} bg={isSelected?'white':'transparent'}  transition={isSelected?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}    boxShadow={isSelected ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''} borderWidth={'1px'}  justifyContent='space-between' key={`shared-view-${index}`} onClick={() => {if (!isRetrievingData.current) setSelectedView({index:index, type:'private', name:(view?.name || '')}); localStorage.setItem('currentView', JSON.stringify({index:index, type:'shared', name:view.name}))}} _hover={{bg:isSelected?'white':'brand.gray_2'}}   fontSize={'.9em'} cursor={'pointer'} borderRadius={'.5rem'} p='6px'>
                                                     <Text  transition={'transform .1s ease-in-out'}   transformOrigin="left center" transform={isSelected?'scale(1.02)':'scale(1)'} whiteSpace={'nowrap'} textOverflow={'ellipsis'}   overflow={'hidden'}>{view.name}</Text>
                                                     <Text>{auth.authData.views?.number_of_conversations_per_private_view?.[index] || 0}</Text>
                                                 </Flex>
@@ -451,7 +529,7 @@ function ConversationsTable({socket}:{socket:any}) {
                             </Flex>
 
                             <Box width={'100%'} mt='2vh' mb='2vh' height={'1px'} bg='gray.300' />
-                            <Button size='sm'variant={'common'} fontSize={'.9em'}  onClick={() => navigate(`/settings/workflows/edit-views`)} leftIcon={<FaRegEdit/>} bg='transparent'>{t('EditViews')}</Button>
+                            <Button w='100%' justifyContent={'start'} size='sm'variant={'common'} fontSize={'.9em'}  onClick={() => navigate(`/settings/workflows/edit-views`)} leftIcon={<FaRegEdit/>} bg='transparent'>{t('EditViews')}</Button>
                            
                         </Box>
                     </Flex>
@@ -475,7 +553,7 @@ function ConversationsTable({socket}:{socket:any}) {
                             
                         <Flex px='1vw' height={'20px'} ref={tableRef} mt='2vh' alignItems={'end'} justifyContent={'space-between'}  > 
                             <Skeleton isLoaded={!waitingInfo} >
-                                <Text whiteSpace={'nowrap'}  fontWeight={'medium'} color='gray.600' > {t('ConversationsCount', {count:(conversations?.total_conversations || 0)})}</Text> 
+                                <Text  whiteSpace={'nowrap'}  fontWeight={'medium'} color='gray.600' > {t('ConversationsCount', {count:(conversations?.total_conversations || 0)})}</Text> 
                             </Skeleton>
                             <AnimatePresence> 
                                 <MotionBox display={'flex'} alignItems={'center'} gap='10px' flexDir={'row-reverse'} pointerEvents={!isConversationOpened?'none':'auto'} width={!isConversationOpened?0:'100%'} initial={{opacity:!isConversationOpened?1:0 }} animate={{opacity:!isConversationOpened?0:1}} exit={{opacity:!isConversationOpened?1:0}} overflow={'hidden'}  transition={{ duration: '0.2', delay:'.3' }} >
@@ -487,17 +565,18 @@ function ConversationsTable({socket}:{socket:any}) {
                                     </Tooltip>
                                 </MotionBox>
                                 
-                                <MotionBox display={'flex'} alignItems={'center'}  gap='10px' flexDir={'row-reverse'} pointerEvents={isConversationOpened?'none':'auto'} width={isConversationOpened?0:'100%'} initial={{opacity:isConversationOpened?1:0, }} animate={{opacity:isConversationOpened?0:1}} exit={{opacity:isConversationOpened?1:0}} overflow={'hidden'}  transition={{ duration: '0.2', delay:'.3' }} >
-                                    <IconButton isRound size='xs'  variant='common'  aria-label='next-page' icon={<IoIosArrowForward />} isDisabled={filters.page_index > Math.floor((conversations?.total_conversations || 0)/ 25)} onClick={() => fetchConversationsDataWithFilter({...filters,page_index:filters.page_index + 1})}/>
+                            
+                                <MotionBox display={'flex'} alignItems={'center'}  gap='10px' flexDir={'row-reverse'} pointerEvents={isConversationOpened?'none':'auto'} width={isConversationOpened?0:'100%'} initial={{opacity:isConversationOpened?1:0 }} animate={{opacity:isConversationOpened?0:1}} exit={{opacity:isConversationOpened?1:0}} overflow={'hidden'}  transition={{ duration: '0.2', delay:'.3' }} >
+                                    <IconButton size='xs'isRound  variant='common'  aria-label='next-page' icon={<IoIosArrowForward />} isDisabled={filters.page_index > Math.floor((conversations?.total_conversations || 0)/ 25)} onClick={() => fetchConversationsDataWithFilter({...filters,page_index:filters.page_index + 1})}/>
                                     <Text fontWeight={'medium'} fontSize={'.8em'} color='gray.600'>{t('Page')} {filters.page_index}</Text>
-                                    <IconButton isRound size='xs' variant='common' aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={filters.page_index === 1} onClick={() => fetchConversationsDataWithFilter({...filters,page_index:filters.page_index - 1})}/>
+                                    <IconButton size='xs' isRound variant='common' aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={filters.page_index === 1} onClick={() => fetchConversationsDataWithFilter({...filters,page_index:filters.page_index - 1})}/>
                                 </MotionBox>
                             </AnimatePresence> 
                         </Flex>
                         
-                        <AnimatePresence> 
-                            {isConversationOpened ?
-                            <MotionBox position='absolute' zIndex={99} bg='brand.hover_gray' top={(tableRef.current?.getBoundingClientRect().bottom || 0) + window.innerWidth * 0.01 } p='0 1vw 2vw 1vw' key="conversationList"   display={'flex'} height={ window.innerHeight - (tableRef.current?.getBoundingClientRect().top || 0) - ( window.innerWidth * 0.01)} flexDir={'column'} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} overflow={'scroll'}  transition={{ duration: '.2' }} >
+                        <AnimatePresence>
+
+                            <MotionBox  width={isConversationOpened?'auto':0} position='absolute' zIndex={99} bg='brand.hover_gray' top={(tableRef.current?.getBoundingClientRect().bottom || 0) + window.innerWidth * 0.01 } p='0 1vw 2vw 1vw' key="conversationList"   display={'flex'} height={ window.innerHeight - (tableRef.current?.getBoundingClientRect().top || 0) - ( window.innerWidth * 0.01)} pointerEvents={isConversationOpened?'auto':'none'} flexDir={'column'} initial={{opacity:!isConversationOpened?1:0,}} animate={{opacity:!isConversationOpened?0:1}}  exit={{opacity:!isConversationOpened?1:0}} overflow={'scroll'}  transition={{ duration: '.2' }} >
                                 {conversations?.page_data.map((con, index) => {
                                     const isSelected = parseInt(location.split('/')[location.split('/').length - 1]) === con.id
                                     return (
@@ -517,11 +596,13 @@ function ConversationsTable({socket}:{socket:any}) {
                                         </Box>
                                     </Skeleton>)
                                     })}
+                                    {waitingInfoList && <Spinner/>}
                             </MotionBox>     
-                            :
-                            <MotionBox top={(tableRef.current?.getBoundingClientRect().bottom || 0)} mt='1vh' position='absolute'  px='1vw'   width={'calc(100vw - 55px - 220px)'} key="tableBox"initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} overflow={'hidden'}  transition={{ duration: '.2', delay:'.3'}} >
+                            
+                            <MotionBox top={(tableRef.current?.getBoundingClientRect().bottom || 0)} mt='1vh' position='absolute'  px='1vw'   width={'calc(100vw - 55px - 220px)'} pointerEvents={isConversationOpened?'none':'auto'} key="tableBox" initial={{opacity:isConversationOpened?1:0}} animate={{opacity:isConversationOpened?0:1}} exit={{opacity:isConversationOpened?1:0}} overflow={'hidden'}  transition={{ duration: '.2', delay:'.3'}} >
                                 {!isConversationOpened && <Table height={selectedElements.length > 0 ? window.innerHeight - (tableRef.current?.getBoundingClientRect().bottom || 0) - 170:undefined } data={conversations?.page_data} CellStyle={CellStyle} noDataMessage={t('NoConversations')} requestSort={requestSort} getSortIcon={getSortIcon} columnsMap={columnsConversationsMap} excludedKeys={['id', 'conversation_id', 'contact_id',  'is_matilda_engaged', 'state', 'organization_id',  'call_sid', 'call_url', 'channel_id', 'custom_attributes', ] } onClickRow={handleClickRow} selectedElements={selectedElements} setSelectedElements={setSelectedElements} onSelectAllElements={getAllConversationsIds} currentIndex={selectedIndex} waitingInfo={waitingInfo}/> }
-                            </MotionBox >}    
+                            </MotionBox>  
+
                         </AnimatePresence>  
                     </Flex>
 
@@ -547,10 +628,14 @@ function ConversationsTable({socket}:{socket:any}) {
                 {showConfirmDelete && memoizedConfirmDeleteBox}
             </MotionBox>
 
-            <MotionBox position={'absolute'} top={0} right={0}  pointerEvents={isConversationOpened?'auto':'none'} initial={{ width: conversationWidth, opacity:isConversationOpened? 0:1  }} animate={{ width: conversationWidth, opacity:isConversationOpened? 1:0 }} exit={{ width: conversationWidth, opacity:isConversationOpened? 0:1  }}  overflowY={'scroll'}  transition={{ duration: '.2'}} 
-                bg='white' zIndex={100} height={'100vh'} boxShadow="-4px 0 6px -2px rgba(0, 0, 0, 0.1)" overflowX={'hidden'} borderLeftColor={'gray.200'} borderLeftWidth={'1px'}>
-                    <Conversation socket={socket}/>
-            </MotionBox>
+            <AnimatePresence>
+                {isConversationOpened && 
+                <MotionBox position={'absolute'} top={0} right={0}  pointerEvents={isConversationOpened?'auto':'none'} initial={{ width: Math.min(window.innerWidth * 0.7, window.innerWidth - 550) - 200 + 'px', opacity:isConversationOpened? 0:1  }} animate={{ width: Math.min(window.innerWidth * 0.7, window.innerWidth - 550) + 'px', opacity:isConversationOpened? 1:0 }} exit={{ width: Math.min(window.innerWidth * 0.7, window.innerWidth - 550) - 200 + 'px', opacity:isConversationOpened? 0:1  }}  overflowY={'scroll'}  transition={{ duration: '.2'}} 
+                    bg='white' zIndex={100} height={'100vh'} boxShadow="-4px 0 6px -2px rgba(0, 0, 0, 0.1)" overflowX={'hidden'} borderLeftColor={'gray.200'} borderLeftWidth={'1px'}>
+                        <ConversationResponse socket={socket} fetchConversationsDataWithFilter={fetchConversationsDataWithFilter} />
+                </MotionBox>}
+            </AnimatePresence>
+
 
         </Flex>)
 }

@@ -113,14 +113,14 @@
     "NoTrash":"No se puede acceder a una conversaciones de la papelera",
     "DeleteWarning":"Estás a punto de eliminar permanentemente los elementos seleccionados. Esta acción /{no se puede deshacer}/. Una vez eliminados, no podrás recuperar los datos.",
     "NoTitle":"Sin título",
-    "PrimaryConversations":"La/{ Conversación #{{conversation_1}} }/ha sido fusionada como conversación principal.",
+    "PrimaryConversation":"La/{ Conversación #{{conversation_1}} }/ha sido fusionada como conversación principal.",
     "ConversationMergedMessage":"Esta conversación ha sido fusionada con la",
     "NoInfo":"Información de fusión no disponible.",
     "AgentTransfer":"La conversación ha sido transferida a un agente.",
     "SolvedConversation":"La conversación ha sido marcada como resuelta.",
     "ClosedConversation":"La conversación ha sido cerrada y no se pueden enviar más mensajes.",
     "NoSystemMessage":"Mensaje del sistema no reconocido.",
-    "ConversationByMatilda":"Matilda está gestionando la conversación",
+    "ConversationByMatilda":"Conversación gestionada por Tilda",
     "ConversationClosed":"La conversación está cerrada",
     "ExportConversation":"Exportar a archivo de texto",
     "OptionsMessage":"[MOSTRAR OPCIONES]",
@@ -141,7 +141,10 @@
     "PlaceholderShortcuts":"Pulsa / para ver los atajos",
     "ConversationData":"Conversación",
     "ClientData":"Cliente",
-    "ClientConversations":"Historial de conversaciones"
+    "ClientConversations":"Historial de conversaciones",
+    "Conversation":"Conversación",
+    "NoFoundConversation":"No se ha encontrado ninguna conversación con ese id",
+    "NoAudioSupport":"Tu navegador no soporta el elemento de audio."
 
 
 

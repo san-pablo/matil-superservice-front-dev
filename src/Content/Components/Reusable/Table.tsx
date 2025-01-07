@@ -52,7 +52,7 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
     useEffect(() => {
         const updateHeight = () => {
             if (headerRef.current) {
-                const alturaCalculada =  ((window.innerHeight - headerRef.current?.getBoundingClientRect().top ) - window.innerWidth * 0.02 - 45)
+                const alturaCalculada =  ((window.innerHeight - headerRef.current?.getBoundingClientRect().top ) - window.innerWidth * 0.01 - 45)
                 setBoxHeight(alturaCalculada)
             }
         } 
@@ -177,7 +177,7 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
     }, [data, sortConfig])
 
     const dataToWork = (requestSort)? data : sortedData
- 
+
     //FRONT
     return(
         <>  
@@ -209,7 +209,7 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
                             ))}
                             {deletableFunction && <Flex width={'60px'}/>}
                         </Flex>
-                        <Box position={'relative'} minWidth={`${totalWidth}px`} overflowX={'hidden'} ref={tableBoxRef} overflowY={'scroll'} maxH={height?height:boxHeight}> 
+                        <Box position={'relative'} minWidth={`${totalWidth}px`} ref={tableBoxRef} overflowY={'scroll'} maxH={height?height:boxHeight}> 
                             {dataToWork.map((row:any, index:number) => {  
                                 
                                 return (<> 

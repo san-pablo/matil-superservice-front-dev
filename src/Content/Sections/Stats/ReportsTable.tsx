@@ -10,7 +10,6 @@ import fetchData from "../../API/fetchData"
 import { Flex, Box, Text, Button, Skeleton, Textarea } from '@chakra-ui/react'
 //COMPONENTS
 import EditText from "../../Components/Reusable/EditText"
-import Table from "../../Components/Reusable/Table"
 import LoadingIconButton from "../../Components/Reusable/LoadingIconButton"
 import ConfirmBox from "../../Components/Reusable/ConfirmBox"
 import IconsPicker from "../../Components/Reusable/IconsPicker"
@@ -82,17 +81,18 @@ function ReportsTable () {
         }
         //FRONT
         return(<> 
-            <Box p='20px'> 
-                <Text  mb='.5vh' fontWeight={'medium'}>{t('Name')}</Text>
+            <Box p='15px'> 
+                <Text  mb='.5vh' fontWeight={'medium'} fontSize={'.9em'}>{t('Name')}</Text>
                 <EditText  maxLength={100} placeholder={`${t('Name')}...`} hideInput={false} value={newReportData.name} setValue={(value) => setNewReportData((prev) => ({...prev, name:value}))}/>
-                <Text  mt='2vh' mb='.5vh'  fontWeight={'medium'}>{t('Description')}</Text>
-                <Textarea resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('Description')}...`} maxH='300px' value={newReportData.description} onChange={(e) => setNewReportData((prev) => ({...prev, description:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: 'brand.text_blue', borderWidth: "2px"}}/>
-
-            </Box>
-        <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-            <Button isDisabled={newReportData.name === ''} size='sm' variant={'main'} onClick={createReport}>{waitingEdit?<LoadingIconButton/>:t('CreateReport')}</Button>
-            <Button  size='sm'variant={'common'} onClick={() => setShowCreate(false)}>{t('Cancel')}</Button>
-        </Flex>
+                <Text  mt='2vh' mb='.5vh'  fontWeight={'medium'}  fontSize={'.9em'}>{t('Description')}</Text>
+                <EditText  maxLength={2000} placeholder={`${t('Description')}...`} hideInput={false} value={newReportData.description} setValue={(value) => setNewReportData((prev) => ({...prev, description:value}))}/>
+            
+            
+                <Flex mt='2vh' gap='15px' flexDir={'row-reverse'}>
+                    <Button isDisabled={newReportData.name === ''} size='sm' variant={'main'} onClick={createReport}>{waitingEdit?<LoadingIconButton/>:t('CreateReport')}</Button>
+                    <Button  size='sm'variant={'common'} onClick={() => setShowCreate(false)}>{t('Cancel')}</Button>
+                </Flex>
+        </Box>
       </>)
     }   
     const memoizedDeleteBox = useMemo(() => (
@@ -104,8 +104,8 @@ function ReportsTable () {
     //FRONT
     return(<>
         {showCreate && memoizedDeleteBox}
-        <Flex flexDir={'column'} height={'100vh'} width={'calc(100vw - 55px)'}  p='2vw'> 
-                <Box> 
+        <Flex flexDir={'column'} height={'100vh'} width={'calc(100vw - 55px)'} bg='brand.hover_gray'  p='1vw'> 
+            <Box> 
                 <Flex justifyContent={'space-between'} alignItems={'end'}> 
                     <Box> 
                         <Text mb='2vh' fontSize={'1.4em'} fontWeight={'medium'}>{t('Reports')}</Text>

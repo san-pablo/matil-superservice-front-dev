@@ -58,28 +58,25 @@ const InputType = ({inputType, value, setValue, disabled}:{inputType:string,valu
     const boolDict = {true:t('True'), false:t('False')}
     const datesMap = {'{today}':t('today'), '{yesterday}':t('yesterday'), '{start_of_week}':t('start_of_week'),'{start_of_month}':t('start_of_month')}
 
-    const [currentValue, setCurrentValue] = useState<string>((value && value !== undefined) ? typeof(value) === 'string'?value:String(value):'') 
- 
+  
     switch(inputType) {
    
-        case 'int':
-        case 'float':  {  
-             const handleBlur = () => {
-
-                const normalizedValueString = currentValue?.replace(',', '.')
-                if (normalizedValueString) {
-                    if (inputType === 'int') {
-                        setValue(parseInt(normalizedValueString)) 
-                        setCurrentValue(String(parseInt(normalizedValueString)))
-                    }
-                    else if (inputType === 'float') return setValue(parseInt(normalizedValueString))
-                }
-            } 
+        case 'int': 
+        return (<NumberInput value={value? value:''} w='100%'onChange={(valueString) => setValue(parseInt(valueString))} pattern={'(?:0|[1-9]\d*)'} >
+                    <NumberInputField placeholder={'-'} px='7px'  height={'32px'}  border={'1px solid transparent'} bg={disabled ? 'brand.gray_1':'transaprent'}  cursor={disabled ? 'not-allowed':'pointer'} transition={'border-color .2s ease-in-out, box-shadow .2s ease-in-out'}  borderRadius='.5rem'  fontSize={'.8em'} _focus={{  boxShadow:'0 0 0 2px rgb(59, 90, 246)', border: '1px solid rgb(59, 90, 246)'}} sx={{'&:focus:hover': {border: '1px solid rgb(59, 90, 246)'}}} _hover={{border:'1px solid #CBD5E0'}} />
+                </NumberInput>)
+        case 'float':
             return (
-            <NumberInput value={currentValue || undefined} w='100%' onBlur={handleBlur} onChange={(value) => setCurrentValue(value) } clampValueOnBlur={false}  >
-                <NumberInputField placeholder={'-'} px='7px'  height={'32px'}  border={'1px solid transparent'} bg={disabled ? 'brand.gray_1':'transaprent'}  cursor={disabled ? 'not-allowed':'pointer'} transition={'border-color .2s ease-in-out, box-shadow .2s ease-in-out'}  borderRadius='.5rem'  fontSize={'.8em'} _focus={{  boxShadow:'0 0 0 2px rgb(59, 90, 246)', border: '1px solid rgb(59, 90, 246)'}} sx={{'&:focus:hover': {border: '1px solid rgb(59, 90, 246)'}}} _hover={{border:'1px solid #CBD5E0'}} />
-            </NumberInput>)
-        } 
+                <NumberInput  value={value? value:''} w='100%' onBlur={() => {if (typeof(value) === 'string') setValue(Number(value))}}  onChange={(valueString) => {
+                    const parsedValue = Number(valueString)
+                    if (valueString.endsWith('.')) setValue(valueString)
+                    else if (!isNaN(parsedValue)) setValue(parsedValue)
+                    else setValue('')
+                    }}  pattern="^[+\-]?(?:\d+)(?:\.\d*)?$|^[+\-]?(?:\d*)(?:\.\d+)$">
+                    <NumberInputField placeholder={'-'} px='7px'  height={'32px'}  border={'1px solid transparent'} bg={disabled ? 'brand.gray_1':'transaprent'}  cursor={disabled ? 'not-allowed':'pointer'} transition={'border-color .2s ease-in-out, box-shadow .2s ease-in-out'}  borderRadius='.5rem'  fontSize={'.8em'} _focus={{  boxShadow:'0 0 0 2px rgb(59, 90, 246)', border: '1px solid rgb(59, 90, 246)'}} sx={{'&:focus:hover': {border: '1px solid rgb(59, 90, 246)'}}} _hover={{border:'1px solid #CBD5E0'}} />
+                </NumberInput>) 
+
+        
         case 'bool':
             return <CustomSelect hide isDisabled={disabled} selectedItem={value} setSelectedItem={(value) => setValue(value)}  options={Object.keys(boolDict)} labelsMap={boolDict}/>          
         case 'str':

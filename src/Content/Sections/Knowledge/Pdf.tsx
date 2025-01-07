@@ -91,7 +91,7 @@ import { ContentData, Folder } from "../../Constants/typing"
      const [showDeleteBox, setShowDeleteBox] = useState<boolean>(false)
  
      const [clientBoxWidth, setClientBoxWidth] = useState(400)
-     const sendBoxWidth = `calc(100vw - 335px - ${clientBoxWidth}px)`
+     const sendBoxWidth = `calc(100vw - 315px - ${clientBoxWidth}px)`
      
       //DELETE A FOLDER
       const DeleteArticle = () => {
@@ -104,15 +104,15 @@ import { ContentData, Folder } from "../../Constants/typing"
              if (response?.status === 200) navigate('/knowledge/content')
          }
          return(<> 
-               <Box p='20px'> 
+               <Box p='15px'> 
                      <Text fontWeight={'medium'} fontSize={'1.2em'}>{parseMessageToBold(t('DeleteArticleAnswer', {name:articleData?.title}))}</Text>
-                     <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
-                     <Text >{parseMessageToBold(t('DeleteFolderWarning'))}</Text>
-                 </Box>
-                 <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+                      <Text  mt='2vh' fontSize={'.8em'}>{parseMessageToBold(t('DeleteFolderWarning'))}</Text>
+               
+                 <Flex  mt='2vh' gap='15px' flexDir={'row-reverse'}>
                      <Button  size='sm' variant='delete' onClick={deleteArticle}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
                      <Button size='sm'  variant={'common'} onClick={() => setShowDeleteBox(false)}>{t('Cancel')}</Button>
                  </Flex>
+            </Box>
          </>)
      }
      const DeleteBox = useMemo(() => (
@@ -124,12 +124,12 @@ import { ContentData, Folder } from "../../Constants/typing"
      return (<>
      {showDeleteBox && DeleteBox}
     
-     <Flex flex='1' position='absolute' width={'calc(100vw - 335px)'} height={'100vh'} top={0} left={0}>
+     <Flex flex='1' position='absolute' width={'calc(100vw - 315px)'} height={'100vh'} top={0} left={0}>
          <MotionBox   initial={{ width: sendBoxWidth  }} animate={{ width: sendBoxWidth}} exit={{ width: sendBoxWidth }} transition={{ duration: '.2' }}  
          width={sendBoxWidth} overflowY={'hidden'} flex={'1'}  borderRightWidth={'1px'} borderRightColor='gray.200' >
-             <Flex px='2vw' height={'70px'} alignItems={'center'} justifyContent={'space-between'}  borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
+             <Flex px='2vw' height={'60px'} alignItems={'center'} justifyContent={'space-between'}  borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
                  <Skeleton isLoaded={articleData !== null}> 
-                     <Text fontSize={'1.5em'} fontWeight={'medium'}>{t('PDF')}</Text>
+                     <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('PDF')}</Text>
                  </Skeleton>
                  <Flex gap='15px'>
                      <Button leftIcon={<HiTrash/>} variant={'delete'} isDisabled={location.split('/')[3].startsWith('create')} size='sm' onClick={() => setShowDeleteBox(true)}>{t('Delete')}</Button>

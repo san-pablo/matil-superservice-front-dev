@@ -129,14 +129,15 @@ const Report = () => {
                         <MotionBox ref={boxRef} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.95 }}  transition={{ duration: '0.1', ease: 'easeOut'}}
                             style={{ transformOrigin: 'top' }} minW={buttonRef.current?.getBoundingClientRect().width } right={window.innerWidth - (buttonRef.current?.getBoundingClientRect().right || 0)} mt='5px'  top={buttonRef.current?.getBoundingClientRect().bottom }  position='absolute' bg='white' p='8px'  zIndex={1000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.200' borderWidth='1px' borderRadius='.7rem'>
                            
-                            {/*<Flex  px='10px' borderRadius='.5rem'  py='10px'cursor={'pointer'} onClick={() => {setShowDeleteBox(true);setShowList(false)}}gap='10px' alignItems={'center'} _hover={{bg:'red.50'}}>
-                                <Icon color='gray.600' as={TbCopyPlusFilled}/>
-                                <Text whiteSpace={'nowrap'}>{t('Double')}</Text>
-                </Flex>*/}
-                            <Flex  px='10px'  borderRadius='.5rem'  color='red' py='10px'cursor={'pointer'} onClick={() => {setShowDeleteBox(true);setShowList(false)}}gap='10px' alignItems={'center'} _hover={{bg:'red.50'}}>
-                                <Icon as={HiTrash}/>
-                                <Text whiteSpace={'nowrap'}>{t('Delete')}</Text>
-                            </Flex>
+                           <Flex fontSize={'.8em'} p='7px' gap='10px'  borderRadius='.5rem'  cursor={'pointer'} onClick={() => {setShowList(false)}} alignItems={'center'} _hover={{bg:'brand.gray_2'}}>
+                                    <Icon color='gray.600' as={TbCopyPlusFilled}/>
+                                    <Text whiteSpace={'nowrap'}>{t('Double')}</Text>
+                                </Flex>
+                                <Flex  fontSize={'.8em'}  p='7px' gap='10px'  borderRadius='.5rem'  color='red' cursor={'pointer'} onClick={() => {setShowDeleteBox(true);setShowList(false)}} alignItems={'center'} _hover={{bg:'red.100'}}>
+                                    <Icon as={HiTrash}/>
+                                    <Text whiteSpace={'nowrap'}>{t('Delete')}</Text>
+                                </Flex>
+ 
                         </MotionBox >
                     </Portal>}
             </AnimatePresence>
@@ -186,35 +187,38 @@ const Report = () => {
             </Flex>
         </ConfirmBox>    
     </>), [showNoSaveWarning])
+    const memoizedActionsButton = useMemo(() => (<ActionsButton/>), [])
 
  
     return (<>      
 
     {showDeleteBox && DeleteBox}
     {showNoSaveWarning && memoizedNoSavedWarning}
-    <Box bg='white' height={'100vh'} width={'calc(100vw - 55px)'} overflowY={'hidden'} p='2vw'>
+
+    {selectedChart ? <EditChartComponent chartData={selectedChart} setChartData={setSelectedChart} reportData={reportData as ReportType} setReportData={setReportData}/>:
+
+
+    <Box bg='white' height={'100vh'} width={'calc(100vw - 55px)'} overflowY={'hidden'} p='1vw'>
     <Flex flexDir={'column'} height={'calc(100vh - 4vw)'} width={'100%'} top={0} left={0}>
-        {selectedChart ? <EditChartComponent chartData={selectedChart} setChartData={setSelectedChart} reportData={reportData as ReportType} setReportData={setReportData}/>:
-        <> 
+    
         <Box> 
-            <Flex  gap='32px' justifyContent={'space-between'}>
+            <Flex height={'50px'}  alignItems={'center'} gap='32px' justifyContent={'space-between'}>
                 <Flex gap='20px'> 
                     <Tooltip label={t('GoBack')}  placement='bottom' hasArrow bg='black'  color='white'  borderRadius='.4rem' fontSize='.75em' p='4px'> 
                         <IconButton  aria-label='go-back' size='sm' variant={'common'} bg='transparent' onClick={onExitAction} icon={<IoIosArrowBack size='20px'/>}/>
                     </Tooltip>
-                    <Box mt='-10px'> 
-                     <EditText  placeholder={t('name')} value={reportData?.name} setValue={(value) => setReportData(prev => ({...prev as ReportType, name:value})) } className={'title-textarea'}/>
+                    <Box > 
+                     <EditText  placeholder={t('name')} value={reportData?.name} setValue={(value) => setReportData(prev => ({...prev as ReportType, name:value})) } className={'title-textarea-collections'}/>
                      <EditText  placeholder={t('AddDescription')} value={reportData?.description} setValue={(value) => setReportData(prev => ({...prev as ReportType, description:value})) } className={'description-textarea-functions'}/>
-
                     </Box>
                 </Flex> 
                 <Flex gap='15px' > 
-                    <ActionsButton/>
+                    {memoizedActionsButton}
                     <Button variant={'common'} size='sm' isDisabled={JSON.stringify(reportDataRef.current) === JSON.stringify(reportData)} onClick={saveChanges}>{waitingSave? <LoadingIconButton/>:t('SaveChanges')}</Button>
                     <Button variant={'main'} leftIcon={<FaPlus/>} size='sm' onClick={() => setSelectedChart(newChart)}>{t('NewChart')}</Button>
                 </Flex>
             </Flex>
-            <Box width='100%' bg='gray.300' height='1px' mt='2vh'/>
+            <Box width='100%' bg='gray.300' height='1px' mt='1vh'/>
         </Box>
 
         <Box flex='1'   overflow={'scroll'}>
@@ -231,9 +235,9 @@ const Report = () => {
             </Box> 
             }
         </Box>
-        </>}
+    
     </Flex>
-    </Box>
+    </Box>}
     </>)
 }
  
@@ -483,80 +487,82 @@ const EditChartComponent = ({chartData, setChartData, reportData, setReportData}
  return(<>
     {showDeleteBox && DeleteBox}
      
-    <Box> 
-    <Flex height={'40px'} gap='32px' alignItems={'center'} justifyContent={'space-between'}> 
-        <Box w='100%' maxW={'800px'}> 
-            <EditText  placeholder={t('name')} value={currentChart?.title} setValue={(value) => setCurrentChart(prev => ({...prev, title:value}))} className={'title-textarea'}/>
-         </Box>
-        <Flex gap='15px'> 
-            <Button variant={'common'} size='sm' onClick={() => setChartData(null)}>{t('Close')}</Button>
-            {chartData.uuid && <Button variant={'delete'} size='sm' onClick={() => setShowDeleteBox(true)}>{t('Delete')}</Button>}
-            <Button variant={'main'} size='sm' isDisabled={JSON.stringify(currentChartRef.current) === JSON.stringify(currentChart)} onClick={saveChanges}>{waitingSave? <LoadingIconButton/>:t('SaveChanges')}</Button>
+    <Flex flexDir={'column'} w='calc(100vw - 55px)' h='100vh'> 
+  
+        <Flex height={'60px'} px='1vw' gap='32px' alignItems={'center'} justifyContent={'space-between'}> 
+            <Box w='100%' mt='10px' maxW={'800px'}> 
+                <EditText  placeholder={t('name')} value={currentChart?.title} setValue={(value) => setCurrentChart(prev => ({...prev, title:value}))} className={'title-textarea-collections'}/>
+            </Box>
+            <Flex gap='15px'> 
+                <Button variant={'common'} size='sm' onClick={() => setChartData(null)}>{t('Close')}</Button>
+                {chartData.uuid && <Button variant={'delete'} size='sm' onClick={() => setShowDeleteBox(true)}>{t('Delete')}</Button>}
+                <Button variant={'main'} size='sm' isDisabled={JSON.stringify(currentChartRef.current) === JSON.stringify(currentChart)} onClick={saveChanges}>{waitingSave? <LoadingIconButton/>:t('SaveChanges')}</Button>
+            </Flex>
         </Flex>
-    </Flex>
-    <Box width='100%' height='1px' mt='2vh'/>
-    </Box>
-    <Flex height={'calc(100vh - 60px)'} >
-        <Box flex='4' ml='-2vw'  p='2vw' bg='gray.50' borderTopColor={'gray.200'} borderTopWidth={'1px'} borderRightColor={'gray.200'} borderRightWidth={'1px'}> 
-            <SectionSelector onChange={(section) => editChartType(section) } selectedSection={currentChart.type} sections={['KPI', 'column', 'bar', 'donut', 'line', 'area', 'table']} sectionsMap={{'KPI':[t('KPI'),<TbSquareNumber7Filled size='20px'/>], 'column':[t('Column'),<FaChartColumn size='20px'/>], 'bar':[t('Bar'),<FaChartBar size='20px'/>], 'donut':[t('Donut'),<FaChartPie size='20px'/>], 'line':[t('Line'),<FaChartLine size='20px'/>], 'area':[t('Area'),<FaChartArea size='20px'/>], 'table':[t('Table'),<FaTable size='20px'/>]}}/>
-            <Box mt='5vh' width={'100%'} height={(currentChart.type === 'column' || currentChart.type === 'donut' || currentChart.type === 'area' || currentChart.type === 'line') ? '400px': (currentChart.type === 'bar' || currentChart.type === 'table')?'600px':'200px'}> 
-                <ChartComponent chartData={currentChart}/>
+         
+        <Flex height={'calc(100vh - 60px)'} >
+            <Box flex='4'  p='1vw' bg='brand.hver_gray' borderTopColor={'gray.200'} borderTopWidth={'1px'} borderRightColor={'gray.200'} borderRightWidth={'1px'}> 
+                <SectionSelector onChange={(section) => editChartType(section) } selectedSection={currentChart.type} sections={['KPI', 'column', 'bar', 'donut', 'line', 'area', 'table']} sectionsMap={{'KPI':[t('KPI'),<TbSquareNumber7Filled size='20px'/>], 'column':[t('Column'),<FaChartColumn size='20px'/>], 'bar':[t('Bar'),<FaChartBar size='20px'/>], 'donut':[t('Donut'),<FaChartPie size='20px'/>], 'line':[t('Line'),<FaChartLine size='20px'/>], 'area':[t('Area'),<FaChartArea size='20px'/>], 'table':[t('Table'),<FaTable size='20px'/>]}}/>
+                <Box mt='5vh' width={'100%'} height={(currentChart.type === 'column' || currentChart.type === 'donut' || currentChart.type === 'area' || currentChart.type === 'line') ? '400px': (currentChart.type === 'bar' || currentChart.type === 'table')?'600px':'200px'}> 
+                    <ChartComponent chartData={currentChart}/>
+                </Box>
             </Box>
-        </Box>
-        <Flex flexDir={'column'} flex='2' p='2vw' height={'calc(100vh - 60px)'}   borderTopColor={'gray.200'} borderTopWidth={'1px'}> 
-            <Box> 
-            <SectionSelector onChange={(section) => setChartSection(section) } selectedSection={chartSection} sections={['data', 'options']} sectionsMap={{'data':[t('data'),<IoStatsChart size='20px'/>], 'options':[t('options'),<IoSettingsSharp size='20px'/>]}}/>
-            </Box>
-            <Box flex='1'  overflow={'scroll'}  pb='5vh' ref={containerRef}> 
-                {chartSection === 'data' ?
-                    <Box  > 
-                        <Flex mt='2vh' mb='.5vh'  alignItems={'center'} gap='15px'> 
-                            <Text fontWeight={'medium'}>{t('TimeInterval')}</Text>
-                            <SectionSelector size={'xs'} selectedSection={currentChart.date_range_type} sectionsMap={{'fixed':[t('fixed'), <FaLock/>], 'relative':[t('relative'), <FaClockRotateLeft/>]}} sections={['relative', 'fixed']} onChange={(option) => setCurrentChart(prev => ({...prev, date_range_value:option === 'fixed'? initialRange:'Yesterday', date_range_type:option}))}/>
-                        </Flex>
-                        <Flex gap='15px'> 
-                            {currentChart.date_range_type === 'relative' ? 
-                            <Box w={'350px'}>
-                                <CustomSelect hide={false} options={['Today', 'Yesterday', 'Past 1 week', 'Past 1 month', 'Past 3 months', 'Past 6 months', 'Past 1 year']} selectedItem={currentChart.date_range_value} containerRef={containerRef} labelsMap={{'Today':t('Today'), 'Yesterday':t('Yesterday'), 'Past 1 week':t('PastWeek', {count:1}), 'Past 1 month':t('PastMonth', {count:1}), 'Past 3 months':t('PastMonth', {count:3}), 'Past 6 months':t('PastMonth', {count:6}), 'Past 1 year':t('PastYear', {count:1})}} setSelectedItem={(value) => setCurrentChart(prev => ({...prev, date_range_value:value as string}))}/>
-                            </Box>
-                            :
-                            <DateRangePicker dateRangeString={currentChart.date_range_value} onDateChange={(range:string) => setCurrentChart(prev => ({...prev, date_range_value:range}))}/>
-                            }
-                        </Flex>
-                        <Text mt='2vh' mb='.5vh' fontWeight={'medium'}>{t('Metrics')} ({currentChart.metrics.length})</Text>
-                        {memoizedMetrics}
-                        {(currentChart.type !== 'donut' && currentChart.type !== 'KPI' ) && <Button variant={'common'} size='sm' mt='2vh' leftIcon={<FaPlus/>} onClick={addMetric}>{t('AddMetric')}</Button>}
-                        {currentChart.type !== 'KPI' && 
-                            <> 
-                            <Text mt='2vh' mb='.5vh' fontWeight={'medium'}>{t('ViewBy')}</Text>
-                            <Box maxW={'350px'}>
-                                <CustomSelect hide={false} options={metricsDefinition[currentChart.metrics[0].metric_name].allowed_view_by} selectedItem={currentChart.view_by.type} containerRef={containerRef} labelsMap={viewByDict} setSelectedItem={(value:any) => setCurrentChart(prev => ({...prev, view_by:{configuration:value === 'time'?{granularity:'day'}:{}, type:value}}))}/>
-                            </Box>
-                            {currentChart.view_by.type === 'time' && 
-                                <Box mt='1vh'> 
-                                    <SectionSelector size={'xs'} selectedSection={currentChart.view_by.configuration.granularity} sectionsMap={{'hour':[t('hour'), <FaClock/>], 'day':[t('day'), <FaCalendarDay/>], 'week':[t('week'), <FaCalendarWeek/>], 'month':[t('month'), <FaCalendarDays/>]}} sections={['hour', 'day', 'week', 'month']} onChange={(option) => setCurrentChart(prev => ({...prev, view_by:{...prev.view_by, configuration:{granularity:option} }}))}/>
+
+            <Flex flexDir={'column'} flex='2' p='1vw' height={'calc(100vh - 60px)'}   borderTopColor={'gray.200'} borderTopWidth={'1px'}> 
+                <Box> 
+                <SectionSelector onChange={(section) => setChartSection(section) } selectedSection={chartSection} sections={['data', 'options']} sectionsMap={{'data':[t('data'),<IoStatsChart size='20px'/>], 'options':[t('options'),<IoSettingsSharp size='20px'/>]}}/>
+                </Box>
+                <Box flex='1'  overflow={'scroll'}  pb='5vh' ref={containerRef}> 
+                    {chartSection === 'data' ?
+                        <Box  > 
+                            <Flex mt='2vh' mb='.5vh'  alignItems={'center'} gap='15px'> 
+                                <Text fontWeight={'medium'}>{t('TimeInterval')}</Text>
+                                <SectionSelector size={'xs'} selectedSection={currentChart.date_range_type} sectionsMap={{'fixed':[t('fixed'), <FaLock/>], 'relative':[t('relative'), <FaClockRotateLeft/>]}} sections={['relative', 'fixed']} onChange={(option) => setCurrentChart(prev => ({...prev, date_range_value:option === 'fixed'? initialRange:'Yesterday', date_range_type:option}))}/>
+                            </Flex>
+                            <Flex gap='15px'> 
+                                {currentChart.date_range_type === 'relative' ? 
+                                <Box w={'350px'}>
+                                    <CustomSelect hide={false} options={['Today', 'Yesterday', 'Past 1 week', 'Past 1 month', 'Past 3 months', 'Past 6 months', 'Past 1 year']} selectedItem={currentChart.date_range_value} containerRef={containerRef} labelsMap={{'Today':t('Today'), 'Yesterday':t('Yesterday'), 'Past 1 week':t('PastWeek', {count:1}), 'Past 1 month':t('PastMonth', {count:1}), 'Past 3 months':t('PastMonth', {count:3}), 'Past 6 months':t('PastMonth', {count:6}), 'Past 1 year':t('PastYear', {count:1})}} setSelectedItem={(value) => setCurrentChart(prev => ({...prev, date_range_value:value as string}))}/>
                                 </Box>
-                            }
-                            {currentChart.type !== 'donut' && <>
-                                <Text mt='2vh' mb='.5vh' fontWeight={'medium'}>{t('SegmentBy')}</Text>
+                                :
+                                <DateRangePicker dateRangeString={currentChart.date_range_value} onDateChange={(range:string) => setCurrentChart(prev => ({...prev, date_range_value:range}))}/>
+                                }
+                            </Flex>
+                            <Text mt='2vh' mb='.5vh' fontWeight={'medium'}>{t('Metrics')} ({currentChart.metrics.length})</Text>
+                            {memoizedMetrics}
+                            {(currentChart.type !== 'donut' && currentChart.type !== 'KPI' ) && <Button variant={'common'} size='sm' mt='2vh' leftIcon={<FaPlus/>} onClick={addMetric}>{t('AddMetric')}</Button>}
+                            {currentChart.type !== 'KPI' && 
+                                <> 
+                                <Text mt='2vh' mb='.5vh' fontWeight={'medium'}>{t('ViewBy')}</Text>
                                 <Box maxW={'350px'}>
-                                    <CustomSelect includeNull hide={false} options={[...metricsDefinition[currentChart.metrics[0].metric_name].allowed_segment_by]} selectedItem={currentChart.segment_by.type} containerRef={containerRef} labelsMap={viewByDict} setSelectedItem={(value:any) => setCurrentChart(prev => ({...prev, segment_by:{configuration:value === 'time'?{granularity:'day'}:{}, type:value}}))}/>
+                                    <CustomSelect hide={false} options={metricsDefinition[currentChart.metrics[0].metric_name].allowed_view_by} selectedItem={currentChart.view_by.type} containerRef={containerRef} labelsMap={viewByDict} setSelectedItem={(value:any) => setCurrentChart(prev => ({...prev, view_by:{configuration:value === 'time'?{granularity:'day'}:{}, type:value}}))}/>
                                 </Box>
-                                {currentChart.segment_by.type === 'time' && 
+                                {currentChart.view_by.type === 'time' && 
                                     <Box mt='1vh'> 
-                                        <SectionSelector size={'xs'} selectedSection={currentChart.segment_by.configuration.granularity} sectionsMap={{'hour':[t('hour'), <FaClock/>], 'day':[t('day'), <FaCalendarDay/>], 'week':[t('week'), <FaCalendarWeek/>], 'month':[t('month'), <FaCalendarDays/>]}} sections={['hour', 'day', 'week', 'month']} onChange={(option) => setCurrentChart(prev => ({...prev, segment_by:{...prev.segment_by, configuration:{granularity:option} }}))}/>
+                                        <SectionSelector size={'xs'} selectedSection={currentChart.view_by.configuration.granularity} sectionsMap={{'hour':[t('hour'), <FaClock/>], 'day':[t('day'), <FaCalendarDay/>], 'week':[t('week'), <FaCalendarWeek/>], 'month':[t('month'), <FaCalendarDays/>]}} sections={['hour', 'day', 'week', 'month']} onChange={(option) => setCurrentChart(prev => ({...prev, view_by:{...prev.view_by, configuration:{granularity:option} }}))}/>
                                     </Box>
                                 }
+                                {currentChart.type !== 'donut' && <>
+                                    <Text mt='2vh' mb='.5vh' fontWeight={'medium'}>{t('SegmentBy')}</Text>
+                                    <Box maxW={'350px'}>
+                                        <CustomSelect includeNull hide={false} options={[...metricsDefinition[currentChart.metrics[0].metric_name].allowed_segment_by]} selectedItem={currentChart.segment_by.type} containerRef={containerRef} labelsMap={viewByDict} setSelectedItem={(value:any) => setCurrentChart(prev => ({...prev, segment_by:{configuration:value === 'time'?{granularity:'day'}:{}, type:value}}))}/>
+                                    </Box>
+                                    {currentChart.segment_by.type === 'time' && 
+                                        <Box mt='1vh'> 
+                                            <SectionSelector size={'xs'} selectedSection={currentChart.segment_by.configuration.granularity} sectionsMap={{'hour':[t('hour'), <FaClock/>], 'day':[t('day'), <FaCalendarDay/>], 'week':[t('week'), <FaCalendarWeek/>], 'month':[t('month'), <FaCalendarDays/>]}} sections={['hour', 'day', 'week', 'month']} onChange={(option) => setCurrentChart(prev => ({...prev, segment_by:{...prev.segment_by, configuration:{granularity:option} }}))}/>
+                                        </Box>
+                                    }
+                                </>}
                             </>}
-                        </>}
-                    </Box>
-                :
-                <Box px='5px'>
-                    <EditChartStyles chartData={currentChart} setChartData={setCurrentChart}/>    
-                </Box>}
-            </Box>
-        </Flex>  
+                        </Box>
+                    :
+                    <Box px='5px'>
+                        <EditChartStyles chartData={currentChart} setChartData={setCurrentChart}/>    
+                    </Box>}
+                </Box>
+            </Flex>  
 
+        </Flex>
     </Flex>
 </>)
 } 
@@ -764,7 +770,7 @@ const EditMetric = ({metric, index, setChartData, metricsDefinition, chartData, 
     }
     return (
         <Box bg='brand.gray_2' mt='2vh' borderRadius={'.5rem'} p='15px'>
-            <Flex justifyContent={'space-between'} > 
+            <Flex mb='1vh' justifyContent={'space-between'} > 
                 <Text fontWeight={'medium'} mb='.5vh'>{t('LegendLabel')}</Text>
                 {length !== 1 && <IconButton size='xs' variant={'delete'} onClick={() => editMetric('delete')} icon={<HiTrash/>} aria-label="delete-param"/>}
             </Flex>

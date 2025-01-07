@@ -36,7 +36,7 @@ const CellStyle = ({ column, element }:{column:string, element:any}) => {
 
     if (column === 'created_at' || column === 'last_interaction_at' )  
     return(
-        <Tooltip  label={timeStampToDate(element as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
+        <Tooltip  label={timeStampToDate(element as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='.8em' p='6px'> 
             <Text fontSize={'.9em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(element as string, t_formats)}</Text>
         </Tooltip>)
     else if (column === 'labels') {
@@ -130,6 +130,8 @@ function BusinessesTable ({showCreateBusiness, setShowCreateBusiness, socket}:{s
     const rowClick = (row:any, index:number) => {
         session.dispatch({type:'UPDATE_BUSINESSES_TABLE_SELECTED_ITEM', payload:{index}})
         navigate(`${row.id}`)
+        setSelectedIndex(index)
+
     }
 
     

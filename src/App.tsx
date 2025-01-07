@@ -73,7 +73,7 @@ const theme = extendTheme({
       Button: { 
           baseStyle: {fontWeight:600, bg:'#f1f1f1', _hover:{bg:'#e8e8e8'}, height:'30px'},
           sizes: {
-            sm: {h: '28px', minW: '28px',  fontSize: '.85em', px: '8px'},
+            sm: {h: '32px', minW: '32px',  fontSize: '.9em', px: '8px'},
           },
           variants:{
             main:{bg:'#222', _hover:{bg:'blackAlpha.800'}, color:'white',   _disabled: {bg: '#222', color: 'white', pointerEvents: 'none', cursor: 'not-allowed',opacity: 0.6}},
@@ -109,8 +109,7 @@ const App: React.FC = () => {
           if (currentOrganizationName) {organization = user.organizations.find((org: Organization) =>  org.id === parseInt(currentOrganizationName))}
           if (!organization) {organization = user.organizations[0]}
           if (organization) {
-            console.log(organization)
-            const responseChannels = await axios.get(URL + `${organization.id}/admin/settings/channels`, {headers: {'Authorization': `Bearer ${accessToken}`}})
+             const responseChannels = await axios.get(URL + `${organization.id}/admin/settings/channels`, {headers: {'Authorization': `Bearer ${accessToken}`}})
             session.dispatch({type:'ADD_CHANNELS', payload:responseChannels?.data})
             setAuthData({ organizationData:{calls_status:organization.calls_status || 'out', avatar_image_url:organization.avatar_image_url || '', is_admin:organization.is_admin, alias:organization.alias || '', groups:organization.groups},
             organizationId: organization.id, userId:user.id, organizationName:organization.name ,email:email, accessToken:accessToken})

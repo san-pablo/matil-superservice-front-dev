@@ -19,7 +19,7 @@ import EditText from "../../Components/Reusable/EditText"
 import timeAgo from "../../Functions/timeAgo"
 import timeStampToDate from "../../Functions/timeStampToString"
 //ICONS
-import { FaBuilding } from "react-icons/fa6"
+import { PiSidebarSimpleBold } from "react-icons/pi"
 import { RxCross2 } from "react-icons/rx"
 import { IoIosArrowForward, IoIosArrowBack } from "react-icons/io"
 //TYPING
@@ -35,7 +35,7 @@ const CellStyle = ({ column, element }:{column:string, element:any}) => {
 
     if (column === 'created_at' ||  column === 'last_interaction_at' )  
     return(
-        <Tooltip label={timeStampToDate(element as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
+        <Tooltip label={timeStampToDate(element as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='.8em' p='6px'> 
             <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(element as string, t_formats)}</Text>
         </Tooltip>)
     else if (column === 'labels') {
@@ -108,8 +108,7 @@ function Business ({socket}: {socket:any}) {
             const headerSectionsData = session.sessionData.headerSectionsData
             const businessElement = headerSectionsData.find(value => value.id === businessId && value.type === 'business')
                 
-            console.log(businessId)
-            //SET TITLE
+             //SET TITLE
             document.title = `${t('Business')}: ${location.split('/')[location.split('/').length - 1]} - ${auth.authData.organizationName} - Matil`
             localStorage.setItem('currentSection', `/contacts/businesses/${businessId}`)
 
@@ -221,10 +220,14 @@ function Business ({socket}: {socket:any}) {
             <Box px='1vw' pt='1vw' > 
                 <Flex   gap='3vw' justifyContent={'space-between'}> 
                     <Flex  flex='1' gap='20px'  alignItems={'center'}>
-                        <Avatar  name={businessDataEdit?.name}/>
-                        <Skeleton width={'100%'} isLoaded={businessDataEdit !== null}> 
-                            <EditText fontSize="1.2em" nameInput={true} size='md' maxLength={70} updateData={(text:string | undefined) => updateData({...businessDataEdit as ContactBusinessesTable, name:text as string})} value={businessDataEdit?.name === ''? t('WebClient'):businessDataEdit?.name} setValue={handelChangeName}/>
-                        </Skeleton>
+                        <IconButton  aria-label='expand-data' icon={<PiSidebarSimpleBold size='18px'/>} size='sm'  variant={'common'} bg='transparent'  onClick={() => navigate('/contacts/businesses') }/>
+                            <Flex gap='10px'  flex='1'  alignItems={'center'}>
+                            <Avatar size='sm' name={businessDataEdit?.name}/>
+                            <Skeleton width={'100%'} isLoaded={businessDataEdit !== null}> 
+                                <EditText fontSize="1.2em" nameInput={true} size='md' maxLength={70} updateData={(text:string | undefined) => updateData({...businessDataEdit as ContactBusinessesTable, name:text as string})} value={businessDataEdit?.name === ''? t('WebClient'):businessDataEdit?.name} setValue={handelChangeName}/>
+                            </Skeleton>
+                        </Flex>
+
                     </Flex>
                 
                 </Flex>

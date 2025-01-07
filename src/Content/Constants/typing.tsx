@@ -358,8 +358,8 @@ export const contactDicRegex:{[key in ContactChannel]:[RegExp, number, Channels]
   }
 
 //SETTINGS
-export type IconKey = 'organization' | 'users' | 'support' | 'workflows' | 'actions' | 'channels' | 'integrations' | 'main'
-export type SubSectionProps = string[][]
+export type IconKey = 'organization' | 'users' | 'help-centers' | 'workflows' | 'actions' | 'channels' | 'integrations' | 'main'
+export type SubSectionProps = (string[][] | any)
 export type SectionsListProps = {[key in IconKey]: string}
 
 export type ActionsType = 'email_csat' |  'whatsapp_csat' | 'webchat_csat' | 'agent_email_notification' | 'motherstructure_update'
