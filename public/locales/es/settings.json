@@ -937,6 +937,27 @@
 
 
     "SecretsWarning":"Como administrador de esta organización, puedes ver y gestionar todos los secretos utilizados por las funciones. \n . Estos secretos incluyen claves API, tokens y otros datos sensibles, así que no los compartas. \n",
-    "CreateSecret":"Crear secreto"
+    "CreateSecret":"Crear secreto",
+    "AllChannels":"Canales",
+    "AllChannelsDes":"Crea, configura y habilita nuevos canales para Tilda.",
+    "NewChannel":"Administra todos los canales de la organización.",
+    "AllConfigs":"Configuraciones",
+    "ConfigEdit":"Define el carácter y la información que usará Tilda, a través de los distintos canales-",
+    "AllConfigsDes":"Crea nuevas configuraciones de Tilda, para definir como debe de comprtarse a través de los distontos canales.",
+    "HelpCenterEdit":"Configura el contenido de este centro de ayuda.",
+    "ChannelType":"Tipo de canal",
+    "CreateChannel":"Crear canal",
+    "NewChannelPlaceholder":"Nuevo canal...",
+    "elements":"General",
+    "colors":"Colores",
+    "texts":"Textos",
+    "Right":"Derecha",
+    "Left":"Izquierda",
+    "AiAssitant":"Asistente virtual",
+    "Others":"Otros",
+    "SelectLanguage":"Selecciona el idioma",
+    "AiAssistant":" • Asistente de IA"
 
- }
+
+    
+ }  

@@ -50,8 +50,7 @@ function BusinessHours () {
 
     //BOOLEAN FOR WAIT THE INFO
     const [waitingInfo, setWaitingInfo] = useState<boolean>(true)
-    const firstRender = useRef<boolean>(true)
-
+ 
     //ORGANIZATION DATA
     const orgDataRef = useRef<OrganizationData | null>(null)
     const [organizationData, setOrganizationData] = useState<OrganizationData | null>(null)
@@ -66,7 +65,7 @@ function BusinessHours () {
                 start_hour: convertMinutesToTime(interval[0]),
              }));
             return acc;
-        }, {} as BussinessHoursType);
+        }, {} as BussinessHoursType)
 
         setOrganizationData(prevHours => ({...prevHours as OrganizationData, business_hours: {...updatedHours, holidays:prevHours?.business_hours.holidays}}))
     }
@@ -100,12 +99,12 @@ function BusinessHours () {
     }
  
     return(
-    <>
+    <Box  p='2vw'>
         <SaveChanges data={organizationData} setData={setOrganizationData} dataRef={orgDataRef} onSaveFunc={saveChanges} onDiscardFunc={onDiscardFunc}/>
         <Box>
             <Flex alignItems={'end'} justifyContent={'space-between'}> 
                 <Skeleton isLoaded={!waitingInfo}> 
-                    <Text fontSize={'1.6em'} fontWeight={'medium'}>{t('Hours')}</Text>
+                    <Text fontSize={'1.5em'} fontWeight={'medium'}>{t('Hours')}</Text>
                     <Text color='gray.600' fontSize={'.9em'}>{t('HoursDes')}</Text>
                 </Skeleton>
             </Flex>
@@ -116,7 +115,7 @@ function BusinessHours () {
         </Box>
         
  
-    </>)
+    </Box>)
 }
 
 export default BusinessHours

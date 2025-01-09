@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useMemo } from "react"
 import { useAuth } from "../../../../AuthContext"
 import { useTranslation } from "react-i18next"
+import { useLocation } from "react-router-dom"
 //FETCH DATA
 import fetchData from "../../../API/fetchData"
 //FRONT
@@ -32,6 +33,7 @@ import { useAuth0 } from "@auth0/auth0-react"
 interface MailProps { 
   id:string
   uuid:string
+  name:string
   display_id:string
   matilda_configuraion:any 
   configuration:{is_ses_verified:boolean, is_forward_verified:boolean, template:string  }
@@ -48,6 +50,7 @@ function Mail () {
     const { t } = useTranslation('settings')
     const explanationTemplateText = useRef<HTMLParagraphElement>(null)
     const { getAccessTokenSilently } = useAuth0()
+    
     //LIST OF CHANNELS
     const [channelsList, setChannelsList] = useState<null | any[]>(null)
     const matildaScrollRef = useRef<HTMLDivElement>(null)
@@ -65,6 +68,8 @@ function Mail () {
     const [introducedName, setIntroducedName] = useState<boolean>(false)
     const [data, setData] = useState<MailProps | null>(null)
     const dataRef = useRef<any>(null)
+    const location = useLocation().pathname
+    const channelId = location.split('/')[location.split('/').length - 1]
 
     //MATILDA CONFIGURATION+
     const configIdRef = useRef<string>('')
@@ -77,32 +82,16 @@ function Mail () {
 
       const fetchInitialData = async() => {
         await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/matilda_configurations`, setValue:setConfigData, auth, getAccessTokenSilently})
-          const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels`, auth, getAccessTokenSilently})
-          if (response?.status === 200){
-            let mailChannels:any[] = []
-            response.data.map((cha:any) => {if (cha.channel_type === 'email')  mailChannels.push(cha)})
-            if (mailChannels) {
-               if (mailChannels.length === 1) {
-                const responseMail = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${mailChannels[0].id}`,  setValue: setData, auth, getAccessTokenSilently})
-                if (responseMail?.status === 200) {
-                  setIntroducedName(true)
-                  dataRef.current = responseMail.data.configuration
-                  setSelectedConfigId(responseMail.data.matilda_configuration_uuid)
-                  configIdRef.current = responseMail.data.matilda_configuration_uuid
-                }
-              }
-              else {
-               setData({id:'', uuid:'', display_id:'', matilda_configuraion:{}, configuration:{is_ses_verified:false, is_forward_verified:false, template:''} })
-                setIntroducedName(false)
-              }
-              setChannelsList(mailChannels)
-             }
-            else {
-              setData({id:'', uuid:'', display_id:'', matilda_configuraion:{}, configuration:{is_ses_verified:false, is_forward_verified:false, template:''} })
-              setIntroducedName(false)
-            }
+
+        const responseMail = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${channelId}`,  setValue: setData, auth, getAccessTokenSilently})
+          if (responseMail?.status === 200) {
+            setIntroducedName(true)
+            dataRef.current = responseMail.data.configuration
+            setSelectedConfigId(responseMail.data.matilda_configuration_uuid)
+            configIdRef.current = responseMail.data.matilda_configuration_uuid
           }
-      }
+        }
+
       fetchInitialData()
     }, [])
 
@@ -179,32 +168,23 @@ function Mail () {
     
     //FRONT 
     return(
-    <>
+    <Box p='2vw'>
+      
     {showDelete && memoizedDeleteBox}
       <Box> 
         <Flex justifyContent={'space-between'}> 
           <Flex gap='20px' alignItems={'center'}> 
-            {(channelsList !== null && channelsList.length > 0 && data !== null)  && <Tooltip label={t('GoBackChannels')}  placement='bottom' hasArrow bg='black'  color='white'  borderRadius='.4rem' fontSize='.75em' p='4px'> 
-                <IconButton aria-label='go-back' size='sm' bg='transparent' border='none' onClick={() => {setIntroducedName(false);setData(null)}} icon={<IoIosArrowBack size='20px'/>}/>
-            </Tooltip>}
-            <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Mail')}</Text>
+            <Skeleton  isLoaded={data !== null}>
+
+              <Text fontSize={'1.4em'} fontWeight={'medium'}>{data?.name}</Text>
+            </Skeleton>
           </Flex>
-          {(channelsList !== null && channelsList.length > 0 && data !== null) && <Button variant={'delete_section'} leftIcon={<HiTrash/>} size='sm' onClick={() => setShowDelete(true)}>{t('DeleteAccount')}</Button>}
+          <Button variant={'delete_section'} leftIcon={<HiTrash/>} size='sm' onClick={() => setShowDelete(true)}>{t('DeleteAccount')}</Button>
         </Flex>       
         <Box height={'1px'} width={'100%'} bg='gray.300' mt='1vh' />
       </Box>
   
-     {(channelsList !== null && channelsList.length > 0 && data === null) ? 
-        <Box flex='1'> 
-           <Flex  mt='5vh' justifyContent={'space-between'} alignItems={'end'}>
-                <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('ActiveAccount', {count:channelsList?.length})}</Text>
-                <Flex gap='10px'> 
-                <Button variant={'common'} size={'sm'} leftIcon={<FaPlus/>} onClick={() => setData(createData)}>{t('CreatAccount')}</Button>
-                </Flex> 
-            </Flex>
-          <Table data={channelsList} CellStyle={CellStyle} excludedKeys={['uuid',' id', 'channel_type']} onClickRow={(row) => selectChannel(row.id)} columnsMap={{'name':[t('Name'), 300], 'display_id':[t('Account'), 300], is_active:[t('Active'), 100]}} noDataMessage='' />
-        </Box>
-      :<>
+   
         {(data === null || data?.display_id === '' || !data?.configuration.is_ses_verified || !data?.configuration.is_forward_verified) ? 
         <Box flex='1' mt='5vh'> 
         <Skeleton isLoaded={channelsList !== null}> 
@@ -279,7 +259,8 @@ function Mail () {
           <Box flex='1' pt='4vh' overflow={'scroll'}> 
 
             <Skeleton  isLoaded={data !== null}>
-              <Text fontSize={'1.1em'} mb='.5vh' fontWeight={'medium'}>{t('Mail')}</Text>
+              
+              <Text fontSize={'1.1em'} mb='.5vh' fontWeight={'medium'}>{t('Name')}</Text>
               <EditText value={data.display_id} setValue={(value) => setData(prev => ({...prev as MailProps, display_id:value}))} isDisabled/>
               <Text fontSize={'1.1em'} mt='3vh' fontWeight={'medium'}>{t('Template')}</Text>
               <Text ref={explanationTemplateText} mb='1vh' color='gray.600' fontSize={'.8em'}>{t('TemplateDes')}</Text>
@@ -303,9 +284,9 @@ function Mail () {
         </Flex>
           
         </>}
-    </>}
  
-    </>)
+ 
+    </Box>)
 }
 
 export default Mail

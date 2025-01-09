@@ -2,16 +2,16 @@
 
 //REACT
 import { useState, useRef, Fragment, useEffect } from 'react'
-import { useAuth } from '../../../AuthContext'
+import { useAuth } from '../../../../AuthContext'
 import { useTranslation } from 'react-i18next'
 import { useAuth0 } from '@auth0/auth0-react'
 //FETCH DATA
-import fetchData from '../../API/fetchData'
+import fetchData from '../../../API/fetchData'
 //FRONT
-import { Flex, Box, Text,} from '@chakra-ui/react'
+import { Flex, Box, Text } from '@chakra-ui/react'
 //FUNCTIONS
-import formatFileSize from '../../Functions/formatFileSize'
-import '../../Components/styles.css'
+import formatFileSize from '../../../Functions/formatFileSize'
+import '../../../Components/styles.css'
  
 const TestChat = ({configurationId, configurationName}:{configurationId:string, configurationName:string}) => {
 

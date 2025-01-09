@@ -358,7 +358,7 @@ export const contactDicRegex:{[key in ContactChannel]:[RegExp, number, Channels]
   }
 
 //SETTINGS
-export type IconKey = 'organization' | 'users' | 'help-centers' | 'workflows' | 'actions' | 'channels' | 'integrations' | 'main'
+export type IconKey = 'organization' | 'users' | 'help-centers' | 'workflows' | 'actions' | 'channels' | 'tilda' | 'integrations' | 'main' 
 export type SubSectionProps = (string[][] | any)
 export type SectionsListProps = {[key in IconKey]: string}
 
@@ -491,6 +491,14 @@ export interface ReportType {
     charts:ChartType[]
     chart_positions:{[key:string]:{x:number, y:number, w:number, h:number}}
   }
+
+export interface ConfigProps { 
+    uuid:string 
+    name:string 
+    description:string 
+    channels_ids:string[]
+    icon:string
+}
 
   
  

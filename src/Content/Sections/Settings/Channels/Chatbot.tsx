@@ -1,24 +1,22 @@
 
 //REACT
-import  {useState, useEffect, useRef, useMemo, Dispatch, SetStateAction, CSSProperties } from 'react'
+import  {useState, useEffect, useRef, useMemo, Dispatch, SetStateAction, CSSProperties, ReactElement } from 'react'
 import { useAuth } from '../../../../AuthContext'
 import { useTranslation } from 'react-i18next'
 import { useAuth0 } from '@auth0/auth0-react'
 //FETCH DATA
 import fetchData from "../../../API/fetchData"
 //FRONT
-import { Flex, Text, Box, IconButton, Image, Icon, Button, Skeleton, chakra, shouldForwardProp, Portal, Switch, NumberInput, NumberInputField, NumberInputStepper, NumberDecrementStepper, NumberIncrementStepper, Tooltip } from "@chakra-ui/react"
+import { Flex, Text, Box, IconButton, Icon, Button, Skeleton, chakra, shouldForwardProp, Portal, Switch, NumberInput, NumberInputField, NumberInputStepper, NumberDecrementStepper, NumberIncrementStepper, Radio } from "@chakra-ui/react"
 import '../../../Components/styles.css'
 import { motion, AnimatePresence, isValidMotionProp } from 'framer-motion'
 //COMPONENTS
 import EditText from '../../../Components/Reusable/EditText'
-import ImageUpload from '../../../Components/Reusable/ImageUpload'
-import LoadingIconButton from '../../../Components/Reusable/LoadingIconButton'
-import ColorPicker from '../../../Components/Once/ColorPicker'
 import ConfirmBox from '../../../Components/Reusable/ConfirmBox'
 import SectionSelector from '../../../Components/Reusable/SectionSelector'
 import SaveChanges from '../../../Components/Reusable/SaveChanges'
-import Table from '../../../Components/Reusable/Table'
+import CustomSelect from '../../../Components/Reusable/CustomSelect'
+import { EditStr, EditColor, EditImage, EditInt } from '../../../Components/Reusable/EditSettings'
 //FUNCTIONS
 import copyToClipboard from '../../../Functions/copyTextToClipboard'
 import useOutsideClick from '../../../Functions/clickOutside'
@@ -26,18 +24,19 @@ import determineBoxStyle from '../../../Functions/determineBoxStyle'
 import timeAgo from '../../../Functions/timeAgo'
 //ICONS
 import { RxCross2 } from 'react-icons/rx'
-import { IoIosArrowDown, IoMdArrowRoundForward, IoIosChatboxes, IoIosArrowBack } from 'react-icons/io'
+import { IoIosArrowDown, IoIosChatboxes, IoIosArrowBack } from 'react-icons/io'
 import { FaPlus , FaCode, FaPaintbrush, FaHouse, FaRobot } from 'react-icons/fa6'
 import { MdContentCopy } from 'react-icons/md'
-import { IoChatbubbleEllipses } from "react-icons/io5";
+import { IoChatbubbleEllipses, IoConstruct } from "react-icons/io5"
 import { BiTargetLock } from "react-icons/bi"
 import { TbMessageFilled } from "react-icons/tb"
+import { BsPersonLinesFill } from "react-icons/bs"
 import { FaListUl } from "react-icons/fa"
 //TYPING
 import { ConfigProps, languagesFlags } from '../../../Constants/typing'
-import CustomSelect from '../../../Components/Reusable/CustomSelect'
-  
-const CellStyle = ({column, element}:{column:string, element:any}) => {return <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element}</Text>}
+import { useLocation, useNavigate } from 'react-router-dom'
+import { BsThreeDots } from 'react-icons/bs'
+import { HiTrash } from 'react-icons/hi2'
 
 //TYPING
 type sectionKeys = 'allowed_urls' | 'allowed_devices' | 'show_incoming_messages' | 'lure_by_seconds' | 'seconds_to_lure_in' | 'lure_by_click' | 'reference_to_lure_in' | 'pages_references' | 'initial_message' | 'options'
@@ -81,29 +80,14 @@ function Chatbot () {
     //CONSTANTS
     const { getAccessTokenSilently } = useAuth0()
     const auth = useAuth()
+    const location = useLocation().pathname
+    const navigate = useNavigate()
     const { t, i18n } = useTranslation('settings')
     const [channelDict, setChannelDict] = useState<any>(null)
 
     //REF FOR ALL THE COLOR PICKER CONTAINERS
     const containerRef = useRef<HTMLDivElement>(null)
-    const matildaScrollRef = useRef<HTMLDivElement>(null)
 
-    const defaultChatbotConfig:ChatBotData = {
-        welcome_message:{},
-        chat_position:'right',
-        mesh_colors: ['#3399ff', '#0066cc'],
-        actions_color:'#0066cc',
-        messages_opacity:0.5,
-        ai_message:{},
-        bot_name:'Tilda',
-        header_background: ['#3399ff', '#0066cc'],
-        header_color: '#FFFFFF',
-        chat_avatar: '',
-        client_background: ['#3399ff', '#0066cc'],
-        client_color: '#FFFFFF',
-        options: {},
-        sections: []
-    }
     const newSection = {
         allowed_urls:[],
         allowed_devices:['mobile', 'desktop'],
@@ -117,17 +101,11 @@ function Chatbot () {
         options:{[i18n.language.toLocaleUpperCase()]:[]},
     }
     
-
-    //CHANNELS LIST
-    const [channelId, setChannelId] = useState<string | null>(null)
-    const [channelsList, setChannelsList] = useState<any>([])
-    
-
-    //BOOLEAN FOR CREATING A NEW WEBCHAT
-    const [waitingCreate, setWaitingCreate] = useState<boolean>(false)
+    const channelId = location.split('/')[location.split('/').length - 1]
 
     //CURRENT EXPANDED SECTION
-    const [currentSection, setCurrentSection] = useState<'styles' | 'sections'>('styles')
+    const sectionsMap:{[key:string]:[string, ReactElement]} = {'tilda':[t('tilda'), <FaRobot/>], 'elements':[t('elements'), <IoConstruct/>], 'colors':[t('colors'), <FaPaintbrush/>], 'texts':[t('texts'), <BsPersonLinesFill/>], 'sections':[t('sections'), <FaListUl/>]}
+    const [currentSection, setCurrentSection] = useState<'tilda' | 'elements' | 'colors' | 'texts' | 'sections'>('tilda')
 
     //SELECTED LANGUAGE 
     const [selectedLanguage, setSelectedLanguage] = useState<string>(i18n.language.toLocaleUpperCase())
@@ -150,14 +128,7 @@ function Chatbot () {
     //FILES FOR AVATAR AND LOGO
     const [avatarFile, setAvatarFile] = useState<File | undefined>(undefined)
 
-    //UPDATE AN IMAGE
-    const handleImageUpdate = (key: keyof ChatBotData, file: File | undefined) => {
-        setAvatarFile(file)
-        setChatBotData((prevData) => ({
-          ...prevData as ChatBotData,
-          [key]: file ? URL.createObjectURL(file) : ''
-        }))
-      }
+  
 
     const getPreSignedUrl = async (file:File) => {
         const response = await fetchData({endpoint: `${auth.authData.organizationId}/chatbot/s3_pre_signed_url`, getAccessTokenSilently, method:'post', auth:auth, requestForm: { file_name: file.name}})   
@@ -194,54 +165,28 @@ function Chatbot () {
     //FETCH NEW DATA WHEN THE VIEW CHANGE
     useEffect(() => {
         document.title = `${t('Channels')} - ${t('Web')} - ${auth.authData.organizationName} - Matil`
-
         const fetchInitialData = async() => {
             await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/matilda_configurations`, getAccessTokenSilently, setValue:setConfigData, auth})
-            const response = await fetchData({getAccessTokenSilently, endpoint:`${auth.authData.organizationId}/admin/settings/channels`, auth})
-
-                if (response?.status === 200){
-  
-                    const channels = response.data.filter((cha: any) => cha.channel_type === 'webchat').map((cha: any) => cha);
-                    setChannelsList(channels)
-                    if (channels.length === 1) {
-                        let chatChannel:any 
-                        channels.map((cha:any) => {if (cha.channel_type === 'webchat')  chatChannel = cha})
-                        setChannelDict(chatChannel)
-                    }
-                    else setSelectedConfigId('-1')
-                    
+            const responseChat = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${channelId}`,setValue:setChannelDict, getAccessTokenSilently, auth, })
+            if (responseChat?.status === 200) { 
+                
+                chatbotDataRef.current = JSON.parse(JSON.stringify(responseChat.data.configuration))
+                setChatBotData({...responseChat.data.configuration})
+                configIdRef.current = responseChat.data.matilda_configuration_uuid
+                setSelectedConfigId(responseChat.data.matilda_configuration_uuid)
             }
         }
         fetchInitialData()
     }, [])
 
-    useEffect(() => {
-        const fetchChatData = async() => {
-            if (channelDict !== null) {
-                const responseChat = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${channelDict.id}`, getAccessTokenSilently, auth, })
-                if (responseChat?.status === 200) { 
-
-                    let chatChannel:any
-                    channelsList.map((cha:any) => {if (cha.id === channelDict.id) chatChannel = cha})
-                    setChannelDict(chatChannel)
-
-                    chatbotDataRef.current = JSON.parse(JSON.stringify(responseChat.data.configuration))
-                    setChatBotData({...responseChat.data.configuration})
-                    configIdRef.current = responseChat.data.matilda_configuration_uuid
-                    setSelectedConfigId(responseChat.data.matilda_configuration_uuid)
-
-                }
-            }
-        }
-        fetchChatData()
-    }, [channelDict])
+ 
 
      // SEND THE CHATBOT CONFIGURATION
     const sendChatBotCofig = async() => {
         let chatAvatar = chatbotDataRef.current?.chat_avatar 
         if (avatarFile) chatAvatar = await getPreSignedUrl(avatarFile)
         const opacity = typeof(chatBotData?.messages_opacity) === 'number' ? chatBotData?.messages_opacity:parseFloat(chatBotData?.messages_opacity || '0.5')
-        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${channelDict.id}`, getAccessTokenSilently, auth, method:'put', requestForm:{...channelDict, configuration:{...chatBotData, chat_avatar:chatAvatar, messages_opacity:opacity}, matilda_configuration_uuid:selectedConfigId}, toastMessages:{'works':t('CorrectUpdatedInfo'), 'failed':t('FailedUpdatedInfo')}})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/${channelId}`, getAccessTokenSilently, auth, method:'put', requestForm:{...channelDict, configuration:{...chatBotData, chat_avatar:chatAvatar, messages_opacity:opacity}, matilda_configuration_uuid:selectedConfigId}, toastMessages:{'works':t('CorrectUpdatedInfo'), 'failed':t('FailedUpdatedInfo')}})
         if (response?.status === 200) {
             configIdRef.current = selectedConfigId
             chatbotDataRef.current = JSON.parse(JSON.stringify(chatBotData))
@@ -264,267 +209,162 @@ function Chatbot () {
     ), [showCode])
 
  
-    const createChatbot = async() => {
-        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/webchat`, setWaiting:setWaitingCreate,getAccessTokenSilently, auth, method:'post', requestForm:{name:t('NewChat'),  configuration:defaultChatbotConfig}, toastMessages:{'works':t('CorrectUpdatedInfo'), 'failed':t('FailedUpdatedInfo')}})
-        if (response?.status === 200) {
-            setSelectedConfigId(response.data)
-            configIdRef.current = response.data
-            chatbotDataRef.current = JSON.parse(JSON.stringify(defaultChatbotConfig))
-            setChatBotData({
-                welcome_message:{},
-                chat_position:'right',
-                mesh_colors: ['#3399ff', '#0066cc'],
-                actions_color:'#0066cc',
-                messages_opacity:0.5,
-                ai_message:{},
-                bot_name:'Tilda',
-                header_background: ['#3399ff', '#0066cc'],
-                header_color: '#FFFFFF',
-                chat_avatar: '',
-                client_background: ['#3399ff', '#0066cc'],
-                client_color: '#FFFFFF',
-                options: {},
-                sections: []
-            })
-        }
-
-    }
-
+   
 
     return(<>
 
         {showCode && memoizedShowCodeBox}
-         
-        
-        {channelDict === null ? 
+        <SaveChanges data={chatBotData} setData={setChatBotData} dataRef={chatbotDataRef} data2={selectedConfigId} dataRef2={configIdRef} setData2={setSelectedConfigId} onSaveFunc={sendChatBotCofig}  />
+        <Box px='2vw' pt='2vw'> 
+            <Skeleton  isLoaded={(chatBotData !== null)}> 
+                <Text fontSize={'1.4em'} fontWeight={'medium'}>{channelDict?.name || ''}</Text>
+            </Skeleton>
+            
+            <Flex justifyContent={'space-between'}> 
 
-            <>
-            {channelsList.length === 0 ?
-            <Flex height={'100%'} top={0} left={0} width={'100%'} position={'absolute'} alignItems={'center'} justifyContent={'center'}> 
-                <Box maxW={'580px'} textAlign={'center'}> 
-                <Text fontWeight={'medium'} fontSize={'2em'} mb='2vh'>{t('CreateChatbot')}</Text>               
-                <Text fontSize={'1em'} color={'gray.600'} mb='2vh'>{t('CreateChatbotDes')}</Text>               
-                <Button  onClick={createChatbot} size='lg' leftIcon={<FaRobot/>} bg={'linear-gradient(to right, #3399ff,#0066cc)'} _hover={{bg:'linear-gradient(to right, #3399ff,#0066cc)', opacity:1}} opacity={0.8} color='#fff'>
-                    {waitingCreate ? <LoadingIconButton/>: t('CreateChatbotButton')}
-                    </Button>
-                </Box>
-            </Flex>
-            :<>
-            <Box> 
-            <Flex justifyContent={'space-between'} alignItems={'end'}> 
-                <Text mb='2vh' fontSize={'1.4em'} fontWeight={'medium'}>{t('Web')}</Text>
-              
+                <Box h='40px' > 
+                    <SectionSelector notSection selectedSection={currentSection} sections={Object.keys(sectionsMap)} sectionsMap={sectionsMap}  onChange={(sec) => setCurrentSection(sec as any) }/>  
+                 </Box>
                 <Flex gap='12px'>
-                    <Button leftIcon={<FaPlus/>} onClick={createChatbot} size='sm' variant={'main'}>{t('CreateChatbotButton')}</Button>  
+                    <Button leftIcon={<IoChatbubbleEllipses/>}  onClick={() => window.open(`https://main.d1pm9d6glnzyf9.amplifyapp.com?organization_id=${auth.authData.organizationId}&webchat_uuid=${channelDict?.id}`, '_blank')} size='sm' variant={'main'}>{t('TryWeb')}</Button>  
+                    <Button leftIcon={<FaCode/>} onClick={() => setShowCode(true)} size='sm' variant={'main'}>{t('ShowCode')}</Button>  
                 </Flex>
             </Flex>
-            <Box height={'1px'} width={'100%'} bg='gray.300' mt='1vh'  />
-            </Box>
-            <Flex flex='1' pt='4vh' overflow={'hidden'}  ref={containerRef}   gap='80px'position='relative'> 
-                <Table data={channelsList} CellStyle={CellStyle} excludedKeys={['uuid',' id', 'channel_type']} onClickRow={(row) => setChannelDict(row)} columnsMap={{'name':[t('Name'), 300], 'display_id':[t('Account'), 300], is_active:[t('Active'), 100]}} noDataMessage='' />
-            </Flex>
-            </>
-            }
-            </>
-            :<>
-                <SaveChanges data={chatBotData} setData={setChatBotData} dataRef={chatbotDataRef} data2={selectedConfigId} dataRef2={configIdRef} setData2={setSelectedConfigId} onSaveFunc={sendChatBotCofig}  />
-                <Box> 
-                    <Flex justifyContent={'space-between'} alignItems={'end'}> 
-                        <Skeleton  isLoaded={(chatBotData !== null)}> 
-                            <Flex  mb='2vh'  alignItems={'center'} gap='10px'> 
-                                <Tooltip label={t('GoBackChannels')}  placement='bottom' hasArrow bg='black'  color='white'  borderRadius='.4rem' fontSize='.75em' p='4px'> 
-                                    <IconButton aria-label='go-back' size='sm' bg='transparent' border='none' onClick={() => setChannelDict(null)} icon={<IoIosArrowBack size='20px'/>}/>
-                                </Tooltip>
-                                <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Web')}</Text>
-                            </Flex>
-                            <SectionSelector selectedSection={currentSection} sections={['styles','sections']} sectionsMap={{'styles':[t('styles'), <FaPaintbrush/>],'sections':[t('sections'), <FaListUl/>]}} onChange={() => setCurrentSection(prev => (prev === 'sections'?'styles':'sections'))}/>
-                        </Skeleton>
-                        <Flex gap='12px'>
-                            <Button leftIcon={<IoChatbubbleEllipses/>}  onClick={() => window.open(`https://main.d1pm9d6glnzyf9.amplifyapp.com?organization_id=${auth.authData.organizationId}&webchat_uuid=${channelDict?.id}`, '_blank')} size='sm' variant={'main'}>{t('TryWeb')}</Button>  
-                            <Button leftIcon={<FaCode/>} onClick={() => setShowCode(true)} size='sm' variant={'main'}>{t('ShowCode')}</Button>  
-                        </Flex>
-                    </Flex>
-                    <Box height={'1px'} width={'100%'} bg='gray.300' mt='1vh'  />
-                </Box>
-                <Flex flex='1' pt='4vh' overflow={'hidden'}  ref={containerRef}   gap='80px'position='relative'> 
-                    <Flex flex='1' height={'100%'} overflow={'scroll'}> 
-                        <Skeleton style={{flex:1}} isLoaded={chatBotData !== null}> 
-                            {currentSection === 'styles' ? <> 
-              
-                            <Text fontWeight={'medium'} mt='2vh'>{t('ChatPosition')}</Text>
-                            <Text fontSize={'.8em'} color='gray.600'>{t('ChatPositionDes')}</Text>
-                            <Flex gap='30px' mt='1vh'>
-                                <Flex   bg={chatBotData?.chat_position === 'left' ? 'blue.50':'gray.50'}cursor={'pointer'} alignItems={'end'} borderColor={'gray.200'} borderWidth={'1px'} borderRadius={'.7em'} p='10px' height={'150px'} flex='1' onClick={(e) => setChatBotData({...chatBotData as ChatBotData, 'chat_position':'left'})} >
-                                    <Flex flexDir={'column'} >
-                                        <Box height={'80px'} borderRadius={'.5em'} width={'50px'}  bg='gray.200' alignItems={'end'}  borderColor={'gray.300'} borderWidth={'1px'} />
-                                        <Box mt='5px' height={'20px'} borderRadius={'50%'} width={'20px'}  bg='gray.200' alignItems={'end'}  borderColor={'gray.300'} borderWidth={'1px'} />
-                                    </Flex>
-                                </Flex>
-                                <Flex bg={chatBotData?.chat_position === 'right' ? 'blue.50':'gray.50'} cursor={'pointer'} alignItems={'end'} justifyContent={'end'}  borderColor={'gray.200'} borderWidth={'1px'} borderRadius={'.7em'} p='10px' height={'150px'} flex='1' onClick={(e) => setChatBotData({...chatBotData as ChatBotData, 'chat_position':'right'})} >
-                                    <Flex alignItems={'end'} flexDir={'column'}>
-                                        <Flex alignItems={'end'} flexDir={'column'} >
-                                            <Box height={'80px'} borderRadius={'.5em'} width={'50px'}  bg='gray.200' alignItems={'end'}  borderColor={'gray.300'} borderWidth={'1px'} />
-                                            <Box mt='5px' height={'20px'} borderRadius={'50%'} width={'20px'}  bg='gray.200' alignItems={'end'}  borderColor={'gray.300'} borderWidth={'1px'} />
-                                        </Flex>
-                                    </Flex>                     
-                                </Flex>
-                            </Flex>
- 
-                            <Text fontWeight={'medium'} mt='2vh'>{t('BackgroundColor')}</Text>
-                            <Text fontSize={'.8em'} color='gray.600'>{t('BackgroundColor')}</Text>
-                            <Flex mt='1vh' alignItems={'center'} gap='10px'> 
-                                <Box flex='1' > 
-                                    <ColorPicker containerRef={containerRef} color={chatBotData?.header_background[0]} 
-                                    setColor={(value) => {
-                                        setChatBotData({ ...chatBotData as ChatBotData, header_background: [ value, chatBotData?.header_background[1] || '']  })
-                                    }}/>
-                                </Box>
-                                <Icon boxSize={'25px'} color='gray.400'  as={IoMdArrowRoundForward}/>
-                                <Box flex='1' > 
-                                    <ColorPicker containerRef={containerRef} color={chatBotData?.header_background[1]} 
-                                    setColor={(value) => {
-                                        setChatBotData({ ...chatBotData as ChatBotData, header_background: [ chatBotData?.header_background[0] || '', value]  })
-                                    }}/>
-                                </Box>
-                            </Flex>
-
-                            <Text fontWeight={'medium'} mt='2vh'>{t('TextColor')}</Text>
-                            <Text fontSize={'.8em'} color='gray.600'>{t('TextColorDes')}</Text>
-                            <Box width='300px' mt='1vh'> 
-                                <ColorPicker containerRef={containerRef} color={chatBotData?.header_color} setColor={(value) => setChatBotData({...chatBotData as ChatBotData, header_color:value})}/>
-                            </Box>
-
-                            <Text fontWeight={'medium'} mt='2vh'>{t('ActionsColorChat')}</Text>
-                            <Text fontSize={'.8em'} color='gray.600'>{t('ActionsColorChatDes')}</Text>
-                            <Box width='300px' mt='1vh'> 
-                                <ColorPicker containerRef={containerRef} color={chatBotData?.actions_color} setColor={(value) => setChatBotData({...chatBotData as ChatBotData, actions_color:value})}/>
-                            </Box>
-
-                            <Text fontWeight={'medium'}  mt='2vh'>{t('BotName')}</Text>
-                            <Text fontSize={'.8em'} color='gray.600'>{t('BotNameDes')}</Text>
-                            <Box width='100%' mt='1vh'> 
-                                <EditText hideInput={false} value={chatBotData?.bot_name || ''} setValue={(value) => setChatBotData(prev => ({...prev as ChatBotData, bot_name:value}))}/>
-                            </Box>
-
-                            <Text fontWeight={'medium'} mt='2vh'>{t('Avatar')}</Text>
-                            <Text fontSize={'.8em'} color='gray.600'>{t('AvatarDes')}</Text>
-                            <Box width='300px' mt='1vh'> 
-                                <ImageUpload id={1} initialImage={chatBotData?.chat_avatar} onImageUpdate={(file) => handleImageUpdate('chat_avatar', file as File)}/>
-                            </Box>
-
-                            <Text fontWeight={'medium'} mt='2vh'>{t('MessageOpacity')}</Text>
-                            <Text fontSize={'.8em'} color='gray.600'>{t('MessageOpacityDes')}</Text>
-                            <Box width='200px' mt='1vh'> 
-                                <NumberInput size='sm' step={0.1}  mt='.5vh' value={chatBotData?.messages_opacity} onChange={(val) =>  setChatBotData(prev => ({...prev as ChatBotData, messages_opacity:val} )) } min={0.3} max={1}>
-                                    <NumberInputField  fontSize={'.9em'} borderRadius='.5rem'   borderColor={'gray.300'} _hover={{ border: '1px solid #CBD5E0' }} _focus={{ borderColor: 'brand.text_blue', borderWidth: '2px', px:'6px' }} px='7px' />
-                                        <NumberInputStepper>
-                                        <NumberIncrementStepper />
-                                        <NumberDecrementStepper />
-                                    </NumberInputStepper>
-                                </NumberInput>
-                            </Box>
-
-                            <Text fontWeight={'medium'} mt='2vh'>{t('BackgroundColorMessages')}</Text>
-                            <Text fontSize={'.8em'} color='gray.600'>{t('BackgroundColorMessagesDes')}</Text>
-                            <Flex mt='1vh' alignItems={'center'} gap='10px'> 
-                                <Box flex='1' > 
-                                    <ColorPicker containerRef={containerRef} color={chatBotData?.client_background[0]} 
-                                    setColor={(value) => {
-                                        setChatBotData({ ...chatBotData as ChatBotData, client_background: [value, chatBotData?.client_background[1] || '']})
-                                    }}/>
-                                </Box>
-                                <Icon boxSize={'25px'} color='gray.400'  as={IoMdArrowRoundForward}/>
-                                <Box flex='1' > 
-                                    <ColorPicker containerRef={containerRef} color={chatBotData?.client_background[1]} 
-                                    setColor={(value) => {
-                                        setChatBotData({ ...chatBotData as ChatBotData, client_background: [ chatBotData?.client_background[0] || '', value]  })
-                                    }}/>
-                                </Box>
-                            </Flex>
-
-                            <Text fontWeight={'medium'} mt='2vh'>{t('TextColorMessages')}</Text>
-                            <Text fontSize={'.8em'} color='gray.600'>{t('TextColorMessagesDes')}</Text>
-                            <Box width='300px' mt='1vh'> 
-                                <ColorPicker containerRef={containerRef} color={chatBotData?.client_color} setColor={(value) => setChatBotData({...chatBotData as ChatBotData, client_color:value})}/>
-                            </Box>
+            <Box bg='gray.300' h='1px' w='100%'/>
 
 
-                            <Text fontWeight={'medium'} mt='2vh'>{t('MeshColors')}</Text>
-                            <Text fontSize={'.8em'} color='gray.600'>{t('MeshColorsDes')}</Text>
-                            <Flex mt='1vh' alignItems={'center'} gap='10px'> 
-                                <Box flex='1' > 
-                                    <ColorPicker containerRef={containerRef} color={chatBotData?.mesh_colors[0]} 
-                                    setColor={(value) => {
-                                        setChatBotData({ ...chatBotData as ChatBotData, mesh_colors: [value, chatBotData?.mesh_colors[1] || '']})
-                                    }}/>
-                                </Box>
-                                <Icon boxSize={'25px'} color='gray.400'  as={IoMdArrowRoundForward}/>
-                                <Box flex='1' > 
-                                    <ColorPicker containerRef={containerRef} color={chatBotData?.mesh_colors[1]} 
-                                    setColor={(value) => {
-                                        setChatBotData({ ...chatBotData as ChatBotData, mesh_colors: [ chatBotData?.mesh_colors[0] || '', value]  })
-                                    }}/>
-                                </Box>
-                            </Flex>
+        </Box>
 
+        <Flex flex='1' overflow={'hidden'}  ref={containerRef} position='relative'> 
+            <Flex flex='1'  pt='3vh'  height={'100%'} px='2vw' overflow={'scroll'}> 
+                <Skeleton style={{flex:1}} isLoaded={chatBotData !== null}> 
 
-                            <Text fontWeight={'medium'}  mt='2vh'>{t('MessagesOptions')}</Text>
-                            <Box mt='1vh'> 
-                                <ChangeLanguage variant={'styles'} selectedLanguage={selectedLanguage} setSelectedLanguage={setSelectedLanguage} chatBotData={chatBotData} setChatBotData={setChatBotData} />
-                            </Box>
-                            
-                            <Text fontWeight={'medium'}  mt='2vh'>{t('TildaMessage')}</Text>
-                            <Text fontSize={'.8em'} color='gray.600'>{t('TildaMessageDes')}</Text>
-                            <Box width='100%' mt='1vh'> 
-                                <EditText hideInput={false} value={chatBotData?.ai_message?.[selectedLanguage] || ''} setValue={(value) => setChatBotData(prev => ({...prev as ChatBotData, ai_message:{...(prev as ChatBotData).ai_message, [selectedLanguage]:value}}))}/>
-                            </Box>
-
-                            <Text fontWeight={'medium'}  mt='2vh'>{t('WelcomeMessage')}</Text>
-                            <Text fontSize={'.8em'} color='gray.600'>{t('WelcomeMessageDes')}</Text>
-                            <Box width='100%' mt='1vh'> 
-                                <EditText hideInput={false} value={chatBotData?.welcome_message[selectedLanguage] || ''} setValue={(value) => setChatBotData(prev => ({...prev as ChatBotData, welcome_message:{...(prev as ChatBotData).welcome_message, [selectedLanguage]:value}}))}/>
-                            </Box>
-
-                            <Text fontWeight={'medium'} mt='2vh'>{t('Shortcuts')}</Text>
-                            <Text fontSize={'.8em'} color='gray.600'>{t('ShortcutWebsDes')}</Text>
-                            <Box width={'100%'} mt='2vh'> 
-                                {(chatBotData?.options[selectedLanguage] || []).map((option, urlIndex) => (
-                                    <Flex key={`option-${urlIndex}`} mt={urlIndex === 0?'0':'1vh'} justifyContent={'space-between'} alignItems={'center'} p='5px' borderRadius=".5em" borderColor="gray.200" borderWidth="1px" bg="brand.gray_2">
-                                        <Text fontSize={'.9em'}>{option}</Text>
-                                        <IconButton onClick={() => removeOption(urlIndex)} aria-label="remove-option" icon={<RxCross2  size='15px'/>} color={'red'} size="xs" border='none' bg='transparent'  />
-                                    </Flex>
-                                ))}
-                            </Box> 
-                            <AddOptionComponent/>
-                            <Box flex='1' pt='4vh' ref={matildaScrollRef}  overflow={'scroll'}> 
-                                <Skeleton isLoaded={configData !== null}> 
-                                <Text  fontWeight={'medium'}>{t('SelectedConfig')}</Text>
-                                {configData?.map((config, index) => (
-                                    <Box transition={'box-shadow 0.3s ease-in-out'} _hover={{shadow:'md'}}  mt='2vh' key={`config-${index}`} bg={selectedConfigId === config.uuid?'rgba(59, 90, 246, 0.25)':'gray.50'} onClick={() => setSelectedConfigId(config.uuid)} borderColor={'gray.200'} borderWidth={'1px'} borderRadius={'.5rem'} p='15px' cursor={'pointer'}>
-                                        <Text fontSize={'.9em'} fontWeight={'medium'}>{config.name}</Text>
-                                        <Text fontSize={'.8em'} color='gray.600'>{config.description}</Text>
-                                    </Box> 
-                                ))}
+                {(() => {
+                    switch (currentSection) {
+                        case 'tilda':
+                            return (<>
+                              <Skeleton isLoaded={configData !== null}> 
+                                    <Text fontWeight={'semibold'} >{t('SelectedConfig')}</Text>
+                                    {configData?.map((config, index) => (
+                                        <Box transition={'box-shadow 0.2s ease-in-out'} _hover={{shadow:'md'}}  mt='1vh' key={`config-${index}`} bg={selectedConfigId === config.uuid?'brand.gray_2':'white'} onClick={() => setSelectedConfigId(config.uuid)} borderColor={'gray.200'} borderWidth={'1px'} borderRadius={'.5rem'} p='15px' cursor={'pointer'}>
+                                            <Text fontSize={'.9em'} fontWeight={'medium'}>{config.name}</Text>
+                                            <Text fontSize={'.8em'} color='gray.600'>{config.description}</Text>
+                                        </Box> 
+                                    ))}
                                 </Skeleton>
-                            </Box>
+                                </>)
 
-                            <Box height={'5vh'}/>
-                            </>
-                            :
-                            <>
-                                {chatBotData?.sections.map((section, index) => (
-                                    <EditSection key={`section-${index}`} chatBotData={chatBotData} setChatBotData={setChatBotData} index={index} expandedIndex={expandedIndex} setExpandedIndex={setExpandedIndex}/>
-                                ))}
-                                <Button size='sm' mt='4vh' leftIcon={<FaPlus/>} variant={'common'} onClick={() => setChatBotData(prev => ({...prev as ChatBotData, sections:[...(chatBotData as ChatBotData).sections, newSection]}))}>{t('AddSection')}</Button>
-                            </>
-                            }
-                        </Skeleton>
-                    </Flex>
-                    <ShowChatBox chatBotData={chatBotData} selectedLanguage={selectedLanguage}/>
-                </Flex>     
-                </>   
-        } 
-    </>)
+                        case 'elements':
+                            return (<>
+                            
+                                <Text fontWeight={'semibold'}>{t('AiAssitant')}</Text>
+                                <Box mt='1vh' maxW={'250px'}> 
+                                    <EditStr title={t('BotName')} description={t('BotNameDes')} placeholder={t('Tilda')} value={chatBotData?.bot_name || ''} setValue={(value) => setChatBotData(prev => ({...prev as ChatBotData, bot_name:value}))}/>
+                                </Box>
+                                <Box mt='1vh'> 
+                                    <EditImage title={t('Avatar')} description={t('AvatarDes')} value={chatBotData?.chat_avatar || ''} setValue={(value:any) => setChatBotData(prev => ({...prev as ChatBotData, chat_avatar:value}))}/>
+                                </Box>
+
+
+                                <Text mt='3vh' fontWeight={'semibold'}>{t('ChatPosition')}</Text>
+                                <Flex mt='3vh'> 
+                                    <Flex gap='10px' cursor={'pointer'}  alignItems={'center'} onClick={(e) => setChatBotData({...chatBotData as ChatBotData, 'chat_position':'left'})}> 
+                                        <Text fontSize={'.9em'}>{t('Left')}</Text>
+                                        <Icon  boxSize={'20px'} color={chatBotData?.chat_position === 'left' ? 'brand.text_blue':''} as={BsThreeDots}/>
+                                        <Flex  height={'20px'} borderRadius={'50%'} width={'20px'}  bg={chatBotData?.chat_position === 'left' ? 'brand.text_blue':''} alignItems={'center'} justifyContent={'center'}  borderColor={'gray.300'} borderWidth={'1px'}>
+                                            <Box borderRadius={'50%'} bg='white' h='7px' w='7px'/>
+                                        </Flex>
+
+                                    </Flex>                        
+                                    <svg width="183" height="105" viewBox="0 0 122 70" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M108 63.5H109.5V62V5C109.5 3.067 107.933 1.5 106 1.5H16C14.067 1.5 12.5 3.067 12.5 5V62V63.5H14H108Z" fill="white"></path><path d="M108 63.5H109.5V62V5C109.5 3.067 107.933 1.5 106 1.5H16C14.067 1.5 12.5 3.067 12.5 5V62V63.5H14H108Z" stroke="#0D1726" stroke-width="3"></path><path d="M0 65H122V68C122 69.1046 121.105 70 120 70H2C0.895428 70 0 69.1046 0 68V65Z" fill="#ACB8CB"></path><path d="M54 65H72V65C72 66.1046 71.1046 67 70 67H56C54.8954 67 54 66.1046 54 65V65Z" fill="#8796AF"></path><rect width="100" height="28" transform="translate(11 21)" fill="white"></rect></svg>
+                                    <Flex gap='10px' cursor={'pointer'} alignItems={'center'} onClick={(e) => setChatBotData({...chatBotData as ChatBotData, 'chat_position':'right'})}> 
+                                        <Flex  height={'20px'} borderRadius={'50%'} width={'20px'}  bg={chatBotData?.chat_position === 'right' ? 'brand.text_blue':''} alignItems={'center'} justifyContent={'center'}  borderColor={'gray.300'} borderWidth={'1px'}>
+                                            <Box borderRadius={'50%'} bg='white' h='7px' w='7px'/>
+                                        </Flex>
+                                        <Icon boxSize={'20px'} color={chatBotData?.chat_position === 'right' ? 'brand.text_blue':''} as={BsThreeDots}/>
+                                        <Text fontSize={'.9em'}>{t('Right')}</Text>
+                                    </Flex>      
+                                </Flex>  
+                                
+                                <Text fontWeight={'semibold'} mt='3vh'>{t('Others')}</Text>
+                                <Box mt='1vh'> 
+                                    <EditInt title={t('MessageOpacity')} description={t('MessageOpacityDes')} value={chatBotData?.messages_opacity || ''} setValue={(value:any) => setChatBotData(prev => ({...prev as ChatBotData, messages_opacity:value}))} unit='' min={0.3} max={1}/>
+                                </Box>
+
+                                </>)
+                        case 'colors':
+                            return (<>
+                                    
+                                    <Text fontWeight={'semibold'}>{t('Header')}</Text>
+                                    <Box mt='1vh'> 
+                                        <EditColor isGradient title={t('BackgroundColor')} description={t('BackgroundColorDes')} value={chatBotData?.header_background || ''} containerRef={containerRef} setValue={(value) => setChatBotData(prev => ({...prev as ChatBotData, header_background:value as any}))}/>
+                                    </Box>
+                                    <Box mt='1vh'> 
+                                        <EditColor title={t('TextColor')} description={t('TextColorDes')} value={chatBotData?.header_color || ''} containerRef={containerRef} setValue={(value) => setChatBotData(prev => ({...prev as ChatBotData, header_color:value as any}))}/>
+                                    </Box>
+
+                                    <Text mt='3vh' fontWeight={'semibold'}>{t('Messages')}</Text>
+                                    <Box mt='1vh'> 
+                                        <EditColor isGradient title={t('BackgroundColorMessages')} description={t('BackgroundColorMessagesDes')} value={chatBotData?.client_background || ''} containerRef={containerRef} setValue={(value) => setChatBotData(prev => ({...prev as ChatBotData, client_background:value as any}))}/>
+                                    </Box>
+                                    <Box mt='1vh'> 
+                                        <EditColor title={t('TextColorMessages')} description={t('TextColorMessagesDes')} value={chatBotData?.client_color || ''} containerRef={containerRef} setValue={(value) => setChatBotData(prev => ({...prev as ChatBotData, client_color:value as any}))}/>
+                                    </Box>
+                                    
+                                    <Text mt='3vh' fontWeight={'semibold'}>{t('Others')}</Text>
+                                    <Box mt='1vh'> 
+                                        <EditColor isGradient title={t('MeshColors')} description={t('MeshColorsDes')} value={chatBotData?.mesh_colors || ''} containerRef={containerRef} setValue={(value) => setChatBotData(prev => ({...prev as ChatBotData, mesh_colors:value as any}))}/>
+                                    </Box>
+                                    <Box mt='1vh'> 
+                                        <EditColor title={t('ActionsColorChat')} description={t('ActionsColorChatDes')} value={chatBotData?.actions_color || ''} containerRef={containerRef} setValue={(value) => setChatBotData(prev => ({...prev as ChatBotData, actions_color:value as any}))}/>
+                                    </Box>
+                                   
+                                </>)
+                        case 'texts':
+                            return (<>
+                              
+                                <Text mb='1vh' fontWeight={'semibold'}>{t('SelectLanguage')}</Text>
+
+                                <ChangeLanguage variant={'styles'} selectedLanguage={selectedLanguage} setSelectedLanguage={setSelectedLanguage} chatBotData={chatBotData} setChatBotData={setChatBotData} />
+                                <Box mt='3vh'> 
+                                    <EditStr title={t('TildaMessage')} description={t('TildaMessageDes')} value={chatBotData?.ai_message?.[selectedLanguage] || ''} setValue={(value) => setChatBotData(prev => ({...prev as ChatBotData, ai_message:{...(prev as ChatBotData).ai_message, [selectedLanguage]:value}}))}/>
+                                </Box>
+                                <Box mt='1vh'> 
+                                    <EditStr title={t('WelcomeMessage')} description={t('WelcomeMessageDes')} value={chatBotData?.welcome_message?.[selectedLanguage] || ''} setValue={(value) => setChatBotData(prev => ({...prev as ChatBotData, welcome_message:{...(prev as ChatBotData).welcome_message, [selectedLanguage]:value}}))}/>
+                                </Box>
+
+                                <Text fontWeight={'medium'} mt='1vh' fontSize={'.9em'}>{t('Shortcuts')}</Text>
+                                <Box width={'100%'} mt='1vh'> 
+                                    {(chatBotData?.options[selectedLanguage] || []).map((option, urlIndex) => (
+                                        <Flex key={`option-${urlIndex}`} mt={urlIndex === 0?'0':'1vh'} justifyContent={'space-between'} alignItems={'center'} p='5px' borderRadius=".5em" borderColor="gray.200" borderWidth="1px" bg="brand.hover_gray">
+                                            <Text fontSize={'.9em'}>{option}</Text>
+                                            <IconButton onClick={() => removeOption(urlIndex)} aria-label="remove-option" icon={<HiTrash  size='15px'/>} variant={'delete'} size="xs" border='none' bg='transparent'  />
+                                        </Flex>
+                                    ))}
+                                </Box> 
+                                <AddOptionComponent/>
+                                
+                                </>)
+                        case 'sections':
+                            return (<>
+                                    {chatBotData?.sections.map((section, index) => (
+                                        <EditSection key={`section-${index}`} chatBotData={chatBotData} setChatBotData={setChatBotData} index={index} expandedIndex={expandedIndex} setExpandedIndex={setExpandedIndex}/>
+                                    ))}
+                                    <Button size='sm' mt='4vh' leftIcon={<FaPlus/>} variant={'common'} onClick={() => setChatBotData(prev => ({...prev as ChatBotData, sections:[...(chatBotData as ChatBotData).sections, newSection]}))}>{t('AddSection')}</Button>
+                                </>)
+                        default:
+                            return <></>
+                    }
+                })()}
+                    
+                </Skeleton>
+            </Flex>
+            <Box  flex='1'  px='2vw' height={'calc(100%)'} py='3vh'> 
+                <ShowChatBox chatBotData={chatBotData} selectedLanguage={selectedLanguage}/>
+            </Box>
+        </Flex>     
+        </>   
+       )
 }
 
 export default Chatbot
@@ -729,20 +569,12 @@ const ShowChatBox = ({chatBotData, selectedLanguage}:{chatBotData:ChatBotData | 
     const [testUrl, setTestUrl] = useState<string>('')
     return (
                  
-        <Flex flexDir={'column'} borderRadius={'.7rem'} flex='1' bg='brand.gray_2' position={'relative'}  overflow={'scroll'}> 
-            <Flex borderBottomWidth={'1px'} justifyContent={'space-between'} borderBottomColor={'gray.300'} p='1vw' alignItems={'center'} gap='32px'> 
-                <Box w={'200px'}> 
-                    <CustomSelect variant='title' hide={false} options={['initial',  'conversation']} selectedItem={selectedView} setSelectedItem={(value) => setSelectedView(value)} iconsMap={{'initial':[t('initial'),FaHouse], 'conversations':[t('conversations'),FaListUl], 'conversation':[t('conversation'),IoIosChatboxes], 'messages':[t('messages'),TbMessageFilled]}}/>
-                </Box>
-                <Box w={'200px'}> 
-                    <EditText value={testUrl} setValue={setTestUrl} />
-                </Box>
-                
-             </Flex>
+        <Flex flexDir={'column'} h='100%' borderRadius={'.7rem'}  flex='1' bg='brand.gray_2' position={'relative'}  overflow={'scroll'}> 
+            
             <Flex py='2vh' px='2vh' flexDir={'column'} alignItems={chatBotData?.chat_position === 'right' ?'end':'start'} flex='1'  overflow={'scroll'}> 
                 <Skeleton isLoaded={(chatBotData !== null)}> 
-                    <Box borderRadius={'1rem'}  fontSize={'.9em'} boxShadow={'1px 0px 10px rgba(0, 0, 0, 0.15)'} overflow={'hidden'}  bg='white' width='360px' height='650px' right={chatBotData?.chat_position === 'right' ?'1vh':undefined} left={chatBotData?.chat_position === 'right' ?undefined:'1vh'}  >
-                        <Main selectedView={selectedView} chatBotData={chatBotData as ChatBotData} selectedLanguage={selectedLanguage}/>
+                    <Box borderRadius={'1rem'}   fontSize={'.9em'} boxShadow={'1px 0px 10px rgba(0, 0, 0, 0.15)'} overflow={'hidden'}  width='360px' height='650px' right={chatBotData?.chat_position === 'right' ?'1vh':undefined} left={chatBotData?.chat_position === 'right' ?undefined:'1vh'}  >
+                        <ChatbotComponent  customInfo={chatBotData as ChatBotData} selectedLanguage={selectedLanguage}/>
                     </Box>
                 </Skeleton>
                 <Skeleton isLoaded={(chatBotData !== null)}> 
@@ -757,115 +589,35 @@ const ShowChatBox = ({chatBotData, selectedLanguage}:{chatBotData:ChatBotData | 
 }
 
 
-const Main = ({selectedView, chatBotData, selectedLanguage}:{selectedView:'initial' | 'conversations' | 'conversation' | 'messages', chatBotData:ChatBotData | null, selectedLanguage:string}) => {
-
-    //PUBLIC URL
-    const t_formats = useTranslation('formats').t
-
-    const i18n = useTranslation('formats').i18n
-
-    const chatDict = {
-        'ES': ['Nueva conversación', 'No hay conversaciones guardadas', 'Conversaciones'],
-        'EN': ['New conversation', 'No saved conversations', 'Conversations'],
-        'FR': ['Nouvelle conversation', 'Aucune conversation enregistrée', 'Conversations']
-    }
-    const clientLanguage: string = i18n.language.toLocaleUpperCase()
-    const language = (chatDict as any)[clientLanguage] ? clientLanguage : 'EN'      
-   
-    const conversationId = selectedView === 'conversation'
-
-    const sortedConversations = [{conversation_id:'', created_at:'', theme:`${t_formats('Conversation')} 1`, pending:false},{conversation_id:'', created_at:'', theme:`${t_formats('Conversation')} 2`, pending:false},{conversation_id:'', created_at:'', theme:`${t_formats('Conversation')} 3`, pending:false},{conversation_id:'', created_at:'', theme:`${t_formats('Conversation')} 4`, pending:false},{conversation_id:'', created_at:'', theme:`${t_formats('Conversation')} 5`, pending:false}]
-    //MODIFIED CONVERSATIONS
-    return(
-    
-    <div style={{ display:'flex', height:'100%',  position:'relative',flexDirection:'column'}} >  
-
-        <div style={{height:'10%', background:`linear-gradient(to right, ${chatBotData?.header_background[0]},${chatBotData?.header_background[1]})`, display:'flex', alignItems:'center', padding:'0 4%', justifyContent:'space-between', zIndex:10}} > 
-            <div style={{display:'flex', gap:'3%', flex:'1', alignItems:'center', justifyContent:conversationId?'flex-start':'center'}}>
-            
-                {conversationId ? 
-                <div className={'fade-in'} style={{ display:'flex',  alignItems:'center', flexDirection:'row', gap:'5px'}} > 
-                    <div style={{display:'flex', alignItems:'center', justifyContent:'center', padding:'10px', background:'transparent', cursor:'pointer'}}>
-                        <svg viewBox="0 0 512 512" width="20"  height="20"  style={{fill: chatBotData?.header_color, cursor:'pointer'}}><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"></path></svg>
-                    </div>
-                    <div style={{display:'flex', alignItems:'center', flexDirection:'row', gap:'15px'}}>    
-                        <img src={chatBotData?.chat_avatar} height="25px" width="25px" />
-                        <span style={{color:chatBotData?.header_color, fontWeight:500,  whiteSpace: 'nowrap',textOverflow: 'ellipsis', fontSize:'1.4em' }} >{''}</span>
-                    </div>
-                </div>
-                :
-                <span className={'fade-in'} style={{color:chatBotData?.header_color, fontWeight:500,  fontSize: '1.2em', whiteSpace: 'nowrap',textOverflow: 'ellipsis'}} >{(chatDict as any)[language][2]}</span>
-                }
-            </div>         
-        </div>
-
-   
-
-      
-        {conversationId && <div > 
-            <ChatbotComponent customInfo={chatBotData as ChatBotData} selectedLanguage={selectedLanguage}/>
-        </div>}
-         
-
-        {!conversationId && <div className={`conversation-container ${conversationId ? 'slide-out' : 'slide-in'}`}>
-            {sortedConversations.length === 0 ?   
-            <span style={{marginTop:'5%', color:'#4A5568', marginLeft:'20px', fontWeight:'medium', fontSize:'1.2em'}}>{(chatDict as any)[language][1]}</span>
-            :<> {sortedConversations.map((con, index) => (
-                <>
-                    <div  key={`conversation-${index}`} className='conversation' >
-                        <div style={{display:'flex',flexDirection:'column',  flex: '1', minWidth: 0}}>
-                            <div  style={{display:'flex',flexDirection:'row', gap:'20px', alignItems:'center',  flex: '1', minWidth: 0}}>
-                                <span style={{whiteSpace: 'nowrap',overflow: 'hidden',textOverflow: 'ellipsis', fontSize:'1.1em'}} >{con.theme?con.theme:'Sin tema'}</span>
-                                {con.pending &&<svg width="7" height="7" viewBox="0 0 15 15"  style={{ flexShrink: 0 }}><circle cx="7" cy="7" r="7" fill="red" /></svg>}
-                            </div>
-                            <span style={{ color:'#666', fontSize:'.9em'}}>{timeAgo(con.created_at, t_formats)}</span>
-                        </div>
-                        <svg viewBox="0 0 512 512" width="12"  style={{fill: 'black'}} height="12"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"></path></svg>
-                    </div>
-                    <div className='conversation-divider'/>
-                </>
-            ))}</>
-            }
-        </div>}
-
-        {!conversationId && <button className={`bottom-button ${conversationId ? 'slide-out' : 'slide-in'}`} style={{color: chatBotData?.header_color,background:`linear-gradient(to right, ${chatBotData?.header_background[0]},${chatBotData?.header_background[1]})`}}>
-            {(chatDict as any)[language][0]}
-            <svg viewBox="0 0 512 512" width="12"  style={{fill: chatBotData?.header_color}} height="12"><path d="M476.59 227.05l-.16-.07L49.35 49.84A23.56 23.56 0 0027.14 52 24.65 24.65 0 0016 72.59v113.29a24 24 0 0019.52 23.57l232.93 43.07a4 4 0 010 7.86L35.53 303.45A24 24 0 0016 327v113.31A23.57 23.57 0 0026.59 460a23.94 23.94 0 0013.22 4 24.55 24.55 0 009.52-1.93L476.4 285.94l.19-.09a32 32 0 000-58.8z"></path></svg>
-        </button>}
  
-    
-    </div>
- 
-    
-    )
-}
-
 
 const ChatbotComponent = ({customInfo, selectedLanguage}:{customInfo:ChatBotData,selectedLanguage:string}) => {
     
     const { t } = useTranslation('settings')
-    const t_formats = useTranslation('formats').t
-    const i18n = useTranslation('formats').i18n
     const showMessages = customInfo?.welcome_message[selectedLanguage] ? [{sender_type:'matilda', timestamp: new Date().toISOString() , text:customInfo?.welcome_message[selectedLanguage] } ]:[]
 
     // TEXTAREA COMPONENT
     const TextAreaContainer = () => {
         return (          
-        <div style={{height:'52px', padding:'10px 20px 10px 20px', gap:'10px', display:'flex', alignItems:'center', justifyContent:'start'}}  >
-            <div style={{display:'flex', position:'relative',flexGrow:'1', alignItems:'center', minHeight:'40px'}} > 
-            <button id="fileButton" className="clip-btn"  onClick={() => {const input = document.getElementById('selectFile'); if (input) input.click()}}
-            onMouseOver={() => {const btn = document.getElementById('fileButton');if (btn) btn.style.background = '#EDF2F7'}}
-            onMouseOut={() => {const btn = document.getElementById('fileButton');if (btn) btn.style.background = 'white'}}>
-                <svg viewBox="0 0 24 24"   width="16" height="16" style={{fill: 'black'}}><path d="M19.187 3.588a2.75 2.75 0 0 0-3.889 0L5.575 13.31a4.5 4.5 0 0 0 6.364 6.364l8.662-8.662a.75.75 0 0 1 1.061 1.06L13 20.735a6 6 0 0 1-8.485-8.485l9.723-9.723a4.247 4.247 0 0 1 4.124-1.139 4.247 4.247 0 0 1 3.025 3.025 4.247 4.247 0 0 1-1.139 4.124l-9.193 9.193a2.64 2.64 0 0 1-1.858.779 2.626 2.626 0 0 1-1.854-.779c-.196-.196-.338-.47-.43-.726a2.822 2.822 0 0 1-.168-.946c0-.7.284-1.373.775-1.864l8.132-8.131a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734l-8.131 8.132a1.148 1.148 0 0 0-.336.803c.003.204.053.405.146.587.01.018.018.028.02.032.22.215.501.332.786.332.29 0 .58-.121.798-.34l9.192-9.192a2.75 2.75 0 0 0 0-3.89Z"></path></svg>
+        <div style={{height:'65px', padding:'0px 4% 0px 4%',width:'100%', display:'flex', flexDirection:'column', alignItems:'center'}}  >
+        
+        <div style={{ width:'100%', marginTop:'-23px',  position:'relative', alignItems:'center', minHeight:'46px'}} > 
+            <textarea disabled maxLength={1000}  className="text-area"  id="autoresizingTextarea" placeholder={t('WriteMessage')} rows={1}/>
+            <button id="fileButton"  className="clip-btn"  >
+              <svg viewBox="0 0 512 512"   width="18" height="18" style={{fill: 'currentColor'}}><path d="M364.2 83.8c-24.4-24.4-64-24.4-88.4 0l-184 184c-42.1 42.1-42.1 110.3 0 152.4s110.3 42.1 152.4 0l152-152c10.9-10.9 28.7-10.9 39.6 0s10.9 28.7 0 39.6l-152 152c-64 64-167.6 64-231.6 0s-64-167.6 0-231.6l184-184c46.3-46.3 121.3-46.3 167.6 0s46.3 121.3 0 167.6l-176 176c-28.6 28.6-75 28.6-103.6 0s-28.6-75 0-103.6l144-144c10.9-10.9 28.7-10.9 39.6 0s10.9 28.7 0 39.6l-144 144c-6.7 6.7-6.7 17.7 0 24.4s17.7 6.7 24.4 0l176-176c24.4-24.4 24.4-64 0-88.4z"></path></svg>
             </button> 
-                <textarea disabled placeholder={t('WriteMessage')} className="text-area"  id="autoresizingTextarea"   rows={1} />
-                <button className="send-btn"  style={{padding:'4px', alignItems:'center', justifyContent:'center', position: 'absolute', right: '6px', top:'10px' }} disabled  >
-                    <svg viewBox="0 0 350 480" width="13" height="13" style={{fill: 'white'}}>
-                        <path d="M214.6 41.4c-12.5-12.5-32.8-12.5-45.3 0l-160 160c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L160 141.2V448c0 17.7 14.3 32 32 32s32-14.3 32-32V141.2L329.4 246.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-160-160z"/>
-                    </svg>
-                </button>
-            </div>     
-        </div>)
+           <button className="send-btn"  style={{padding:'7px', alignItems:'center', width:"28px", height:"28px", justifyContent:'center', background:customInfo?.actions_color || 'black',position: 'absolute', right: '10px', bottom:'10px' }} >
+                <svg preserveAspectRatio="xMidYMid"viewBox="0 0 390 480" width="14" height="14"  style={{fill: 'white'}}>
+                    <path d="M214.6 41.4c-12.5-12.5-32.8-12.5-45.3 0l-160 160c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L160 141.2V448c0 17.7 14.3 32 32 32s32-14.3 32-32V141.2L329.4 246.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-160-160z"/>
+                </svg>
+            </button>
+        </div>
+
+          <div style={{ flex:'1', display:'flex', gap:'5px', alignItems:'center'}} onClick={() => window.open('https://www.matil.ai/contact', '_blank')}> 
+            <img alt='MATIL' src={'/images/matil-simple-gradient.svg'} height="14px" width={'14px'} />
+            <span className={'matil-text'}  >matil</span>
+          </div>
+      </div>)
     }
 
     const calculateBorderRadius = (isBotMessage:boolean, isPreviousMessageBot:boolean, isNextMessageBot:boolean, isLastMessage:boolean ) => {
@@ -877,22 +629,22 @@ const ChatbotComponent = ({customInfo, selectedLanguage}:{customInfo:ChatBotData
         return `.${firstBorder}rem .${secondBorder}rem .${thirdBorder}rem .${fourthBorder}rem`
         }
 
-    const parseTimestampAsUTC = (timestamp:string) => {
-        const isoFormattedTimestamp = timestamp.replace(' ', 'T') + (timestamp.endsWith('Z')?'':'Z')
-        return isoFormattedTimestamp
-        }
-    const formatearHora = (timestamp: string, locale:string = 'en') => {
-        const fecha = new Date(parseTimestampAsUTC(timestamp));
-        return fecha.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
-    }
-    const formatearFecha = (timestamp: string, locale: string = 'en') => {
-        const fecha = new Date(parseTimestampAsUTC(timestamp));
-        return fecha.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });
-      }
+ 
+    return(
+    <div style={{zIndex:2, backgroundColor:'white',  height:'100%', width:'100%', backgroundImage:`radial-gradient(circle at 100% 110%, ${customInfo?.mesh_colors?.[0]} 0px, transparent 60%), radial-gradient(circle at 0% 130%, ${customInfo?.mesh_colors?.[1]} 0px, transparent 50%)`, }}>  
+       <div style={{zIndex:1000000000000}} className={`button-hover`}>
+          <svg viewBox="0 0 20 20" width="22"  height="22"  ><path d="M3 7a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 13a1 1 0 011-1h10a1 1 0 110 2H4a1 1 0 01-1-1z"></path></svg>
+     </div>
+
+        <div style={{height:'545px',fontWeight:400,  fontSize:'1.1em', padding:'10px', overflow:'scroll'}} >
           
-    return(<>     
-        <div  style={{height:'490px',fontWeight:400,  fontSize:'1.1em', padding:'33px 4%', overflow:'scroll'}} >
-          
+            <div style={{width:'100%', display:'flex', marginBottom:'20px', flexDirection:'column', alignItems:'center', justifyContent:'center'}}>
+                    <img alt='chatLogo' src={customInfo?.chat_avatar} width='40px'/>
+                   
+                  <span style={{marginTop:'5px', fontWeight:500}}>{customInfo?.bot_name || 'Tilda'}{t('AiAssistant')}</span>
+                <span style={{fontSize:`1em`}}>{customInfo?.ai_message?.[selectedLanguage] || ''}</span>
+              </div>
+
           {showMessages.map((message, index)=>{
 
           const isNextMessageBot = showMessages[index + 1] ? showMessages[index + 1].sender_type !== 'contact' : false
@@ -903,29 +655,28 @@ const ChatbotComponent = ({customInfo, selectedLanguage}:{customInfo:ChatBotData
           const diaMensajeActual = new Date(message.timestamp).getDate()
 
           const diaMensajeAnterior = index > 0 ? new Date(showMessages[index - 1].timestamp).getDate() : 10;
-          const mostrarBarraNuevoDia = diaMensajeAnterior !== null && diaMensajeActual !== diaMensajeAnterior;
 
           return(
           <div>  
-            { mostrarBarraNuevoDia && <div style={{marginTop:index > 0?'15px':'0px',fontSize:'.8em', color:'#718096', textAlign: 'center' }}>{formatearFecha(message.timestamp,  i18n.language)}</div>}
             <div style={{ marginTop: index === 0 ? '0px' : (( ((message.sender_type === 'contact') && (showMessages[index - 1].sender_type === 'contact')) ||((message.sender_type !== 'contact') && (showMessages[index - 1].sender_type !== 'contact')))  ? '3px':'15px')}}> 
             
-            {(!isPreviousMessageBot && message.sender_type !== 'contact') && <span style={{fontSize:'.75em',color:'#718096', marginLeft:'35px'}}>{''}</span>}
+             
+            <div  style={{gap:'10px', display:'flex', width:'100%', alignItems:'end', flexDirection:message.sender_type !== 'contact' ? 'row':'row-reverse'}}  key={`message-${index}`}  >
+                <div style={{maxWidth:'82%',display:'flex',flexDirection:'column',alignItems:'end'}}> 
+                    <div style={{ wordBreak: 'break-word', overflowWrap: 'break-word', background:message.sender_type !== 'contact'?`rgba(237, 242, 247, ${customInfo?.messages_opacity ?customInfo?.messages_opacity:0.5 })`:`linear-gradient(to right, ${customInfo?.client_background?customInfo.client_background[0]:'green'},${customInfo?.client_background?customInfo.client_background[1]:'green'})`, color:message.sender_type !== 'contact'?'black':customInfo?.client_color,  padding:'14px', borderRadius:calcBorderRadius}}>
+                        <div style={{display:'flex', justifyContent:'space-between'}}>
+                        {message.sender_type !== 'contact'  && 
+                            <div style={{display:'flex', alignItems:'center', gap:'8px', marginBottom:'12px'}}>
+                            <img alt='chatLogo' src={customInfo?.chat_avatar} width='20px'/>
+                            <span style={{fontWeight:400}}>{`${customInfo?.bot_name || 'Tilda'}${t('AiAssistant')}`}</span>
+                            </div>}
+                        </div>
             
-            <div style={{gap:'10px', display:'flex', width:'100%', alignItems:'end', flexDirection:message.sender_type !== 'contact' ? 'row':'row-reverse'}}  key={`message-${index}`}  >
-                {(message.sender_type !== 'contact' && !isNextMessageBot)&& 
-                
-                <div style={{marginBottom:'18px'}}><img alt='chatLogo' width={'20px'} height={'20px'} src={customInfo?.chat_avatar}/></div>}
-                <div style={{maxWidth:'82%',display:'flex',flexDirection:'column',alignItems:'end', animation:index > 1 ?message.sender_type !== 'contact'? 'expandFromLeft 0.5s ease-out' : 'expandFromRight 0.5s ease-out':'none'}}> 
-                  <div style={{ marginLeft:(message.sender_type !== 'contact' && !isNextMessageBot)?'0':'30px', wordBreak: 'break-word', fontSize:'.9em', overflowWrap: 'break-word', background:message.sender_type !== 'contact'?'#EDF2F7':`linear-gradient(to right, ${customInfo?.client_background?customInfo.client_background[0]:'green'},${customInfo?.client_background?customInfo.client_background[1]:'green'})`, color:message.sender_type !== 'contact'?'black':customInfo?.client_color,  padding:'8px', borderRadius:calcBorderRadius}}>
-                    <span style={{ wordBreak: 'break-word'}}>
-                        {message.text}
-                    </span>
-                  </div>
-                  {(( (message.sender_type != 'contact' && !isNextMessageBot) || (message.sender_type === 'contact' && isNextMessageBot) )) && <span style={{color:'#718096', marginTop:'5px',fontSize:'.7em',fontWeight:300}}>{formatearHora(message.timestamp, i18n.language)}</span>}
+
+                        <span style={{fontSize:'.9em'}}>{message.text}</span>
+                    </div>
                 </div>
             </div>
-
           </div>
           </div>)
           })}
@@ -933,25 +684,20 @@ const ChatbotComponent = ({customInfo, selectedLanguage}:{customInfo:ChatBotData
             {customInfo?.options&&
             <>
                 {(customInfo?.options?.[selectedLanguage] || []).map((option:string, index:number) => (
-                <div style={{cursor:'pointer', fontSize:'.9em', alignItems:'center', justifyContent:'center', background:`linear-gradient(to right, ${customInfo?.header_background?customInfo.header_background[0]:'green'},${customInfo?.header_background?customInfo.header_background[1]:'green'})`, padding:'8px', borderRadius:'2rem' }}  key={`option-${index}`}  >
-                    <span style={{color:customInfo?.client_color, whiteSpace:'nowrap'}}>{option}</span>
-                </div>
+                   <div className={'option-component'} style={{cursor:'pointer',  fontSize:'.9em', alignItems:'center', justifyContent:'center',  background:`linear-gradient(to right, ${customInfo?.client_background?customInfo.header_background[0]:'green'},${customInfo?.client_background?customInfo.header_background[1]:'green'})`, padding:'10px', borderRadius:'12px'}}  key={`option-${index}`}>
+                   <span style={{ color:customInfo?.client_color, whiteSpace:'nowrap' }}>{option}</span>
+                 </div>
             ))}
             </>}
         </div>
 
-        
-        <div className='gradient' style={{color:'#718096',gap:'5px', justifyContent:'center', display:'flex', alignItems:'center'}}  >
-            <div style={{ display:'inline-flex', height:'15px', gap:'5px', justifyContent:'center', alignItems:'center', cursor:'pointer'}} onClick={() => window.open('https://www.matil.ai/contact', '_blank')} className={'icon-container'}> 
-                <img alt='MATIL' src={'/images/matil-simple-gradient.png'} width={'14px'}  />
-                <span className={'matil-text'} >matil</span>
-            </div>
-        </div> 
+ 
       </div>
       <TextAreaContainer/>
    
+    </div>  
  
-    </>)
+    )
 }
 
 

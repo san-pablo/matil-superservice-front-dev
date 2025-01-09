@@ -12,6 +12,7 @@ import EditText from "../../../Components/Reusable/EditText"
 import ColorPicker from "../../../Components/Once/ColorPicker"
 import SectionSelector from "../../../Components/Reusable/SectionSelector"
 import CustomSelect from "../../../Components/Reusable/CustomSelect"
+import { EditStr, EditBool, EditColor } from "../../../Components/Reusable/EditSettings"
 //ICONS
 import { IoMdArrowRoundForward } from 'react-icons/io'
 import { FaStar, FaComment, FaGaugeHigh, FaCircleExclamation } from "react-icons/fa6"
@@ -31,7 +32,7 @@ interface SurveysConfigProps {
 
  
 //MAIN FUNCTION
-const Surveys = ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) => {
+const Surveys = () => {
 
     //CONSTANTS
     const auth = useAuth()
@@ -39,6 +40,7 @@ const Surveys = ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) => {
     const {  getAccessTokenSilently } = useAuth0()
     const sectionsList = ['csat', 'nps']
     const sectionsMap:{[key:string]:[string, ReactElement]} = {'csat':[t('csat'), <FaStar/>], 'nps':[t('nps'), <FaGaugeHigh/>]}
+    const scrollRef = useRef<HTMLDivElement>(null)
 
     //WAITING SEND
     const [waitingSend, setWaitingSend] = useState<boolean>(false)
@@ -90,124 +92,72 @@ const Surveys = ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) => {
     return(<>
         <SaveChanges data={currentSection === 'csat'?csatData:npsData} setData={currentSection === 'csat'?setCsatData:setNpsData} dataRef={currentSection === 'csat'?csatDataRef:npsDataRef} onSaveFunc={sendNewData}/>
 
-        <Box> 
-            <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Surveys')}</Text>
+ 
+        <Box px='2vw' pt='2vw' > 
+            <Text fontSize={'1.5em'} fontWeight={'medium'}>{t('Surveys')}</Text>
             <Text color='gray.600' fontSize={'.9em'}>{t('SurveysDes')}</Text>
 
-            <Flex justifyContent={'space-between'} mt='2vh' mb='2vh'> 
-                <SectionSelector selectedSection={currentSection} sections={sectionsList} sectionsMap={sectionsMap}  onChange={() => setCurrentSection(prev => (prev === 'csat'?'nps':'csat'))}/>
-            </Flex>
-            <Box height={'1px'} width={'100%'} bg='gray.300' mt='2vh' />
-        </Box>
-
-        <Flex flex='1' pt='4vh' overflow={'hidden'}  gap='80px'position='relative'> 
- 
-            <Box flex='4' ref={scrollRef} overflow={'scroll'} height={'100%'}> 
-                <Text fontWeight={'medium'}>{t('ScoreMessage')}</Text>
-                    <Text mb='.5vh' fontSize={'.8em'} color='gray.600'>{t('ScoreMessageDes')}</Text>
-                    <Skeleton  isLoaded={(csatData !== null && npsData !== null)} >
-                        <EditText placeholder={t('ScorePlaceholder')} value={dataToWork?.score_message} setValue={(value) => handleEditKey('score_message', value) }  hideInput={false}/>
-                    </Skeleton>
-                    <Flex mt='3vh' gap='10px'alignItems={'center'}>
-                        <Skeleton  isLoaded={(csatData !== null && npsData !== null)} >
-                            <Switch isChecked={dataToWork?.ask_for_comments} onChange={(e) => handleEditKey('ask_for_comments', e.target.checked)}/>
-                        </Skeleton>
-                        <Text fontWeight={'medium'}>{t('AskForComments')}</Text>  
-                    </Flex>  
-                    <Text mt='.5vh' fontSize={'.8em'} color='gray.600'>{t('AskForCommentsDes')}</Text>
-                    {dataToWork?.ask_for_comments && <>
-                        <Text mt='2vh' fontWeight={'medium'}>{t('Comments')}</Text>
-                        <Text mb='1vh' fontSize={'.8em'} color='gray.600'>{t('CommentsDes')}</Text>
-                        <Skeleton  isLoaded={(csatData !== null && npsData !== null)} >
-                            <EditText placeholder={t('CommentsSpacePlaceholder')} value={dataToWork?.comment_message} setValue={(value) => handleEditKey('comment_message', value) } hideInput={false}/>
-                        </Skeleton>
-                        <Text mt='2vh' fontWeight={'medium'}>{t('CommentsPlaceholder')}</Text>
-                        <Text mb='1vh' fontSize={'.8em'} color='gray.600'>{t('CommentsPlaceholderDes')}</Text>
-                        <Skeleton  isLoaded={(csatData !== null && npsData !== null)} >
-                        <EditText placeholder={t('CommentsPlaceholderPlaceholder')} value={dataToWork?.comment_placeholder} setValue={(value) => handleEditKey('comment_placeholder', value) } hideInput={false}/>
-                        </Skeleton>
-                    </>}
-                    <Text mt='2vh' fontWeight={'medium'}>{t('ThanksMessage')}</Text>
-                    <Text mb='1vh' fontSize={'.8em'} color='gray.600'>{t('ThanksMessageDes')}</Text>
-                    <Skeleton  isLoaded={(csatData !== null && npsData !== null)} >
-                        <EditText  placeholder={t('ThanksMessagePlaceholder')} value={dataToWork?.thank_you_message} setValue={(value) => handleEditKey('thank_you_message', value) } hideInput={false}/>
-                    </Skeleton>
-                    <Text fontWeight={'medium'} mt='2vh'>{t('BackgroundColorSurvey')}</Text>
-                    <Text fontSize={'.8em'} color='gray.600'>{t('BackgroundColorSurveyDes')}</Text>
-                    
-                    <Skeleton  isLoaded={(csatData !== null && npsData !== null)} >
-                        <Flex  mt='.5vh'  alignItems={'center'} gap='10px'> 
-                            <Box  w='300px' > 
-                                <ColorPicker containerRef={scrollRef} color={dataToWork?.background_color[0]} 
-                                setColor={(value) => {
-                                    const newHeaderBackground = [...dataToWork?.background_color as [string, string]]
-                                    newHeaderBackground[0] = value
-                                    console.log(newHeaderBackground)
-                                    handleEditKey('background_color', newHeaderBackground as [string, string])
-                                }}/>
-                            </Box>
-                            <Icon boxSize={'25px'} color='gray.400'  as={IoMdArrowRoundForward}/>
-                            <Box  w='300px' > 
-                                <ColorPicker containerRef={scrollRef} color={dataToWork?.background_color[1]} 
-                                setColor={(value) => {
-                                    const newHeaderBackground = [...dataToWork?.background_color as [string, string]]
-                                    newHeaderBackground[1] = value
-                                    handleEditKey('background_color', newHeaderBackground as [string, string])
-                                }}/>
-                            </Box>
-                        </Flex>
-                    </Skeleton>
-                    <Text fontWeight={'medium'} mt='2vh'>{t('TextColorSurvey')}</Text>
-                    <Text fontSize={'.8em'} color='gray.600'>{t('TextColorSurveyDes')}</Text>
-                    <Box mt='.5vh'  maxW={'300px'} flex='1' > 
-                        <Skeleton  isLoaded={(csatData !== null && npsData !== null)} >
-                            <ColorPicker containerRef={scrollRef} color={dataToWork?.text_color} setColor={(value) => {handleEditKey('text_color', value) }}/>
-                        </Skeleton>
-                    </Box>
-
-                    <Text fontWeight={'medium'} mt='2vh'>{t('ButtonBackgroundColor')}</Text>
-                    <Text fontSize={'.8em'} color='gray.600'>{t('ButtonBackgroundColorDes')}</Text>
-                    <Skeleton  isLoaded={(csatData !== null && npsData !== null)}  >
-                        <Flex  mt='.5vh'  alignItems={'center'} gap='10px'> 
-                            <Box  w='300px'> 
-                                <ColorPicker containerRef={scrollRef} color={dataToWork?.buttons_background_color[0]} 
-                                setColor={(value) => {
-                                    const newHeaderBackground = [...dataToWork?.buttons_background_color as [string, string]]
-                                    newHeaderBackground[0] = value
-                                    handleEditKey('buttons_background_color', newHeaderBackground as [string, string])
-                                }}/>
-                            </Box>
-                            <Icon boxSize={'25px'} color='gray.400'  as={IoMdArrowRoundForward}/>
-                            <Box  w='300px'> 
-                                <ColorPicker containerRef={scrollRef} color={dataToWork?.buttons_background_color[1]} 
-                                setColor={(value) => {
-                                    const newHeaderBackground = [...dataToWork?.buttons_background_color as [string, string]]
-                                    newHeaderBackground[1] = value
-                                    handleEditKey('buttons_background_color', newHeaderBackground as [string, string])
-                                }}/>
-                            </Box>
-                        </Flex>
-                    </Skeleton>
-                    <Text fontWeight={'medium'} mt='2vh'>{t('ButtonColor')}</Text>
-                    <Text fontSize={'.8em'} color='gray.600'>{t('ButtonColorDes')}</Text>
-                    <Box  mt='.5vh'  maxW={'300px'} flex='1' >
-                        <Skeleton  isLoaded={(csatData !== null && npsData !== null)}  >
-                            <ColorPicker containerRef={scrollRef} color={dataToWork?.buttons_text_color} setColor={(value) => {handleEditKey('buttons_text_color', value) }}/>
-                        </Skeleton>
-                    </Box>
+            <Box h='40px' > 
+                <SectionSelector notSection selectedSection={currentSection} sections={sectionsList} sectionsMap={sectionsMap}  onChange={() => setCurrentSection(prev => (prev === 'csat'?'nps':'csat'))}/>
+                <Box bg='gray.300' h='1px' w='100%'/>
             </Box>
- 
-            <Flex overflow={'hidden'} flexDir={'column'} alignItems={'center'} justifyContent={'center'} borderRadius={'.7rem'} flex='3' bg='brand.gray_2' position={'relative'} > 
-                <Flex w='100%' borderBottomWidth={'1px'} justifyContent={'space-between'} borderBottomColor={'gray.300'} p='1vw' alignItems={'center'} gap='32px'> 
-                    <Box w={'200px'}> 
-                        <CustomSelect variant='title' hide={false} options={['stars', 'comments', 'thanks']} selectedItem={viewType} setSelectedItem={(value) => setViewType(value)} iconsMap={{'stars':[t('stars'),FaStar], 'comments':[t('comments'),FaComment], 'thanks':[t('thanks'),FaCircleExclamation]}}/>
-                    </Box>
-                    
-                </Flex>
-                <Main surveyConfig={dataToWork as SurveysConfigProps} viewType={viewType}/>
-            </Flex>
-        </Flex>
+         </Box>
 
+        <Flex flex='1' overflow={'scroll'}   position='relative'> 
+ 
+            <Flex flexDir={'column'}  px='2vw' py='3vh'  flex='4'  ref={scrollRef} overflow={'scroll'} > 
+                <Skeleton  isLoaded={(csatData !== null && npsData !== null)} >
+                    <EditStr placeholder={t('ScorePlaceholder')} value={dataToWork?.score_message || ''} setValue={(value) => handleEditKey('score_message', value)} description={t('ScoreMessageDes')} title={t('ScoreMessage')}/>
+                </Skeleton>
+                    
+                <Skeleton  isLoaded={(csatData !== null && npsData !== null)} style={{marginTop:'2vh'}}>
+                    <EditBool title={t('AskForComments')} description={t('AskForCommentsDes')} value={dataToWork?.ask_for_comments || false} setValue={(value:boolean) => handleEditKey('ask_for_comments', value)}/>
+                </Skeleton>
+ 
+                {dataToWork?.ask_for_comments && <>
+
+                    <Skeleton  isLoaded={(csatData !== null && npsData !== null)} style={{marginTop:'2vh'}} >
+                        <EditStr placeholder={t('CommentsSpacePlaceholder')} value={dataToWork?.comment_message || ''} setValue={(value) => handleEditKey('comment_message', value)} description={t('CommentsDes')} title={t('Comments')}/>
+                    </Skeleton>
+
+                    <Skeleton  isLoaded={(csatData !== null && npsData !== null)} style={{marginTop:'2vh'}} >
+                        <EditStr placeholder={t('CommentsPlaceholderPlaceholder')} value={dataToWork?.comment_placeholder || ''} setValue={(value) => handleEditKey('comment_placeholder', value)} description={t('CommentsPlaceholderDes')} title={t('CommentsPlaceholder')}/>
+                    </Skeleton>
+                </>}
+
+                <Skeleton  isLoaded={(csatData !== null && npsData !== null)} style={{marginTop:'2vh'}} >
+                    <EditStr placeholder={t('ThanksMessagePlaceholder')} value={dataToWork?.thank_you_message || ''} setValue={(value) => handleEditKey('thank_you_message', value)} description={t('ThanksMessageDes')} title={t('ThanksMessage')}/>
+                </Skeleton>
+
+                <Skeleton  isLoaded={(csatData !== null && npsData !== null)} style={{marginTop:'2vh'}} >
+                    <EditColor isGradient containerRef={scrollRef} value={dataToWork?.background_color || ''} setValue={(value) => handleEditKey('background_color', value as any)} description={t('BackgroundColorSurveyDes')} title={t('BackgroundColorSurvey')}/>
+                </Skeleton>
+
+                <Skeleton  isLoaded={(csatData !== null && npsData !== null)} style={{marginTop:'2vh'}} >
+                    <EditColor containerRef={scrollRef} value={dataToWork?.text_color || ''} setValue={(value) => handleEditKey('text_color', value as any)} description={t('TextColorSurveyDes')} title={t('TextColorSurvey')}/>
+                </Skeleton>
+                  
+                <Skeleton  isLoaded={(csatData !== null && npsData !== null)} style={{marginTop:'2vh'}} >
+                    <EditColor isGradient containerRef={scrollRef} value={dataToWork?.buttons_background_color || ''} setValue={(value) => handleEditKey('buttons_background_color', value as any)} description={t('ButtonBackgroundColorDes')} title={t('ButtonBackgroundColor')}/>
+                </Skeleton>
+
+                 
+                <Skeleton  isLoaded={(csatData !== null && npsData !== null)} style={{marginTop:'2vh'}} >
+                    <EditColor containerRef={scrollRef} value={dataToWork?.buttons_text_color || ''} setValue={(value) => handleEditKey('buttons_text_color', value as any)} description={t('ButtonColorDes')} title={t('ButtonColor')}/>
+                </Skeleton>
+            </Flex>
+            <Box px='2vw' flex='3' py='3vh'> 
+                <Flex overflow={'hidden'} h='100%'  flexDir={'column'} alignItems={'center'} justifyContent={'center'} borderRadius={'.7rem'}   bg='brand.gray_2' position={'relative'} > 
+                    <Flex w='100%' borderBottomWidth={'1px'} justifyContent={'space-between'} borderBottomColor={'gray.200'} p='1vw' alignItems={'center'} gap='32px'> 
+                        <Box w={'200px'}> 
+                            <CustomSelect variant='title' hide={false} options={['stars', 'comments', 'thanks']} selectedItem={viewType} setSelectedItem={(value) => setViewType(value)} iconsMap={{'stars':[t('stars'),FaStar], 'comments':[t('comments'),FaComment], 'thanks':[t('thanks'),FaCircleExclamation]}}/>
+                        </Box>
+                    </Flex>
+                    <Main surveyConfig={dataToWork as SurveysConfigProps} viewType={viewType}/>
+                </Flex>
+            </Box>
+        </Flex>
+ 
        
         </>)
     }

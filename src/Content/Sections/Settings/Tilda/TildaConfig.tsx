@@ -1,26 +1,24 @@
 //REACT
-import { Dispatch, SetStateAction, useRef, useState, CSSProperties, RefObject, useEffect, useMemo } from "react"
+import { useRef, useState, CSSProperties, RefObject, useEffect, useMemo } from "react"
 import { useTranslation } from "react-i18next"
-import { useAuth } from "../../../AuthContext"
-import { useSession } from "../../../SessionContext"
+import { useAuth } from "../../../../AuthContext"
 import { useAuth0 } from "@auth0/auth0-react"
 //FETCH DATA
-import fetchData from "../../API/fetchData"
+import fetchData from "../../../API/fetchData"
 //FRONT
 import { motion, isValidMotionProp } from 'framer-motion'
 import { Text, Box, Flex, Button, NumberInput, NumberInputField, Switch, Icon, Skeleton, Textarea, IconButton, Portal, chakra, shouldForwardProp,Tooltip } from "@chakra-ui/react"
 import EmojiPicker, { EmojiClickData } from 'emoji-picker-react'
 //COMPONENTS
-import EditText from "../../Components/Reusable/EditText"
-import EditStructure from "../../Components/Reusable/EditStructure"
-import ConfirmBox from "../../Components/Reusable/ConfirmBox"
-import LoadingIconButton from "../../Components/Reusable/LoadingIconButton"
+import EditText from "../../../Components/Reusable/EditText"
+import EditStructure from "../../../Components/Reusable/EditStructure"
+import ConfirmBox from "../../../Components/Reusable/ConfirmBox"
+import LoadingIconButton from "../../../Components/Reusable/LoadingIconButton"
 import TestChat from "./TestChat"
-import IconsPicker from "../../Components/Reusable/IconsPicker"
 //FUNCTIONS
-import useOutsideClick from "../../Functions/clickOutside"
-import determineBoxStyle from "../../Functions/determineBoxStyle"
-import parseMessageToBold from "../../Functions/parseToBold"
+import useOutsideClick from "../../../Functions/clickOutside"
+import determineBoxStyle from "../../../Functions/determineBoxStyle"
+import parseMessageToBold from "../../../Functions/parseToBold"
 //ICONS
 import { RxCross2 } from "react-icons/rx"
 import { FaPlus } from "react-icons/fa6"
@@ -28,137 +26,17 @@ import { PiChatsBold } from "react-icons/pi"
 import { HiTrash } from "react-icons/hi2"
 import { IoIosArrowBack } from "react-icons/io"
 //TYPING
-import { MatildaConfigProps, FieldAction, FunctionTableData } from "../../Constants/typing"
+import { MatildaConfigProps, FieldAction, FunctionTableData } from "../../../Constants/typing"
+import { useLocation, useNavigate } from "react-router-dom"
  
-   
-//TYPING
-interface ConfigProps { 
-    uuid:string 
-    name:string 
-    description:string 
-    channels_ids:string[]
-    icon:string
-}
- 
-const tryData = {uuid:'', icon:'',name:'Hola', description:'Hola'}
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
 
-//MAIN FUNCTION
-function Tilda ({configData, setConfigData, selectedIndex, setSelectedIndex, scrollRef}:{configData:ConfigProps[] | null, setConfigData:Dispatch<SetStateAction<ConfigProps[] | null>>, selectedIndex:number, setSelectedIndex:Dispatch<SetStateAction<number>>, scrollRef:RefObject<HTMLDivElement>}) {
-
-    //AUTH CONSTANT
-    const auth = useAuth()
-    const session = useSession()
-    const { t } = useTranslation('settings')
-    const {  getAccessTokenSilently } = useAuth0()
-    
-    //TEST ID
-    const [testConfigId, setTestConfigId] = useState<{id:string, name:string} | null>(null)
-
-
-    //TRIGGER TO DELETE 
-    const [configToDeleteIndex, setConfigToDeleteIndex] = useState<number | null>(null)
-    
-    //FETCH INITIAL DATA
-    useEffect(() => {
-        const fetchTriggerData = async () => {
-            const response  = await fetchData({ getAccessTokenSilently, endpoint:`${auth.authData.organizationId}/admin/settings/matilda_configurations`, setValue:setConfigData, auth})
-        }
-        document.title = `${t('Settings')} - ${t('MatildaConfigs')} - ${auth.authData.organizationName} - Matil`
-        if (!configData) fetchTriggerData()
-    }, [])
-
-    //FUNCTION FOR DELETING THE TRIGGER
-    const DeleteComponent = () => {
-
-        //WAITING DELETION
-        const [waitingDelete, setWaitingDelete] = useState<boolean>(false)
-
-        //FUNCTION FOR DELETING AN AUTOMATION
-        const deleteTrigger= async () => {
-            setWaitingDelete(true)
-            const newData = configData?.filter((_, index) => index !== configToDeleteIndex) as ConfigProps[]
-            
-            const response = await fetchData({endpoint: `${auth.authData.organizationId}/admin/settings/matilda_configurations/${configData?.[configToDeleteIndex as number]?.uuid}`, method: 'delete', getAccessTokenSilently, setWaiting: setWaitingDelete, auth, toastMessages: {works: t('CorrectDeletedConfiguration'), failed: t('FailedDeletedConfiguration')}})
-            if (response?.status === 200) {
-                setConfigData(newData)
-                setConfigToDeleteIndex(null)
-            }
-        }
-
-        //FRONT
-        return(<>
-            <Box p='20px' > 
-                <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('ConfirmDelete')}</Text>
-                <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
-                <Text >{parseMessageToBold(t('ConfirmDeleteConfig', {name:configData?.[configToDeleteIndex as number].name}))}</Text>
-            </Box>
-            <Flex bg='gray.50' p='20px' gap='10px' flexDir={'row-reverse'}>
-                <Button  size='sm' variant={'delete'} onClick={deleteTrigger}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
-                <Button  size='sm' variant={'common'}onClick={() => setConfigToDeleteIndex(null)}>{t('Cancel')}</Button>
-            </Flex>
-        </>)
-    }
-
-    //DELETE BOX
-    const memoizedDeleteBox = useMemo(() => (
-        <ConfirmBox setShowBox={(b:boolean) => setConfigToDeleteIndex(null)}> 
-            <DeleteComponent/>
-        </ConfirmBox>
-    ), [configToDeleteIndex])
-
-    const memoizedTestChat = useMemo(() => (<> 
-          <Portal> 
-                <MotionBox initial={{opacity:0}}  animate={{opacity:1}} display={'flex'} exit={{opacity:0}} transition={{ duration: '.2' }} onMouseDown={() => setTestConfigId(null)} backdropFilter= 'blur(1px)' position='fixed' alignItems='center'justifyContent='center' top={0} left={0} width='100vw' height='100vh' bg='rgba(0, 0, 0, 0.3)' zIndex= {10000}>
-                    <MotionBox initial={{opacity:0, y:15}}  animate={{opacity:1, y:0}} transition={{ duration: '.2'}}     h={'90vh'} w='49.72vh' onMouseDown={(e) => e.stopPropagation()} bg='white' overflow={'hidden'} borderRadius={'1.5rem'} shadow={'xl'} position={'absolute'}  borderColor='gray.200' borderWidth='7px' zIndex={111}  >
-                        <TestChat configurationId={testConfigId?.id || ''} configurationName={testConfigId?.name || ''}/>
-                    </MotionBox>
-                </MotionBox>
-          </Portal> 
-    </>), [testConfigId])
-
-    //FRONT
-    return(<>
-        {testConfigId && memoizedTestChat}
-        {configToDeleteIndex !== null && memoizedDeleteBox}
-        {(selectedIndex >= -1 && configData !==  null) ? <GetMatildaConfig configIndex={selectedIndex as number} setConfigIndex={setSelectedIndex}  allConfigs={configData} setAllConfigs={setConfigData} scrollRef={scrollRef} setTestConfigId={setTestConfigId}/>:<>
-            
-        
-        {configData?.length === 0 ? 
-            <Flex height={'100%'} top={0} left={0} width={'100%'} alignItems={'center'} justifyContent={'center'}> 
-                <Box maxW={'580px'} textAlign={'center'}> 
-                    <Text fontWeight={'medium'} fontSize={'2em'} mb='2vh'>{t('NoConfigs')}</Text>               
-                    <Button variant={'main'} leftIcon={<FaPlus/>} onClick={() => {setSelectedIndex(-1)}}>{t('CreateConfig')}</Button>
-                </Box>
-            </Flex> 
-            :
-            <Flex flexWrap={'wrap'} gap='32px'  >
-                {(configData ? configData: [tryData, tryData, tryData])?.map((conf, index) => (
-                    <Skeleton isLoaded={configData !== null} style={{borderRadius:'1rem'}}> 
-                        <Box p='20px' overflow={'hidden'}  width={'400px'}  onClick={() => setSelectedIndex(index)} cursor={'pointer'} borderWidth={'1px'} key={`help-center-${index}`} transition={'box-shadow 0.3s ease-in-out'} _hover={{shadow:'lg'}} shadow={'sm'} borderRadius={'1rem'}>
-                            <Flex gap='15px'>
-                                <IconsPicker disabled selectedIcon={conf?.icon || 'IoSettingsSharp'} setSelectedIcon={() => {}}/> 
-                                <Box> 
-                                    <Text fontWeight={'medium'}  w='295px' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'} fontSize={'1.2em'}>{conf.name}</Text>
-                                    <Text  w='295px' color='gray.600' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}  fontSize={'.9em'}>{conf.description?conf.description:t('NoDescription')}</Text>
-                                </Box>
-                            </Flex>                       
-                            <Button mt='2vh' leftIcon={<PiChatsBold/>}  onClick={(e) => {e.stopPropagation();setTestConfigId({id:conf.uuid, name:conf.name})}} size='xs' variant={'main'}>{t('TestChat')}</Button>  
-                        </Box>
-                    </Skeleton>
-                ))}
-            </Flex> 
-            }  
-        </>}
-    </>)
-}
-
-export default Tilda
-
-const GetMatildaConfig = ({allConfigs, setAllConfigs, configIndex, setConfigIndex, scrollRef, setTestConfigId}:{allConfigs:ConfigProps[] , setAllConfigs:Dispatch<SetStateAction<ConfigProps[] | null>>, configIndex:number, setConfigIndex:Dispatch<SetStateAction<number>>, scrollRef:RefObject<HTMLDivElement>, setTestConfigId:Dispatch<SetStateAction<{id:string, name:string} | null>>}) => {
+const TildaConfig = ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) => {
 
     //TRANSLATION CONSTANT
     const auth = useAuth()
+    const location = useLocation().pathname
+    const navigate = useNavigate()
     const {  getAccessTokenSilently } = useAuth0()
     const { t } = useTranslation('settings')
     const operationTypesDict = {'user_id':['eq', 'neq',  'exists'], 'group_id':['eq', 'neq',  'exists'], 'channel_type':['eq', 'neq', 'exists'], 'title':['eq', 'neq', 'exists'], 'theme':['eq', 'neq', 'exists'], 'urgency_rating':['eq', 'neq', 'leq', 'geq', 'exists'], 'status':['eq', 'neq'], 'unseen_changes':['eq', 'exists'], 'tags':['contains', 'ncontains', 'exists'], 'is_matilda_engaged':['eq', 'exists'],'is_csat_offered':['eq', 'exists'],
@@ -195,10 +73,13 @@ const GetMatildaConfig = ({allConfigs, setAllConfigs, configIndex, setConfigInde
         help_centers_ids:[]
     }
 
+    const configUuid:string = location.split('/')[location.split('/').length - 1]
+
     //WAITING BOOLEAN
     const [waitingSend, setWaitingSend] = useState<boolean>(false)
 
     const [showDelete, setShowDelete] = useState<boolean>(false)
+    const [testConfigId, setTestConfigId] = useState<{id:string, name:string} | null>(null)
 
     //CONFIG DATA
     const configDictRef = useRef<MatildaConfigProps | null>(null)
@@ -212,26 +93,24 @@ const GetMatildaConfig = ({allConfigs, setAllConfigs, configIndex, setConfigInde
     const [deleteFunctionIndex, setDeleteFunctionIndex] = useState<number | null>(null )
     const [deleteHelpCenterIndex, setDeleteHelpCenterIndex] = useState<number | null>(null)
 
-
-
     //FETCH INITIAL DATA
     useEffect(() => {
         const fetchInitialData = async () => {
             await fetchData({endpoint:`${auth.authData.organizationId}/admin/help_centers`, auth,  getAccessTokenSilently, setValue:setHelpCentersData})
             await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions`, auth,  getAccessTokenSilently, setValue:setFunctionsData})
 
-            if (configIndex === -1) {
+            if (configUuid === 'new') {
                 setConfigDict(newConfig)
                 configDictRef.current = newConfig
             }
             else  {
-               const response =  await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/matilda_configurations/${allConfigs?.[configIndex]?.uuid}`,  getAccessTokenSilently, setValue:setConfigDict, auth})
+               const response =  await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/matilda_configurations/${configUuid}`,  getAccessTokenSilently, setValue:setConfigDict, auth})
                if (response?.status === 200) configDictRef.current = response.data
             }
         }
         document.title = `${t('Settings')} - ${t('MatildaConfigs')} - ${auth.authData.organizationName} - Matil`
         fetchInitialData()
-    }, [])
+    }, [location])
 
 
     //SELECT EMOJIS
@@ -297,18 +176,16 @@ const GetMatildaConfig = ({allConfigs, setAllConfigs, configIndex, setConfigInde
      //SAVE CONFIG
     const saveConfig = async() => {
         setWaitingSend(true)
-        if (configIndex === -1) {
+        if (configUuid === 'new') {
             const response =  await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/matilda_configurations`,  getAccessTokenSilently,method:'post', requestForm:configDict as MatildaConfigProps, auth, toastMessages:{works:t('CorrectCreatedConfig'), failed:t('FailedCreatedConfig')}})
             if (response?.status === 200 && configDict) {
-                setAllConfigs(prev => ([...prev as ConfigProps[], {uuid:response.data.uuid, name:configDict.name, description:configDict.description,channels_ids:configDict.channel_ids, icon:''}]))
-                setConfigIndex(-2)
+                navigate('/settings/tilda/all-configs')
             }
         }
         else {
             const response =  await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/matilda_configurations/${configDict?.uuid}`, method:'put', getAccessTokenSilently,  requestForm:configDict as MatildaConfigProps, auth, toastMessages:{works:t('CorrectEditedConfig'), failed:t('FailedEditedConfig')}})
             if (response?.status === 200 && configDict) {
                 configDictRef.current = configDict
-                setAllConfigs((prev) => (prev || []).map((config) =>config.uuid === configDict.uuid? {...config, name: configDict.name,description: configDict.description}: config))        
             }
         }
         setWaitingSend(false)
@@ -365,11 +242,9 @@ const GetMatildaConfig = ({allConfigs, setAllConfigs, configIndex, setConfigInde
     }
 
     const onExitAction = () => {
-        if (configIndex === -1 || (JSON.stringify(configDict) === JSON.stringify(configDictRef.current))) setConfigIndex(-2)
-        else {
-            setConfigIndex(-2)
-            //saveConfig()
-        }
+        if (configUuid === 'new' || (JSON.stringify(configDict) === JSON.stringify(configDictRef.current))) navigate('/settings/tilda/all-configs')
+        else navigate('/settings/tilda/all-configs')
+         
     }  
 
     //DELETE HELP CENTER COMPONENT
@@ -446,8 +321,7 @@ const GetMatildaConfig = ({allConfigs, setAllConfigs, configIndex, setConfigInde
             const response = await fetchData({endpoint: `${auth.authData.organizationId}/admin/settings/matilda_configurations/${configDict?.uuid}`,  getAccessTokenSilently, method: 'delete', setWaiting: setWaitingDelete, auth, toastMessages: {works: t('CorrectDeletedConfiguration'), failed: t('FailedDeletedConfiguration')}})
             setWaitingDelete(false)
             if (response?.status === 200) {
-                setAllConfigs(prev => (prev as ConfigProps[]).filter((_, index) => index !== configIndex))
-                setConfigIndex(-2)
+                navigate('/settings/tilda/all-configs')
             }
             else setShowDelete(false)
         }
@@ -503,8 +377,20 @@ const GetMatildaConfig = ({allConfigs, setAllConfigs, configIndex, setConfigInde
         </ConfirmBox>
     </>), [deleteFunctionIndex])
 
+const memoizedTestChat = useMemo(() => (<> 
+    <Portal> 
+          <MotionBox initial={{opacity:0}}  animate={{opacity:1}} display={'flex'} exit={{opacity:0}} transition={{ duration: '.2' }} onMouseDown={() => setTestConfigId(null)} backdropFilter= 'blur(1px)' position='fixed' alignItems='center'justifyContent='center' top={0} left={0} width='100vw' height='100vh' bg='rgba(0, 0, 0, 0.3)' zIndex= {10000}>
+              <MotionBox initial={{opacity:0, y:15}}  animate={{opacity:1, y:0}} transition={{ duration: '.2'}}     h={'90vh'} w='49.72vh' onMouseDown={(e) => e.stopPropagation()} bg='white' overflow={'hidden'} borderRadius={'1.5rem'} shadow={'xl'} position={'absolute'}  borderColor='gray.200' borderWidth='7px' zIndex={111}  >
+                  <TestChat configurationId={testConfigId?.id || ''} configurationName={testConfigId?.name || ''}/>
+              </MotionBox>
+          </MotionBox>
+    </Portal> 
+</>), [testConfigId])
+
 return(   
     <>
+    {testConfigId && memoizedTestChat}
+
     {showAddHelpCenters && memoizedAddHelpCenter}
     {showAddFunctions && memoizedAddFunctions}
     {deleteHelpCenterIndex !== null && memoizedDeleteHelpCenter}
@@ -524,9 +410,9 @@ return(
             </Flex>
 
             <Flex gap='15px'>
-                {configIndex !== -1  && <Button leftIcon={<HiTrash/>} variant={'delete'} size='sm' onClick={() => setShowDelete(true)}>{t('Delete')}</Button>}
-                {configIndex !== -1  && <Button leftIcon={<PiChatsBold/>}  onClick={(e) => {e.stopPropagation();setTestConfigId({id:configDict?.uuid || '', name:configDict?.name || ''})}} size='sm' variant={'main'}>{t('TestChat')}</Button>}  
-                <Button variant={configIndex === -1?'main':'common'} size='sm' onClick={saveConfig} isDisabled={configDict?.name === ''  || ((JSON.stringify(configDict) === JSON.stringify(configDictRef.current)))}>{waitingSend?<LoadingIconButton/>:configIndex === -1? t('CreateConfig'):t('SaveChanges')}</Button> 
+                {configUuid !== 'new'  && <Button leftIcon={<HiTrash/>} variant={'delete'} size='sm' onClick={() => setShowDelete(true)}>{t('Delete')}</Button>}
+                {configUuid !== 'new' && <Button leftIcon={<PiChatsBold/>}  onClick={(e) => {e.stopPropagation();setTestConfigId({id:configDict?.uuid || '', name:configDict?.name || ''})}} size='sm' variant={'main'}>{t('TestChat')}</Button>}  
+                <Button variant={configUuid !== 'new'?'main':'common'} size='sm' onClick={saveConfig} isDisabled={configDict?.name === ''  || ((JSON.stringify(configDict) === JSON.stringify(configDictRef.current)))}>{waitingSend?<LoadingIconButton/>:configUuid === 'new'? t('CreateConfig'):t('SaveChanges')}</Button> 
             </Flex>
         </Flex>
         <Flex flex='1' pb='5vh' p='2vw' overflow={'scroll'}  width={'100%'}>
@@ -667,8 +553,8 @@ return(
                         </Flex>
                     ))} 
                 </>}
-                <Button variant={'common'} leftIcon={<FaPlus/>} isDisabled={configDict?.functions_uuids.length === functionsData?.length || configIndex === -1} onClick={() => setShowAddFunctions(true)} size='sm' mt='2vh'>{t('AddFunctions')}</Button>
-                {configIndex === -1 && <Text mt='.5vh' fontSize={'.8em'} color='red'>{t('SaveFunctionWarning')}</Text>}
+                <Button variant={'common'} leftIcon={<FaPlus/>} isDisabled={configDict?.functions_uuids.length === functionsData?.length || configUuid === 'new'} onClick={() => setShowAddFunctions(true)} size='sm' mt='2vh'>{t('AddFunctions')}</Button>
+                { configUuid === 'new' && <Text mt='.5vh' fontSize={'.8em'} color='red'>{t('SaveFunctionWarning')}</Text>}
 
 
                  <Flex gap='10px' mt='3vh' alignItems={'center'}>
@@ -693,8 +579,8 @@ return(
                     ))} 
                 </>
                 }
-                <Button variant={'common'} leftIcon={<FaPlus/>} isDisabled={configDict?.help_centers_ids.length === helpCentersData?.length || configIndex === -1}  onClick={() => setShowAddHelpCenters(true)} size='sm' mt='2vh'>{t('AddHelpCenters')}</Button>
-                {configIndex === -1 && <Text mt='.5vh' fontSize={'.8em'} color='red'>{t('SaveHelpCenterWarning')}</Text>}
+                <Button variant={'common'} leftIcon={<FaPlus/>} isDisabled={configDict?.help_centers_ids.length === helpCentersData?.length ||  configUuid === 'new'}  onClick={() => setShowAddHelpCenters(true)} size='sm' mt='2vh'>{t('AddHelpCenters')}</Button>
+                { configUuid === 'new' && <Text mt='.5vh' fontSize={'.8em'} color='red'>{t('SaveHelpCenterWarning')}</Text>}
                 </>}
 
             </Skeleton>
@@ -706,3 +592,4 @@ return(
     </>)
 }
 
+export default TildaConfig

@@ -178,6 +178,9 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
 
     const dataToWork = (requestSort)? data : sortedData
 
+    console.log(columns)
+    console.log(dataToWork)
+
     //FRONT
     return(
         <>  

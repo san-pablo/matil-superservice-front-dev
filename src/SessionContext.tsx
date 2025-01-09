@@ -48,7 +48,7 @@ type ChannelsType = {
     display_id: string
     name: string
     channel_type: string
-    is_active: string
+    is_active: boolean
 }
 
 //SESSION DATA TYPE

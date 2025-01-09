@@ -34,7 +34,7 @@ import { FaMagnifyingGlass }  from "react-icons/fa6"
 import { FaPlus, FaFacebook, FaInstagram, FaLinkedin, FaYoutube, FaTiktok, FaPinterest, FaGithub, FaReddit, FaDiscord, FaTwitch, FaTelegram, FaSpotify } from "react-icons/fa"
 import { TbBrandX } from "react-icons/tb"
 import { RxHamburgerMenu, RxCross2 } from 'react-icons/rx'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { HiTrash } from "react-icons/hi2"
 import { BsTrash3Fill, BsFillExclamationTriangleFill } from 'react-icons/bs'
 import { 
@@ -169,120 +169,8 @@ interface StylesConfig {
 //MOTION BOX
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
  
-
-function HelpCenters ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
-
-    //CONSTANTS
-    const { t } = useTranslation('settings')
-    const {  getAccessTokenSilently } = useAuth0()
-    const auth = useAuth()
-   
-    //DATA
-    const [helpCentersData, setHelpCentersData] = useState<{id: string, name: string, is_live: boolean}[] | null>(null)
-
-    //CREATE HELP CENTER
-    const [showCreate, setShowCreate] = useState<boolean>(false)
-     
-    //SELECTED HELP CENTER
-    const [selectedHelpCenter, setSelectedHelpCenter] = useState<string | null>(null)
-
-    useEffect(() => {
-        document.title = `${t('Settings')} - ${t('HelpCenters')} - ${auth.authData.organizationName} - Matil`
-        const fetchInitialData = async() => {
-            const helpCentersData = await fetchData({endpoint:`${auth.authData.organizationId}/admin/help_centers`, auth, getAccessTokenSilently, setValue:setHelpCentersData})
-        }
-        fetchInitialData()
-    }, [])
-
-
-     //FUNCTION FOR DELETING THE TRIGGER
-     const AddComponent = () => {
-
-        //NEW HELP CENTER
-        const [waitingCreate, setWaitingCreate] = useState<boolean>(false)
-        const [newHelpCenter, setNewHelpCenter] = useState<{name:string, id:string}>({name:'', id:''})
-
-        //FUNCTION FOR DELETING AN AUTOMATION
-        const createHelpCenter = async () => {
-             const newData = {...newHelpCenter, is_live:false, style:{}, languages:[auth.authData.userData?.language], created_by:auth.authData.userId, updated_by:auth.authData.userId}
-            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/help_centers`, getAccessTokenSilently, method:'post', setWaiting:setWaitingCreate, requestForm:newData,  auth, toastMessages:{works:t('CorrectCreatedHelpCenter'), failed:t('FailedCreatedHelpCenter')}})
-            if (response?.status === 200) setHelpCentersData(prev => [...prev as {name: string, is_live: boolean, id: string}[], {name: newData.name, is_live: false, id: newData.id} ])
-            setShowCreate(false)
-        }
-
-        //FRONT
-        return(<>
-            <Box p='20px' > 
-                <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('AddHelpCenter')}</Text>
-                <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
-                <Text  mb='.5vh' fontWeight={'medium'}>{t('Name')}</Text>
-                <EditText  maxLength={100} placeholder={t('NewHelpCenter')} hideInput={false} value={newHelpCenter.name} setValue={(value) => setNewHelpCenter((prev) => ({...prev, name:value}))}/>
-                <Text mt='2vh' mb='.5vh' fontWeight={'medium'}>{t('UrlIdentifier')}</Text>
-                <EditText regex={/^[a-zA-Z0-9-_\/]+$/} maxLength={100} placeholder={'matil'} hideInput={false} value={newHelpCenter.id} setValue={(value) => setNewHelpCenter((prev) => ({...prev, id:value}))}/>
-            </Box>
-            <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-                <Button  size='sm' variant={'main'} isDisabled={newHelpCenter.name === '' || newHelpCenter.id === '' || !(/^[a-zA-Z0-9-_\/]+$/).test(newHelpCenter.id)} onClick={createHelpCenter}>{waitingCreate?<LoadingIconButton/>:t('AddHelpCenter')}</Button>
-                <Button  size='sm' variant={'common'} onClick={()=> setShowCreate(false)}>{t('Cancel')}</Button>
-            </Flex>
-        </>)
-    }
-
-    //DELETE BOX
-    const memoizedAddBox = useMemo(() => (
-        <ConfirmBox setShowBox={setShowCreate}> 
-            <AddComponent/>
-        </ConfirmBox>
-    ), [showCreate])
-     
-    return(<>
-
-    {selectedHelpCenter ?  <HelpCenter  scrollRef={scrollRef} helpCenterId={selectedHelpCenter} setHelpCenterId={setSelectedHelpCenter} setHelpCentersData={setHelpCentersData}/> :
-    <>
-    {showCreate && memoizedAddBox}
-        <Box> 
-            <Flex justifyContent={'space-between'} alignItems={'end'}> 
-                <Box> 
-                    <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('HelpCenters')}</Text>
-                    <Text color='gray.600' fontSize={'.9em'}>{t('HelpCentersDes')}</Text>
-                </Box>
-                <Button  variant='main' size={'sm'} onClick={() => setShowCreate(true)} leftIcon={<FaPlus/>}>{t('CreateHelpCenter')}</Button>
-            </Flex>
-            <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/>
-        </Box>
-
-        
-        <Skeleton flex='1' style={{ overflow:'scroll'}} isLoaded={helpCentersData !== null}>
-            {helpCentersData?.length === 0 ?   
-            <Flex height={'100%'} top={0} left={0} width={'100%'} position={'absolute'} alignItems={'center'} justifyContent={'center'}> 
-                <Box maxW={'580px'} textAlign={'center'}> 
-                    <Text fontWeight={'medium'} fontSize={'2em'} mb='2vh'>{t('NoHelpCenters')}</Text>               
-                    <Text fontSize={'1em'} color={'gray.600'} mb='2vh'>{t('NoHelpCentersDes')}</Text>               
-                    <Button  variant='main'  onClick={() => setShowCreate(true)} leftIcon={<FaPlus/>}>{t('CreateHelpCenter')}</Button>
-                </Box>
-            </Flex> : 
-            <Flex flexWrap={'wrap'} gap='32px'  >
-                {helpCentersData?.map((center, index) => (
-                    <Box overflow={'hidden'} onClick={() => setSelectedHelpCenter(center.id)} cursor={'pointer'} borderWidth={'1px'} key={`help-center-${index}`} transition={'box-shadow 0.3s ease-in-out'} _hover={{shadow:'lg'}} borderColor={'gray.300'} shadow={'sm'} borderRadius={'1rem'}>
-                        <Box height={'200px'} width={'300px'} bg='brand.text_blue'>
-                        </Box>
-                        <Box p='20px'>
-                            <Text fontWeight={'medium'} fontSize={'1.2em'}>{center.name}</Text>
-                            <Flex mt='1vh' alignItems={'center'} gap='10px'>
-                                <Icon color={center?.is_live?'#68D391':'#ECC94B'} as={FaCircleDot}/>
-                                <Text>{center.is_live?t('Live'):t('NoLive')}</Text>
-                            </Flex>
-                        </Box>
-                    </Box>
-                ))}
-            </Flex>}
-        </Skeleton>
-    </>}
-</>
-    )
-}
-export default HelpCenters
-
-function HelpCenter ({scrollRef, helpCenterId, setHelpCenterId, setHelpCentersData}:{scrollRef:RefObject<HTMLDivElement>, helpCenterId:string | null, setHelpCenterId:Dispatch<SetStateAction<string | null>>, setHelpCentersData:Dispatch<SetStateAction<{ name: string, is_live: boolean, id: string}[] | null>>}) {
+ 
+function HelpCenter ({scrollRef, setHelpCentersData}:{scrollRef:RefObject<HTMLDivElement>, setHelpCentersData:Dispatch<SetStateAction<{ name: string, is_live: boolean, id: string}[]>>}) {
 
     //CONSTANTS
     const auth = useAuth()
@@ -291,7 +179,9 @@ function HelpCenter ({scrollRef, helpCenterId, setHelpCenterId, setHelpCentersDa
     const { t } = useTranslation('settings')
     const desiredKeys = ['uuid', 'title', 'description', 'public_article_help_center_collections', 'public_article_status', 'public_article_common_uuid']
     const headerRef = useRef<HTMLDivElement>(null)
-    const availableLanguages = ['ES', 'EN', ]
+    const availableLanguages = ['ES', 'EN']
+    const helpCenterId = useLocation().pathname.split('/')[useLocation().pathname.split('/').length - 1]
+
     const getPreSignedUrl = async (blobUrl:string) => {
         if (!blobUrl) return ''
         else if (blobUrl.startsWith('https')) return blobUrl
@@ -364,7 +254,7 @@ function HelpCenter ({scrollRef, helpCenterId, setHelpCenterId, setHelpCentersDa
 
     const updateHelpCenter = async (newData:HelpCenterData) => {
         if ( JSON.stringify(newData) === JSON.stringify(helpCenterDataRef.current)) return 
-        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/help_centers/${helpCenterId}`, getAccessTokenSilently, method:'put', requestForm:newData, auth, toastMessages:{works:t('CorrectEditedHelpCenter'), failed:t('FailedEditedHelpCenter')}})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/help_centers/${helpCenterId}`, getAccessTokenSilently, method:'put', requestForm:{...newData, languages:['ES']}, auth, toastMessages:{works:t('CorrectEditedHelpCenter'), failed:t('FailedEditedHelpCenter')}})
         if (response?.status === 200) {
             helpCenterDataRef.current = newData
             setHelpCenterData(newData)
@@ -713,7 +603,7 @@ function HelpCenter ({scrollRef, helpCenterId, setHelpCenterId, setHelpCentersDa
             const response = await fetchData({endpoint: `${auth.authData.organizationId}/admin/help_centers/${helpCenterData?.id}`, getAccessTokenSilently, method: 'delete', setWaiting: setWaitingDelete, auth, toastMessages: {works: t('CorrectDeletedHelpCenter'), failed: t('FailedDeletedHelpCenter')}})
             if (response?.status === 200) {
                 setHelpCentersData(prev => (prev || []).filter(helpCenter => helpCenter.id !== helpCenterData?.id))
-                setHelpCenterId(null)
+                navigate('/settings/help-centers/all')
             }
             setShowDelete(false)
         }
@@ -837,6 +727,10 @@ function HelpCenter ({scrollRef, helpCenterId, setHelpCenterId, setHelpCentersDa
 
 
     return(<>
+
+    <SaveChanges data={helpCenterData} dataRef={helpCenterDataRef} setData={setHelpCenterData} onSaveFunc={() => updateHelpCenter(helpCenterData as any)} />
+
+
         {showCreateCollection && memoizedCreateCollectionBox}
         {showDelete && memoizedDeleteBox}
         {showEdit && memoizedEditBox}
@@ -895,6 +789,8 @@ function HelpCenter ({scrollRef, helpCenterId, setHelpCenterId, setHelpCentersDa
     </>
     )
 }
+export default HelpCenter
+
 
 const EditStyles = ({currentStyles, currentCollections, stylesRef, publicArticlesData, stylesHeaderRef, saveStyles}:{currentStyles:StylesConfig,currentCollections:{name:string, icon:string, description:string}[], publicArticlesData:ArticleData[],stylesRef:MutableRefObject<StylesConfig | null>,  stylesHeaderRef:RefObject<HTMLDivElement>, saveStyles:(data:StylesConfig) => void}) => {
 
@@ -908,8 +804,7 @@ const EditStyles = ({currentStyles, currentCollections, stylesRef, publicArticle
     const channels = session.sessionData.additionalData.channels?.filter(channel => channel.channel_type === 'webchat') || []
     const webchatChannel = channels?.length === 0 ?'':channels?.[0]?.uuid
 
-    console.log(channels)
-    const MatilStyles:StylesConfig = {
+     const MatilStyles:StylesConfig = {
         show_header:false,
         logo:'',
         title:'',
@@ -984,7 +879,7 @@ const EditStyles = ({currentStyles, currentCollections, stylesRef, publicArticle
     return (
         <>
         <SaveChanges data={configStyles} dataRef={stylesRef} setData={setConfigStyles} onSaveFunc={() => saveStyles(configStyles)} />
-
+ 
   
         <Flex height={window.innerHeight - window.innerWidth * 0.02 - (stylesHeaderRef.current?.getBoundingClientRect().top || 0)} flex='1' gap='30px' minHeight='0'>
              <Flex px='2px' minW={'450px'} flexDir={'column'} flex='3' maxH={'100%'}  overflow={'scroll'} ref={containerRef} >

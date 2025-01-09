@@ -55,7 +55,7 @@
     "whatsapp":"Whatsapp",
     "instagram": "Instagram",
     "google_business":"Google Business",
-    "phone":"Llamada telefónica",
+    "phone":"Teléfono",
     "new":"Nueva",
     "open":"Abierta",
     "solved":"Resuelta",
@@ -144,7 +144,10 @@
     "ClientConversations":"Historial de conversaciones",
     "Conversation":"Conversación",
     "NoFoundConversation":"No se ha encontrado ninguna conversación con ese id",
-    "NoAudioSupport":"Tu navegador no soporta el elemento de audio."
+    "NoAudioSupport":"Tu navegador no soporta el elemento de audio.",
+    "Active":"Activo",
+    "Inactive":"Inactivo"
+
 
 
 

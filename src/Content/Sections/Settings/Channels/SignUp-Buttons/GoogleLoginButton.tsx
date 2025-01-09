@@ -29,7 +29,7 @@ import axios from 'axios'
     }
 
   return (
-    <Button  onClick={handleAuth} size='lg' bg='#1877f2' leftIcon={<FaGoogle/>} _hover={{bg:'#0F6AE0'}} color='#fff'>
+    <Button  onClick={handleAuth} size='md' bg='#1877f2' w='100%' leftIcon={<FaGoogle/>} _hover={{bg:'#0F6AE0'}} color='#fff'>
       {waitingInfo?<LoadingIconButton/>:'Registrarse con Google'}
     </Button>
   )
