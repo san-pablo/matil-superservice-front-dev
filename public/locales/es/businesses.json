@@ -6,7 +6,7 @@
     "BusinessesCount_other":"{{count}} Empresas",
     "CreateBusiness":"Crear Empresa",
     "Name":"Nombre",
-    "Domain":"Domain",
+    "Domain":"Dominio",
     "Business":"Empresa",
     
     "name": "Nombre",
@@ -22,6 +22,8 @@
     "CorrectCreated":"Empresa creado con éxito",
     "FailedCreated":"Hubo un error al crear la empresa",
     "Cancel":"Cancelar",
-    "ApplyFilters":"Aplicar Filtros"
+    "ApplyFilters":"Aplicar Filtros",
+    "CreateBusinessAdvice":"Crea una empresa de contacto para organizar tus clientes .",
+    "NewMessages":"Nuevo mensaje"
 
 }

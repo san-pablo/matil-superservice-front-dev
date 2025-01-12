@@ -19,6 +19,7 @@ import parseMessageToBold from "../../../Functions/parseToBold"
 import { FaPlus, FaTicket, FaBuilding } from "react-icons/fa6"
 import { IoPeopleSharp } from "react-icons/io5"
 import { IconType } from "react-icons"
+import { useAuth0 } from "@auth0/auth0-react"
 
 type variables = 'bool' | 'int' | 'float' | 'str' | 'timestamp'
 type fieldConfigType = {name:string, type:variables, default:string}
@@ -45,7 +46,7 @@ function parseToBack(dataArray:FieldsType[]) {
 const CellStyle = ({column, element}:{column:string, element:any}) => {
 
     const  { t } = useTranslation('settings')
-    const structuresMap:{[key:string]:[string, IconType]} = {'conversation':[t('Conversations'), FaTicket],  'contact':[t('Client'), IoPeopleSharp], 'contact_business':[t('Business'), FaBuilding],  }
+     const structuresMap:{[key:string]:[string, IconType]} = {'conversation':[t('Conversations'), FaTicket],  'contact':[t('Client'), IoPeopleSharp], 'contact_business':[t('Business'), FaBuilding],  }
 
     if (column === 'motherstructure') {
         return (<Flex gap='10px' alignItems={'center'}>
@@ -60,6 +61,8 @@ const Fields = () => {
 
     //CONSTANTS
     const { t } = useTranslation('settings')
+    const { getAccessTokenSilently } = useAuth0()
+
     const auth = useAuth()
     const structuresMap:{[key in 'conversation' | 'contact' | 'contact_business']:string} = {'conversation':t('Conversations'), 'contact':t('Contacts'), 'contact_business':t('Contact_business')}
     const variablesMap:{[key in variables]:string} = {'bool':t('bool'), 'int':t('int'), 'float':t('float'), 'str':t('str'), 'timestamp':t('timestamp')}
@@ -93,7 +96,7 @@ const Fields = () => {
     useEffect(() => {        
         document.title = `${t('Settings')} - ${t('Fields')} - ${auth.authData.organizationId} - Matil`
         const fetchInitialData = async() => {
-            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/custom_attributes`, auth})
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/custom_attributes`,getAccessTokenSilently,auth})
             if (response?.status === 200 ) setFieldsData(parseBack(response.data))
             
         }
@@ -108,7 +111,7 @@ const Fields = () => {
         if (fieldData.index === -1 ) newFields = [...fieldsData as FieldsType[], fieldData.data]
         else { newFields = (fieldsData as FieldsType[]).map((item, index) => index === fieldData.index ? fieldData.data : item)}
         
-        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/custom_attributes`, method:'put', requestForm:parseToBack(newFields), auth, toastMessages:{'works':fieldData.index === -1 ?t('CorrectCreatedFields'):t('CorrectUpdatedFields'), 'failed':fieldData.index === -1 ?t('FailedCreatedFields'):t('FailedUpdatedFields')}})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/custom_attributes`, method:'put', getAccessTokenSilently,requestForm:parseToBack(newFields), auth, toastMessages:{'works':fieldData.index === -1 ?t('CorrectCreatedFields'):t('CorrectUpdatedFields'), 'failed':fieldData.index === -1 ?t('FailedCreatedFields'):t('FailedUpdatedFields')}})
         if (response?.status === 200) {
             setFieldsData(newFields)
             setEditFieldData(null)
@@ -118,7 +121,7 @@ const Fields = () => {
     const handleDeleteFields= async() => {
         setWaitingDelete(true)
         const newFields = fieldsData?.filter((field) => fieldToDelete?.name !== field.name) || []
-        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/custom_attributes`, method:'put', setWaiting:setWaitingDelete, requestForm:parseToBack(newFields), auth, toastMessages:{'works':t('CorrectDeletedFields'), 'failed':t('FailedDeletedFields')}})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/custom_attributes`, method:'put', setWaiting:setWaitingDelete, requestForm:parseToBack(newFields), getAccessTokenSilently,auth, toastMessages:{'works':t('CorrectDeletedFields'), 'failed':t('FailedDeletedFields')}})
         if (response?.status === 200) {
             setFieldsData(newFields)
             setFieldToDelete(null)
@@ -191,6 +194,8 @@ const Fields = () => {
                 <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Fields')}</Text>
                 <Text color='gray.600' fontSize={'.9em'}>{t('FieldsDes')}</Text>
             </Box>
+            <Button size='sm' variant={'main'} leftIcon={<FaPlus/>} onClick={() => setEditFieldData({index:-1, data:{ motherstructure:'conversation', name:'', type:'bool', default:true}})}>{t('CreateField')}</Button>
+
         </Flex>
         <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/>
         
@@ -202,8 +207,7 @@ const Fields = () => {
             <Skeleton isLoaded={fieldsData !== null}> 
                 <Text  fontWeight={'medium'} fontSize={'1.2em'}>{t('FieldsCount', {count:fieldsData?.length})}</Text>
             </Skeleton>
-            <Button size='sm' variant={'common'} leftIcon={<FaPlus/>} onClick={() => setEditFieldData({index:-1, data:{ motherstructure:'conversation', name:'', type:'bool', default:true}})}>{t('CreateField')}</Button>
-        </Flex>
+         </Flex>
 
         <Skeleton  isLoaded={fieldsData !== null}> 
             <Table data={filteredFieldsData} CellStyle={CellStyle} noDataMessage={t('NoFields')}  columnsMap={columnsFieldsMap} onClickRow={(row:any, index:number) => setEditFieldData({index, data:row})} deletableFunction={(row,index) => setFieldToDelete(row)}/>

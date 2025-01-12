@@ -14,6 +14,7 @@ import ChannelInfo from "../Channels/Components/Channelnfo"
 //ICONS
 import { FaPlus } from "react-icons/fa6"
 import { ConfigProps } from "../../../Constants/typing"
+import { useAuth0 } from "@auth0/auth0-react"
 //TYPING
  
 
@@ -22,6 +23,7 @@ function Shopify () {
 
     //AUTH CONSTANT
     const auth = useAuth()
+    const { getAccessTokenSilently } = useAuth0()
 
     //WAIT INFO BOOLEAN
     const [waitingIndex, setWaitingIndex] = useState<number | null>(null)
@@ -37,14 +39,14 @@ function Shopify () {
     useEffect(() => {
         document.title = `Integraciones - Shopify - ${auth.authData.organizationName} - Matil`
         const fetchInitialData = async() => {
-            const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/whatsapp`,  setValue: setData, auth})   
+            const response = await fetchData({ getAccessTokenSilently, endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/whatsapp`,  setValue: setData, auth})   
             if (response?.status === 200) dataRef.current = response.data
         }
         fetchInitialData()
     }, [])
 
     const callNewWhatsapp = async() => {
-        const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/whatsapp`,  setValue: setData, auth})
+        const response = await fetchData({ getAccessTokenSilently, endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/whatsapp`,  setValue: setData, auth})
         setShowCreateAccount(false)
     }
 
@@ -63,7 +65,7 @@ function Shopify () {
  
     const sendConfigDict = async (index:number) => {
         setWaitingIndex(index)
-        const response = await fetchData({endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/whatsapp`, method:'put', requestForm:data[index], auth, toastMessages:{'works':'Configuración actualizado con éxito', 'failed':'Hubo un error al actualizar la información'}})
+        const response = await fetchData({ getAccessTokenSilently, endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/whatsapp`, method:'put', requestForm:data[index], auth, toastMessages:{'works':'Configuración actualizado con éxito', 'failed':'Hubo un error al actualizar la información'}})
         if (response?.status === 200) dataRef.current = data
         setWaitingIndex(null)
     }

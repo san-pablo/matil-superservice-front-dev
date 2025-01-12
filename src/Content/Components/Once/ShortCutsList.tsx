@@ -32,15 +32,14 @@ const ShortCutsList = ({setShowShortcuts}:{setShowShortcuts:Dispatch<SetStateAct
     
     //CONSTANTS
     const { t } = useTranslation('main')
-
-    
     return (
       <Flex flexDir='column' justifyContent={'space-between'} maxH={'90vh'}> 
-        <Box p='20px'>
+        <Box p='20px 20px 0 20px'>
           <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('KeyboardShortcutsTitle')}</Text>        
+          <Box w='100%' h='1px' bg='gray.200' mt='2vh' mb='2vh'/>      
         </Box>
      
-        <Box flex='1'  p='20px' overflowY={'scroll'}> 
+        <Box flex='1'  p='0 20px 50px 20px' overflowY={'scroll'}> 
           <Flex gap='50px'> 
             <Box>
               <Text fontWeight={'medium'}>{t('navigation.title')}</Text>

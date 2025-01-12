@@ -20,20 +20,22 @@ import parseMessageToBold from "../../Functions/parseToBold"
 import generateUUID from "../../Functions/generateUuid"
 //ICONS
 import { FaLink } from "react-icons/fa6"
-import { BsTypeH1, BsTypeH2, BsTypeBold, BsTypeItalic,  BsTypeUnderline } from "react-icons/bs";
+import { BsTypeH1, BsTypeH2, BsTypeBold, BsTypeItalic, BsTypeUnderline } from "react-icons/bs"
 import { PiSidebarSimpleBold } from "react-icons/pi"
+import { HiTrash } from "react-icons/hi2"
 //TYPING
-import { ContentData } from "../../Constants/typing" 
-import { BsTrash3Fill } from "react-icons/bs"
+import { ContentData,Folder } from "../../Constants/typing" 
 import LoadingIconButton from "../../Components/Reusable/LoadingIconButton"
+import { useAuth0 } from "@auth0/auth0-react"
 
 //MOTION BOX
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)}) 
 
-const TextSection = () => {
+const TextSection = ({folders}:{folders:Folder[]}) => {
 
     //CONSTANTS
     const { t } = useTranslation('knowledge')
+    const { getAccessTokenSilently } = useAuth0()
     const auth = useAuth()
     const location = useLocation().pathname
     const navigate = useNavigate()
@@ -47,8 +49,8 @@ const TextSection = () => {
         is_available_to_tilda: false,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        created_by: auth.authData.userId || -1,
-        updated_by: auth.authData.userId || -1,
+        created_by: auth.authData.userId || '',
+        updated_by: auth.authData.userId || '',
         tags: [],
         public_article_help_center_collections:[],
         public_article_common_uuid: generateUUID(),
@@ -68,7 +70,7 @@ const TextSection = () => {
         const articleId = location.split('/')[3]
         
         const fetchInitialData = async() => {
-            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources/${articleId}`, auth, setValue:setArticleData})
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources/${articleId}`, getAccessTokenSilently,auth, setValue:setArticleData})
             if (response?.status === 200) articleDataRef.current = response?.data
         }
 
@@ -84,8 +86,12 @@ const TextSection = () => {
     const saveChanges = async () => {
         const articleId = location.split('/')[3]
         let response
-        if (articleId.startsWith('create') && firstSendedRef.current) response =  await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`, method:'post', setWaiting:setWaitingSave, requestForm:articleData  as ContentData, auth, toastMessages:{works:t('CorrectSavedInfo'), failed:t('FailedSavedInfo')} }) 
-        else response = response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources/${articleData?.uuid}`, method:'put', setWaiting:setWaitingSave, requestForm:articleData as ContentData, auth, toastMessages:{works:t('CorrectSavedInfo'), failed:t('FailedSavedInfo')} })
+
+        if (articleId.startsWith('create') && firstSendedRef.current) {
+            response =  await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`,getAccessTokenSilently, method:'post', setWaiting:setWaitingSave, requestForm:articleData  as ContentData, auth, toastMessages:{works:t('CorrectSavedInfo'), failed:t('FailedSavedInfo')} }) 
+            navigate(-1)
+        }
+        else response = response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources/${articleData?.uuid}`, getAccessTokenSilently,method:'put', setWaiting:setWaitingSave, requestForm:articleData as ContentData, auth, toastMessages:{works:t('CorrectSavedInfo'), failed:t('FailedSavedInfo')} })
 
         if (response?.status === 200) articleDataRef.current = articleData
         firstSendedRef.current = false
@@ -97,7 +103,7 @@ const TextSection = () => {
     const [showDeleteBox, setShowDeleteBox] = useState<boolean>(false)
 
     const [clientBoxWidth, setClientBoxWidth] = useState(400)
-    const sendBoxWidth = `calc(100vw - 335px - ${clientBoxWidth}px)`
+    const sendBoxWidth = `calc(100vw - 315px - ${clientBoxWidth}px)`
     
      //DELETE A FOLDER
      const DeleteArticle = () => {
@@ -106,19 +112,19 @@ const TextSection = () => {
         //FUNCTION FOR CREATE A NEW BUSINESS
         const deleteArticle= async () => {
             const articleId = location.split('/')[3]
-            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources/${articleId}`, method:'delete',  auth, toastMessages:{works:t('CorrectSavedInfo'), failed:t('FailedSavedInfo')} })
-            if (response?.status === 200) navigate('/knowledge/content')
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources/${articleId}`, method:'delete',  auth, getAccessTokenSilently,toastMessages:{works:t('CorrectSavedInfo'), failed:t('FailedSavedInfo')} })
+            if (response?.status === 200) navigate(-1)
         }
         return(<> 
-              <Box p='20px'> 
+              <Box p='15px'> 
                     <Text fontWeight={'medium'} fontSize={'1.2em'}>{parseMessageToBold(t('DeleteArticleAnswer', {name:articleData?.title}))}</Text>
-                    <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
-                    <Text >{parseMessageToBold(t('DeleteFolderWarning'))}</Text>
-                </Box>
-                <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+                    <Text mt='2vh' fontSize={'.8em'} >{parseMessageToBold(t('DeleteFolderWarning'))}</Text>
+          
+                <Flex  mt='2vh' gap='15px' flexDir={'row-reverse'}>
                     <Button  size='sm' variant='delete' onClick={deleteArticle}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
                     <Button size='sm'  variant={'common'} onClick={() => setShowDeleteBox(false)}>{t('Cancel')}</Button>
                 </Flex>
+                </Box>
         </>)
     }
     const DeleteBox = useMemo(() => (
@@ -130,16 +136,16 @@ const TextSection = () => {
     return (<>
     {showDeleteBox && DeleteBox}
    
-    <Flex flex='1' position='absolute' width={'calc(100vw - 335px)'} height={'100vh'} top={0} left={0} bg='white'>
+    <Flex flex='1' position='absolute' width={'calc(100vw - 315px)'} height={'100vh'} top={0} left={0} bg='white'>
         <MotionBox   initial={{ width: sendBoxWidth  }} animate={{ width: sendBoxWidth}} exit={{ width: sendBoxWidth }} transition={{ duration: '.2' }}  
         width={sendBoxWidth} overflowY={'hidden'}  borderRightWidth={'1px'} borderRightColor='gray.200' >
-            <Flex px='2vw' height={'70px'} alignItems={'center'} justifyContent={'space-between'}  borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
+            <Flex px='2vw' height={'60px'} alignItems={'center'} justifyContent={'space-between'}  borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
                 <Skeleton isLoaded={articleData !== null}> 
-                    <Text fontSize={'1.5em'} fontWeight={'medium'}>{t('TextFragment')}</Text>
+                    <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('TextFragment')}</Text>
                 </Skeleton>
                 <Flex gap='15px'>
-                    <Button leftIcon={<BsTrash3Fill/>} variant={'delete'} isDisabled={location.split('/')[3].startsWith('create')} size='sm' onClick={() => setShowDeleteBox(true)}>{t('Delete')}</Button>
-                    <Button variant={'main'} size='sm' isDisabled={JSON.stringify(articleData) === JSON.stringify(articleDataRef.current)} onClick={saveChanges}>{waitingSave?<LoadingIconButton/>:t('SaveChanges')}</Button>
+                    <Button leftIcon={<HiTrash/>} variant={'delete'} isDisabled={location.split('/')[3].startsWith('create')} size='sm' onClick={() => setShowDeleteBox(true)}>{t('Delete')}</Button>
+                    <Button variant={'main'} size='sm' isDisabled={JSON.stringify(articleData) === JSON.stringify(articleDataRef.current)} onClick={saveChanges}>{waitingSave?<LoadingIconButton/>:location.split('/')[3].startsWith('create') ? t('Create'):t('SaveChanges')}</Button>
                     {clientBoxWidth === 0 && <IconButton aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'20px'}/>} onClick={() =>setClientBoxWidth(400)}/>}
                 </Flex>
             </Flex>
@@ -151,7 +157,7 @@ const TextSection = () => {
                  </Box>
             </Flex>
         </MotionBox>
-        <SourceSideBar clientBoxWidth={clientBoxWidth} setClientBoxWidth={setClientBoxWidth} sourceData={articleData} setSourceData={setArticleData}/>
+        <SourceSideBar clientBoxWidth={clientBoxWidth} setClientBoxWidth={setClientBoxWidth} sourceData={articleData} setSourceData={setArticleData} folders={folders}/>
 
     </Flex>
     </>)

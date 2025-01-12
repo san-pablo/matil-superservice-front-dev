@@ -80,7 +80,7 @@ const ImageUpload = ({ id, initialImage, onImageUpdate, maxImageSize = 100}:Imag
     //FRONT
     return (<> 
     <input type="file" accept="image/jpeg, image/png, image/gif, image/svg+xml" onChange={handleImageChange} style={{display:'none'}} id={`image-upload-${id}`} />
-        <Flex onClick={handleContainerClick} width="100%" alignItems="center" justifyContent="space-between" height="100px" borderRadius=".5em" borderColor="gray.300" borderWidth="1px" bg="brand.gray_2" cursor="pointer" position="relative" p='20px'>
+        <Flex onClick={handleContainerClick} width="100%" alignItems="center" justifyContent="space-between" height="100px" borderRadius=".5em"   bg='brand.gray_2' borderColor={'gray.200'} borderWidth={'1px'} cursor="pointer" position="relative" p='20px'>
           {!image && <Text textAlign={'center'} fontSize={'.9em'} color='brand.text_blue'>{t('DragImage')}</Text>}
           {image && (
             <>
@@ -92,7 +92,7 @@ const ImageUpload = ({ id, initialImage, onImageUpdate, maxImageSize = 100}:Imag
                 </Box>
               </Flex>
 
-              <IconButton aria-label="Remove image" icon={<RxCross2  size='20px'/>} size="sm" border='none' bg='transparent' onClick={handleRemoveImage} />
+              <IconButton aria-label="Remove image" icon={<RxCross2  size='20px'/>} variant={'common'} size="sm" border='none' bg='transparent' onClick={handleRemoveImage} />
             </>
           )}
         </Flex>

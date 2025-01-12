@@ -51,6 +51,7 @@
     "solved": "Solved",
     "pending": "Pending",
     "closed": "Closed",
+    "theme":"Theme",
     "Priority_0": "Low",
     "Priority_1": "Medium",
     "Priority_2": "High",

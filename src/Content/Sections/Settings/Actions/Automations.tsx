@@ -3,6 +3,7 @@
 import  { useState, useEffect, useRef, Dispatch, SetStateAction, useMemo, RefObject } from 'react'
 import { useAuth } from '../../../../AuthContext'
 import { useTranslation } from 'react-i18next'
+import { useAuth0 } from '@auth0/auth0-react'
 //FETCH DATA
 import fetchData from "../../../API/fetchData"
 //FRONT
@@ -18,13 +19,13 @@ import EditStructure from '../../../Components/Reusable/EditStructure'
 import CustomSelect from '../../../Components/Reusable/CustomSelect'
 import Table from '../../../Components/Reusable/Table'
 import VariableTypeChanger from '../../../Components/Reusable/VariableTypeChanger'
+import SaveChanges from '../../../Components/Reusable/SaveChanges'
 //FUNCTIONS
 import parseMessageToBold from '../../../Functions/parseToBold'
 //ICONS
 import { IoIosArrowForward } from "react-icons/io"
 import { FaPlus } from 'react-icons/fa6'
-import { RxCross2 } from 'react-icons/rx'
-import { BsTrash3Fill } from 'react-icons/bs'
+import { HiTrash } from 'react-icons/hi2'
 //TYPING 
 import { ActionDataType, ActionsType, FieldAction } from '../../../Constants/typing'
   
@@ -36,6 +37,7 @@ function Automations ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
 
     //AUTH CONSTANT
     const auth = useAuth()
+    const { getAccessTokenSilently } = useAuth0()
     const { t } = useTranslation('settings')
     const newAutomation:ActionDataType = {
         name: t('NewAutomation'),
@@ -73,7 +75,7 @@ function Automations ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
     //FETCH INITIAL DATA
     useEffect(() => {
         const fetchTriggerData = async () => {
-            const response  = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/automations`, setValue:setAutomationData, auth})
+            const response  = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/automations`, getAccessTokenSilently, setValue:setAutomationData, auth})
         }
         document.title = `${t('Settings')} - ${t('Automations')} - ${auth.authData.organizationName} - Matil`
         fetchTriggerData()
@@ -90,7 +92,7 @@ function Automations ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
         const deleteTrigger= async () => {
             setWaitingDelete(true)
             const newTriggers = automationData?.filter((_, index) => index !== automationToDeleteIndex)
-            const response = await fetchData({endpoint: `${auth.authData.organizationId}/admin/settings/automations`, requestForm: newTriggers, method: 'put', setWaiting: setWaitingDelete, auth, toastMessages: {works: t('CorrectDeletedAutomation'), failed: t('FailedDeletedAutomation')}})
+            const response = await fetchData({endpoint: `${auth.authData.organizationId}/admin/settings/automations`,getAccessTokenSilently, requestForm: newTriggers, method: 'put', setWaiting: setWaitingDelete, auth, toastMessages: {works: t('CorrectDeletedAutomation'), failed: t('FailedDeletedAutomation')}})
             if (response?.status === 200) {
                 setAutomationData(newTriggers as ActionDataType[])
                 setAutomationToDeleteIndex(null)
@@ -104,7 +106,7 @@ function Automations ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
                 <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
                 <Text >{parseMessageToBold(t('ConfirmDeleteTrigger', {name:automationData?.[automationToDeleteIndex as number].name}))}</Text>
             </Box>
-            <Flex bg='gray.50' p='20px' gap='10px' flexDir={'row-reverse'}>
+            <Flex bg='gray.50' p='20px' borderTopColor={'gray.200'} borderTopWidth={'1px'} gap='10px' flexDir={'row-reverse'}>
                 <Button  size='sm' variant={'delete'} onClick={deleteTrigger}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
                 <Button  size='sm' variant={'common'}onClick={() => setAutomationToDeleteIndex(null)}>{t('Cancel')}</Button>
             </Flex>
@@ -129,6 +131,8 @@ function Automations ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
                     <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Automations')}</Text>
                     <Text color='gray.600' fontSize={'.9em'}>{t('AutomationsDes')}</Text>
                 </Box>
+                <Button size='sm' variant={'main'} leftIcon={<FaPlus/>} onClick={() => {setSelectedIndex(-1)}}>{t('CreateAutomation')}</Button>
+
             </Flex>
             <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/>
             
@@ -140,9 +144,7 @@ function Automations ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
                 <Skeleton isLoaded={automationData !== null}> 
                     <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('AutomationsCount', {count:automationData?.length})}</Text>
                 </Skeleton>
-                <Flex gap='10px'> 
-                    <Button size='sm' variant={'common'} leftIcon={<FaPlus/>} onClick={() => {setSelectedIndex(-1)}}>{t('CreateAutomation')}</Button>
-                </Flex> 
+            
             </Flex>
             <Skeleton isLoaded={automationData !== null}> 
                 <Table data={filteredAutomationData} CellStyle={CellStyle} columnsMap={{'name':[t('Name'), 150], 'description':[t('Description'), 350]}}  excludedKeys={['all_conditions', 'any_conditions', 'actions']} noDataMessage={t('NoAutomations')} onClickRow={(row, index) => setSelectedIndex(index)} deletableFunction={(row:any, index:number) => setAutomationToDeleteIndex(index)}/>  
@@ -156,6 +158,7 @@ function Automations ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
 const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTriggers, setAllTriggers, scrollRef }:{triggerData:ActionDataType, selectedIndex:number, setSelectedIndex:Dispatch<SetStateAction<number >>,allTriggers:ActionDataType[], setAllTriggers:Dispatch<SetStateAction<ActionDataType[] | null>>, scrollRef:RefObject<HTMLDivElement>}) => {
 
     //CONSTANTS
+    const { getAccessTokenSilently } = useAuth0()
     const auth = useAuth()
     const { t } = useTranslation('settings')
 
@@ -176,7 +179,7 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
             updatedAutomations[selectedIndex] = currentAutomationData
             newAutomations = updatedAutomations
         }
-        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/automations`, requestForm:newAutomations, method:'put', setWaiting:setWaitingSend, auth, toastMessages:{works:selectedIndex === -1?t('CorrectCreatedAutomation'):t('CorrectUpdatedAutomation'), failed: selectedIndex === -1?t('FailedCreatedAutomation'):t('FailedUpdatedAutomation')}})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/automations`,getAccessTokenSilently, requestForm:newAutomations, method:'put', setWaiting:setWaitingSend, auth, toastMessages:{works:selectedIndex === -1?t('CorrectCreatedAutomation'):t('CorrectUpdatedAutomation'), failed: selectedIndex === -1?t('FailedCreatedAutomation'):t('FailedUpdatedAutomation')}})
         if (response?.status === 200) {
             setSelectedIndex(-2)
             setAllTriggers(newAutomations)
@@ -185,7 +188,7 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
  
     //ADD A CONDITION OR AN ACTION
     const addElement = (type: 'all_conditions' | 'any_conditions' | 'actions') => {
-        const newElement = type === 'actions' ? {type:'email_csat', arguments:{content:'',  probability:50}}:{motherstructure:'conversation', is_customizable:false, name:'user_id', op:'eq', value:-1}
+        const newElement = type === 'actions' ? {type:'email_csat', arguments:{content:'',  probability:50}}:{motherstructure:'conversation', is_customizable:false, name:'user_id', op:'eq', value:'matilda'}
         setCurrentAutomationData((prev) => ({ ...prev, [type]: [...prev[type],newElement]}))
     }
     //DELETE A CONDITION OR AN ACTION
@@ -214,9 +217,9 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
                 case 'webchat_csat':
                     return {probability:50}
                 case 'agent_email_notification':
-                    return {user_id:-1, notification_message:''}
+                    return {user_id:'matilda', notification_message:''}
                 case 'motherstructure_update':
-                    return {motherstructure:'conversation', is_customizable:false, name:'user_id', operation:'eq', value:-1}
+                    return {motherstructure:'conversation', is_customizable:false, name:'user_id', operation:'eq', value:'matilda'}
             }
         }
 
@@ -245,14 +248,19 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
 
     //FRONT
     return (<>
-        <Box> 
+
+        <SaveChanges data={currentAutomationData} disabled={selectedIndex === -1} setData={setCurrentAutomationData} dataRef={automationDataRef} onSaveFunc={sendTrigger}/>
+
+        <Flex alignItems={'end'} justifyContent={'space-between'}>
             <Flex fontWeight={'medium'} fontSize={'1.4em'} gap='10px' alignItems={'center'}> 
-                <Text onClick={() => setSelectedIndex(-2)} color='brand.text_blue' cursor={'pointer'}>{t('Automations')}</Text>
+                <Text onClick={() => setSelectedIndex(-2)}  color='brand.text_blue' cursor={'pointer'}>{t('Automations')}</Text>
                 <Icon as={IoIosArrowForward}/>
                 <Text>{currentAutomationData.name}</Text>
             </Flex>
-            <Box width='100%' bg='gray.300' height='1px' mt='2vh'/>
-        </Box>
+            {selectedIndex === -1 && <Button variant={'main'} onClick={sendTrigger} size={'sm'} leftIcon={<FaPlus/>}>{waitingSend ? <LoadingIconButton/>: t('Create')}</Button>}
+
+        </Flex>
+        <Box width='100%' bg='gray.300' height='1px' mt='2vh'/>
 
         <Box flex='1' overflow={'scroll'} pt='3vh'> 
             <Text mb='.5vh' fontSize={'1.1em'}  fontWeight={'medium'}>{t('Name')}</Text>
@@ -261,40 +269,48 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
             </Box>
 
             <Text fontSize={'1.1em'} mt='3vh' mb='.5vh'  fontWeight={'medium'}>{t('Description')}</Text>
-            <Textarea maxW={'500px'} resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('Description')}...`} maxH='300px' value={currentAutomationData.description} onChange={(e) => setCurrentAutomationData((prev) => ({...prev, description:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
+            <Textarea maxW={'500px'} resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('Description')}...`} maxH='300px' value={currentAutomationData.description} onChange={(e) => setCurrentAutomationData((prev) => ({...prev, description:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "brand.text_blue", borderWidth: "2px"}}/>
 
+          
             <Text fontWeight={'medium'} fontSize={'1.1em'} mt='3vh'>{t('Conditions')}</Text>
             <Text fontSize={'.8em'} color='gray.600'>{t('ConditionsDes')}</Text>
 
-        <Flex gap='30px' mt='1.5vh'> 
-                <Box flex='1'>     
+            <Flex gap='30px' mt='1.5vh'> 
+                <Box flex='1'> 
                     <Text fontSize={'.9em'} fontWeight={'medium'}>{t('AllConditionsAut')}</Text>
                     <Text fontSize={'.8em'} color='gray.600'>{t('AllConditionsAutDes')}</Text>
 
-                    {currentAutomationData.all_conditions.map((condition, index) => (
-                        <Flex  key={`all-automation-${index}`} mt='2vh' gap='10px'>
-                            <Box flex={'1'}> 
-                                <EditStructure data={condition} setData={(newCondition) => {editElement('all_conditions', index, newCondition)}} scrollRef={scrollRef} operationTypesDict={operationTypesDict} typesMap={typesMap}/>
-                            </Box>
-                            <IconButton bg='transaprent' border='none' color='red' size='sm' _hover={{bg:'gray.200'}} icon={<RxCross2/>} aria-label='delete-all-condition' onClick={() => removeElement('all_conditions', index)}/>
-                         </Flex>
-                    ))}
-                    <Button mt='2vh' variant={'common'}  leftIcon={<FaPlus/>} size='xs'  onClick={() => addElement('all_conditions')}>{t('AddCondition')}</Button>
-                </Box>
+                    <Flex flexWrap={'wrap'} gap='10px' mt='2vh'> 
+                        {currentAutomationData.all_conditions.map((condition, index) => (<> 
+                            <Flex alignItems={'center'}  key={`all-automation-${index}`}  gap='10px'>
+                                <Box flex={'1'}> 
+                                    <EditStructure deleteFunc={() => removeElement('all_conditions', index)} typesMap={typesMap} data={condition} setData={(newCondition) => {editElement('all_conditions', index, newCondition)}} scrollRef={scrollRef} operationTypesDict={operationTypesDict}/>
+                                </Box>
+                            </Flex>
+                            {index < currentAutomationData.all_conditions.length -1 && <Flex bg='brand.gray_2' p='7px' borderRadius={'.5rem'} fontWeight={'medium'}>{t('AND')}</Flex>}
+                        </>))}
+                        <IconButton variant={'common'} aria-label='add' icon={<FaPlus/>} size='sm'  onClick={() => addElement('all_conditions')}/>
+
+                    </Flex>
+                 </Box>
 
                 <Box flex='1'> 
                     <Text fontSize={'.9em'}  fontWeight={'medium'}>{t('AnyConditionsAut')}</Text>
                     <Text fontSize={'.8em'} color='gray.600'>{t('AnyConditionsAutDes')}</Text>
 
-                    {currentAutomationData.any_conditions.map((condition, index) => (
-                        <Flex key={`any-automation-${index}`} mt='2vh' gap='10px'>
+                    <Flex flexWrap={'wrap'} gap='10px' mt='2vh'> 
+
+                    {currentAutomationData.any_conditions.map((condition, index) => (<> 
+                        <Flex  alignItems={'center'} key={`any-automation-${index}`} gap='10px'>
                             <Box flex={'1'}> 
-                                <EditStructure data={condition} setData={(newCondition) => {editElement('any_conditions', index, newCondition)}} scrollRef={scrollRef} operationTypesDict={operationTypesDict} typesMap={typesMap}/>
+                                <EditStructure deleteFunc={() => removeElement('any_conditions', index)} typesMap={typesMap} data={condition} setData={(newCondition) => {editElement('any_conditions', index, newCondition)}} scrollRef={scrollRef} operationTypesDict={operationTypesDict}/>
                             </Box>
-                            <IconButton bg='transparent' border='none' color='red' size='sm' _hover={{bg:'gray.200'}} icon={<RxCross2/>} aria-label='delete-any-condition' onClick={() => removeElement('any_conditions', index)}/>
-                        </Flex>
+                         </Flex>
+                        {index < currentAutomationData.any_conditions.length -1 && <Flex bg='brand.gray_2' p='7px' borderRadius={'.5rem'} fontWeight={'medium'}>{t('OR')}</Flex>}
+                        </>
                     ))}
-                    <Button variant={'common'} mt='2vh' display={'inline-flex'} leftIcon={<FaPlus/>} size='xs' onClick={() => addElement('any_conditions')}>{t('AddCondition')}</Button>
+                    <IconButton variant={'common'} aria-label='add' icon={<FaPlus/>} size='sm'  onClick={() => addElement('any_conditions')}/>
+                    </Flex>
                 </Box>
             </Flex>
 
@@ -302,11 +318,11 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
             <Text fontSize={'.8em'} color='gray.600'>{t('ActionsToDoDes')}</Text>
 
             {currentAutomationData.actions.map((action, index) => (
-                <Box shadow='md' maxW={'1000px'} mt='2vh' bg='gray.50' borderColor={'gray.200'} borderWidth={'1px'} p='15px' borderRadius={'.5rem'} key={`arg-${index}`}>
+                <Box shadow='md' maxW={'1000px'} mt='2vh'  borderColor={'gray.200'} borderWidth={'1px'} p='15px' borderRadius={'.5rem'} key={`arg-${index}`}>
 
                     <Flex alignItems={'center'} justifyContent={'space-between'}> 
                         <Text mb='.3vh' fontSize={'.9em'} fontWeight={'medium'}>{t('ActionType')}</Text>
-                        <Button size='xs' leftIcon={<BsTrash3Fill/>} variant={'delete'} onClick={() => removeElement('actions', index)}>{t('Delete')}</Button>
+                        <Button size='xs' leftIcon={<HiTrash/>} variant={'delete'} onClick={() => removeElement('actions', index)}>{t('Delete')}</Button>
                     </Flex>
                     <Box maxW='350px' mb='2vh'> 
                         <CustomSelect containerRef={scrollRef} hide={false} selectedItem={action.type} setSelectedItem={(value) => {editActions(index, value)}} options={actionsList} labelsMap={actionsMap} />
@@ -401,13 +417,6 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
             ))}
  
             <Button variant={'common'} mt='2vh' display={'inline-flex'} leftIcon={<FaPlus/>} size='sm' onClick={() => addElement('actions')}>{t('AddAction')}</Button>
-        </Box>
-
-        <Box> 
-            <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='2vh'/>
-            <Flex flexDir={'row-reverse'}> 
-                <Button variant={'common'} onClick={sendTrigger} isDisabled={currentAutomationData.name === ''  || currentAutomationData.actions.length === 0 || ((JSON.stringify(currentAutomationData) === JSON.stringify(automationDataRef.current)))}>{waitingSend?<LoadingIconButton/>:t('SaveChanges')}</Button> 
-            </Flex>
         </Box>
     </>)
 }

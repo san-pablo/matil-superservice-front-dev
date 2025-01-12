@@ -26,10 +26,16 @@ const getDynamicTimestamps = () => {
 
 
 //CHECK IF A VIEW PASS A GIVEN CONDITION
-const checkConditions = (ticket: ConversationsData, conditions: Array<{ column: string, operation_type: string, value: string | number }>, userId:number): boolean => {
+const checkConditions = (ticket: ConversationsData, conditions: Array<{ column: string, operation_type: string, value: string | number }>, userId:string): boolean => {
     return conditions.every(condition => {
-        const ticketValue = ticket[condition.column as keyof ConversationsData]
+        
+        let ticketValue: any;
 
+    
+        if (condition.column in ticket) ticketValue = ticket[condition.column as keyof ConversationsData]
+        else if (ticket.custom_attributes && condition.column in ticket.custom_attributes && ticket.custom_attributes[condition.column]) ticketValue = ticket.custom_attributes[condition.column]
+        else return false
+        
         let normalizedTicketValue = ticketValue
         let normalizedConditionValue = condition.value
 
@@ -57,6 +63,10 @@ const checkConditions = (ticket: ConversationsData, conditions: Array<{ column: 
                 return normalizedTicketValue > normalizedConditionValue
             case "lt":
                 return normalizedTicketValue < normalizedConditionValue
+            case "contains":
+                return typeof normalizedTicketValue === 'string' && typeof normalizedConditionValue === 'string' ? normalizedTicketValue.includes(normalizedConditionValue) : false
+            case "ncontains":
+                return typeof normalizedTicketValue === 'string' && typeof normalizedConditionValue === 'string' ? !normalizedTicketValue.includes(normalizedConditionValue) : false
             default:
                 return false
         }
@@ -64,12 +74,12 @@ const checkConditions = (ticket: ConversationsData, conditions: Array<{ column: 
 }
 
 //MAIN FUNCTION
-const DetermineConversationViews = (ticketData: ConversationsData | null | undefined, views:Views, userId:number ): ViewResult[]  => {
+const DetermineConversationViews = (ticketData: ConversationsData | null | undefined, views:Views, userId:string ): ViewResult[]  => {
     
     if (!ticketData) return []
 
     const results: ViewResult[] = []
-    const checkView = (view: View, type: 'private' | 'shared', index: number, userId:number) => {
+    const checkView = (view: View, type: 'private' | 'shared', index: number, userId:string) => {
         const meetsAll = view.all_conditions ? checkConditions(ticketData, view.all_conditions, userId): true
         const meetsAny = view.any_conditions ? view.any_conditions.length === 0 || checkConditions(ticketData, view.any_conditions, userId) : true
         

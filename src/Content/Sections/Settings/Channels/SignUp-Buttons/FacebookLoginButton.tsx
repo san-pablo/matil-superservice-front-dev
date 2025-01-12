@@ -9,6 +9,8 @@ import { Button } from '@chakra-ui/react'
 import LoadingIconButton from '../../../../Components/Reusable/LoadingIconButton'
 //ICONS
 import { FaFacebookSquare } from "react-icons/fa"
+import { useAuth0 } from '@auth0/auth0-react'
+import { useTranslation } from 'react-i18next'
 
 //TYPING
 declare global {
@@ -19,21 +21,13 @@ declare global {
 }
   
 //MAIN FUNCTINO
-const FacebookLoginButton = ({ name, loadDataFunc }: { name: string, loadDataFunc:() => void }) => {
+const FacebookLoginButton = ({ name, loadDataFunc }: { name: string, loadDataFunc:(data:any) => void }) => {
   
-  const auth = useAuth()
   const [waitingInfo, setWaitingInfo] = useState<boolean>(false)
   const handleSendNewChannel = async (data: any) => {
-      data['name'] = name
-      const response = await fetchData({
-        endpoint: `${auth.authData.organizationId}/admin/settings/channels/whatsapp`,
-        requestForm: data,
-        method: 'post',
-        setWaiting: setWaitingInfo,
-        auth: auth
-      })
-      
-      loadDataFunc()
+      setWaitingInfo(true)
+      await loadDataFunc(data)
+      setWaitingInfo(false)
   }
 
   useEffect(() => {
@@ -61,7 +55,6 @@ const FacebookLoginButton = ({ name, loadDataFunc }: { name: string, loadDataFun
   const launchWhatsAppSignup = () => {
       window.FB.login((response: any) => {
         if (response.authResponse) {
-          console.log(response.authResponse)
           handleSendNewChannel({code: response.authResponse.code})
         }
       }, {
@@ -76,7 +69,7 @@ const FacebookLoginButton = ({ name, loadDataFunc }: { name: string, loadDataFun
       })
     }
   return (
-    <Button isDisabled={name === ''} onClick={launchWhatsAppSignup} size='lg' bg='#1877f2' leftIcon={<FaFacebookSquare/>} _hover={{bg:'#0F6AE0'}} color='#fff'>
+    <Button isDisabled={name === ''} onClick={launchWhatsAppSignup} size='md' w='100%' bg='#1877f2' leftIcon={<FaFacebookSquare/>} _hover={{bg:'#0F6AE0'}} color='#fff'>
       {waitingInfo?<LoadingIconButton/>:'Registrarse con Facebook'}
     </Button>
   )

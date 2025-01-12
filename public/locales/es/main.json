@@ -18,9 +18,11 @@
     "Connected":"Conectado",
     "Out":"Ausente",
     "Disconnected":"Desconectado",
-    "Clients":"Clientes",
+    "Contacts":"Contactos",
     "Conversations":"Conversaciones",
-    "Businesses":"Empresas de Contacto",
+    "Businesses":"Empresas",
+    "Clients":"Clientes",
+    "CreateBusiness":"Crear empresa",
     "Flows":"Flujos",
     "Stats":"Estadísticas",
     "Knowledge":"Conocimiento",
@@ -31,12 +33,14 @@
     "NotFoundError":"Oops! No se ha encontrado la página que estás buscando.",
     "GoBack":"Volver a la aplicación",
     "UsersFeedback":"Feedback de usuarios",
-    "UsersFeedbackDes":"Queremos ofrecerte la mejor experiencia posible. Si encuentras algún fallo, tienes sugerencias para mejorar, quejas sobre el servicio o cualquier otra recomendación, no dudes en hacérnoslo saber.",
+    "UsersFeedbackDes":"Queremos ofrecerte la mejor experiencia posible. Si encuentras algún error, tienes ideas para mejorar, inquietudes sobre el servicio o cualquier otra sugerencia, estaremos encantados de escucharte. ¡Tu opinión es muy importante para nosotros!.",
     "FeedbackPlaceholder":"Deja aquí tu mensaje...",
     "Send":"Enviar",
     "KeyboardShortcutsTitle":"Atajos del teclado",
     "ActivateShortcuts":"Activar atajos",
     "DownloadAsPdf":"Descargar como PDF",
+    "Organization":"Organización",
+ 
     "navigation": {
         "title": "Navegación",
         "description": "Se usan en cualquier lugar",
@@ -87,5 +91,5 @@
           "bulletList": "Insertar lista de viñetas"
         }
       }
-
+      
 }

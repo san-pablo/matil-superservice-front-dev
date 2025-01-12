@@ -14,17 +14,18 @@ import ConfirmBox from '../../../Components/Reusable/ConfirmBox'
 //FUNCTIONS
 import parseMessageToBold from '../../../Functions/parseToBold'
 //ICONS
-import { RxCross2 } from 'react-icons/rx'
 import { useTranslation } from 'react-i18next'
 import { FaPlus, } from 'react-icons/fa6'
  import { FaEdit } from 'react-icons/fa'
- import { BsTrash3Fill } from 'react-icons/bs'
+import { HiTrash } from 'react-icons/hi2'
+import { useAuth0 } from '@auth0/auth0-react'
 //MAIN FUNCTION
 function Themes () {
 
     //CONSTANTS
     const auth = useAuth()
     const { t } = useTranslation('settings')
+    const {  getAccessTokenSilently } = useAuth0()
 
     //SHORTCUTS DATA
     const [addThemeIndex, setAddThemeIndex] = useState<number | null>(null)
@@ -35,14 +36,12 @@ function Themes () {
     //MODIFY TITLE
     useEffect (() => {
         document.title = `${t('Settings')} - ${t('Themes')} - ${auth.authData.organizationName} - Matil`
-        fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/themes`,  setValue:setCurrentThemes, auth})
+        fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/themes`,  setValue:setCurrentThemes, auth,  getAccessTokenSilently})
     }, [])
     
     //ADD AND DELETE SHORTCUT
-    
     const handleAddTheme = async(newThemes:{name:string, description:string}[]) => {
-         const newViews = {...auth.authData.views, conversation_themes:newThemes?.map(theme => theme.name)}
-        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/themes`, method:'put', auth:auth, requestForm:newThemes, toastMessages:{'works':t('CorrectEditedTheme'), 'failed':t('FailedEditedTheme')}})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/themes`, method:'put', auth:auth, requestForm:newThemes, getAccessTokenSilently,  toastMessages:{'works':t('CorrectEditedTheme'), 'failed':t('FailedEditedTheme')}})
         if (response?.status === 200) {
             auth.setAuthData({conversation_themes:newThemes?.map(theme => theme.name)})  
             setCurrentThemes(newThemes)
@@ -67,7 +66,7 @@ function Themes () {
                 <Textarea resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('Description')}...`} maxH='300px' value={newOption.description} onChange={(e) => setNewOption((prev) => ({...prev, description:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(59, 90, 246)", borderWidth: "2px"}}/>
             </Box>
             <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'}bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-                <Button  size='sm' variant={'main'} onClick={addTheme}>{waitingAdd?<LoadingIconButton/>:t('AddTheme')}</Button>
+                <Button  size='sm' variant={'main'} onClick={addTheme}>{waitingAdd?<LoadingIconButton/>:index === -1?t('AddTheme'):t('EditTheme')}</Button>
                 <Button  size='sm' variant={'common'} onClick={()=> setAddThemeIndex(null)}>{t('Cancel')}</Button>
             </Flex>  
             </>)
@@ -86,7 +85,7 @@ function Themes () {
             <Box p='20px'>
                 <Text width={'400px'}>{parseMessageToBold(t('DeleteThemeQuestion', {name:currentThemes?.[index].name}))}</Text>
             </Box>
-            <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='brand.gray_2' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+            <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'}bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
                 <Button  size='sm' variant={'delete'} onClick={deleteTheme}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
                 <Button  size='sm' variant={'common'} onClick={()=> setAddThemeIndex(null)}>{t('Cancel')}</Button>
             </Flex>  
@@ -113,21 +112,21 @@ function Themes () {
                 <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Themes')}</Text>
                 <Text color='gray.600' fontSize={'.9em'}>{t('ThemesDes')}</Text>
             </Box>
+            <Button variant={'main'} leftIcon={<FaPlus/>} size='sm' onClick={() => setAddThemeIndex(-1)}>{t('AddTheme')}</Button>
+
         </Flex>
 
         <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/>
-        <Flex  width={'60%'} minW={'500px'} flexDir={'row-reverse'}>
-            <Button variant={'common'} leftIcon={<FaPlus/>} size='sm' onClick={() => setAddThemeIndex(-1)}>{t('AddTheme')}</Button>
-        </Flex>
+  
         <Box flex='1' width={'60%'} mt='2vh' minW={'500px'} pb='2vh'  overflow={'scroll'}> 
             <Skeleton isLoaded={currentThemes !== null}> 
                 {currentThemes?.map((theme, index) => (
-                    <Box cursor={'pointer'} key={`option-${index}`} mt={index === 0?'0':'1vh'} shadow='sm' p='15px' borderRadius='.5rem' borderColor="gray.200" borderWidth="1px"  bg='gray.50'> 
+                    <Box cursor={'pointer'} key={`option-${index}`} mt={index === 0?'0':'1vh'} shadow='sm' p='15px' borderRadius='.5rem' borderColor="gray.200" borderWidth="1px" > 
                         <Flex justifyContent={'space-between'} alignItems={'center'} >
                             <Text fontWeight={'medium'} fontSize={'1.1em'}>{theme.name}</Text>
                             <Flex gap='5px'> 
-                                <IconButton size='xs' variant={'common'} icon={<FaEdit/>}  onClick={() => setAddThemeIndex(index)} aria-label="edit-param"/>
-                                <IconButton size='xs' bg='transparent' variant={'delete'} onClick={() => setDeleteThemeIndex(index)} icon={<BsTrash3Fill/>} aria-label="delete-param"/>
+                                <IconButton size='xs' bg='transparent'  variant={'common'} icon={<FaEdit size='14px'/>}  onClick={() => setAddThemeIndex(index)} aria-label="edit-param"/>
+                                <IconButton size='xs' bg='transparent' variant={'delete'} onClick={() => setDeleteThemeIndex(index)} icon={<HiTrash  size='14px'/>} aria-label="delete-param"/>
                             </Flex>
                         </Flex>
                         <Text mt='1vh' fontSize={'.9em'}>{theme.description}</Text>

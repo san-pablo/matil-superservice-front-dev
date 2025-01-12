@@ -15,20 +15,19 @@ import EditText from "../../Components/Reusable/EditText"
 import timeStampToDate from "../../Functions/timeStampToString"
 import timeAgo from "../../Functions/timeAgo"
 //ICONS
-import { IconType } from "react-icons"
 import { RxCross2 } from "react-icons/rx"
 import { IoBook, IoHelpCircle } from "react-icons/io5"
-import { FaArrowsRotate, FaPlus, FaLock, FaCloudArrowUp, FaFilePdf, FaFileLines } from "react-icons/fa6"
+import { FaPlus, FaLock, FaCloudArrowUp, FaFilePdf, FaFileLines } from "react-icons/fa6"
 import { AiFillAppstore } from "react-icons/ai"
 import { BiWorld } from "react-icons/bi"
 import { FiEdit } from "react-icons/fi"
-import { FaCloudUploadAlt } from "react-icons/fa";
-
+import { FaCloudUploadAlt } from "react-icons/fa"
 //TYPING
 import { ContentData, languagesFlags } from "../../Constants/typing"
 import { useSession } from "../../../SessionContext"
 import { useNavigate } from "react-router-dom"
 import LoadingIconButton from "../../Components/Reusable/LoadingIconButton"
+import { useAuth0 } from "@auth0/auth0-react"
  
 
 
@@ -38,6 +37,7 @@ function Fonts () {
 
     //AUTH CONSTANT
     const  { t } = useTranslation('knowledge')
+    const { getAccessTokenSilently } = useAuth0()
     const navigate = useNavigate()
     const t_formats = useTranslation('formats').t
     const auth = useAuth()
@@ -67,15 +67,15 @@ function Fonts () {
     useEffect(() => {
         
         const fetchTriggerData = async () => {
-            const responseInternal  = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`, params:{page_index:1, type:['internal_article']}, auth})
+            const responseInternal  = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`, getAccessTokenSilently, params:{page_index:1, type:['internal_article']}, auth})
             if (responseInternal?.status === 200) setInternalArticles(responseInternal.data.page_data)
-            const responsePublic  = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`, params:{page_index:1, type:['public_article']}, auth})
+            const responsePublic  = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`, getAccessTokenSilently, params:{page_index:1, type:['public_article']}, auth})
             if (responsePublic?.status === 200) setPublicArticles(responsePublic.data.page_data)
-            const responsePdf  = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`, params:{page_index:1, type:['pdf']}, auth})
+            const responsePdf  = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`, getAccessTokenSilently, params:{page_index:1, type:['pdf']}, auth})
             if (responsePdf?.status === 200) setPdfArticles(responsePdf.data.page_data)
-            const responseWeb = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`, params:{page_index:1, type:'website'}, auth})
+            const responseWeb = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`, getAccessTokenSilently, params:{page_index:1, type:'website'}, auth})
             if (responseWeb?.status === 200) setWebArticles(responseWeb.data.page_data)
-            const responseText  = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`, params:{page_index:1, type:['snippet']}, auth})
+            const responseText  = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`,getAccessTokenSilently, params:{page_index:1, type:['snippet']}, auth})
             if (responseText?.status === 200) setTextArticles(responseText.data.page_data)
         }
         localStorage.setItem('currentSectionContent', 'fonts')
@@ -154,9 +154,11 @@ function Fonts () {
                                                 <Text color={art.public_article_status === 'draft'?'red.600':'green.600'}>{t(art.public_article_status)}</Text>
                                             </Box>
                                         </Box>
-                                        <Tooltip label={timeStampToDate(art.created_at as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
-                                            <Text flex={1} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(art.created_at as string, t_formats)}</Text>
-                                        </Tooltip>
+                                        <Flex justifyContent={'center'} flex={1}> 
+                                            <Tooltip label={timeStampToDate(art.created_at as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
+                                                <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(art.created_at as string, t_formats)}</Text>
+                                            </Tooltip>
+                                        </Flex>
                                         <Button size='sm' variant={'common'} leftIcon={<FiEdit/>}  onClick={() => navigate(`/knowledge/article/${art.uuid}`)}>{t('Edit')}</Button>
 
                                     </Flex>
@@ -199,9 +201,13 @@ function Fonts () {
                                                     <Text color={art.public_article_status === 'draft'?'red.600':'green.600'}>{t(art.public_article_status)}</Text>
                                                 </Box>
                                                 </Box>
-                                                <Tooltip label={timeStampToDate(art.created_at as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
-                                                    <Text flex={1} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(art.created_at as string, t_formats)}</Text>
-                                                </Tooltip>
+
+                                                <Flex justifyContent={'center'} flex={1}> 
+                                                    <Tooltip label={timeStampToDate(art.created_at as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
+                                                        <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(art.created_at as string, t_formats)}</Text>
+                                                    </Tooltip>
+                                                </Flex>
+                                               
                                                 <Button size='sm' variant={'common'} leftIcon={<FiEdit/>} onClick={() => navigate(`/knowledge/article/${art.uuid}`)} >{t('Edit')}</Button>
 
                                             </Flex>
@@ -243,10 +249,12 @@ function Fonts () {
                                                     <Text fontSize={'.8em'}>{typeof art.language === 'string' && art.language in languagesFlags ?languagesFlags[art.language][1]:'🏴󠁥󠁳󠁣󠁴󠁿'}</Text>
                                                 </Flex>
                                             
-                                            
-                                                <Tooltip label={timeStampToDate(art.created_at as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
-                                                    <Text flex={2} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(art.created_at as string, t_formats)}</Text>
-                                                </Tooltip>
+                                                <Flex justifyContent={'center'} flex={2}> 
+                                                    <Tooltip label={timeStampToDate(art.created_at as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
+                                                        <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(art.created_at as string, t_formats)}</Text>
+                                                    </Tooltip>
+                                                </Flex>
+
                                                 <Button size='sm' variant={'common'} leftIcon={<FiEdit/>} onClick={() => navigate(`/knowledge/website/${art.uuid}`)} >{t('Edit')}</Button>
                                             </Flex>
                                         ))}
@@ -286,9 +294,13 @@ function Fonts () {
                                             <Text color={art.public_article_status === 'draft'?'red.600':'green.600'}>{t(art.public_article_status)}</Text>
                                         </Box>
                                         </Box>
-                                        <Tooltip label={timeStampToDate(art.created_at as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
-                                            <Text flex={1} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(art.created_at as string, t_formats)}</Text>
-                                        </Tooltip>
+
+                                        <Flex justifyContent={'center'} flex={1}> 
+                                                    <Tooltip label={timeStampToDate(art.created_at as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
+                                                        <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(art.created_at as string, t_formats)}</Text>
+                                                    </Tooltip>
+                                                </Flex>
+                                    
                                         <Button size='sm' variant={'common'} leftIcon={<FiEdit/>} onClick={() => navigate(`/knowledge/snippet/${art.uuid}`)} >{t('Edit')}</Button>
 
                                     </Flex>
@@ -330,9 +342,11 @@ function Fonts () {
                                             <Text fontSize={'.8em'}>{typeof art.language === 'string' && art.language in languagesFlags ?languagesFlags[art.language][1]:'🏴󠁥󠁳󠁣󠁴󠁿'}</Text>
                                         </Flex>
                                         
-                                        <Tooltip label={timeStampToDate(art.created_at as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
-                                            <Text flex={2} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(art.created_at as string, t_formats)}</Text>
-                                        </Tooltip>
+                                        <Flex justifyContent={'center'} flex={2}> 
+                                            <Tooltip label={timeStampToDate(art.created_at as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='sm' p='6px'> 
+                                                <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(art.created_at as string, t_formats)}</Text>
+                                            </Tooltip>
+                                        </Flex>
                                         <Button size='sm' variant={'common'} leftIcon={<FiEdit/>} onClick={() => navigate(`/knowledge/pdf/${art.uuid}`)} >{t('Edit')}</Button>
 
                                     </Flex>
@@ -354,6 +368,7 @@ export default Fonts
 const SyncronizeWeb = ({setShowSyncronize, setContentData}:{setShowSyncronize:Dispatch<SetStateAction<boolean>>,  setContentData:Dispatch<SetStateAction<ContentData[] | null>>}) => {
 
     const { t } = useTranslation('knowledge')
+    const { getAccessTokenSilently }= useAuth0()
     const auth = useAuth()
     const [webUrl, setWebUrl] = useState<string>('')
 
@@ -368,8 +383,8 @@ const SyncronizeWeb = ({setShowSyncronize, setContentData}:{setShowSyncronize:Di
             is_available_to_tilda: false,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
-            created_by: auth.authData.userId || -1,
-            updated_by: auth.authData.userId || -1,
+            created_by: auth.authData.userId || '',
+            updated_by: auth.authData.userId || '',
             tags: [],
             content:{url:webUrl},
             is_ingested:false,
@@ -377,7 +392,7 @@ const SyncronizeWeb = ({setShowSyncronize, setContentData}:{setShowSyncronize:Di
             public_article_status: 'draft'
         }
         console.log(newWeb)
-        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`, method:'post', requestForm:newWeb, auth})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`,getAccessTokenSilently, method:'post', requestForm:newWeb, auth})
         if (response?.status === 200) setContentData(prev => ([...prev as ContentData[], newWeb]))
         setShowSyncronize(false)
      }
@@ -402,12 +417,13 @@ const CreatePdf = ({setShowAddPdf, setContentData}:{setShowAddPdf:Dispatch<SetSt
 
     const { t } = useTranslation('knowledge')
     const auth = useAuth()
+    const { getAccessTokenSilently } = useAuth0()
 
     const [waitingCreate, setWaitingCreate] = useState<boolean>(false)
     const [selectedDocument, setSelectedDocument] = useState<File | null>(null)
 
     const getPreSignedUrl = async (file:File) => {
-        const response = await fetchData({endpoint: `${auth.authData.organizationId}/chatbot/s3_pre_signed_url`, method:'post', auth:auth, requestForm: { file_name: file.name}})   
+        const response = await fetchData({endpoint: `${auth.authData.organizationId}/chatbot/s3_pre_signed_url`,getAccessTokenSilently, method:'post', auth:auth, requestForm: { file_name: file.name}})   
         if (response?.status === 200) {
             const responseUpload = await fetch(response.data.upload_url, {method: "PUT", headers: {}, body: file})
             if (responseUpload.ok) {
@@ -431,15 +447,15 @@ const CreatePdf = ({setShowAddPdf, setContentData}:{setShowAddPdf:Dispatch<SetSt
             is_available_to_tilda: false,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
-            created_by: auth.authData.userId || -1,
-            updated_by: auth.authData.userId || -1,
+            created_by: auth.authData.userId || '',
+            updated_by: auth.authData.userId || '',
             tags: [],
             content:{url:await getPreSignedUrl(selectedDocument as File)},
             is_ingested:false,
             public_article_help_center_collections:[],
             public_article_status: 'draft'
         }
-        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`, setWaiting:setWaitingCreate, method:'post', requestForm:newPdf, auth})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`, getAccessTokenSilently,setWaiting:setWaitingCreate, method:'post', requestForm:newPdf, auth})
         if (response?.status === 200) setContentData(prev => ([...prev as ContentData[], newPdf]))
         setShowAddPdf(false)
      }

@@ -14,9 +14,8 @@ type fieldConfigType = {name:string, type:'bool' | 'int' | 'float' | 'str' | 't
 type AuthData = {
     email: string
     accessToken: string
-    refreshToken:string
     organizationId: number | null
-    userId: number | null
+    userId: string | null
     organizationName: string
     views: Views | null
     users:{[key:string | number]:{name:string, surname:string, email_address:string, last_login:string, is_admin:boolean}} | null
@@ -25,6 +24,7 @@ type AuthData = {
     userData:{name: string, surname: string, email_address: string, password: string, language:string, shortcuts_activated:boolean} | null
     organizationData:{calls_status:'connected' | 'out' | 'disconnected', avatar_image_url:string, is_admin:boolean, alias:string, groups:{id:number, name:string}[]} | null
     customAttributes:{conversation:fieldConfigType[], contact:fieldConfigType[], contact_business:fieldConfigType[]} | null
+    active_integrations:string[]
 }
  
 //AUTH CONTEXT TYPE DEFINITION
@@ -33,14 +33,12 @@ type AuthContextType = {
     isSignedIn: boolean
     setAuthData: (data: Partial<AuthData>) => void
     signOut: () => void
-    signIn: () => void
 }
 
 //CONTEXT TOOLS
 const AuthContext = createContext<AuthContextType>({
-    authData: { email: '', accessToken: '',refreshToken:'', organizationId: null, userId:null, organizationName:'', views:{"private_views": [], "shared_views": []}, users:null, conversation_themes:[], shortcuts:[], userData:null, organizationData:null, customAttributes:null},
+    authData: { email: '', accessToken: '', organizationId: null, userId:null, organizationName:'', views:{"private_views": [], "shared_views": []}, users:null, conversation_themes:[], shortcuts:[], userData:null, organizationData:null, customAttributes:null, active_integrations:[]},
     isSignedIn: false, 
-    signIn: () => {},
     signOut: () => {},
     setAuthData: () => {},
 })
@@ -51,7 +49,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [authData, setAuthData] = useState<AuthData>({
         email: '',
         accessToken: '',
-        refreshToken: '',
         organizationId: null,
         userId:null,
         organizationName:'',
@@ -61,7 +58,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         shortcuts:[],
         userData:null,
         organizationData:null,
-        customAttributes:null
+        customAttributes:null,
+        active_integrations:[]
     })
 
     //AUTHENTICATION FUNCTIONALITIES
@@ -72,21 +70,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     //SIGN OUT
     const signOut = () => {
-        setAuthData({ email: '', accessToken: '', refreshToken: '',organizationId: null, userId:null, organizationName:'', views:{"private_views": [], "shared_views": []}, users:null, conversation_themes:[], shortcuts:[], userData:null,organizationData:null, customAttributes:null
-    })
-        setIsSignedIn(false)
+        setAuthData({ email: '', accessToken: '', organizationId: null, userId:null, organizationName:'', views:{"private_views": [], "shared_views": []}, users:null, conversation_themes:[], shortcuts:[], userData:null,organizationData:null, customAttributes:null, active_integrations:[]})
         localStorage.clear()
     }
-
-    //SIGN IN
-    const signIn = () => {setIsSignedIn(true)}
 
     return (
         <AuthContext.Provider value={{
             authData,
             isSignedIn,
             setAuthData: setAuthDataHandler,
-            signIn: signIn,
             signOut: signOut
         }}>
             {children}

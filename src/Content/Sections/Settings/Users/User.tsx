@@ -9,9 +9,9 @@ import { motion, isValidMotionProp} from 'framer-motion'
 import EditText from "../../../Components/Reusable/EditText"
 import CustomSelect from "../../../Components/Reusable/CustomSelect"
 import LoadingIconButton from "../../../Components/Reusable/LoadingIconButton"
+import SaveChanges from "../../../Components/Reusable/SaveChanges"
 //ICONS
 import { IconType } from "react-icons"
-import { IoIosArrowDown } from "react-icons/io"
 import {  BsFillTelephoneInboundFill, BsFillTelephoneMinusFill, BsFillTelephoneXFill } from "react-icons/bs"
 //TYPING
 import { languagesFlags } from "../../../Constants/typing"
@@ -38,6 +38,30 @@ const MotionBox = chakra(motion.div, {shouldForwardProp: isValidMotionProp})
 
 const availableLanguages = ['Español', 'English']
 
+{/* 
+     <Flex ref={actionNoteRef} fontSize={'.7em'}  cursor={'pointer'} gap='5px' alignItems={'center'} onClick={() => setShowChangeAction(!showChangeAction)}> 
+        <Text  whiteSpace={'nowrap'}>{sendAction === 'close'?t('CloseAction_1'):sendAction === 'next'?t('CloseAction_2'):t('CloseAction_3')}</Text>
+        <Icon className={ showChangeAction? "rotate-icon-up" : "rotate-icon-down"} as={IoIosArrowDown} boxSize={'13px'}/>
+        </Flex>
+
+           <Box position={'relative'}>  
+                                {showChangeAction &&  
+                                <Portal > 
+                                    <MotionBox  bottom={window.innerHeight -  (actionNoteRef.current?.getBoundingClientRect().top || 0) + 10}  right={window.innerWidth - (actionNoteRef.current?.getBoundingClientRect().right || 0)}  ref={actionBoxRef} initial={{ opacity: 0, marginBottom: -10}} animate={{ opacity: 1, marginBottom: 0 }}  exit={{ opacity: 0, marginBottom: -10}} transition={{ duration: '0.2', ease: 'easeOut'}} 
+                                        fontSize={'.8em'} overflow={'hidden'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={1000}   position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
+                                        <Flex p='7px' alignItems={'center'} gap='7px' cursor={'pointer'} _hover={{bg:'brand.hover_gray'}} onClick={() => {setShowChangeAction(false);setSendAction('close');localStorage.setItem('sendAction','close')}}>
+                                            <Text whiteSpace={'nowrap'}>{t('CloseAction_1')}</Text>
+                                        </Flex>
+                                        <Flex p='7px' alignItems={'center'} gap='7px' cursor={'pointer'} _hover={{bg:'brand.hover_gray'}} onClick={() => {setShowChangeAction(false);setSendAction('next');localStorage.setItem('sendAction','next')}}>
+                                            <Text whiteSpace={'nowrap'}>{t('CloseAction_2')}</Text>
+                                        </Flex>
+                                        <Flex p='7px' alignItems={'center'} gap='7px' cursor={'pointer'} _hover={{bg:'brand.hover_gray'}} onClick={() => {setShowChangeAction(false);setSendAction('mantain');localStorage.setItem('sendAction','mantain')}}>
+                                            <Text whiteSpace={'nowrap'}>{t('CloseAction_3')}</Text>
+                                        </Flex>
+                                    </MotionBox>
+                                </Portal>}
+                            </Box>
+*/}
 //MAIN FUNCTION
 const User = () => {
 
@@ -78,93 +102,88 @@ const User = () => {
     }
  
     return(<>
+        <SaveChanges data={organizationData} setData={setOrganizationData} dataRef={organizationDataRef} onSaveFunc={() => {}}/>
         <Box>
-            <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Profile')}</Text>
-            <Text color='gray.600' fontSize={'.9em'}>{t('ProfileDes')}</Text>
+            <Flex alignItems={'end'} justifyContent={'space-between'}> 
+                <Box> 
+                    <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Profile')}</Text>
+                    <Text color='gray.600' fontSize={'.9em'}>{t('ProfileDes')}</Text>
+                </Box>
+             </Flex>
             <Box width='100%' bg='gray.300' height='1px' mt='2vh' />
         </Box>
-        <Box overflow={'scroll'} flex='1' pb='2vh'  pt='3vh' maxW={'1000px'}> 
-
-            <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('GeneralInfo')}</Text>
-            <Text color='gray.600' fontSize={'.9em'}>{t('GeneralInfoDes')}</Text>
-            <Flex mt='3vh' gap='30px'>
-                <Box   flex='1'>
-                    <Text mb='.5vh' fontWeight={'medium'}>{t('Name')}</Text>
-                    <EditText hideInput={false} value={userData.name} setValue={(value) => handleEditKey('name', value)}/>
-                </Box>
-                <Box  flex='1'>
-                    <Text mb='.5vh' fontWeight={'medium'}> {t('Surname')}</Text>
-                    <EditText hideInput={false} value={userData.surname} setValue={(value) => handleEditKey('surname', value)}/>
-                </Box>
-            </Flex>
-            <Box mt='3vh'  maxW={'500px'}>
-                <Text mb='.5vh' fontWeight={'medium'}> {t('Mail')}</Text>
-                <EditText hideInput={false} value={userData.email_address} setValue={(value) => handleEditKey('email_address', value)}/>
-            </Box>
-            <Box mt='3vh' maxW={'500px'}>
-                <Text mb='.5vh' fontWeight={'medium'}> {t('Password')}</Text>
-                <EditText hideInput={false} value={userData.password} setValue={(value) => handleEditKey('password', value)}/>
-            </Box>
-         
-            <Box mt='3vh' maxW={'500px'}>
-                <Text mb='.5vh' fontWeight={'medium'}>{t('Language')}</Text>
-                <CustomSelect labelsMap={languagesMap}  selectedItem={userData.language}  setSelectedItem={(value) => handleEditKey('language', value)} options={Object.keys(languagesMap)} hide={false} />
-            </Box>
-
-            <Text fontWeight={'medium'} mt='5vh' fontSize={'1.2em'}>{t('OrgInfo', {name:auth.authData.organizationName})}</Text>
-            <Text color='gray.600' fontSize={'.9em'}>{t('OrgInfoDes')}</Text>
-
-            <Flex alignItems={'center'} justifyContent={'space-between'} mt='3vh'>
-                <Flex alignItems={'center'} gap='10px'>
-                    <Avatar src={organizationData.avatar_image_url}/>
-                    <Box alignItems={'center'} gap='10px'>
-                        <Text fontWeight={'medium'}>{t('ProfilePicture')}</Text>
-                        <Text color={'gray.600'} fontSize={'.9em'}>{t('ProfilePicture_Exp')}</Text>
-                    </Box>
+        <Box flex='1'> 
+            <Flex  maxW={'1200px'} pt='3vh' gap='50px' > 
+                
+        
+                <Box flex={'1'} bg='white'display={'inline-block'}  borderWidth={'1px'}  borderColor={'gray.200'} borderRadius={'.7rem'} p='20px'  > 
+                    <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('GeneralInfo')}</Text>
+                    <Text color='gray.600' fontSize={'.9em'}>{t('GeneralInfoDes')}</Text>
+                
+                <Flex mt='3vh' gap='15px' alignItems={'center'}>
+                        <Text fontWeight={'medium'}>{t('Name')}</Text>
+                        <Box maxW={'400px'}> 
+                            <EditText hideInput={true} value={userData.name} setValue={(value) => handleEditKey('name', value)}/>
+                        </Box>
                 </Flex>
-                <Flex alignItems={'center'} gap='10px'>
-                    <Button size='xs'>{t('AddNewPicture')}</Button>
-                    <Button size='xs' color='red'>{t('Delete')}</Button>
+        
+                <Flex mt='1vh' gap='15px' alignItems={'center'}>
+                        <Text fontWeight={'medium'}>{t('Surname')}</Text>
+                        <Box maxW={'400px'}> 
+                            <EditText hideInput={true} value={userData.surname} setValue={(value) => handleEditKey('surname', value)}/>
+                        </Box>
                 </Flex>
-            </Flex>
 
-            
-         
-            
-            <Flex mt='3vh' gap='30px'>
-               
-                <Box  flex='1'>
-                    <Text fontWeight={'medium'}> {t('CallStatus')}</Text>
-                    <Box position='relative' mt='7px' maxW='350px'> 
-                        <Flex borderColor={'gray.300'} borderWidth={'1px'}  color={phoneMap[organizationData.calls_status][2]}  justifyContent={'space-between'}  px='7px' py='5px'  alignItems='center' cursor='pointer' _hover={{ bg: 'brand.hover_gray' }} borderRadius='.4rem' onClick={() => setShowStatusList(!showStatusList)}>
-                            <Flex  alignItems={'center'} gap='10px'> 
-                                <Icon height={'12px'} width={'12px'} as={phoneMap[organizationData.calls_status][1]} />
-                                <Text fontWeight={'medium'} fontSize='.8em' whiteSpace='nowrap'>{phoneMap[organizationData.calls_status][0]}</Text>
-                            </Flex>
-                            <Box color='gray.600' > 
-                            <IoIosArrowDown className={showStatusList ? "rotate-icon-up" : "rotate-icon-down"}/>
+                <Box bg='gray.200' height={'1px'} mt='2vh' mb='2vh' width={'100%'}/>
+
+                <Flex gap='15px' alignItems={'center'}>
+                        <Text fontWeight={'medium'}>{t('Mail')}</Text>
+                        <Box maxW={'400px'}> 
+                            <EditText hideInput={true} regex={/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/} value={userData.email_address} setValue={(value) => handleEditKey('email_address', value)}/>
+                        </Box>
+                </Flex>
+
+                <Flex mt='1vh' gap='15px' alignItems={'center'}>
+                        <Text fontWeight={'medium'}>{t('Password')}</Text>
+                        <Box maxW={'400px'}> 
+                            <EditText hideInput={true} value={userData.password} setValue={(value) => handleEditKey('password', value)}/>
+                        </Box>
+                </Flex>
+
+
+                <Box bg='gray.200' height={'1px'} mt='2vh' mb='2vh' width={'100%'}/>
+
+                <Flex mt='1vh' gap='15px' alignItems={'center'}>
+                <Text fontWeight={'medium'}>{t('Language')}</Text>
+                        <Box w={'250px'}> 
+                            <CustomSelect labelsMap={languagesMap}  selectedItem={userData.language}  setSelectedItem={(value) => handleEditKey('language', value)} options={Object.keys(languagesMap)} hide={true} />
+                        </Box>
+                </Flex>
+                </Box>
+                <Box flex={'1'} bg='white'display={'inline-block'}  borderWidth={'1px'}  borderColor={'gray.200'} borderRadius={'.7rem'} p='20px'  > 
+                    <Text fontWeight={'medium'}  fontSize={'1.2em'}>{t('OrgInfo', {name:auth.authData.organizationName})}</Text>
+                    <Text color='gray.600' fontSize={'.9em'}>{t('OrgInfoDes')}</Text>
+
+                    <Flex alignItems={'center'} justifyContent={'space-between'} mt='3vh'>
+                        <Flex alignItems={'center'} gap='10px'>
+                            <Avatar src={organizationData.avatar_image_url}/>
+                            <Box alignItems={'center'} gap='10px'>
+                                <Text fontWeight={'medium'}>{t('ProfilePicture')}</Text>
+                                <Text color={'gray.600'} fontSize={'.9em'}>{t('ProfilePicture_Exp')}</Text>
                             </Box>
                         </Flex>
-                        {showStatusList &&
-                            <MotionBox initial={{ opacity: 0, top: 10}} animate={{ opacity: 1, top: 0 }}  exit={{ opacity: 0, top: -10}} transition={{ duration: '0.2',  ease: '[0.0, 0.9, 0.9, 1.0]'}} 
-                            overflow={'hidden'} ml={'calc(100% + 5px)'} width={'100%'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={1000}   position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
-                            {['connected', 'out', 'disconnected'].map((status, index) => (
-                                <Flex key={`status-list-${index}`} bg={status === organizationData.calls_status?'blue.50':''} color={phoneMap[status][2]} p='7px' gap='10px' alignItems='center' cursor='pointer' _hover={{ bg: status === organizationData.calls_status?'blue.100':'brand.hover_gray' }} onClick={() => {setShowStatusList(!showStatusList)}}>
-                                    <Icon height={'12px'} width={'12px'} as={phoneMap[status][1]} />
-                                    <Text fontWeight={'medium'} fontSize='.8em' whiteSpace='nowrap'>{phoneMap[status][0]}</Text>
-                                </Flex>
-                            ))}
-                            </MotionBox>}  
-                        </Box>        
-                    </Box>
+                        <Flex alignItems={'center'} gap='10px'>
+                            <Button size='xs' variant={'common'}>{t('AddNewPicture')}</Button>
+                            <Button size='xs' variant={'delete'} >{t('Delete')}</Button>
+                        </Flex>
+                    </Flex>
+    
+                </Box>
+    
+    
             </Flex>
         </Box>
-        <Box> 
-            <Box width={'100%'} mt='2vh' mb='2vh' height={'1px'} bg='gray.300'/>
-            <Flex flexDir={'row-reverse'}> 
-                <Button variant={'common'} onClick={() => {}} isDisabled={(JSON.stringify(userDataRef.current) === JSON.stringify(organizationData)) &&(JSON.stringify(organizationDataRef.current) === JSON.stringify(userData)) }>{waitingSend?<LoadingIconButton/>:t('SaveChanges')}</Button>
-            </Flex>
-        </Box>
+       
     </>)
 }
 

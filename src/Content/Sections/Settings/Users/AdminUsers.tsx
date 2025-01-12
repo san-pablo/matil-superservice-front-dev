@@ -1,12 +1,12 @@
 
 //REACT
-import  { useState, useEffect, Dispatch, SetStateAction, Fragment, useMemo } from 'react'
+import  { useState, useEffect, Dispatch, SetStateAction, useMemo } from 'react'
 import { useAuth } from '../../../../AuthContext'
 import { useTranslation } from 'react-i18next'
 //FETCH DATA
 import fetchData from "../../../API/fetchData"
 //FRONT
-import { Flex, Text, Box, IconButton, Tooltip, Button, Checkbox, Skeleton } from "@chakra-ui/react"
+import { Flex, Text, Box, IconButton, Tooltip, Button, Skeleton } from "@chakra-ui/react"
 //COMPONENTS
 import EditText from '../../../Components/Reusable/EditText'
 import LoadingIconButton from '../../../Components/Reusable/LoadingIconButton'
@@ -18,6 +18,7 @@ import parseMessageToBold from '../../../Functions/parseToBold'
 //ICONS
 import { BsClipboard2Check, BsTrash3Fill } from "react-icons/bs"
 import { FaPlus } from 'react-icons/fa6'
+import { useAuth0 } from '@auth0/auth0-react'
 
 //TYPING
 interface UserData  {
@@ -41,6 +42,7 @@ const NewUserBox = ({userData, setUserData, setShowCreateNewUser}:NewUserBoxProp
     //CONSTANTS
     const auth = useAuth()
     const { t } = useTranslation('settings')
+    const {  getAccessTokenSilently } = useAuth0()
 
     //SHOW USER ERROR
     const [showError, setShowError] = useState<string>('')
@@ -51,7 +53,7 @@ const NewUserBox = ({userData, setUserData, setShowCreateNewUser}:NewUserBoxProp
      
     //CREATE A NEW USER FUNCTION
     const createNewUser = async() => {
-       const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/users`, setWaiting:setWaitingCreate, requestForm:newUserInfo,auth:auth, method:'post'})
+       const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/users`, getAccessTokenSilently,  setWaiting:setWaitingCreate, requestForm:newUserInfo,auth:auth, method:'post'})
        if (response?.status === 200 && response?.data) {
            const newInvitationKey = response.data.invitation_key
            const newUser = {...newUserInfo, is_active:true, invitation_key:newInvitationKey, name:response.data.name, surname:response.data.surname}
@@ -122,6 +124,7 @@ function AdminUsers () {
 
     //CONSTANTS
     const { t } = useTranslation('settings')
+    const {  getAccessTokenSilently } = useAuth0()
     const auth = useAuth()
     const usersColumnsMap:{[key:string]:[string, number]} = {'name':[t('Name'), 150], 'surname':[t('Surname'), 200], 'email':[t('Mail'), 200], 'is_admin':[t('Rol'), 90], 'is_active':[t('Status'), 60], 'invitation_key':[t('InvitationCode'), 350]}
 
@@ -134,8 +137,8 @@ function AdminUsers () {
       useEffect(() => {
         const filterUserData = () => {
           const filtered = userData.filter(user =>
-            user.name.toLowerCase().includes(text.toLowerCase()) ||
-            user.surname.toLowerCase().includes(text.toLowerCase()) ||
+            (user?.name || '').toLowerCase().includes(text.toLowerCase()) ||
+            (user?.surname || '').toLowerCase().includes(text.toLowerCase()) ||
             user.email.toLowerCase().includes(text.toLowerCase())
           )
           setFilteredUserData(filtered)
@@ -146,7 +149,7 @@ function AdminUsers () {
     
     //FETCH INITIAL DATA
     useEffect(() => {
-        fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/users`, setValue:setUserData, setWaiting:setWaitingInfo, auth})
+        fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/users`, setValue:setUserData, getAccessTokenSilently, setWaiting:setWaitingInfo, auth})
         document.title = `${t('Settings')} - ${t('Users')} - ${auth.authData.organizationName} - Matil`
     }, [])
  
@@ -158,7 +161,7 @@ function AdminUsers () {
     const [userToDelete, setUserToDelete] = useState<UserData | null>(null)
     const handleDeleteUsers = async() => {
 
-        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/users`, setWaiting:setWaitingDelete, params:{email:userToDelete?.email},auth:auth, method:'delete'})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/users`, getAccessTokenSilently,  setWaiting:setWaitingDelete, params:{email:userToDelete?.email},auth:auth, method:'delete'})
         if (response && response.status === 200) {
             const updatedUserData = userData.filter(user =>  user.email !== userToDelete?.email)
             setUserData(updatedUserData)
@@ -191,9 +194,16 @@ function AdminUsers () {
         {userToDelete && memoizedDeleteBox}
         {showCreateNewUser && memoizedNewUserBox}
 
-        <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('UsersTable')}</Text>
-        <Text color='gray.600' fontSize={'.9em'}>{t('UsersDes')}</Text>
+        <Flex alignItems={'end'} justifyContent={'space-between'}> 
+            <Box> 
+                <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('UsersTable')}</Text>
+                <Text color='gray.600' fontSize={'.9em'}>{t('UsersDes')}</Text>
+            </Box>
+            <Button leftIcon={<FaPlus/>} size='sm' variant={'main'} onClick={() => {setShowCreateNewUser(!showCreateNewUser)}}>{t('CreateUser')}</Button>
+        </Flex>
         <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/>
+
+  
         <Box width={'350px'}> 
             <EditText value={text} setValue={setText} searchInput={true}/>
         </Box>
@@ -201,8 +211,7 @@ function AdminUsers () {
             <Skeleton isLoaded={!waitingInfo}> 
                 <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('UsersCount', {count:userData.length})}</Text>
             </Skeleton>
-            <Button leftIcon={<FaPlus/>} size='sm' variant={'common'} onClick={() => {setShowCreateNewUser(!showCreateNewUser)}}>{t('CreateUser')}</Button>
-        </Flex>
+         </Flex>
 
          <Skeleton  isLoaded={!waitingInfo}> 
             <Table data={filteredUserData} CellStyle={UserCellStyles} excludedKeys={['avatar_image_url', 'alias', 'call_status']} noDataMessage={t('NoUsers')} columnsMap={usersColumnsMap}  deletableFunction={(row, index) => setUserToDelete(row)} />

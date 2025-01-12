@@ -4,7 +4,9 @@ import { IoMdMail, IoLogoWhatsapp } from "react-icons/io"
 import { IoChatboxEllipses, IoLogoGoogle } from "react-icons/io5"
 import { AiFillInstagram } from "react-icons/ai"
 import { FaPhone } from "react-icons/fa"
+import { FaCloud } from "react-icons/fa6"
 
+ 
 //USER INFO AND ORGANIZATION
 export interface Organization {
     id: number
@@ -23,10 +25,11 @@ export interface userInfo {
 }
 
 //VIEWS
-interface Condition {
+export interface Condition {
     column: ConversationColumn
-    operation_type: 'geq' | 'leq' | 'eq'
+    operation_type: string
     value: any
+    is_customizable:boolean
 }
 interface Order {
     column: ConversationColumn
@@ -68,9 +71,11 @@ export type ConversationColumn =
   | 'theme'
   | 'urgency_rating'
   | 'status'
-  | 'deletion_date'
+  | 'deletion_scheduled_at'
   | 'unseen_changes'
   | 'closed_at'
+  | 'call_status'
+  | 'call_duration'
 
   
 
@@ -89,8 +94,10 @@ export const columnConversationsMap: ColumnsConversationsMap = {
     closed_at: 150,
     title: 300,
     urgency_rating: 130,
-    deletion_date: 180,
+    deletion_scheduled_at: 180,
     unseen_changes: 250,
+    call_status:100,
+    call_duration:70
   }
 
 export interface ConversationsTableProps {
@@ -114,10 +121,10 @@ export interface ClientConversationsProps{
 export interface ConversationsData {
     id: number
     local_id: number
-    user_id:number
+    user_id:string
     conversation_id: number
     title: string
-    channel_type: string
+    channel_id: string
     created_at: string
     updated_at: string
     solved_at: string
@@ -125,6 +132,9 @@ export interface ConversationsData {
     urgency_rating: number
     status: 'new' | 'open' |'solved' | 'pending' | 'closed'
     unseen_changes: boolean
+    call_status:'ongoing' | 'completed'
+    call_duration:number
+    call_url:string
     custom_attributes:{ [key: string]: any }
 }
 
@@ -249,34 +259,6 @@ export interface ContactBusiness {
     custom_attributes:{ [key: string]: any }
 }
 
-//FLOWS
-export type FlowsColumn = 
-  | 'id'
-  | 'name'
-  | 'description'
-  | 'is_active'
-  | 'number_of_channels'
-  | 'created_at'
-  | 'updated_at'
-
-export interface FlowsData {
-    id:number
-    name: string
-    description:string
-    is_active: boolean
-    number_of_channels:number
-    created_at:string
-    updated_at:string
-  }
-export const columnsFlowsMap: ColumnsMap = {
-    name: 200,
-    description:  350,
-    is_active: 100,
-    number_of_channels:180,
-    created_at:  180,
-    updated_at: 180
- }
-
  //FUNCTIONS
  export interface FunctionTableData  {
     uuid:string
@@ -284,6 +266,7 @@ export const columnsFlowsMap: ColumnsMap = {
     description:string
     number_of_errors:number
     is_active:boolean
+    icon:string
  }
  export interface FunctionsData {
     uuid:string
@@ -311,7 +294,7 @@ export type FlowMessage = {
 }
 
 export type FieldAction = {
-    motherstructure:'conversation' | 'contact' | 'contact_business'
+    motherstructure:'conversation' | 'contact' | 'contact_business' | 'custom'
     is_customizable:boolean
     name:string
     operation?:string
@@ -331,7 +314,7 @@ export type FunctionType = {
 export type MessagesProps = {
     id:number
     timestamp:string
-    sender_type:number
+    sender_type:string
     type:string
     content:any
 }
@@ -341,17 +324,19 @@ export type MessagesData = {
 }
 
 //STATES MAP
-export const statesMap:{[key in 'new' | 'open' |'solved' | 'pending' | 'closed']: [string, string]} = 
+export const statesMap:{[key in 'new' | 'open' |'solved' | 'pending' | 'closed' | 'ongoing' | 'completed']: [string, string]} = 
 {
-    'new':['yellow.100', 'yellow.600'],
-    'open':['red.100', 'red.600'],
-    'pending':['cyan.100', 'cyan.600',],
-    'solved':['green.100', 'green.600'],
-    'closed':['gray.100', 'gray.600']
+    'new':['yellow.100', '#B7791F'],
+    'completed':['green.100', '#2F855A'],
+    'ongoing':['cyan.100', '#00A3C4'],
+    'open':['red.200', '#C53030'],
+    'pending':['blue.100', '#00A3C4',],
+    'solved':['#B7F1CB', '#2F855A'],
+    'closed':['gray.200', '#4A5568']
 }
 
 //FILTERS AND MAPPING
-export type Channels = 'email' | 'whatsapp' | 'instagram' | 'webchat' | 'google_business' | 'phone'
+export type Channels = 'email' | 'whatsapp' | 'instagram' | 'webchat' | 'google_business' | 'phone' | 'voip'
 export const logosMap:{[key in Channels]: [IconType, string]} = 
     { 
         'email':[ IoMdMail, 'red.600'],
@@ -359,21 +344,22 @@ export const logosMap:{[key in Channels]: [IconType, string]} =
         'webchat':[IoChatboxEllipses, 'cyan.400'], 
         'google_business':[ IoLogoGoogle, 'blue.400'],
         'instagram': [AiFillInstagram, 'pink.700'], 
-        'phone':[ FaPhone, 'blue.400']
+        'phone':[ FaPhone, 'blue.400'],
+        'voip':[ FaCloud, 'blue.400']
 
     }
 export type ContactChannel = 'email_address' | 'phone_number' |  'instagram_username' | 'webchat_uuid' |  'google_business_id'
-export const contactDicRegex:{[key in ContactChannel]:[string, RegExp, number, Channels]} = {
-    'email_address': ['Mail', /^[\w\.-]+@[\w\.-]+\.\w+$/, 50, 'email'],
-    'phone_number': ['Teléfono', /^\+?\d{1,15}$/, 16, 'whatsapp'],
-    'instagram_username': ['Instagram', /^[a-zA-Z0-9._]{1,30}$/, 30, 'instagram'],
-    'webchat_uuid': ['Web Id', /^[a-zA-Z0-9._-]{1,40}$/, 40, 'webchat'],
-    'google_business_id':['Google Business', /^[a-zA-Z0-9._-]{1,40}$/, 40, 'google_business']
+export const contactDicRegex:{[key in ContactChannel]:[RegExp, number, Channels]} = {
+    'email_address': [ /^[\w\.-]+@[\w\.-]+\.\w+$/, 50, 'email'],
+    'phone_number': [/^\+?\d{1,15}$/, 16, 'whatsapp'],
+    'instagram_username': [ /^[a-zA-Z0-9._]{1,30}$/, 30, 'instagram'],
+    'webchat_uuid': [/^[a-zA-Z0-9._-]{1,40}$/, 40, 'webchat'],
+    'google_business_id':[ /^[a-zA-Z0-9._-]{1,40}$/, 40, 'google_business']
   }
 
 //SETTINGS
-export type IconKey = 'organization' | 'users' | 'support' | 'workflows' | 'actions' | 'channels' | 'integrations' | 'main'
-export type SubSectionProps = string[][]
+export type IconKey = 'organization' | 'users' | 'help-centers' | 'workflows' | 'actions' | 'channels' | 'tilda' | 'integrations' | 'main' 
+export type SubSectionProps = (string[][] | any)
 export type SectionsListProps = {[key in IconKey]: string}
 
 export type ActionsType = 'email_csat' |  'whatsapp_csat' | 'webchat_csat' | 'agent_email_notification' | 'motherstructure_update'
@@ -386,35 +372,26 @@ export interface ActionDataType  {
 }
  
 //MATILDA CONFIGURATION PROPS
-export interface ConfigProps { 
-    uuid:string 
-    name:string 
-    description:string 
-    channels_ids:string[]
-}
+ 
 export interface MatildaConfigProps {
     uuid:string 
-
     name:string 
     description:string
-
+    introduce_assistant:boolean
+    assistant_name:string
     base_system_prompt:string 
     tone: string
     allowed_emojis: string[]
     allow_sources:boolean 
     help_center_id:string 
-
     allow_agent_transfer:boolean
     business_hours_agent_transfer_message:string
     non_business_hours_agent_transfer_message:string
-
     delay_response:boolean
     minimum_seconds_to_respond: number
     maximum_seconds_to_respond: number
-
     all_conditions: FieldAction[]
     any_conditions: FieldAction[]
-
     channel_ids:string[]
     functions_uuids:string[]
     help_centers_ids:string[]
@@ -428,14 +405,14 @@ export interface ContentData {
     uuid: string 
     type: 'internal_article' | 'public_article' | 'folder' | 'pdf' | 'snippet' | 'website' | 'subwebsite'
     title: string
-    folder_uuid?:string
+    folder_uuid?:string | null
     description?: string
     language: string
     is_available_to_tilda: boolean
     created_at: string
     updated_at: string
-    created_by: number
-    updated_by: number
+    created_by: string
+    updated_by: string
     tags: string[]
     is_ingested?:boolean
     public_article_help_center_collections:string[]
@@ -446,6 +423,7 @@ export interface ContentData {
     internal_article_content?: {text: string},
     pdf_content?: {url: string, text: string},
     website_content?: {pages: {url: string, text: string}}
+    
 }
 
 //FOLDERS
@@ -457,4 +435,73 @@ export interface Folder {
     children: Folder[]
 }
 
+/*STATS */
+export type metrics = 'total_conversations' | 'average_response_time' | 'total_messages' | 'csat_score' | 'nps_score' | 'conversations_with_tilda_involvement' | 'tilda_messages_sent' | 'tilda_words_sent' | 'total_solved_conversations' 
+export interface MetricType {
+    uuid: string
+    report_chart_uuid: string
+    metric_name: metrics
+    aggregation_type: 'sum' | 'avg' | 'median' | 'count' | 'min' | 'max' 
+    legend_label: string
+    configurations: {[key:string]:any}
+    filter_conjunction: 'AND' | 'OR'
+    filters: {field_name: string, operator: 'eq' | 'neq' | 'geq' | 'leq' | 'in' | 'nin' | 'l' | 'g', value: any}[]
+}
 
+export interface ChartType   {
+    uuid: string
+    report_uuid: string
+    type: 'KPI' | 'column' | 'bar' | 'donut' | 'line' | 'area' | 'table'
+    title: string
+    date_range_type: 'relative' | 'fixed'
+    date_range_value: string
+    view_by: {type: 'time' | 'channel_type' |  'theme' | 'user_id' | 'channel_id' | 'status' | 'urgency_rating' | 'is_transferred', configuration:any}
+    segment_by: {type:null | 'time' | 'channel_type' |  'theme' | 'user_id' | 'channel_id' | 'status' | 'urgency_rating' | 'is_transferred',  configuration:any}
+    timezone?: string
+    configuration: {x:number, y:number, h:number, w:number, [key:string]:any},
+    metrics: MetricType[]
+    data: {[key:string]:any}[]
+  }
+
+
+export interface ReportDataType {
+    uuid: string
+    name: string
+    icon:string
+    description: string
+    user_id: string
+    organization_id: number
+    created_at: string
+    updated_at: string
+  }
+export interface ReportType {
+    uuid: string
+    name: string
+    description: string
+    user_id: string
+    organization_id: number
+    created_at: string
+    updated_at: string
+    charts:ChartType[]
+    chart_positions:{[key:string]:{x:number, y:number, w:number, h:number}}
+  }
+
+export interface ConfigProps { 
+    uuid:string 
+    name:string 
+    description:string 
+    channels_ids:string[]
+}
+
+  
+ 
+export interface ChannelsType  {
+    id: string
+    uuid: string
+    display_id: string
+    name: string
+    channel_type: string
+    is_active: boolean
+}
+
+  

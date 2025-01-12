@@ -1,15 +1,15 @@
 //PREACT COMPACT
 import { useState, useEffect, useRef, Fragment } from 'react'
+import { useAuth } from '../../../../AuthContext'
+import { useTranslation } from 'react-i18next'
 //STYLES
 import './styles.css'
-import { io } from 'socket.io-client'
 //FUNCTIONS
 import downloadFile from '../../../Functions/downloadFile'
 import formatFileSize from '../../../Functions/formatFileSize'
 import timeAgo from '../../../Functions/timeAgo'
 import timeStampToDate from '../../../Functions/timeStampToString'
-import { useAuth } from '../../../../AuthContext'
-import { useTranslation } from 'react-i18next'
+ 
  
 //TYPING
 type ConversationType = {conversation_id:string, created_at:string, theme:string, pending:boolean}
