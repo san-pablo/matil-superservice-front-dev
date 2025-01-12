@@ -3,13 +3,12 @@
 */
 
 //REACT
-import { useState, useEffect, useRef,useMemo,lazy, useCallback } from "react"
+import { useState, useEffect, useRef,useMemo,lazy, useCallback, Dispatch, SetStateAction, Suspense } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "../../../AuthContext" 
 import { useSession } from "../../../SessionContext"
 import { useTranslation } from 'react-i18next'
 import { useAuth0 } from "@auth0/auth0-react"
-
 //FETCH DATA
 import fetchData from "../../API/fetchData"
 import LoadingIconButton from "../../Components/Reusable/LoadingIconButton"
@@ -18,7 +17,6 @@ import { Flex, Box, Text, Icon, Button, IconButton, Skeleton, Tooltip, Portal, c
 import { motion, AnimatePresence, isValidMotionProp } from 'framer-motion'
 //COMPONENTS
 import ActionsButton from "./ActionsButton"
-import EditText from "../../Components/Reusable/EditText"
 import Table from "../../Components/Reusable/Table"
 import StateMap from "../../Components/Reusable/StateMap"
 import ConfirmBox from "../../Components/Reusable/ConfirmBox"
@@ -28,14 +26,17 @@ import DetermineConversationViews from "../../MangeData/DetermineConversationVie
 import timeStampToDate from "../../Functions/timeStampToString"
 import timeAgo from "../../Functions/timeAgo"
 import showToast from "../../Components/Reusable/ToastNotification"
+import useOutsideClick from "../../Functions/clickOutside"
 import parseMessageToBold from "../../Functions/parseToBold"
 //ICONS
 import { IoIosArrowForward, IoIosArrowBack } from "react-icons/io"
 import { MdDeselect } from "react-icons/md"
 import { FaExclamationCircle, FaExclamationTriangle, FaInfoCircle, FaCheckCircle, FaRegEdit } from 'react-icons/fa'
-import { FaArrowRotateLeft, FaPlus } from "react-icons/fa6"
+import { FaArrowRotateLeft, FaMagnifyingGlass, FaPlus, FaTable } from "react-icons/fa6"
 import { BiEditAlt } from "react-icons/bi"
 import { HiTrash } from "react-icons/hi2"
+import { PiSidebarSimpleBold } from "react-icons/pi"
+import { TbLayoutSidebarFilled } from "react-icons/tb"
 //TYPING
 import { Conversations, ConversationColumn, Views, ViewType, ConversationsTableProps, logosMap, Channels, statesMap  } from "../../Constants/typing"
   
@@ -97,7 +98,7 @@ const CellStyle = ({column, element}:{column:string, element:any}) => {
     const { t } = useTranslation('conversations')
     const t_formats = useTranslation('formats').t
 
-    if (column === 'local_id') return  <Text fontSize={'.9em'} color='gray' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>#{element}</Text>
+    if (column === 'local_id') return  <Text fontSize={'.9em'} color='gray.600' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>#{element}</Text>
      else if (column === 'user_id')  return  <Text fontSize={'.9em'} fontWeight={'medium'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element === 'matilda' ?'Matilda':element === 'no_user' ? t('NoAgent'):(auth?.authData?.users?.[element as string | number]?.name || t('NoAgent')) }</Text>
     else if (column === 'unseen_changes') 
         return(
@@ -110,7 +111,7 @@ const CellStyle = ({column, element}:{column:string, element:any}) => {
     else if (column === 'urgency_rating' && typeof element === 'number') {return <AlertLevel t={t} rating={element}/>}
     else if (column === 'created_at' || column === 'updated_at' || column === 'solved_at' || column === 'closed_at') {
         return(
-        <Tooltip  label={timeStampToDate(element as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='0rem' fontSize='.8em' p='6px'> 
+        <Tooltip  label={timeStampToDate(element as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.5rem' fontSize='.8em' p='6px'> 
             <Text fontSize={'.9em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(element as string, t_formats)}</Text>
         </Tooltip>)
     }
@@ -139,22 +140,21 @@ function ConversationsTable({socket}:{socket:any}) {
     const auth = useAuth()
     const session= useSession()
     const navigate = useNavigate()
-    const tableRef = useRef<HTMLDivElement>(null)
-    const location = useLocation().pathname
+     const tableRef = useRef<HTMLDivElement>(null)
+    const location = useLocation()
+    const currentSearch = location.search
+
+    const conversationContainerRef = useRef<HTMLDivElement>(null)
+    const tableContainerRef = useRef<HTMLDivElement>(null)
+    const changeViewButtonRef = useRef<HTMLDivElement>(null)
+    useOutsideClick({ref1:conversationContainerRef,  ref2:tableContainerRef, ref3:changeViewButtonRef,  onOutsideClick:() => navigate(`/conversations${currentSearch}`)})
+
 
     //TABLE MAPPING
-    const columnsConversationsMap:{[key in ConversationColumn]:[string, number]} = {id: [t('id'), 50], local_id: [t('local_id'), 50], status:  [t('status'), 100], channel_type: [t('channel_type'), 150], theme:  [t('theme'), 200], user_id: [t('user_id'), 200], created_at: [t('created_at'), 150],updated_at: [t('updated_at'), 180], solved_at: [t('solved_at'), 150],closed_at: [t('closed_at'), 150],title: [t('title'), 300], urgency_rating: [t('urgency_rating'), 130], deletion_scheduled_at: [t('deletion_date'), 180], unseen_changes: [t('unseen_changes'), 200],  call_status: [t('call_status'), 150], call_duration: [t('call_duration'), 150], }
+    const columnsConversationsMap:{[key in ConversationColumn]:[string, number]} = {id: [t('id'), 50], local_id: [t('local_id'), 50], status:  [t('status'), 100], channel_type: [t('channel_type'), 100], theme:  [t('theme'), 200], user_id: [t('user_id'), 200], created_at: [t('created_at'), 150],updated_at: [t('updated_at'), 180], solved_at: [t('solved_at'), 150],closed_at: [t('closed_at'), 150],title: [t('title'), 300], urgency_rating: [t('urgency_rating'), 130], deletion_scheduled_at: [t('deletion_date'), 180], unseen_changes: [t('unseen_changes'), 200],  call_status: [t('call_status'), 150], call_duration: [t('call_duration'), 150], }
     
-    const [isConversationOpened,setIsConversationOpened] = useState<boolean>(location.split('/')[location.split('/').length - 2] === 'conversation')
-    const [conversationWidth,setConversationWidth ] = useState<Number>(isConversationOpened ?Math.min(window.innerWidth * 0.7, window.innerWidth - 550) : Math.max(window.innerWidth * 0.6, window.innerWidth - 275 - 240) - 200)
-    useEffect(() => {
-        const handleResize = () => {
-            setConversationWidth(isConversationOpened ?Math.min(window.innerWidth * 0.7, window.innerWidth - 550) : Math.max(window.innerWidth * 0.6, window.innerWidth - 275 - 240) - 200)
-        }
-        handleResize()
-        window.addEventListener('resize', handleResize);
-        return () => {window.removeEventListener('resize', handleResize)}
-    }, [isConversationOpened])
+    const [isConversationOpened,setIsConversationOpened] = useState<boolean>(location.pathname.split('/')[location.pathname.split('/').length - 2] === 'conversation')
+   
 
     //WAITING NEW CONVERSATIONS ON LIST
     const debounce = (func:any, delay:any) => {
@@ -162,11 +162,9 @@ function ConversationsTable({socket}:{socket:any}) {
         return (...args:any) => {
             clearTimeout(timeout);
             timeout = setTimeout(() => func(...args), delay);
-        };
-    };
+        }
+    }
     
-    const [waitingInfoList, setWaitingInfoList] = useState<boolean>(false)
-
     {/*
     const listRef = useRef<HTMLDivElement>(null);
  
@@ -217,6 +215,26 @@ function ConversationsTable({socket}:{socket:any}) {
     }, [])
     */}
  
+    const [selectedTableSection, setSelectedTabelSection] = useState<'table' | 'list'>('table')
+ 
+    useEffect(() => {
+        const params = new URLSearchParams(location.search)
+        params.set('view', 'table')
+        navigate(`${location.pathname}?view=${'table'}`)
+    }, [])
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const view = params.get('view')
+        console.log(view)
+        setSelectedTabelSection(view as any)
+        setIsConversationOpened(location.pathname.split('/')[location.pathname.split('/').length - 2] === 'conversation' || view === 'list')
+
+    }, [location.search, location.pathname])
+
+   
+
+    const [hideViews, setHideViews] = useState<boolean>(false)
 
     //WAIT INFO AND FORCE TH REUPDATE OF THE TABLE ON DELETE
     const [waitingInfo, setWaitingInfo] = useState<boolean>(true)
@@ -232,7 +250,6 @@ function ConversationsTable({socket}:{socket:any}) {
     const [selectedView, setSelectedView] = useState<ViewType>((localStorage.getItem('currentView') && JSON.parse(localStorage.getItem('currentView') as string)) || getFirstView(auth.authData.views as Views))
     const allConversationsIdsRef = useRef<number[]>([])
     const [selectedIndex, setSelectedIndex] = useState<number>(-1)
- 
  
     //SHOW FILTERS AND FILTERS INFO
     const isRetrievingData = useRef<boolean>(false)
@@ -267,7 +284,7 @@ function ConversationsTable({socket}:{socket:any}) {
         })
     },[JSON.stringify(auth.authData.organizationId)])
 
-    useEffect(() => {if (location.endsWith('conversations')) document.title = `${t('Conversations')} - ${selectedView.name} - ${auth.authData.organizationName} - Matil`},[selectedView, location])
+    useEffect(() => {if (location.pathname.endsWith('conversations')) document.title = `${t('Conversations')} - ${selectedView.name} - ${auth.authData.organizationName} - Matil`},[selectedView, location])
    
     //FETCH NEW DATA WHEN THE VIEW CHANGE
     useEffect(() => {
@@ -317,16 +334,15 @@ function ConversationsTable({socket}:{socket:any}) {
         fetchConversationData()
     }, [selectedView])
 
-    useEffect(() => {
-        setIsConversationOpened(location.split('/')[location.split('/').length - 2] === 'conversation')
-    },[location])
+ 
     
      //NAVIGATE TO THE CLICKED CONVERSATIONS AND SHOW IT IN THE HEADER
     const [selectedElements, setSelectedElements] = useState<number[]>([])
     const handleClickRow  = (row:ConversationsTableProps, index:number) => {
         session.dispatch({type:'UPDATE_CONVERSATIONS_TABLE_SELECTED_ITEM', payload:{view:{view_type:selectedView?.type, view_index:selectedView?.index}, index}})
         if (selectedView?.type === 'deleted') {showToast({message:t('NoTrash'), type:'failed'});return}
-        navigate(`/conversations/conversation/${row.id}`) 
+        navigate(`/conversations/conversation/${row.id}${currentSearch}`)
+        setSelectedIndex(index) 
     }
 
     //GET ALL CONVERSATIONS IDS
@@ -370,6 +386,23 @@ function ConversationsTable({socket}:{socket:any}) {
             }
         }
     }
+
+    useEffect(() => {
+        const handleKeyDown = (event:KeyboardEvent) => {
+              switch (event.code) {           
+                case 'Escape':
+                    console.log(currentSearch)
+                    if (!location.pathname.endsWith('conversations')) navigate(`/conversations${currentSearch}`)
+                    break        
+                default:
+                  break
+              }
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown)
+        }
+    },[location, currentSearch])
 
  
     //DELETE AND RECOVER CONVERSATIONS LOGIC
@@ -461,28 +494,59 @@ function ConversationsTable({socket}:{socket:any}) {
         </ConfirmBox>
     ), [showConfirmDelete])
 
-    
+    const tableWidthHideView =`calc(100vw - 45px)`  
+    const tableWidthShowView =`calc(100vw - 45px - 220px)`  
 
-     const sendBoxWidth = `calc(100vw - 55px - ${isConversationOpened ? conversationWidth:0}px)`
+    const listWidthHideView =`calc(100vw - 45px - ${Math.min(window.innerWidth * 0.6, window.innerWidth - 500)}px)`  
+    const listWidthShowView =`calc(100vw - 45px - ${Math.min(window.innerWidth * 0.6, window.innerWidth - 500)}px - 220px)`  
 
+     
      //FRONT
-    return(
-        <Flex position={'relative'} width={'calc(100vw - 55px)'} bg='brand.hover_gray' height={'100vh'}> 
+    return(<>
+            <Box position='fixed' ref={changeViewButtonRef} zIndex={100} bottom={selectedElements.length === 0 ? '1vw':'calc(60px + 1vw)'} left={hideViews?'calc(45px + 2vw)':'calc(45px +  220px + 2vw)'}transition={'left 0.2s ease-in-out, bottom .1s ease-in-out'}> 
+                 <ChangeViewButton selectedTableSection={selectedTableSection} setSelectedTabelSection={setSelectedTabelSection} firstId={conversations?.page_data?.[0]?.id || -1}/>
+            </Box>
 
-            <MotionBox initial={{ width: sendBoxWidth  }} animate={{ width: sendBoxWidth}} exit={{ width: sendBoxWidth }} transition={{ duration: '.2' }}  
-                width={sendBoxWidth}    overflowY={'hidden'} >
-                
-                <Flex height={'100vh'}  color='black' >
-                    {/*VIEWS SELECTION*/}
-                    <Flex zIndex={100}  gap='20px' py='2vh' width={'220px'} flexDir={'column'} justifyContent={'space-between'} borderRightWidth={'1px'} borderRightColor='gray.200' >
-                        <Flex justifyContent={'space-between'} flexDir={'column'} flex='1' minH={0}>  
-                           
+            <Suspense fallback={<></>}>    
+                <AnimatePresence>
+                    {(isConversationOpened ) && 
+                    <MotionBox ref={conversationContainerRef} overflowY={'scroll'} w={Math.min(window.innerWidth * 0.6, window.innerWidth - 500)} initial={{ right: -25  + 'px', opacity: isConversationOpened ||selectedTableSection === 'list'?0:1}} animate={{ right: 0,  opacity: isConversationOpened ||selectedTableSection === 'list'?1:0  }} exit={{ right:-25 ,  opacity: isConversationOpened ||selectedTableSection === 'list'?0:1}} transition={{ duration: '.125', ease: 'easeOut'}} 
+                    bg='white' top={0} minHeight="100vh" maxHeight="100vh" boxShadow={"-4px 0 6px -2px rgba(0, 0, 0, 0.1)"} borderLeftColor={'gray.200'} borderLeftWidth={'1px'} right={0} pointerEvents={isConversationOpened ||selectedTableSection === 'list' ?'auto':'none'} height={'100vh'}   position='absolute' zIndex={100} overflow={'hidden'} >
+                            <ConversationResponse socket={socket} fetchConversationsDataWithFilter={fetchConversationsDataWithFilter} />
+                    </MotionBox>}
+                </AnimatePresence>
+            </Suspense>
+            
+            {showConfirmDelete && memoizedConfirmDeleteBox}
+
+
+            <Flex position={'relative'} width={'calc(100vw - 45px)'} bg='brand.hover_gray' height={'100vh'}> 
+ 
+                     {/*VIEWS SELECTION*/}
+                    <Flex zIndex={10} overflow={'hidden'}borderRightColor={'gray.200'} borderRightWidth={'1px'}  width={hideViews ? 0:220}transition={'width ease-in-out .2s'}  gap='20px' py='2vh' flexDir={'column'} justifyContent={'space-between'} >
+                        <Flex justifyContent={'space-between'} w='calc(220px)' flexDir={'column'} flex='1' minH={0}>  
+                            
+                            <Box px='1vw' > 
+                                <Flex  alignItems={'center'} justifyContent={'space-between'}> 
+                                    <Text  fontWeight={'semibold'} fontSize={'1.2em'}>{t('Inbox')}</Text>
+                                    <IconButton bg='transparent' _hover={{bg:'brand.gray_1', color:'brand.text_blue'}} borderColor={'gray.200'} borderWidth={'1px'} variant={'common'}  h='28px' w='28px' aria-label="create-function" size='xs'>
+                                    <Tooltip  label={t('Search') + '...'}  placement='right'  bg='white' color='black'  borderRadius='.5rem' fontSize='.7em' p='6px'> 
+                                        <Box display="flex" h='100%' w='100%' alignItems="center" justifyContent="center" transition="transform .5s ease-in-out"  _hover={{ transform: "rotate(90deg)" }} >
+                                            <FaMagnifyingGlass size="14px" />
+                                        </Box>
+                                    </Tooltip>
+
+                                    </IconButton>
+                                </Flex>
+                                <Box h='1px' w='100%' bg='gray.300' mt='2vh' mb='2vh'/>
+                            </Box>
+
                             <Box height={'100px'} flex='1' overflow={'scroll'}  px='1vw'>
                                 
-                                    <Text  fontWeight={'semibold'} mb='1vh'>{t('PrivateViews')}</Text>
+                                    <Text  fontWeight={'medium'} mb='1vh'>{t('PrivateViews')}</Text>
                                     
-                                     <Box mb='4vh'> 
-                                     {(auth.authData.views && 'private_views' in auth.authData.views && auth.authData.views.private_views.length > 0 ) ? <>
+                                        <Box mb='4vh'> 
+                                        {(auth.authData.views && 'private_views' in auth.authData.views && auth.authData.views.private_views.length > 0 ) ? <>
 
                                         {auth.authData.views.private_views.map((view, index) => {
                                             const isSelected = selectedView.index === index && selectedView.type === 'private'
@@ -495,14 +559,14 @@ function ConversationsTable({socket}:{socket:any}) {
                                         })}
                                         </> :
                                         <> 
-                                         <Button w='100%'  onClick={() => navigate(`/settings/workflows/edit-views/edit`)} leftIcon={<FaPlus/>} bg='transparent' borderColor={'gray.300'} borderWidth={'1px'} variant={'common'} size='xs'>{t('CreatePrivateView')}</Button>
+                                            <Button w='100%'  onClick={() => navigate(`/settings/workflows/edit-views/edit`)} leftIcon={<FaPlus/>} bg='transparent' borderColor={'gray.300'} borderWidth={'1px'} variant={'common'} size='xs'>{t('CreatePrivateView')}</Button>
                                         </>
                                         }
                                     </Box>
                                     
-                   
+                    
                                 {(auth.authData.views && 'shared_views' in auth.authData.views && auth.authData.views.shared_views.length > 0 ) &&   <>
-                                    <Text fontWeight={'semibold'} mb='1vh' >{t('PublicViews')}</Text>
+                                    <Text fontWeight={'medium'} mb='1vh' >{t('PublicViews')}</Text>
                                     <Box> 
                                         {auth.authData.views.shared_views.map((view, index) => {
                                         const isSelected = selectedView.index === index && selectedView.type === 'shared'
@@ -517,78 +581,123 @@ function ConversationsTable({socket}:{socket:any}) {
                                 </>}
                             </Box>
                         </Flex>
-                        <Box px='1vw'>
+                        <Box px='1vw'  w='220px'>
                             
                             <Flex gap='10px' color='red' boxShadow={selectedView.type === 'deleted' ?'0 0 3px 0px rgba(0, 0, 0, 0.1)':''} borderWidth={'1px'} borderColor={selectedView.type === 'deleted' ? 'gray.200':'transparent'} justifyContent='space-between'  onClick={() => {if (!isRetrievingData.current) setSelectedView({index:0, type:'deleted', name:t('Trash')}); localStorage.setItem('currentView', JSON.stringify({index:0, type:'deleted', name:t('Trash')}))}} _hover={{bg:selectedView.type === 'deleted'? 'white':'brand.gray_2'}}  bg={selectedView.type === 'deleted'?'white':'transparent'}   transition={selectedView.type === 'deleted'?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}  fontWeight={selectedView.type === 'deleted'?  'medium':'normal'}fontSize={'.9em'} cursor={'pointer'} borderRadius={'.5rem'} p='6px'>
                                 <Flex gap='10px' alignItems={'center'}> 
                                     <Icon boxSize={'15px'} as={HiTrash}/>
                                     <Text mt='2px' transition={'transform .1s ease-in-out'}   transformOrigin="left center" transform={selectedView.type === 'deleted' ?'scale(1.02)':'scale(1)'} whiteSpace={'nowrap'} textOverflow={'ellipsis'}   overflow={'hidden'}>{t('Trash')}</Text>
-
-                                 </Flex>
+                                    </Flex>
                                 <Text>{auth.authData.views?.number_of_conversations_in_bin || 0}</Text>
                             </Flex>
 
                             <Box width={'100%'} mt='2vh' mb='2vh' height={'1px'} bg='gray.300' />
                             <Button w='100%' justifyContent={'start'} size='sm'variant={'common'} fontSize={'.9em'}  onClick={() => navigate(`/settings/workflows/edit-views`)} leftIcon={<FaRegEdit/>} bg='transparent'>{t('EditViews')}</Button>
-                           
+                            
                         </Box>
                     </Flex>
+ 
 
-                    {/* ACTIONS AND SHOW TABLE */}
-                    <Flex flexDir={'column'}  position='relative' w={'calc(100% - 250px)'}  flex='1'>
-                        <Flex px='1vw' pt='1vw' justifyContent={'space-between'} gap='10px'>
-                            <Text flex='1' minW={0} fontWeight={'medium'} fontSize={'1.4em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{selectedView.name}</Text>
-                            <AnimatePresence> 
-                                <MotionBox pointerEvents={isConversationOpened?'none':'auto'} width={isConversationOpened?0:'auto'} initial={{opacity:isConversationOpened?1:0, }} animate={{opacity:isConversationOpened?0:1}} exit={{opacity:isConversationOpened?1:0}} overflow={'hidden'}  transition={{ duration: '0.2', delay:'.3' }} >
-                                    <ActionsButton items={conversations?.page_data} view={selectedView} section={'conversations'} />
-                                </MotionBox>
-                            </AnimatePresence> 
-                        </Flex>
-                                    
-                        <Flex px='1vw' gap='15px' mt='1vh'> 
-                            <Box maxW={'100%'} w={'300px'}> 
-                                <EditText filterData={(text:string) => {fetchConversationsDataWithFilter({...filters, search:text})}}  value={filters?.search || ''} setValue={(value) => setFilters(prev => ({...prev, search:value}))} searchInput={true}/>
+                {/* ACTIONS AND SHOW TABLE */}
+                <AnimatePresence >
+
+                    {selectedTableSection === 'table' ?<>
+                    <MotionBox key="table-section" initial={{opacity:0}}  animate={{opacity:1}} exit={{opacity:0}}   transition={{ duration: '0.2',  ease: 'easeInOut'}} > 
+                        <Flex bg='brand.hover_gray' h='100vh' flexDir={'column'} width={hideViews ? tableWidthHideView:tableWidthShowView} minW={hideViews ? tableWidthHideView:tableWidthShowView} transition={'width ease-in-out .2s, min-width ease-in-out .2s'} right={0}   position="absolute" top={0} >
+                            
+                            <Flex px='2vw' pt='2vh' justifyContent={'space-between'} gap='10px'>
+                                <Flex flex={1} gap='10px' alignItems={'center'}> 
+                                    <Tooltip  label={t('HideViews')}  placement='right'  bg='white' color='black'  borderRadius='.5rem' fontSize='.7em' p='6px'> 
+                                        <IconButton bg='transparent' _hover={{bg:'brand.gray_1', color:'brand.text_blue'}} icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'18px'}/>} variant={'common'}  h='28px' w='28px' aria-label="create-function" size='xs' onClick={() => setHideViews(prev => (!prev))} />
+                                    </Tooltip>
+                                    <Text flex='1' minW={0} fontWeight={'medium'} fontSize={'1.2em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{selectedView.name}</Text>
+                                </Flex>
+                                <ActionsButton items={conversations?.page_data} view={selectedView} section={'conversations'} />
+                            </Flex>
+                                        
+                            <Flex px='2vw' mb='1vh' height={'20px'} ref={tableRef} mt='2vh' alignItems={'end'} justifyContent={'space-between'}  > 
+                                <Skeleton isLoaded={!waitingInfo} >
+                                    <Text  whiteSpace={'nowrap'}  fontWeight={'medium'} color='gray.600' > {t('ConversationsCount', {count:(conversations?.total_conversations || 0)})}</Text> 
+                                </Skeleton>
+
+                                <AnimatePresence> 
+                                
+                                
+                                    <MotionBox display={'flex'} alignItems={'center'}  gap='10px' flexDir={'row-reverse'} pointerEvents={isConversationOpened?'none':'auto'} width={isConversationOpened?0:'100%'} initial={{opacity:isConversationOpened?1:0 }} animate={{opacity:isConversationOpened?0:1}} exit={{opacity:isConversationOpened?1:0}} overflow={'hidden'}  transition={{ duration: '0.2', delay:'.3' }} >
+                                        <IconButton size='xs'isRound  variant='common'  aria-label='next-page' icon={<IoIosArrowForward />} isDisabled={filters.page_index > Math.floor((conversations?.total_conversations || 0)/ 25)} onClick={() => fetchConversationsDataWithFilter({...filters,page_index:filters.page_index + 1})}/>
+                                        <Text fontWeight={'medium'} fontSize={'.8em'} color='gray.600'>{t('Page')} {filters.page_index}</Text>
+                                        <IconButton size='xs' isRound variant='common' aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={filters.page_index === 1} onClick={() => fetchConversationsDataWithFilter({...filters,page_index:filters.page_index - 1})}/>
+                                    </MotionBox>
+                                </AnimatePresence> 
+                            </Flex>
+                            
+                            <Box ref={tableContainerRef}> 
+                            <Table height={selectedElements.length > 0 ? window.innerHeight * 0.98   - (tableRef.current?.getBoundingClientRect().bottom || 0) - 85 - window.innerWidth * 0.02:undefined } data={conversations?.page_data} CellStyle={CellStyle} noDataMessage={t('NoConversations')} requestSort={requestSort} getSortIcon={getSortIcon} columnsMap={columnsConversationsMap} excludedKeys={['id', 'conversation_id', 'contact_id',  'is_matilda_engaged', 'state', 'organization_id',  'call_sid', 'call_url', 'channel_id', 'custom_attributes', ] } onClickRow={handleClickRow} selectedElements={selectedElements} setSelectedElements={setSelectedElements} onSelectAllElements={getAllConversationsIds} currentIndex={selectedIndex} waitingInfo={waitingInfo}/>
                             </Box>
                         </Flex>
-                            
-                        <Flex px='1vw' height={'20px'} ref={tableRef} mt='2vh' alignItems={'end'} justifyContent={'space-between'}  > 
-                            <Skeleton isLoaded={!waitingInfo} >
-                                <Text  whiteSpace={'nowrap'}  fontWeight={'medium'} color='gray.600' > {t('ConversationsCount', {count:(conversations?.total_conversations || 0)})}</Text> 
-                            </Skeleton>
-                            <AnimatePresence> 
-                                <MotionBox display={'flex'} alignItems={'center'} gap='10px' flexDir={'row-reverse'} pointerEvents={!isConversationOpened?'none':'auto'} width={!isConversationOpened?0:'100%'} initial={{opacity:!isConversationOpened?1:0 }} animate={{opacity:!isConversationOpened?0:1}} exit={{opacity:!isConversationOpened?1:0}} overflow={'hidden'}  transition={{ duration: '0.2', delay:'.3' }} >
+                          
+                        <AnimatePresence> 
+                          {(selectedElements.length > 0) && 
+                          <Portal> 
+                              <motion.div initial={{bottom:-200}} animate={{bottom:0}} exit={{bottom:-200}} transition={{duration:.1,ease:'easeOut' }} style={{backgroundColor:'white',display:'flex', borderTop:'1px solid #E2E8F0',transition:'width ease-in-out .2s', justifyContent:'space-between', alignItems:'center',padding:'0 2vw 0 2vw', height:'60px', right:0, gap:'20px',position:'fixed',overflow:'scroll', width:hideViews ? tableWidthHideView:tableWidthShowView}}>
+                                  <Flex gap='1vw' alignItems={'center'}> 
+                                      <Text whiteSpace={'nowrap'} fontWeight={'medium'} fontSize={'.8em'}>{t('ConversationsCount', {count:selectedElements.length})}</Text>
+                                      <Button color='brand.text_blue' onClick={() => setSelectedElements([])} size='xs' bg='transparent' borderColor={'transparent'}  variant={'common'}  leftIcon={<MdDeselect/>}>{t('DeSelect')}</Button> 
+                                      {selectedView.type === 'deleted' ? 
+                                          <Button  fontWeight={'medium'} color='brand.text_blue'  size='xs' bg='transparent' borderColor={'transparent'} variant={'common'} leftIcon={<FaArrowRotateLeft/>} onClick={recoverConversations}>{t('Recover')}</Button>
+                                      :
+                                          <> {selectedElements.length <= 1 && <Button  fontWeight={'medium'} color='brand.text_blue' onClick={() => navigate(`/conversations/conversation/${conversations?.page_data[selectedElements[0]].id}${currentSearch}`)}size='xs' bg='transparent' borderColor={'transparent'}  variant={'common'}  leftIcon={<BiEditAlt/>}>{t('Edit')}</Button>}</>
+                                      } 
+                                      <Button  fontWeight={'medium'} size='xs'onClick={() => {if (selectedView.type === 'deleted') setShowConfirmDelete(true);else{deleteConversations()}}} bg='transparent' borderColor={'transparent'} variant='delete' leftIcon={<HiTrash/>}>{waitingDelete?<LoadingIconButton/>:selectedView.type === 'deleted'?t('Delete'):t('MoveToBin')}</Button>
+                                  </Flex>
+                                  <Button sx={{ whiteSpace: 'nowrap', minWidth: 'auto' }} size='xs' variant='delete' onClick={() => setSelectedElements([])} >{t('Cancel')}</Button>
+                              </motion.div>
+                          </Portal>}
+                        </AnimatePresence>
+                    </MotionBox>
+                    </>
+                    :
+                     <MotionBox key="list-section" initial={{opacity:0}} animate={{opacity:1}}  exit={{opacity:0}}  transition={{ duration: '.2',  ease: 'easeInOut'}} > 
+                        <Flex h='100vh' bg='brand.hover_gray' flexDir={'column'} width={hideViews ? listWidthHideView:listWidthShowView} transition={'width ease-in-out .2s'} >
+
+                            <Flex px='1vw' pt='2vh' justifyContent={'space-between'} gap='10px'>
+                                <Flex flex={1} gap='10px' alignItems={'center'}> 
+                                    <Tooltip  label={t('HideViews')}  placement='right'  bg='white' color='black'  borderRadius='.5rem' fontSize='.7em' p='6px'> 
+                                        <IconButton bg='transparent' _hover={{bg:'brand.gray_1', color:'brand.text_blue'}} icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'18px'}/>} variant={'common'}  h='28px' w='28px' aria-label="create-function" size='xs' onClick={() => setHideViews(prev => (!prev))} />
+                                    </Tooltip>
+                                    <Text flex='1' minW={0} fontWeight={'medium'} fontSize={'1.2em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{selectedView.name}</Text>
+                                </Flex>
+                            </Flex>
+                            <Flex px='1vw' mb='1vh' height={'20px'}  mt='2vh' alignItems={'end'} justifyContent={'space-between'}  > 
+
+                                <Skeleton isLoaded={!waitingInfo} >
+                                    <Text  whiteSpace={'nowrap'}  fontWeight={'medium'} color='gray.600' > {t('ConversationsCount', {count:(conversations?.total_conversations || 0)})}</Text> 
+                                </Skeleton>
+
+                                <Flex alignItems={'center'} gap='10px' flexDir={'row-reverse'} overflow={'hidden'}  >
                                     <Tooltip  label={t('Delete')}  placement='top' hasArrow bg='white' color='black'  borderRadius='0.3rem' fontSize='.8em' p='6px'> 
                                         <IconButton size='xs' opacity={selectedElements.length === 0 ? 0:1} pointerEvents={selectedElements.length === 0 ? 'none':'auto'} variant='delete'  aria-label='delete' icon={<HiTrash  size={'16px'}/>} onClick={() => {if (selectedView.type === 'deleted') setShowConfirmDelete(true);else{deleteConversations()}}} />
                                     </Tooltip>
                                     <Tooltip  label={t('DeSelect')}  placement='top' hasArrow bg='white' color='black'  borderRadius='0.3rem' fontSize='.8em' p='6px'> 
                                         <IconButton size='xs'  opacity={selectedElements.length === 0 ? 0:1}  pointerEvents={selectedElements.length === 0 ? 'none':'auto'} variant='common'  aria-label='deselect' icon={<MdDeselect size={'16px'}/>} onClick={() => setSelectedElements([])} />
                                     </Tooltip>
-                                </MotionBox>
-                                
-                            
-                                <MotionBox display={'flex'} alignItems={'center'}  gap='10px' flexDir={'row-reverse'} pointerEvents={isConversationOpened?'none':'auto'} width={isConversationOpened?0:'100%'} initial={{opacity:isConversationOpened?1:0 }} animate={{opacity:isConversationOpened?0:1}} exit={{opacity:isConversationOpened?1:0}} overflow={'hidden'}  transition={{ duration: '0.2', delay:'.3' }} >
-                                    <IconButton size='xs'isRound  variant='common'  aria-label='next-page' icon={<IoIosArrowForward />} isDisabled={filters.page_index > Math.floor((conversations?.total_conversations || 0)/ 25)} onClick={() => fetchConversationsDataWithFilter({...filters,page_index:filters.page_index + 1})}/>
-                                    <Text fontWeight={'medium'} fontSize={'.8em'} color='gray.600'>{t('Page')} {filters.page_index}</Text>
-                                    <IconButton size='xs' isRound variant='common' aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={filters.page_index === 1} onClick={() => fetchConversationsDataWithFilter({...filters,page_index:filters.page_index - 1})}/>
-                                </MotionBox>
-                            </AnimatePresence> 
-                        </Flex>
+                                </Flex>
+                            </Flex>
                         
-                        <AnimatePresence>
-
-                            <MotionBox  width={isConversationOpened?'auto':0} position='absolute' zIndex={99} bg='brand.hover_gray' top={(tableRef.current?.getBoundingClientRect().bottom || 0) + window.innerWidth * 0.01 } p='0 1vw 2vw 1vw' key="conversationList"   display={'flex'} height={ window.innerHeight - (tableRef.current?.getBoundingClientRect().top || 0) - ( window.innerWidth * 0.01)} pointerEvents={isConversationOpened?'auto':'none'} flexDir={'column'} initial={{opacity:!isConversationOpened?1:0,}} animate={{opacity:!isConversationOpened?0:1}}  exit={{opacity:!isConversationOpened?1:0}} overflow={'scroll'}  transition={{ duration: '.2' }} >
+                                        
+                            <Box flex='1' overflow={'scroll'} px='1vw'> 
                                 {conversations?.page_data.map((con, index) => {
-                                    const isSelected = parseInt(location.split('/')[location.split('/').length - 1]) === con.id
+                                    const isSelected = parseInt(location.pathname.split('/')[location.pathname.split('/').length - 1]) === con.id
                                     return (
                                     <Skeleton isLoaded={!waitingInfo}> 
-                                        <Box w={`calc(${sendBoxWidth} - 220px - 2vw)`} position={'relative'} key={`conversations-${index}`} onClick={() => {navigate(`/conversations/conversation/${con.id}`)}}  p='10px' borderRadius={'.1rem'} cursor={'pointer'}  bg={ isSelected?'white':'transparent'}   transition={isSelected?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}   boxShadow={isSelected ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''} borderWidth={'1px'} borderColor={isSelected ? 'gray.200':'transparent'}  _hover={{bg:isSelected?'white':'brand.gray_2'}}>
+                                        <Box w={`calc(${hideViews ? listWidthHideView:listWidthShowView}  - 2vw)`} position={'relative'} key={`conversations-${index}`} onClick={() => {navigate(`/conversations/conversation/${con.id}${currentSearch}`)}}  p='10px' borderRadius={'.5rem'} cursor={'pointer'}  bg={ isSelected?'white':'transparent'}   transition={isSelected?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}    boxShadow={isSelected ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''} borderWidth={'1px'} borderColor={isSelected ? 'gray.200':'transparent'}   _hover={{bg:isSelected?'white':'brand.hover_gray_white', borderColor:'gray.200'}}>
                                             <Flex alignItems={'center'} gap='10px'> 
                                                 <Flex w='18px'  onClick={(e) => e.stopPropagation()}> 
                                                     <CustomCheckbox id={`checkbox-${index}`}   isChecked={selectedElements.includes(index)} onChange={() => handleCheckboxChange(index, !selectedElements.includes(index))} />
                                                 </Flex>
-                                                <Text mt='-6px' transition={'transform .1s ease-in-out'}   transformOrigin="left center" transform={isSelected?'scale(1.02)':'scale(1)'} maxWidth="100%"  flex='1' textOverflow={'ellipsis'} overflow={'hidden'}   whiteSpace={'nowrap'} fontWeight={parseInt(location.split('/')[location.split('/').length - 1])  === con.id ?'medium':'normal'} fontSize={'.8em'}>{con.title ? con.title:t('NoDescription')}</Text>
+                                                <Text mt='-6px' transition={'transform .1s ease-in-out'}   transformOrigin="left center" transform={isSelected?'scale(1.02)':'scale(1)'} maxWidth="100%"  flex='1' textOverflow={'ellipsis'} overflow={'hidden'}   whiteSpace={'nowrap'} fontWeight={parseInt(location.pathname.split('/')[location.pathname.split('/').length - 1])  === con.id ?'medium':'normal'} fontSize={'.8em'}>{con.title ? con.title:t('NoDescription')}</Text>
                                             </Flex>
-                                   
+                                    
                                             <Flex ml='28px' justifyContent={'space-between'} alignItems={'end'}>
                                                 <StateMap mini state={con.status as Status}/>
                                                 <Text mt='5px' fontSize={'.8em'} color='gray' whiteSpace={'nowrap'} >{timeAgo(con.updated_at as string, t_formats)}</Text>
@@ -596,50 +705,62 @@ function ConversationsTable({socket}:{socket:any}) {
                                         </Box>
                                     </Skeleton>)
                                     })}
-                                    {waitingInfoList && <Spinner/>}
-                            </MotionBox>     
-                            
-                            <MotionBox top={(tableRef.current?.getBoundingClientRect().bottom || 0)} mt='1vh' position='absolute'  px='1vw'   width={'calc(100vw - 55px - 220px)'} pointerEvents={isConversationOpened?'none':'auto'} key="tableBox" initial={{opacity:isConversationOpened?1:0}} animate={{opacity:isConversationOpened?0:1}} exit={{opacity:isConversationOpened?1:0}} overflow={'hidden'}  transition={{ duration: '.2', delay:'.3'}} >
-                                {!isConversationOpened && <Table height={selectedElements.length > 0 ? window.innerHeight - (tableRef.current?.getBoundingClientRect().bottom || 0) - 170:undefined } data={conversations?.page_data} CellStyle={CellStyle} noDataMessage={t('NoConversations')} requestSort={requestSort} getSortIcon={getSortIcon} columnsMap={columnsConversationsMap} excludedKeys={['id', 'conversation_id', 'contact_id',  'is_matilda_engaged', 'state', 'organization_id',  'call_sid', 'call_url', 'channel_id', 'custom_attributes', ] } onClickRow={handleClickRow} selectedElements={selectedElements} setSelectedElements={setSelectedElements} onSelectAllElements={getAllConversationsIds} currentIndex={selectedIndex} waitingInfo={waitingInfo}/> }
-                            </MotionBox>  
+                            </Box>
+                        </Flex>
+                    </MotionBox>
+                  
 
-                        </AnimatePresence>  
-                    </Flex>
+                    }
+                </AnimatePresence>
 
-                    <AnimatePresence> 
-                        {(selectedElements.length > 0 && !isConversationOpened) && 
-                        <Portal> 
-                            <motion.div initial={{bottom:-200}} animate={{bottom:0}} exit={{bottom:-200}} transition={{duration:.2}} style={{backgroundColor:'#F9F9F9',display:'flex', justifyContent:'space-between', alignItems:'center',padding:'0 1vw 0 1vw', height:'80px', left:'275px', gap:'20px',position:'fixed',  borderTop:' 1px solid #E2E8F0', overflow:'scroll', width:`calc(100vw - 275px)`}}>
-                                <Flex gap='1vw' alignItems={'center'}> 
-                                    <Text whiteSpace={'nowrap'} fontWeight={'medium'} fontSize={'.9em'}>{t('ConversationsCount', {count:selectedElements.length})}</Text>
-                                    <Button  fontWeight={'medium'} color='brand.text_blue' onClick={() => setSelectedElements([])} size='sm' bg='transparent' borderColor={'transparent'}  variant={'common'}  leftIcon={<MdDeselect/>}>{t('DeSelect')}</Button> 
-                                    {selectedView.type === 'deleted' ? 
-                                        <Button  fontWeight={'medium'} color='brand.text_blue'  size='sm' bg='transparent' borderColor={'transparent'} variant={'common'} leftIcon={<FaArrowRotateLeft/>} onClick={recoverConversations}>{t('Recover')}</Button>
-                                    :
-                                        <> {selectedElements.length <= 1 && <Button  fontWeight={'medium'} color='brand.text_blue' onClick={() => navigate(`/conversations/conversation/${selectedElements[0]}`)} size='sm' bg='transparent' borderColor={'transparent'}  variant={'common'}  leftIcon={<BiEditAlt/>}>{t('Edit')}</Button>}</>
-                                    } 
-                                    <Button  fontWeight={'medium'} size='sm' onClick={() => {if (selectedView.type === 'deleted') setShowConfirmDelete(true);else{deleteConversations()}}} bg='transparent' borderColor={'transparent'} variant='delete' leftIcon={<HiTrash/>}>{waitingDelete?<LoadingIconButton/>:selectedView.type === 'deleted'?t('Delete'):t('MoveToBin')}</Button>
-                                </Flex>
-                                <Button sx={{ whiteSpace: 'nowrap', minWidth: 'auto' }} size='sm' variant='delete' onClick={() => setSelectedElements([])} >{t('Cancel')}</Button>
-                            </motion.div>
-                        </Portal>}
-                    </AnimatePresence>
-                </Flex>
-                {showConfirmDelete && memoizedConfirmDeleteBox}
-            </MotionBox>
+        
+        </Flex>
 
-            <AnimatePresence>
-                {isConversationOpened && 
-                <MotionBox position={'absolute'} top={0} right={0}  pointerEvents={isConversationOpened?'auto':'none'} initial={{ width: Math.min(window.innerWidth * 0.7, window.innerWidth - 550) - 200 + 'px', opacity:isConversationOpened? 0:1  }} animate={{ width: Math.min(window.innerWidth * 0.7, window.innerWidth - 550) + 'px', opacity:isConversationOpened? 1:0 }} exit={{ width: Math.min(window.innerWidth * 0.7, window.innerWidth - 550) - 200 + 'px', opacity:isConversationOpened? 0:1  }}  overflowY={'scroll'}  transition={{ duration: '.2'}} 
-                    bg='white' zIndex={100} height={'100vh'} boxShadow="-4px 0 6px -2px rgba(0, 0, 0, 0.1)" overflowX={'hidden'} borderLeftColor={'gray.200'} borderLeftWidth={'1px'}>
-                        <ConversationResponse socket={socket} fetchConversationsDataWithFilter={fetchConversationsDataWithFilter} />
-                </MotionBox>}
-            </AnimatePresence>
-
-
-        </Flex>)
+        
+        </>)
 }
 
 export default ConversationsTable
 
  
+
+const ChangeViewButton = ({selectedTableSection, setSelectedTabelSection, firstId}:{selectedTableSection:'list' | 'table',setSelectedTabelSection:Dispatch<SetStateAction<'list' | 'table'>>, firstId:number}) => {
+
+    const navigate = useNavigate()
+    const sectionsMap = {'list':TbLayoutSidebarFilled, 'table':FaTable}
+    const [indicatorStyle, setIndicatorStyle] = useState<{ width: number, left: number }>({ width: 0, left: 0 })
+
+    useEffect(() => {
+        const selectedButton = document.getElementById(`section-btn-${selectedTableSection}`)
+        if (selectedButton) {
+            const { offsetWidth, offsetLeft } = selectedButton
+            setIndicatorStyle({ width: offsetWidth, left: offsetLeft })
+        }
+    }, [selectedTableSection])
+
+    const changeView = (newView:'list' | 'table') => {
+        const params = new URLSearchParams(location.search)
+        params.set('view', newView)
+        navigate(`${location.pathname}?view=${newView}`)
+    }
+
+
+
+    return (<>
+            <Flex position='relative' bg='white' boxShadow={'lg'} borderRadius={'2rem'} p='4px' borderWidth={'1px'} borderColor={'gray.200'}>
+            <Flex position='absolute' height='calc(100% - 8px)' bg='brand.gray_1' borderRadius={'2rem'} transition={'all 0.3s ease'} style={{width: `${indicatorStyle.width}px`, left: `${indicatorStyle.left}px`}}/>
+            
+            {['table', 'list'].map((section, index) => {
+                    const isSelected = selectedTableSection === section
+                    return (
+                        <Flex zIndex={10} alignItems={'center'} color={'black'} key={`secciones-${index}`} id={`section-btn-${section}`} onClick={() => { changeView(section as 'table' | 'list')}}>
+                            <Flex bg='transparent' color={isSelected ? 'brand.text_blue' : 'gray.600'} _hover={{ color: 'brand.text_blue' }} px='12px' py='4px'>
+                                <Icon boxSize={section === 'list'?'18px':'16px'} as={(sectionsMap as any)[section]}/>
+                            </Flex>
+                        </Flex>
+                    )
+                })}
+            </Flex>
+        </>
+    )
+}

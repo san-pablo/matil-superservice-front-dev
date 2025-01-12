@@ -52,11 +52,11 @@ const CellStyle = ({column, element}:{column:string, element:any}) => {
     }    
     else if (column === 'is_active') return(
         <Box boxShadow={`1px 1px 1px rgba(0, 0, 0, 0.15)`} display="inline-flex" fontSize='.9em' py='2px' px='8px' fontWeight={'medium'} color='white'  bg={!element?'red.100':'green.100'} borderRadius={'.7rem'}> 
-            <Text  color={!element?'red.600':'green.600'}>{element?t('Active'):t('Inactive')}</Text>
+            <Text  color={!element?'red.600':'green.600'} >{element?t('Active'):t('Inactive')}</Text>
         </Box>
     )
 
-    else return <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element}</Text>
+    else return <Text fontSize={'.9em'}  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element}</Text>
 }
 
 const defaultChatbotConfig = {
@@ -149,7 +149,7 @@ const AllChannels = ({channelsData}:{channelsData:ChannelsType[]}) => {
                 <Flex mt='.5vh' mb='5vh' flexWrap={'wrap'} gap='10px'>
 
                     {Object.keys(channelsDict).map((cha, index) => (
-                        <Flex key={`channel-${index}`} transition={'background-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out'} _hover={{shadow:'md'}} bg={channelType === cha ? 'brand.gray_2':''} onClick={() => setChannelType(cha as Channels)} p='10px' borderRadius={'.5rem'} gap='10px' cursor={'ponter'} alignItems={'center'} borderColor={'gray.200'} borderWidth={'1px'}>
+                        <Flex key={`channel-${index}`} transition={'background-color 0.2s ease-in-out, border-color 0.2s ease-in-out,box-shadow 0.2s ease-in-out'} onClick={() => setChannelType(cha as Channels)} p='10px' borderRadius={'.5rem'} gap='10px' cursor={'ponter'} alignItems={'center'} color={channelType === cha ? 'brand.text_blue':'black'} boxShadow={ channelType === cha  ? '0 0 0 2px rgb(59, 90, 246)' : ''} _hover={{bg:'brand.gray_2'}} border={channelType === cha  ? '1px solid rgb(59, 90, 246)': '1px solid #E2E8F0'}>
                             <Icon as={channelsDict[cha as Channels][1]}/>
                             <Text fontSize={'.9em'}>{channelsDict[cha as Channels][0]}</Text>
                         </Flex>

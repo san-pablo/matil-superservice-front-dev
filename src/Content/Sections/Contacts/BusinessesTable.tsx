@@ -1,5 +1,5 @@
 //REACT
-import { useState, useEffect, useMemo, Dispatch, SetStateAction, lazy } from "react"
+import { useState, useEffect, useMemo, Dispatch, SetStateAction, lazy, useRef } from "react"
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from "../../../AuthContext" 
 import { useTranslation } from "react-i18next"
@@ -9,20 +9,22 @@ import { useSession } from "../../../SessionContext"
 import fetchData from "../../API/fetchData"
 //FRONT
 import { motion, isValidMotionProp } from 'framer-motion'
-import { Flex, Box, Text, Tooltip, Button, IconButton, Skeleton, chakra, shouldForwardProp  } from '@chakra-ui/react'
+import { Flex, Box, Text, Tooltip, IconButton, Skeleton,Button, chakra, shouldForwardProp  } from '@chakra-ui/react'
  //COMPONENTS
-import EditText from "../../Components/Reusable/EditText"
 import Table from "../../Components/Reusable/Table"
 import ConfirmBox from "../../Components/Reusable/ConfirmBox"
 import CreateBusiness from "./CreateBusiness"
 //FUNCTIONS
 import timeAgo from "../../Functions/timeAgo"
 import timeStampToDate from "../../Functions/timeStampToString"
+import useOutsideClick from "../../Functions/clickOutside"
 //ICONS
-import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io"
+import { IoSend } from "react-icons/io5";
+import { PiSidebarSimpleBold } from "react-icons/pi"
+import { FaPlus } from "react-icons/fa6"
 //TYPING
 import { ContactBusinessesProps } from "../../Constants/typing"
-  //SECTION
+   //SECTION
 const Business = lazy(() => import('./Business'))
   
 
@@ -55,7 +57,7 @@ const CellStyle = ({ column, element }:{column:string, element:any}) => {
 }
 
 //MAIN FUNCTION
-function BusinessesTable ({showCreateBusiness, setShowCreateBusiness, socket}:{showCreateBusiness:boolean, setShowCreateBusiness:Dispatch<SetStateAction<boolean>>, socket:any}) {
+function BusinessesTable ({showCreateBusiness, setShowCreateBusiness, socket, setHideViews}:{showCreateBusiness:boolean, setShowCreateBusiness:Dispatch<SetStateAction<boolean>>,  setHideViews:Dispatch<SetStateAction<boolean>>, socket:any}) {
 
     //AUTH CONSTANT
     const auth = useAuth()
@@ -83,8 +85,8 @@ function BusinessesTable ({showCreateBusiness, setShowCreateBusiness, socket}:{s
 
 
     //FETCH DATA ON FIRST RENDER
+    useEffect(() => {document.title = `${t('ContactBusinesses')} - ${auth.authData.organizationName} - Matil`},[location]) 
     useEffect(() => {
-        document.title = `${t('ContactBusinesses')} - ${auth.authData.organizationName} - Matil`
         localStorage.setItem('currentSection', `contact-businesses`)
 
         const fetchBusinessessData = async() => {
@@ -103,6 +105,25 @@ function BusinessesTable ({showCreateBusiness, setShowCreateBusiness, socket}:{s
     }, [])
  
   
+
+    //HIDE BUSINESS LOGIC
+    const conversationContainerRef = useRef<HTMLDivElement>(null)
+    const tableContainerRef = useRef<HTMLDivElement>(null)
+    useOutsideClick({ref1:conversationContainerRef,  ref2:tableContainerRef,  onOutsideClick:() => navigate(`/contacts/businesses`)})
+    useEffect(() => {
+        const handleKeyDown = (event:KeyboardEvent) => {
+              switch (event.code) {           
+                case 'Escape':
+                    if (!location.endsWith('clients')) navigate(`/contacts/businesses`)
+                    break        
+                default:
+                  break
+              }
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        return () => {window.removeEventListener('keydown', handleKeyDown)}
+    },[location])
+
       
     //FETCH NEW DATA ON FILTERS CHANGE
     const fetchBusinessDataWithFilter = async (new_filters:{page_index:number, sort_by?:string, search?:string, order?:'asc' | 'desc'} | null) => {
@@ -148,27 +169,32 @@ function BusinessesTable ({showCreateBusiness, setShowCreateBusiness, socket}:{s
     return(<>
         {showCreateBusiness && memoizedCreateBusiness}
 
-        <MotionBox width={clientBoxWidth + 'px'}  overflowY={'scroll'} initial={{ width: clientBoxWidth + 'px', opacity: expandClient?1:0}} animate={{ width: clientBoxWidth + 'px',  opacity: expandClient?0:1  }} exit={{ width: clientBoxWidth + 'px',  opacity: expandClient?1:0}} transition={{ duration: '.2'}} 
+        <MotionBox width={clientBoxWidth + 'px'}  ref={conversationContainerRef} overflowY={'scroll'} initial={{ width: clientBoxWidth + 'px', opacity: expandClient?1:0}} animate={{ width: clientBoxWidth + 'px',  opacity: expandClient?0:1  }} exit={{ width: clientBoxWidth + 'px',  opacity: expandClient?1:0}} transition={{ duration: '.2'}} 
         bg='white' boxShadow="-4px 0 6px -2px rgba(0, 0, 0, 0.1)" top={0} right={0} pointerEvents={expandClient ?'none':'auto'} height={'100vh'}  p={expandClient ?'1vw':'0'} overflowX={'hidden'} position='absolute' zIndex={100} overflow={'hidden'} >
             <Business socket={socket}/> 
         </MotionBox>
 
-        <Box width={'calc(98vw - 55px)'} overflowX={'scroll'} overflowY={'hidden'} >
-            <Box width={'300px'}> 
-                <EditText filterData={(text:string) => {fetchBusinessDataWithFilter({...filters, search:text})}} value={filters.search} setValue={(value) => setFilters(prev => ({...prev, search:value}))} searchInput={true}/>
-            </Box>
-  
-            <Flex mt='1vh'  justifyContent={'space-between'} alignItems={'center'}> 
+        <Box height={'100%'} width={'100%'} overflowX={'scroll'} overflowY={'hidden'} >
+    
+            <Flex alignItems={'center'} justifyContent={'space-between'}> 
+                <Flex flex={1} gap='10px' alignItems={'center'}> 
+                    <Tooltip  label={t('HideSidebar')}  placement='right'  bg='white' color='black'  borderRadius='.5rem' fontSize='.7em' p='6px'> 
+                        <IconButton bg='transparent' _hover={{bg:'brand.gray_1', color:'brand.text_blue'}} icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'18px'}/>} variant={'common'}  h='28px' w='28px' aria-label="hide-sidebar" size='xs' onClick={() => setHideViews(prev => (!prev))} />
+                    </Tooltip>
+                    <Text flex='1' minW={0} fontWeight={'medium'} fontSize={'1.2em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{t('Businesses')}</Text>
+                </Flex>
+                <Button variant='main' size={'sm'} leftIcon={<FaPlus/>} onClick={() => setShowCreateBusiness(true)}>{t('CreateBusiness')}</Button> 
+            </Flex>    
+
+            <Flex mt='2vh' gap='20px' alignItems={'center'}> 
                 <Skeleton  isLoaded={!waitingInfo} >
                     <Text fontWeight={'medium'} color='gray.600' > {t('BusinessesCount', {count:businesses?.total_contact_businesses})}</Text> 
                 </Skeleton>
-                <Flex  mb='1vh' alignItems={'center'} justifyContent={'end'} gap='10px' flexDir={'row-reverse'}>
-                    <IconButton isRound size='xs'  variant={'common'}  aria-label='next-page' icon={<IoIosArrowForward />} isDisabled={filters?.page_index > Math.floor((businesses?.total_contact_businesses || 0)/ 25)} onClick={() => fetchBusinessDataWithFilter({...filters,page_index:filters?.page_index + 1})}/>
-                    <Text fontWeight={'medium'} fontSize={'.8em'} color='gray.600'>{t('Page')} {filters?.page_index}</Text>
-                    <IconButton isRound size='xs' variant={'common'} aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={filters?.page_index === 1} onClick={() => fetchBusinessDataWithFilter({...filters,page_index:filters?.page_index - 1})}/>
-                </Flex>
+                <Button leftIcon={<IoSend/>} size='sm' variant={'common'} >{t('NewMessages')}</Button>
             </Flex>
-            <Table data={businesses?.page_data || []} CellStyle={CellStyle} noDataMessage={t('NoBusinesses')} excludedKeys={['id']} columnsMap={columnsBusinessesMap} onClickRow={rowClick} requestSort={requestSort} getSortIcon={getSortIcon} currentIndex={selectedIndex}/>
+            <Box ref={tableContainerRef}> 
+                <Table data={businesses?.page_data || []} CellStyle={CellStyle} noDataMessage={t('NoBusinesses')} excludedKeys={['id']} columnsMap={columnsBusinessesMap} onClickRow={rowClick} requestSort={requestSort} getSortIcon={getSortIcon} currentIndex={selectedIndex}/>
+            </Box>
         </Box>
         </>)
 }

@@ -1,5 +1,5 @@
 //REACT
-import { useState, useEffect, lazy } from "react"
+import { useState, useEffect, lazy, Dispatch, SetStateAction, useRef } from "react"
 import { useTranslation } from "react-i18next"
 import { useAuth } from "../../../AuthContext"
 import { useSession } from "../../../SessionContext"
@@ -16,6 +16,7 @@ import Table from "../../Components/Reusable/Table"
 //FUNCTIONS
 import timeStampToDate from "../../Functions/timeStampToString"
 import timeAgo from "../../Functions/timeAgo"
+import useOutsideClick from "../../Functions/clickOutside"
 //ICONS
 import { IconType } from "react-icons"
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io"
@@ -25,6 +26,7 @@ import { IoMdMail, IoLogoWhatsapp } from "react-icons/io"
 import { IoChatboxEllipses, IoLogoGoogle } from "react-icons/io5"
 import { AiFillInstagram } from "react-icons/ai"
 import { FaCloud } from "react-icons/fa6"
+import { PiSidebarSimpleBold } from "react-icons/pi"
 //TYPING
 import { Clients, Channels,  ClientColumn, languagesFlags } from "../../Constants/typing"
 import { useAuth0 } from "@auth0/auth0-react"
@@ -82,7 +84,7 @@ const CellStyle = ({ column, element }:{column:string, element:any}) => {
 
 
 //MAIN FUNCTION
-function ClientsTable ({socket}:{socket:any}) {
+function ClientsTable ({socket, setHideViews}:{socket:any, setHideViews:Dispatch<SetStateAction<boolean>>}) {
 
     //AUTH CONSTANT
     const auth = useAuth()
@@ -116,10 +118,9 @@ function ClientsTable ({socket}:{socket:any}) {
     const [selectedIndex, setSelectedIndex] = useState<number>(-1)
 
     //FETCH DATA ON FIRST RENDER
+    useEffect(() => {document.title = `${t('Clients')} - ${auth.authData.organizationName} - Matil`},[location]) 
     useEffect(() => {
-        document.title = `${t('Clients')} - ${auth.authData.organizationName} - Matil`
         localStorage.setItem('currentSection', `clients`)
-
         const fetchClientsData = async() => {
             if (session.sessionData.clientsTable) {
                 setClients(session.sessionData.clientsTable.data)
@@ -135,6 +136,24 @@ function ClientsTable ({socket}:{socket:any}) {
         fetchClientsData()
     }, [])
 
+
+    //HIDE CLIENTE LOGIC
+    const conversationContainerRef = useRef<HTMLDivElement>(null)
+    const tableContainerRef = useRef<HTMLDivElement>(null)
+    useOutsideClick({ref1:conversationContainerRef,  ref2:tableContainerRef,  onOutsideClick:() => navigate(`/contacts/clients`)})
+    useEffect(() => {
+        const handleKeyDown = (event:KeyboardEvent) => {
+              switch (event.code) {           
+                case 'Escape':
+                    if (!location.endsWith('clients')) navigate(`/contacts/clients`)
+                    break        
+                default:
+                  break
+              }
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        return () => {window.removeEventListener('keydown', handleKeyDown)}
+    },[location])
 
     //SORT LOGIC
     const requestSort = (key: string) => {
@@ -182,36 +201,34 @@ function ClientsTable ({socket}:{socket:any}) {
     return(
         <>  
         <AnimatePresence> 
-            {!expandClient && <MotionBox  overflowY={'scroll'} initial={{ width: Math.min(window.innerWidth * 0.6, window.innerWidth - 500) - 200  + 'px', opacity: expandClient?1:0}} animate={{ width: Math.min(window.innerWidth * 0.6, window.innerWidth - 500) + 'px',  opacity: expandClient?0:1  }} exit={{ width: Math.min(window.innerWidth * 0.6, window.innerWidth - 500) - 200  + 'px',  opacity: expandClient?1:0}} transition={{ duration: '.2'}} 
+            {!expandClient && <MotionBox  ref={conversationContainerRef} overflowY={'scroll'} w={Math.min(window.innerWidth * 0.6, window.innerWidth - 500)} initial={{ right: -25  + 'px', opacity: expandClient?1:0}} animate={{ right: 0,  opacity: expandClient?0:1  }} exit={{ right:-25 ,  opacity: expandClient?1:0}} transition={{ duration: '.125', ease: 'easeOut'}} 
             bg='white' top={0}     minHeight="100vh" maxHeight="100vh" boxShadow="-4px 0 6px -2px rgba(0, 0, 0, 0.1)" right={0} pointerEvents={expandClient ?'none':'auto'} height={'100vh'}   position='absolute' zIndex={100} overflow={'hidden'} >
                 <Client socket={socket} fetchClientDataWithFilter={fetchClientDataWithFilter}/> 
             </MotionBox>}
         </AnimatePresence>
   
-        <Box height={'100%'} width={'calc(98vw - 55px)'} overflowX={'scroll'} overflowY={'hidden'} >
+        <Box height={'100%'} width={'100%'} overflowX={'scroll'} overflowY={'hidden'} >
     
-            <Flex gap='15px'  > 
-                <Box width={'300px'}> 
-                    <EditText filterData={(text:string) => {fetchClientDataWithFilter({...filters, search:text})}} value={filters?.search} setValue={(value) => setFilters(prev => ({...prev, search:value}))} searchInput={true}/>
-                </Box>
-                <FilterButton selectList={Object.keys(logosMap)} itemsMap={logosMap} selectedElements={filters?.channel_types} setSelectedElements={(element) => toggleChannelsList(element as Channels)} icon={PiDesktopTowerFill} initialMessage={t('ClientsFilterMessage')}/>
-                <Button leftIcon={<FaFilter/>} fontSize={'.9em'} size='sm' variant={'common'}  onClick={() => fetchClientDataWithFilter({...filters, page_index:1})}>{t('ApplyFilters')}</Button>
+            <Flex flex={1} gap='10px' alignItems={'center'}> 
+                <Tooltip  label={t('HideSidebar')}  placement='right'  bg='white' color='black'  borderRadius='.5rem' fontSize='.7em' p='6px'> 
+                    <IconButton bg='transparent' _hover={{bg:'brand.gray_1', color:'brand.text_blue'}} icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'18px'}/>} variant={'common'}  h='28px' w='28px' aria-label="hide-sidebar" size='xs' onClick={() => setHideViews(prev => (!prev))} />
+                </Tooltip>
+                <Text flex='1' minW={0} fontWeight={'medium'} fontSize={'1.2em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{t('Clients')}</Text>
             </Flex>
+    
+            <Flex gap='15px' mt='1vh'  > 
+                <FilterButton selectList={Object.keys(logosMap)} itemsMap={logosMap} selectedElements={filters?.channel_types} setSelectedElements={(element) => toggleChannelsList(element as Channels)}  icon={PiDesktopTowerFill} initialMessage={t('ClientsFilterMessage')}/>
+             </Flex>
 
             <Flex mt='1vh'  justifyContent={'space-between'} alignItems={'center'}> 
                 <Skeleton  isLoaded={!waitingInfo} >
                     <Text fontWeight={'medium'} color='gray.600' > {t('ClientsCount', {count:clients?.total_contacts})}</Text> 
                 </Skeleton>
-                <Flex  mb='1vh' alignItems={'center'} justifyContent={'end'} gap='10px' flexDir={'row-reverse'}>
-                    <IconButton isRound size='xs'  variant={'common'}  aria-label='next-page' icon={<IoIosArrowForward />} isDisabled={filters?.page_index > Math.floor((clients?.total_contacts || 0)/ 25)} onClick={() => fetchClientDataWithFilter({...filters,page_index:filters?.page_index + 1})}/>
-                    <Text fontWeight={'medium'} fontSize={'.8em'} color='gray.600'>{t('Page')} {filters?.page_index}</Text>
-                    <IconButton isRound size='xs' variant={'common'} aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={filters?.page_index === 1} onClick={() => fetchClientDataWithFilter({...filters,page_index:filters?.page_index - 1})}/>
-                </Flex>
             </Flex>
 
- 
+            <Box mt='1vh' ref={tableContainerRef}> 
             <Table data={clients?.page_data || []} CellStyle={CellStyle} noDataMessage={t('NoClients')} columnsMap={columnsClientsMap} requestSort={requestSort} getSortIcon={getSortIcon} onClickRow={clickRow} excludedKeys={['id', 'contact_business_id', 'phone_number', 'email_address', 'instagram_username', 'webchat_uuid', 'google_business_review_id']} waitingInfo={waitingInfo} currentIndex={selectedIndex} />
- 
+            </Box>
         </Box>
         </>)
 }

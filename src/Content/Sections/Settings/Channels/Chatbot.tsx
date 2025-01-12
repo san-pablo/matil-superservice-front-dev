@@ -3,6 +3,7 @@
 import  {useState, useEffect, useRef, useMemo, Dispatch, SetStateAction, CSSProperties, ReactElement } from 'react'
 import { useAuth } from '../../../../AuthContext'
 import { useTranslation } from 'react-i18next'
+import { useSession } from '../../../../SessionContext'
 import { useAuth0 } from '@auth0/auth0-react'
 //FETCH DATA
 import fetchData from "../../../API/fetchData"
@@ -15,13 +16,14 @@ import EditText from '../../../Components/Reusable/EditText'
 import ConfirmBox from '../../../Components/Reusable/ConfirmBox'
 import SectionSelector from '../../../Components/Reusable/SectionSelector'
 import SaveChanges from '../../../Components/Reusable/SaveChanges'
-import CustomSelect from '../../../Components/Reusable/CustomSelect'
+import ActionsButton from '../../../Components/Reusable/ActionsButton'
 import { EditStr, EditColor, EditImage, EditInt } from '../../../Components/Reusable/EditSettings'
+import LoadingIconButton from '../../../Components/Reusable/LoadingIconButton'
 //FUNCTIONS
 import copyToClipboard from '../../../Functions/copyTextToClipboard'
 import useOutsideClick from '../../../Functions/clickOutside'
 import determineBoxStyle from '../../../Functions/determineBoxStyle'
-import timeAgo from '../../../Functions/timeAgo'
+import parseMessageToBold from '../../../Functions/parseToBold'
 //ICONS
 import { RxCross2 } from 'react-icons/rx'
 import { IoIosArrowDown, IoIosChatboxes, IoIosArrowBack } from 'react-icons/io'
@@ -33,7 +35,7 @@ import { TbMessageFilled } from "react-icons/tb"
 import { BsPersonLinesFill } from "react-icons/bs"
 import { FaListUl } from "react-icons/fa"
 //TYPING
-import { ConfigProps, languagesFlags } from '../../../Constants/typing'
+import { ChannelsType, ConfigProps, languagesFlags } from '../../../Constants/typing'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { BsThreeDots } from 'react-icons/bs'
 import { HiTrash } from 'react-icons/hi2'
@@ -75,12 +77,13 @@ interface ChatBotData  {
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
 
 //MAIN FUNCTION
-function Chatbot () {
+function Chatbot ({setChannelsData}:{setChannelsData:Dispatch<SetStateAction<ChannelsType[]>>}) {
 
     //CONSTANTS
     const { getAccessTokenSilently } = useAuth0()
     const auth = useAuth()
     const location = useLocation().pathname
+    const session = useSession()
     const navigate = useNavigate()
     const { t, i18n } = useTranslation('settings')
     const [channelDict, setChannelDict] = useState<any>(null)
@@ -106,6 +109,9 @@ function Chatbot () {
     //CURRENT EXPANDED SECTION
     const sectionsMap:{[key:string]:[string, ReactElement]} = {'tilda':[t('tilda'), <FaRobot/>], 'elements':[t('elements'), <IoConstruct/>], 'colors':[t('colors'), <FaPaintbrush/>], 'texts':[t('texts'), <BsPersonLinesFill/>], 'sections':[t('sections'), <FaListUl/>]}
     const [currentSection, setCurrentSection] = useState<'tilda' | 'elements' | 'colors' | 'texts' | 'sections'>('tilda')
+
+    const [showConfirmDelete, setShowConfirmDelete] = useState<boolean>(false) 
+
 
     //SELECTED LANGUAGE 
     const [selectedLanguage, setSelectedLanguage] = useState<string>(i18n.language.toLocaleUpperCase())
@@ -179,9 +185,21 @@ function Chatbot () {
         fetchInitialData()
     }, [])
 
- 
+    
+    //DUPPLICATE WEBCHAT
+    const duplicateChannel = async() => {
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/channels/webchat`, getAccessTokenSilently, auth, method:'post', requestForm:{name:channelDict.name + ' ' + t('Copy'),  configuration:chatBotData}, toastMessages:{'works':t('CorrectCopiedChannel'), 'failed':t('FailedCopiedChannel')}})
+        if (response?.status === 200) {
+            const newChannel = {id: response.data.id, uuid: response.data.id, display_id: `webchat_${response.data.id}`, name: channelDict.name + ' ' + t('Copy'), channel_type: 'webchat', is_active: true}
+            setChannelsData((prevChannels) => [...prevChannels, newChannel])
+            const updatedChannels = [...session.sessionData.additionalData.channels || [], newChannel]
+            session.dispatch({type:'ADD_CHANNELS', payload:updatedChannels})
+            navigate(`/settings/channels/webchat/${response.data.id}`)
+        
+        }
+    }
 
-     // SEND THE CHATBOT CONFIGURATION
+    // SEND THE CHATBOT CONFIGURATION
     const sendChatBotCofig = async() => {
         let chatAvatar = chatbotDataRef.current?.chat_avatar 
         if (avatarFile) chatAvatar = await getPreSignedUrl(avatarFile)
@@ -196,11 +214,10 @@ function Chatbot () {
     //SHIOW CODE BOX
     const memoizedShowCodeBox = useMemo(() => (
         <ConfirmBox setShowBox={setShowCode}> 
-            <Box p='20px'>
+            <Box p='15px'>
                 <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('InsertCode')}</Text>
-                <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
                 <Text  mb='2vh' fontSize={'.9em'} color='gray.600'>{t('InsertCodeDes')}</Text>
-                <Flex p='15px' gap='20px'  borderColor={'gray.300'}borderWidth={'1px'} borderRadius={'.5rem'} bg='brand.gray_2'>
+                <Flex p='15px' gap='20px'   borderRadius={'.5rem'} bg='brand.gray_2'>
                     <Text flex='1' color='gray.600' fontSize={'.7em'}>{`<script defer src="https://chat-widget-matlil.s3.eu-west-3.amazonaws.com/insert.js?organization_id=${auth.authData.organizationId}&chatbot_id=${channelDict?.id}" id="matil-chat-widget"></script>`}</Text>
                 </Flex>
                 <Button onClick={() => {setShowCode(false);copyToClipboard(`<script defer src="https://chat-widget-matlil.s3.eu-west-3.amazonaws.com/insert.js?organization_id=${auth.authData.organizationId}&chatbot_id=${channelDict?.id}" id="matil-chat-widget"></script>`, t('CorrectCopiedCode'))}} leftIcon={<MdContentCopy/>} size='sm' variant={'common'} mt='2vh'>{t('CopyCode')}</Button>
@@ -208,12 +225,41 @@ function Chatbot () {
         </ConfirmBox>
     ), [showCode])
 
- 
-   
+    const [waitingDelete, setWaitingDelete] = useState<boolean>(false) 
+
+    const memoizedDeleteBox = useMemo(() => {
+
+        const handleDeleteChannel= async() => {
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions/${channelId}`, getAccessTokenSilently, setWaiting:setWaitingDelete, method:'delete', auth, toastMessages:{'works':t('CorrectDeletedChannel'), 'failed':t('FailedDeletedChannel')}})
+            if (response?.status == 200) {
+                setChannelsData((prevChannels) => prevChannels.filter((channel) => channel.id !== channelId))
+                const updatedChannels = (session.sessionData.additionalData.channels || []).filter((channel) => channel.id !== channelId)
+                session.dispatch({type:'ADD_CHANNELS', payload:updatedChannels})
+                navigate('/settings/channels/all-channels')   
+            }
+        }
+    
+        return (
+        <ConfirmBox setShowBox={setShowConfirmDelete}> 
+                <Box p='15px'> 
+                    <Text fontSize={'1.2em'}>{parseMessageToBold(t('DeleteChannelAnswer', {name:channelDict?.name}))}</Text>
+                    <Text mt='2vh' fontSize={'.8em'}  color='gray.600'>{t('DeleteChannelWarning')}</Text>
+                    <Flex  mt='2vh' gap='15px' flexDir={'row-reverse'}>
+                        <Button size='sm' variant={'delete'}onClick={handleDeleteChannel}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
+                        <Button  size='sm' variant={'common'} onClick={() => setShowConfirmDelete(false)}>{t('Cancel')}</Button>
+                    </Flex>
+                </Box>
+            </ConfirmBox>)
+    }, [showConfirmDelete])
+
+    //MEMOIZED ACTIONS BUTTON
+    const memoizedActionsButton = useMemo(() => (<ActionsButton deleteAction={() => setShowConfirmDelete(true)} copyAction={duplicateChannel} />), [channelDict, chatBotData])
 
     return(<>
 
+        {showConfirmDelete && memoizedDeleteBox}
         {showCode && memoizedShowCodeBox}
+        
         <SaveChanges data={chatBotData} setData={setChatBotData} dataRef={chatbotDataRef} data2={selectedConfigId} dataRef2={configIdRef} setData2={setSelectedConfigId} onSaveFunc={sendChatBotCofig}  />
         <Box px='2vw' pt='2vw'> 
             <Skeleton  isLoaded={(chatBotData !== null)}> 
@@ -226,6 +272,7 @@ function Chatbot () {
                     <SectionSelector notSection selectedSection={currentSection} sections={Object.keys(sectionsMap)} sectionsMap={sectionsMap}  onChange={(sec) => setCurrentSection(sec as any) }/>  
                  </Box>
                 <Flex gap='12px'>
+                    {memoizedActionsButton}
                     <Button leftIcon={<IoChatbubbleEllipses/>}  onClick={() => window.open(`https://main.d1pm9d6glnzyf9.amplifyapp.com?organization_id=${auth.authData.organizationId}&webchat_uuid=${channelDict?.id}`, '_blank')} size='sm' variant={'main'}>{t('TryWeb')}</Button>  
                     <Button leftIcon={<FaCode/>} onClick={() => setShowCode(true)} size='sm' variant={'main'}>{t('ShowCode')}</Button>  
                 </Flex>
@@ -586,10 +633,7 @@ const ShowChatBox = ({chatBotData, selectedLanguage}:{chatBotData:ChatBotData | 
 
         </Flex>
     )
-}
-
-
- 
+} 
 
 const ChatbotComponent = ({customInfo, selectedLanguage}:{customInfo:ChatBotData,selectedLanguage:string}) => {
     
@@ -633,8 +677,8 @@ const ChatbotComponent = ({customInfo, selectedLanguage}:{customInfo:ChatBotData
     return(
     <div style={{zIndex:2, backgroundColor:'white',  height:'100%', width:'100%', backgroundImage:`radial-gradient(circle at 100% 110%, ${customInfo?.mesh_colors?.[0]} 0px, transparent 60%), radial-gradient(circle at 0% 130%, ${customInfo?.mesh_colors?.[1]} 0px, transparent 50%)`, }}>  
        <div style={{zIndex:1000000000000}} className={`button-hover`}>
-          <svg viewBox="0 0 20 20" width="22"  height="22"  ><path d="M3 7a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 13a1 1 0 011-1h10a1 1 0 110 2H4a1 1 0 01-1-1z"></path></svg>
-     </div>
+            <svg viewBox="0 0 20 20" width="22"  height="22"  ><path d="M3 7a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 13a1 1 0 011-1h10a1 1 0 110 2H4a1 1 0 01-1-1z"></path></svg>
+        </div>
 
         <div style={{height:'545px',fontWeight:400,  fontSize:'1.1em', padding:'10px', overflow:'scroll'}} >
           

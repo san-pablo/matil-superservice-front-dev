@@ -76,21 +76,21 @@ const FunctionsTable = () => {
 
 
     const functionsWidth = hideFunctions ? 0 : 260
-    const functionBoxWidth = `calc(100vw - 55px - ${functionsWidth}px)`
+    const functionBoxWidth = `calc(100vw - 45px - ${functionsWidth}px)`
 
     
     return (<> 
 
-        <Flex position={'relative'} width={'calc(100vw - 55px)'} bg='brand.hover_gray' height={'100vh'}> 
+        <Flex position={'relative'} width={'calc(100vw - 45px)'} bg='brand.hover_gray' height={'100vh'}> 
 
             <MotionBox initial={{ width: functionsWidth  }} animate={{ width: functionsWidth}} exit={{ width: functionsWidth }} transition={{ duration: '.2' }}  
                 width={functionsWidth}    overflow={'hidden'} >
 
-                <Flex bg='brand.hover_gray' px='1vw' w='260px' zIndex={100} h='100vh'  py='2vh' flexDir={'column'} justifyContent={'space-between'} borderRightWidth={'1px'} borderRightColor='gray.200' >
+                <Flex bg='brand.hover_gray' px='1vw' w='260px' zIndex={100} h='100vh'  py='2vh' flexDir={'column'} justifyContent={'space-between'}  >
                     <Box> 
                         <Flex  alignItems={'center'} justifyContent={'space-between'}> 
-                            <Text  fontWeight={'medium'} fontSize={'1.2em'}>{t('Functions')}</Text>
-                            <IconButton boxShadow={'0 0 7px 0px rgba(0, 0, 0, 0.25)'} bg='white' _hover={{bg:'brand.gray_2', color:'brand.text_blue'}} variant={'common'} icon={<FaPlus size={'16px'}/>} aria-label="create-function" size='xs'  onClick={() => navigate('/functions/function/new')}/>
+                            <Text  fontWeight={'semibold'} fontSize={'1.2em'}>{t('Functions')}</Text>
+                            <IconButton bg='transparent' borderWidth={'1px'} borderColor={'gray.200'}  h='28px' w='28px'  _hover={{bg:'brand.gray_1', color:'brand.text_blue'}} variant={'common'} icon={<FaPlus size={'16px'}/>} aria-label="create-function" size='xs'  onClick={() => navigate('/functions/function/new')}/>
                         </Flex>
                         <Box h='1px' w='100%' bg='gray.300' mt='2vh' mb='2vh'/>
 
@@ -102,7 +102,6 @@ const FunctionsTable = () => {
                             <Icon as={FaEye}/>
                             <Text transition={'transform .1s ease-in-out'}   transformOrigin="left center" transform={location.endsWith('functions')?'scale(1.02)':'scale(1)'} whiteSpace={'nowrap'} textOverflow={'ellipsis'}   overflow={'hidden'}>{t('Secrets')}</Text>
                          </Flex>
-
                      </Box>
 
 
@@ -130,10 +129,10 @@ const FunctionsTable = () => {
             </MotionBox>
 
             <MotionBox  initial={{ width: functionBoxWidth }} animate={{ width: functionBoxWidth,}} exit={{ width: functionBoxWidth, }}  overflowY={'scroll'}  transition={{ duration: '.2'}} 
-                zIndex={100} height={'100vh'} overflowX={'hidden'}>
+                zIndex={100} bg='white' height={'100vh'} overflowX={'hidden'}>
                 <Suspense fallback={<></>}>    
                         <Routes >
-                            <Route path="/" element={<FunctionsStats  setHideFunctions={setHideFunctions}/>}/>
+                            <Route path="/" element={<FunctionsStats functionsList={functionsData} setHideFunctions={setHideFunctions}/>}/>
                             <Route path="/secrets" element={<Secrets  setHideFunctions={setHideFunctions}/>}/>
                             <Route path="/function/*" element={<Function setHideFunctions={setHideFunctions}/>}/>
                         </Routes>

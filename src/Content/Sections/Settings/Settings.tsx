@@ -25,7 +25,7 @@ import { HiViewColumns } from "react-icons/hi2"
 import { MdKeyboardCommandKey, MdWebhook } from "react-icons/md"
 import { SiGooglemybusiness } from "react-icons/si"
 //TYPING
-import { IconKey, SubSectionProps, ConfigProps } from "../../Constants/typing" 
+import { IconKey, SubSectionProps, ConfigProps, ChannelsType } from "../../Constants/typing" 
   
 //MAIN
 const Main = lazy (() => import('./Main')) 
@@ -167,7 +167,7 @@ function Settings () {
     const isAdmin = auth.authData.users?.[auth.authData?.userId || '']?.is_admin
 
     //const integrationsList = auth.authData.active_integrations.map((integration) => {return[t(integration), integration]})
-    const channelsList = (session.sessionData.additionalData.channels || [])
+    const [channelsList, setChannelsList] = useState<ChannelsType[]>(session.sessionData.additionalData.channels || [])
     const [helpCentersList, setHelpCentersList] = useState<any[]>([])
     const [configsList, setConfigsList] = useState<ConfigProps[]>([])
 
@@ -275,8 +275,8 @@ function Settings () {
                         <Route path="/organization/hours" element={<BussinessHours  />} />
                         <Route path="/organization/surveys" element={<Surveys/>} />
 
-                        <Route path="/tilda/all-configs" element={<Tilda />} />
-                        <Route path="/tilda/config/*" element={<TildaConfig scrollRef={scrollRef}/>} />
+                        <Route path="/tilda/all-configs" element={<Tilda configData={configsList}/>} />
+                        <Route path="/tilda/config/*" element={<TildaConfig setConfigsData={setConfigsList}/>} />
 
                         <Route path="/users/user" element={<User />} />
                         <Route path="/users/admin-users" element={<AdminUsers />} />
@@ -296,7 +296,7 @@ function Settings () {
                         <Route path="/actions/automations" element={<Automations scrollRef={scrollRef}/>} />
 
                         <Route path="/channels/all-channels/*" element={<AllChannels channelsData={channelsList}/>} />
-                        <Route path="/channels/webchat/*" element={<Chatbot />} />
+                        <Route path="/channels/webchat/*" element={<Chatbot setChannelsData={setChannelsList}/>} />
                         <Route path="/channels/whatsapp/*" element={<Whatsapp />} />
                         <Route path="/channels/phone/*" element={<Phone />} />
                         <Route path="/channels/instagram/*" element={<Instagram />} />

@@ -124,7 +124,7 @@ const Article = ({folders}:{folders:Folder[]}) => {
         return(<> 
               <Box p='15px'> 
                     <Text fontWeight={'medium'} fontSize={'1.2em'}>{parseMessageToBold(t('DeleteArticleAnswer', {name:articleData?.title}))}</Text>
-                     <Text mt='2vh' fontSize={'.8em'} >{parseMessageToBold(t('DeleteFolderWarning'))}</Text>
+                     <Text mt='2vh' fontSize={'.8em'} color='gray.600'>{t('DeleteFolderWarning')}</Text>
           
                     <Flex mt='2vh' gap='15px' flexDir={'row-reverse'} >
                         <Button  size='sm' variant='delete' onClick={deleteArticle}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>

@@ -39,16 +39,17 @@ const CreateBusiness = ({setShowBox, actionTrigger}:{setShowBox:(key:boolean) =>
         <Box p='15px' maxW='450px'> 
             <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('CreateBusiness')}</Text>
  
+            <Text mt='2vh' color={'gray.600'} fontSize={'.8em'}>{t('CreateBusinessAdvice')}</Text>
+
             <Text mt='2vh' fontWeight={'medium'} mb='.5vh' fontSize={'.8em'}>{t('Name')}</Text>
             <EditText value={businessName} setValue={setBusinessName} hideInput={false} placeholder='Ejemplo'/>
             <Text mt='2vh' fontWeight={'medium'} mb='.5vh' fontSize={'.8em'}>{t('Domain')}</Text>
             <EditText value={businessDomain} setValue={setBusinessDomain} hideInput={false} placeholder='ejemplo.com'/>
                         
-  
-        <Flex  maxW='450px'  mt='2vh' gap='15px' flexDir={'row-reverse'}>
-            <Button  size='sm' variant={'main'} isDisabled={businessName === '' || businessDomain === ''} onClick={createBusiness}>{waitingCreate?<LoadingIconButton/>:t('CreateBusiness')}</Button>
-            <Button  size='sm' variant={'common'} onClick={()=>setShowBox(false)}>{t('Cancel')}</Button>
-        </Flex>
+            <Flex  maxW='450px'  mt='2vh' gap='15px' flexDir={'row-reverse'}>
+                <Button  size='xs' variant={'main'} isDisabled={businessName === '' || businessDomain === ''} onClick={createBusiness}>{waitingCreate?<LoadingIconButton/>:t('CreateBusiness')}</Button>
+                <Button  size='xs' variant={'common'} onClick={()=>setShowBox(false)}>{t('Cancel')}</Button>
+            </Flex>
         </Box>
     </>)
 }

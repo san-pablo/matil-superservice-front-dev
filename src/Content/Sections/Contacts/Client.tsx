@@ -498,24 +498,22 @@ function Client ( {socket, fetchClientDataWithFilter}:{socket:any, fetchClientDa
 
         
         <Flex flexDir={'column'} height={'100vh'}   width={'100%'}>
-            <Box px='1vw' pt='1vw' > 
-                <Flex   gap='3vw' justifyContent={'space-between'}> 
-                    <Flex  flex='1' gap='20px'  alignItems={'center'}>
-                        <IconButton  aria-label='expand-data' icon={<PiSidebarSimpleBold size='18px'/>} size='sm'  variant={'common'} bg='transparent'  onClick={() => navigate('/contacts/clients') }/>
-                        <Flex gap='10px'  flex='1'  alignItems={'center'}>
-                            <Avatar size='sm' name={clientDataEdit?.name}/>
-                            <Skeleton width={'100%'} isLoaded={clientDataEdit !== null}> 
-                                <EditText fontSize="1.2em" nameInput={true} size='md' maxLength={70} updateData={(text:string | undefined) => updateData({...clientDataEdit as ClientData, name:text as string})} value={clientDataEdit?.name === ''? t('WebClient'):clientDataEdit?.name} setValue={handelChangeName}/>
-                            </Skeleton>
-                        </Flex>
-                    </Flex>
-                    <Flex alignItems={'center'} gap='10px'>
-                        <Button variant={'common'}  leftIcon={clientDataEdit?.is_blocked?<TbKey/>:<MdBlock/>} onClick={() => {if (!clientDataEdit?.is_blocked) setShowBlock(true); else updateData({...clientDataEditRef.current as ClientData, is_blocked:false})}} color={clientDataEdit?.is_blocked?'black':'red'}  size='sm'   _hover={{color:clientDataEdit?.is_blocked?'blue.500':'red.600'}}>{clientDataEdit?.is_blocked?t('Deblock'):t('Block')}</Button>
-                        <Button leftIcon={<TbArrowMerge/>}  size='sm' variant={'common'} onClick={() => setShowMerge(true)}>{t('Merge')}</Button>
-                    </Flex>
+        
+            <Flex borderBottomWidth={'1px'} borderBottomColor={'gray.200'} h='50px' px='1vw'  gap='3vw' justifyContent={'space-between'}> 
+                <Flex  flex='1' gap='10px'  alignItems={'center'}>
+                    <Skeleton  isLoaded={clientDataEdit !== null}> 
+                        <Avatar size='xs' name={clientDataEdit?.name}/>
+                    </Skeleton>
+                    <Skeleton isLoaded={clientDataEdit !== null} style={{flex:1}}> 
+                        <EditText  nameInput maxLength={70} fontSize="1em"  updateData={(text:string | undefined) => updateData({...clientDataEdit as ClientData, name:text as string})} value={clientDataEdit?.name === ''? t('WebClient'):clientDataEdit?.name} setValue={handelChangeName}/>
+                    </Skeleton>
                 </Flex>
-                <Box h='1px' w='100%' bg='gray.200' mt='2vh'/>
-            </Box>
+                <Flex alignItems={'center'} gap='10px'>
+                    <Button leftIcon={clientDataEdit?.is_blocked?<TbKey/>:<MdBlock/>} onClick={() => {if (!clientDataEdit?.is_blocked) setShowBlock(true); else updateData({...clientDataEditRef.current as ClientData, is_blocked:false})}} variant={clientDataEdit?.is_blocked?'common':'delete'} size='sm'>{clientDataEdit?.is_blocked?t('Deblock'):t('Block')}</Button>
+                    <Button leftIcon={<TbArrowMerge/>}  size='sm' variant={'common'} onClick={() => setShowMerge(true)}>{t('Merge')}</Button>
+                </Flex>
+            </Flex>
+        
 
             <Flex flex='1' > 
                 <Box flex='1' py='2vh'  ref={scrollRef1} px='1vw' borderRightColor={'gray.200'} borderRightWidth={'1px'}  overflow={'scroll'}  >
@@ -536,7 +534,7 @@ function Client ( {socket, fetchClientDataWithFilter}:{socket:any, fetchClientDa
                         
                         <Box position={'relative'}> 
                             <Flex ref={addNewChannelButtonRef} mt='2vh'  alignItems={'center'} gap='7px' color={'brand.text_blue'} _hover={{opacity:0.8}}  cursor={'pointer'}>
-                                <Icon as={FaPlus} boxSize={'11px'} />
+                                <Icon as={FaPlus} boxSize={'12px'} />
                                 <Text fontWeight={'medium'} fontSize={'.85em'} onClick={() => setShowAddNewChannel(!showAddNewChannel)}>{t('AddContact')}</Text>
                             </Flex>
                             {showAddNewChannel && 

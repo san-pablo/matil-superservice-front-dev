@@ -15,7 +15,7 @@ const CollapsableSection = ({ section, isExpanded, onSectionExpand, children, se
                 <IoIosArrowDown  className={isExpanded ? "rotate-icon-up" : "rotate-icon-down"}/>
             </Flex>
             <div className={`expandable-container ${isExpanded ? 'expanded' : 'collapsed'}`} style={{ overflow: isExpanded ? 'visible' : 'hidden',   transition: isExpanded ?'max-height .2s ease-in-out, opacity 0.2s ease-in-out': 'max-height .2s ease-out, opacity 0.2s ease-out'}}>      
-                      {children}
+                {children}
             </div>
         </Box>
     )

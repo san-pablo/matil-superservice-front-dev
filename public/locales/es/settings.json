@@ -235,7 +235,9 @@
     "EditHelpCenter":"Editar centro de ayuda",
     "CorrectDeletedHelpCenter":"Centro de ayuda eliminado con éxito",
     "FailedDeletedHelpCenter":"Hubo un error al eliminar el centro de ayuda",
-    "ConfirmDeleteHelpCenter":"¿Estás seguro que deseas eliminar el centro de ayuda/{ {{name}}}/?",
+    "ConfirmDeleteHelpCenter":"Eliminar el centro de ayuda/{ {{name}}}/",
+    "ConfirmDeleteHelpCenterDes":"El asistente dejará de usar los artículos de este centro de ayuda para responder.",
+
     "CorrectEditedHelpCenter":"Centro de ayuda editado con éxito",
     "FailedEditedHelpCenter":"Hubo un error al editar el centro de ayuda",
     "Edit":"Editar",
@@ -640,7 +642,7 @@
     "Outputs":"Variables de salida",
     "AddArgument":"Añadir argumento",
     "AddOutput":"Añadir variable de salida",
-    "Errors":"Historial de errores",
+    "Errors":"Errores",
     "CopyError":"Copiar error",
     "NoErrors":"No hay errores",
     "ErrorsCount_one":"Hay {{count}} error en la función",
@@ -812,7 +814,9 @@
     "MatildaConfigsDes":"Define el comportamiento de Matilda a través de los distintos canales.",
     "CorrectDeletedConfiguration":"Configuración eliminada con éxito",
     "FailedDeletedConfiguration":"Hubo un error al eliminar la configuración",
-    "ConfirmDeleteConfiguration":"¿Estás seguro de que deseas eliminar la configuración/{ {{name}}}/?",
+    "ConfirmDeleteConfiguration":"Eliminar la configuración/{ {{name}}}/",
+    "DeleteConfigurationWarning":"Esta acción no se puede deshacer. Al eliminar la configuración el bot dejará de funcionar en todos los canales que tengan esta configuración asociada.",
+    
     "ConfirmDeleteConfig":"¿Estás seguro que deseas eliminar la configuración/{ {{name}}}/?",
     "NoConfigs":"No hay configuraciones disponibles",
     "ConfigCount_one":"{{count}} configuración",
@@ -828,7 +832,7 @@
     "Instructions":"Instrucciones",
     "Knowledge":"Funciones y Conocimiento",
     "NewConfig":"Nueva configuración",
-    "AvailableFunctions":"Funciones disponibles",
+    "AvailableFunctions":"Funciones habilitadas",
     "AddFunctions":"Añadir funciones",
     "AddHelpCenters":"Añadir centros de ayuda",
     "CorrectAddedHelpCenter":"Centro de ayuda añadido correctamente",
@@ -837,7 +841,9 @@
     "NoAvailableFunctions":"No hay funciones disponibles",
     "CorrectDeletedFunction":"Función eliminada correctamente",
     "FailedDeletedFunction":"Hubo un error al eliminar la función",
-    "ConfirmDeleteFunction":"¿Estás seguro de eliminar la función/{ {{name}}}/?",
+    "ConfirmDeleteFunction":"Eliminar la función/{ {{name}}}/",
+    "ConfirmDeleteFunctionDes":"El asistente dejará de poder usar esta función en las conversaciones.",
+
 
     "AssitantName":"Nombre del asistente",
     "AssitantNameDes":"Nombre con el que se presentará el asistente virtual. Será Tilda por defecto.",
@@ -943,7 +949,7 @@
     "NewChannel":"Administra todos los canales de la organización.",
     "AllConfigs":"Configuraciones",
     "ConfigEdit":"Define el carácter y la información que usará Tilda, a través de los distintos canales-",
-    "AllConfigsDes":"Crea nuevas configuraciones de Tilda, para definir como debe de comprtarse a través de los distontos canales.",
+    "AllConfigsDes":"Crea nuevas configuraciones de Tilda, para definir como debe de comprtarse a través de los distintos canales.",
     "HelpCenterEdit":"Configura el contenido de este centro de ayuda.",
     "ChannelType":"Tipo de canal",
     "CreateChannel":"Crear canal",
@@ -956,7 +962,46 @@
     "AiAssitant":"Asistente virtual",
     "Others":"Otros",
     "SelectLanguage":"Selecciona el idioma",
-    "AiAssistant":" • Asistente de IA"
+    "AiAssistant":" • Asistente de IA",
+    "CorrectCopiedChannel":"Canal copiado con éxito",
+    "FailedCopiedChannel":"Hubo un error al copiar el canal",
+    "DeleteChannelAnswer":"Eliminar el canal/{ {{name}}}/",
+    "DeleteChannelWarning":"Esta acción no se puede deshacer. Al eliminar un canal los mensajes de los clientes ya no serán contestados por Tilda, ni llegarán a la plataforma. Además, en el caso del webchat, este desaparecrá de la web.",
+    "EnabledChannels":"Canales habilitados",
+    "neutral":"Neutral",
+    "professional":"Profesional",
+    "sarcastic":"Sarcástico",
+    "factual":"Factual",
+    "Presentation":"Presentación",
+    "mood":"Carácter",
+    "Personality":"Personalidad",
+    "Responses":"Respuestas",
+    "knowledge":"Conocimiento",
+    "instructions":"Instrucciones",
+    "AddFirstFunction":"Añade tu primera función",
+    "NoFunctionsSelected":"No hay ninguna función seleccionada. Añade funciones a la configuración, para que el asistente pueda realizar acciones de negocio.",
+    "NoHelpCenterSelected":"No hay ninguna centro de ayuda seleccionado. Añade centros de ayuda a la configuración, para que el asistente pueda acceder a los artículos y referenciarlos en sus respuestas.",
+    "Thinking":"Pensando",
+
+    "total_calls":"Total llamadas",
+    "total_errors":"Total errores",
+    "mean_execution_time_ms":"Tiempo de ejecución medio",
+    "mean_memory_consumed_kb":"Consumo de memoria medio",
+    "ReproduceErrorWarning":"Clica en un error para reproducir la función con los mismos argumentos y ver si se ha solucionado.",
+    "RunSuccessful":"Sin errores",
+    "ExecutionTime":"Tiempo de ejecución",
+    "MemoryUsage":"Uso de memoria",
+    "ArgumentsLog":"Argumentos",
+    "Result":"Resultado",
+    "NoSecrets":"No hay secretos todavía",
+    "Value":"Valor"
+
+
+
+
+
+
+
 
 
     

@@ -58,5 +58,7 @@
     "google_business":"Google Business",
     "phone":"Teléfono",
     "ClientsFilterMessage":"Los canales son",
-    "Deblock":"Desbloquear"
+    "Deblock":"Desbloquear",
+    "HideSidebar":"Esconder barra"
+
 }

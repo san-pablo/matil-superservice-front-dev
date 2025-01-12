@@ -48,14 +48,15 @@ const theme = extendTheme({
         blue_hover_2:'#DDF1FC',
 
         gray_1:"#e8e8e8",
-        gray_2:"#f3f3f3",
-        hover_gray:'#F9F9F9',
+        gray_2:"#eeeeee",
+        hover_gray:'#F6F6F6',
+        hover_gray_white:'#FAFAFA',
         gradient_blue:'linear-gradient(to right, rgba(0, 102, 204, 1),rgba(51, 153, 255, 1))',
         gradient_blue_hover:'linear-gradient(to right, rgba(0, 72, 204, 1),rgba(51, 133, 255, 1))'
        }
      },
     styles: {
-      global: {body: {bg: 'white', fontFamily: 'Poppins, sans-serif'}}
+      global: {body: {bg: 'white', fontFamily: 'Poppins'}}
     },
     fontWeights: { normal: 400, medium: 500, semibold: 600,bold: 700},
     components: {
@@ -73,7 +74,8 @@ const theme = extendTheme({
       Button: { 
           baseStyle: {fontWeight:600, bg:'#f1f1f1', _hover:{bg:'#e8e8e8'}, height:'30px'},
           sizes: {
-            sm: {h: '32px', minW: '32px',  fontSize: '.9em', px: '8px'},
+            xs: {h: '28px', minW: '28px',  fontSize: '.9em', px: '8px'},
+            sm: {h: '28px', minW: '28px',  fontSize: '.9em', px: '8px'},
           },
           variants:{
             main:{bg:'#222', _hover:{bg:'blackAlpha.800'}, color:'white',   _disabled: {bg: '#222', color: 'white', pointerEvents: 'none', cursor: 'not-allowed',opacity: 0.6}},

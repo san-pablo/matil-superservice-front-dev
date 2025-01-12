@@ -147,7 +147,7 @@ function Content ({userInfo}:{userInfo:userInfo}) {
         if (Notification.permission !== 'granted') Notification.requestPermission()
 
         const section = localStorage.getItem('currentSection')
-        if (!window.location.hash.substring(1)) navigate(section !== null ? section : 'conversations')
+        if (window.location.pathname === '/' && !window.location.hash) navigate(section !== null ? section : 'conversations')
         else navigate(window.location)
 
         socket.current = io('https://api.matil.ai/platform', {
@@ -351,12 +351,14 @@ function Content ({userInfo}:{userInfo:userInfo}) {
 
     useEffect(() => {
         const updateBarPosition = () => {
-            const currentSection = location.split('/')[1] as 'conversations' | 'contacts' | 'knowledge' | 'functions' | 'stats' | 'settings';
+            const currentSection = location.split('/')[1] as 'conversations' | 'contacts' | 'knowledge' | 'functions' | 'stats' | 'settings'
+            console.log(currentSection)
+            console.log(sectionsRefs[currentSection]?.current)
             if (sectionsRefs[currentSection]?.current && barRef.current) {
                 isFirstSection.current = false
                 const sectionTop = sectionsRefs[currentSection]?.current?.getBoundingClientRect().top || 0
                 localStorage.setItem('currentSectionTop', String(sectionTop))
-                barRef.current.style.transform = `translateY(${sectionTop}px)`
+                barRef.current.style.transform = `translateY(${sectionTop}px)` 
             }
         }    
         updateBarPosition()
@@ -415,10 +417,11 @@ function Content ({userInfo}:{userInfo:userInfo}) {
     const NavBar = () => {
  
 
-        const MatilImage = useMemo(() => (<Image src='/images/matil-simple-2.svg' width={'22px'} height={'22px'} />), [])
+        const MatilImage = useMemo(() => (<Image src='/images/matil-simple-2.svg' width={'18px'} height={'18px'} />), [])
         
         return (<>
-        
+            
+ 
             <Flex alignItems='center' flexDir='column' >
                 <Box  width='100%'> 
                     <Flex width={'100%'} justifyContent={'center'} mb='5vh'> 
@@ -426,13 +429,14 @@ function Content ({userInfo}:{userInfo:userInfo}) {
                     </Flex>
                     <NavBarItem ref={conversationsRef} icon={IoFileTrayFull} section={'conversations'}/>
                     <NavBarItem ref={clientsRef} icon={BsFillPersonLinesFill} section={'contacts'}/>
-                </Box>
+                    {isAdmin && <NavBarItem ref={flowsRef}  icon={BsStars} section={'functions'}/>}
+                    {isAdmin && <NavBarItem  ref={statsRef} icon={BsBarChartFill} section={'stats'}/>}
+                    {isAdmin && <NavBarItem ref={knowledgeRef}  icon={BsFillLayersFill} section={'knowledge'}/>}
+                 </Box>
             </Flex>
             <Flex  alignItems='center' flexDir='column' position={'relative'}>
-                {isAdmin && <NavBarItem ref={flowsRef}  icon={BsStars} section={'functions'}/>}
-                {isAdmin && <NavBarItem  ref={statsRef} icon={BsBarChartFill} section={'stats'}/>}
-                {isAdmin && <NavBarItem ref={knowledgeRef}  icon={BsFillLayersFill} section={'knowledge'}/>}
-                {isAdmin && <NavBarItem ref={settingsRef} icon={IoIosSettings} section={'settings'}/>}
+            {isAdmin && <NavBarItem ref={settingsRef} icon={IoIosSettings} section={'settings'}/>}
+
                 <Flex width='40px' bg='gray.300' height='1px' mb='2vh' mt='2vh'/>
                 <LogoutBox userInfoApp={userInfoApp} auth={auth} addOrganization={addOrganization} changeOrganization={changeOrganization}/>
             </Flex>
@@ -468,16 +472,16 @@ function Content ({userInfo}:{userInfo:userInfo}) {
 
     //FRONT 
     return(<> 
-        
-        <Box ref={barRef} transform={`translateY(${localStorage.getItem('currentSectionTop')})px)`} style={{position: 'absolute', zIndex:100, left: 0, width: '3px', top:0, backgroundColor: 'rgba(59, 90, 246)', height:'51px'}}   transition={isFirstSection.current ? 'none':'transform 0.25s ease'} />
-        {socket.current ? 
+        <Box ref={barRef} borderRadius={'.5rem'} zIndex={1} boxShadow={'0 0 3px 0px rgba(0, 0, 0, 0.1)'}  transform={`translateY(${localStorage.getItem('currentSectionTop')})px)`} style={{position: 'absolute', left: '4px', width: '38px', top:0, backgroundColor: 'white', height:'38px'}}   transition={isFirstSection.current ? 'none':'transform 0.25s ease'} />
+
+         {socket.current ? 
 
         <Flex width={'100vw'} height={'100vh'} overflow={'hidden'}> 
 
             {memoizedCallWidget}
         
             {/*SIDEBAR*/}
-            <Flex flexDir='column'  alignItems='center' justifyContent='space-between' height={'100vh'} width='55px' py='3vh' bg='brand.gray_1' >
+            <Flex flexDir='column'  alignItems='center' justifyContent='space-between' height={'100vh'} width='45px' py='3vh' bg='brand.gray_1' >
                 {memoizedNavbar}
             </Flex>
 
@@ -528,13 +532,13 @@ const NavBarItem = forwardRef<HTMLDivElement, NavBarItemProps>(({icon, section }
             navigate(section)
         }
     }
-    const isSelected = section === 'settings' ? location.split('/')[1] === 'settings': section === 'knowledge' ? location.split('/')[1] === 'knowledge' : section === 'stats' ? location.split('/')[1] === 'stats' : section === 'functions' ? location.split('/')[1] === 'functions' : section === 'contacts' ? location.split('/')[1] === 'contacts':location === `/${section}` 
+    const isSelected = section === 'settings' ? location.split('/')[1] === 'settings': section === 'knowledge' ? location.split('/')[1] === 'knowledge' : section === 'stats' ? location.split('/')[1] === 'stats' : section === 'functions' ? location.split('/')[1] === 'functions' : section === 'contacts' ? location.split('/')[1] === 'contacts':location.split('/')[1] === 'conversations'
 
     //FRONT
     return (
         <Tooltip isOpen={isHovered} label={sectionsMap[section]} placement='right' color={'black'} bg='white' boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.15)'} borderWidth={'1px'} borderColor={'gray.200'} borderRadius='.4rem' fontSize='sm' fontWeight={'medium'} p='6px'>
-            <Flex ref={ref} justifyContent='center' alignItems='center' py='15px' width={'55px'} cursor='pointer'  bg={(isSelected) ? 'brand.hover_gray': isHovered ? 'brand.hover_gray':'transparent'} color={(isSelected) ? 'rgba(59, 90, 246)' : 'gray.600'} onClick={handleClick} onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
-                <Icon as={icon} boxSize='21px'/>
+            <Flex zIndex={10} position={'relative'} borderRadius={'.5rem'} ref={ref} justifyContent='center' alignItems='center' h='38px' width={'38px'} cursor='pointer'  bg={'transparent'} color={(isSelected) ? 'rgba(59, 90, 246)' : 'gray.600'} _hover={{color:isSelected?'rgba(59, 90, 246)':'black'}} onClick={handleClick} onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
+                <Icon as={icon} boxSize='18px'/>
             </Flex>
         </Tooltip>
     )

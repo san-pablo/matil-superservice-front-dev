@@ -56,6 +56,7 @@ const ColumnChart = ({ xaxis, segmentxAxis, yaxis, ytitle, chartType, configurat
 
     const parseYAxis = () => {
       let yaxisTrue:any[] = []
+
       yaxis.map((metric, metricIndex) => {
         if (segmentxAxis.length > 0) {
           segmentxAxis.map((_, segmentIndex) => { 
@@ -70,6 +71,7 @@ const ColumnChart = ({ xaxis, segmentxAxis, yaxis, ytitle, chartType, configurat
             })
           })
         }
+
         else yaxisTrue.push({
           id: `segment-${metricIndex}-${0}`,
           data: xaxis.map((_, categoryIndex) => metric[categoryIndex][0] || 0),
@@ -84,7 +86,7 @@ const ColumnChart = ({ xaxis, segmentxAxis, yaxis, ytitle, chartType, configurat
     }
     
  
-  return (
+   return (
     <ThemeProvider theme={muiTheme}>
         
         <div ref={target} style={{ width: '100%', height: '100%' }}>

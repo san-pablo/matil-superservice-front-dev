@@ -1,6 +1,6 @@
 
 //REACT
-import  {useState, RefObject, SetStateAction, Dispatch } from 'react'
+import  {useState, RefObject } from 'react'
 //FRONT
 import { Flex, Text, Box, Icon, Switch, NumberInput, NumberInputField, Tooltip, NumberInputStepper, NumberDecrementStepper, NumberIncrementStepper } from "@chakra-ui/react"
 //COMPONENTS
@@ -11,7 +11,7 @@ import ColorPicker from '../Once/ColorPicker'
 import { IoMdArrowRoundForward, } from 'react-icons/io'
 import { FaQuestionCircle } from "react-icons/fa"
 
-export const EditStr = ({ title, value, setValue, description, placeholder}:{value:string, setValue:(value:string) => void, title:string, description?:string, placeholder?:string}) => {
+export const EditStr = ({ title, value, setValue, description, placeholder, isTextArea = false}:{value:string, setValue:(value:string) => void, title:string, description?:string, placeholder?:string, isTextArea?:boolean}) => {
         
     const [hoverDescription, setHoverDescription] = useState<boolean>(false)
 
@@ -25,7 +25,7 @@ export const EditStr = ({ title, value, setValue, description, placeholder}:{val
             </Tooltip>}
         </Flex>
         <Box  mt='.5vh'> 
-            <EditText placeholder={placeholder} hideInput={false} value={value} setValue={(val) => setValue(val)}/>
+            <EditText isTextArea={isTextArea} placeholder={placeholder} hideInput={false} value={value} setValue={(val) => setValue(val)}/>
         </Box>
     </>)
 }

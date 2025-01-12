@@ -13,11 +13,28 @@ import { Flex, Box, Text } from '@chakra-ui/react'
 import formatFileSize from '../../../Functions/formatFileSize'
 import '../../../Components/styles.css'
  
+const customInfo = {
+  welcome_message:{},
+  chat_position:'right',
+  mesh_colors: ['#3399ff', '#0066cc'],
+  actions_color:'#0066cc',
+  messages_opacity:0.5,
+  ai_message:{},
+  bot_name:'Tilda',
+  header_background: ['#3399ff', '#0066cc'],
+  header_color: '#FFFFFF',
+  chat_avatar: '/images/matil.svg',
+  client_background: ['#3399ff', '#0066cc'],
+  client_color: '#FFFFFF',
+  options: {},
+  sections: []
+}
+
 const TestChat = ({configurationId, configurationName}:{configurationId:string, configurationName:string}) => {
 
   //CONSTANTS
-  const auth = useAuth()
-  const { t } = useTranslation('flows')
+   const auth = useAuth()
+  const { t } = useTranslation('settings')
   const { getAccessTokenSilently } = useAuth0()
 
   //MESSAGES
@@ -37,6 +54,7 @@ const TestChat = ({configurationId, configurationName}:{configurationId:string, 
     }
   }, [messages])
 
+  
   //SEND A MESSAGE
   const sendMessage = async (content:string | File, type:string) => {
 
@@ -102,8 +120,11 @@ const TestChat = ({configurationId, configurationName}:{configurationId:string, 
     }
   }
 
-   //TEXT AREA CONTAINER
-   const TextAreaContainer = () => {
+  
+
+  const TextAreaContainer = () => {
+
+
     const [inputValue, setInputValue] = useState<string>('')
     function resizeTextarea( e:any ) {
       setInputValue(e.target.value)
@@ -111,40 +132,46 @@ const TestChat = ({configurationId, configurationName}:{configurationId:string, 
       e.target.style.height = e.target.scrollHeight + 'px'
     }
 
-     //Enviar el texto a través del input y resizear la text area
+      //Enviar el texto a través del input y resizear la text area
     const handleKeyDown = (event: any) => {
       if (event.key === 'Enter' && !waitingMessage) {
         event.preventDefault()
         if (inputValue.trim() !== '') {
           sendMessage(inputValue, 'plain')
         }
-      }}
+    }}
 
-    return (      <>   
-    <input id='selectFile' type="file" style={{display:'none'}}  onChange={(e)=>{handleFileSelect(e)}} accept=".pdf, .doc, .docx, image/*" />
+    return (          
+    <div style={{height:'70px', marginTop:'30px', padding:'0px 10px 0px 10px', width:'100%', display:'flex', flexDirection:'column', alignItems:'center'}}  >
+    
+    <div style={{ width:'100%', position:'relative', alignItems:'center'}} > 
+        <textarea ref={inputRef} disabled={waitingMessage}  maxLength={1000}  className="text-area"  id="autoresizingTextarea" placeholder={t('WriteMessage')} onKeyDown={handleKeyDown}  rows={1} onChange={resizeTextarea} />
+        <button id="fileButton"  onClick={() => {if (!waitingMessage) {const input = document.getElementById('selectFile'); if (input) input.click()}}}className="clip-btn"  >
+          <svg viewBox="0 0 512 512"   width="18" height="18" style={{fill: 'currentColor'}}><path d="M364.2 83.8c-24.4-24.4-64-24.4-88.4 0l-184 184c-42.1 42.1-42.1 110.3 0 152.4s110.3 42.1 152.4 0l152-152c10.9-10.9 28.7-10.9 39.6 0s10.9 28.7 0 39.6l-152 152c-64 64-167.6 64-231.6 0s-64-167.6 0-231.6l184-184c46.3-46.3 121.3-46.3 167.6 0s46.3 121.3 0 167.6l-176 176c-28.6 28.6-75 28.6-103.6 0s-28.6-75 0-103.6l144-144c10.9-10.9 28.7-10.9 39.6 0s10.9 28.7 0 39.6l-144 144c-6.7 6.7-6.7 17.7 0 24.4s17.7 6.7 24.4 0l176-176c24.4-24.4 24.4-64 0-88.4z"></path></svg>
+        </button> 
+      <button className="send-btn"   disabled={waitingMessage || inputValue === ''} onClick={() => {sendMessage(inputValue, 'plain')}}  style={{padding:'7px', alignItems:'center', width:"28px", height:"28px", justifyContent:'center', background:customInfo?.actions_color || 'black',position: 'absolute', right: '10px', bottom:'10px' }} >
+            <svg preserveAspectRatio="xMidYMid"viewBox="0 0 390 480" width="14" height="14"  style={{fill: 'white'}}>
+                <path d="M214.6 41.4c-12.5-12.5-32.8-12.5-45.3 0l-160 160c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L160 141.2V448c0 17.7 14.3 32 32 32s32-14.3 32-32V141.2L329.4 246.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-160-160z"/>
+            </svg>
+        </button>
+    </div>
 
-    <div style={{height:'100px', padding:'10px 20px 10px 20px', gap:'10px', display:'flex', alignItems:'center'}}  >
 
-        <div style={{display:'flex', position:'relative',flexGrow:'1', alignItems:'center', minHeight:'40px'}} > 
-          <button   id="fileButton"  className="clip-btn"  onClick={() => {if (!waitingMessage) {const input = document.getElementById('selectFile'); if (input) input.click()}}}>
-            <svg viewBox="0 0 24 24"   width="16" height="16" style={{fill: 'black'}}><path d="M19.187 3.588a2.75 2.75 0 0 0-3.889 0L5.575 13.31a4.5 4.5 0 0 0 6.364 6.364l8.662-8.662a.75.75 0 0 1 1.061 1.06L13 20.735a6 6 0 0 1-8.485-8.485l9.723-9.723a4.247 4.247 0 0 1 4.124-1.139 4.247 4.247 0 0 1 3.025 3.025 4.247 4.247 0 0 1-1.139 4.124l-9.193 9.193a2.64 2.64 0 0 1-1.858.779 2.626 2.626 0 0 1-1.854-.779c-.196-.196-.338-.47-.43-.726a2.822 2.822 0 0 1-.168-.946c0-.7.284-1.373.775-1.864l8.132-8.131a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734l-8.131 8.132a1.148 1.148 0 0 0-.336.803c.003.204.053.405.146.587.01.018.018.028.02.032.22.215.501.332.786.332.29 0 .58-.121.798-.34l9.192-9.192a2.75 2.75 0 0 0 0-3.89Z"></path></svg>
-          </button> 
-            <textarea maxLength={1000} ref={inputRef} disabled={waitingMessage} className="text-area"  id="autoresizingTextarea" placeholder="Escribe un mensaje..." onKeyDown={handleKeyDown}  rows={1} onChange={resizeTextarea}/>
-            <button className="send-btn"  style={{padding:'4px', alignItems:'center', width:"22px", height:"22px", justifyContent:'center', background:inputValue === ''?'#A0AEC0':'black',position: 'absolute', right: '6px', top:'11px' }} disabled={waitingMessage || inputValue === ''} onClick={() => {sendMessage(inputValue, 'plain')}} >
-                <svg viewBox="0 0 390 480" width="15" height="13" style={{fill: 'white'}}>
-                    <path d="M214.6 41.4c-12.5-12.5-32.8-12.5-45.3 0l-160 160c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L160 141.2V448c0 17.7 14.3 32 32 32s32-14.3 32-32V141.2L329.4 246.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-160-160z"/>
-                </svg>
-            </button>
-        </div>
-      
-      
-      </div>
-      </> )
+  </div>)
   }
 
-  
+
+  const calculateBorderRadius = (isBotMessage:boolean, isPreviousMessageBot:boolean, isNextMessageBot:boolean, isLastMessage:boolean ) => {
+    const firstBorder = (isBotMessage && isPreviousMessageBot) ? 2 : 7
+    const secondBorder = (!isBotMessage && !isPreviousMessageBot) ? 2 : 7
+    const thirdBorder = isLastMessage ? 7 : (!isBotMessage && !isNextMessageBot) ? 2 : 7
+    const fourthBorder = isLastMessage ? 7 : (isBotMessage && isNextMessageBot) ? 2 : 7
+    
+    return `.${firstBorder}rem .${secondBorder}rem .${thirdBorder}rem .${fourthBorder}rem`
+    }
+
   const ShowMessage = ({type, content}:{type:string, content:any}) => {
- 
+
     // Regular expressions for emails and URLs
     if (type === 'plain' ) {
         
@@ -197,7 +224,7 @@ const TestChat = ({configurationId, configurationName}:{configurationId:string, 
                           )
                         }
                     }
-                     else if (boldRegex.test(part)) {
+                    else if (boldRegex.test(part)) {
                       const boldText = part.replace(/\*\*/g, '')
                       return <span style={{fontWeight:500}} key={index}>{boldText}</span>
                     } else return <span key={index}>
@@ -239,60 +266,78 @@ const TestChat = ({configurationId, configurationName}:{configurationId:string, 
             <span style={{ fontWeight:300, fontSize:'.85em'}} >{formatFileSize(content.file_size)}</span>
           </div>
         </div>
-       )
+      )
     }
-     else return null
+    else return null
   }
 
-  
-
-  return(<>  
-
-   <Flex height='100%' borderRadius={'2rem'}  width='100%'  flexDir='column' >  
-        <div style={{height:'10%', background:`linear-gradient(to right, #3399ff,#0066cc)`, display:'flex', alignItems:'center', padding:'0 4%', justifyContent:'space-between', zIndex:10}} > 
-              <Text fontWeight={'medium'} color={'white'} fontSize={'1.2em'}>{configurationName}</Text>
-          </div>    
-        <Box ref={scrollRef} width={'100%'}overflow={'scroll'} flex='1'>
-            <Box p='20px' > 
-            {messages.map((message, index)=>{
     
-              const isNextMessageBot = messages[index + 1] ? messages[index + 1].sent_by === 'business' : false 
-              const isLastMessageBot = messages[index - 1] ? messages[index - 1].sent_by === 'business' : false 
-              const isLastMessage = index === messages.length - 1 
+  return(<>  
+    <input id='selectFile' type="file" style={{display:'none'}}  onChange={(e)=>{handleFileSelect(e)}} accept=".pdf, .doc, .docx, image/*" />
 
-              return(
-              <div key={`message-${index}`}>
-                <div style={{ marginTop: index === 0 ? '0px' : (message.sent_by === messages[index - 1].sent_by? '3px':'15px')}}> 
-                  <div style={{gap:'10px', fontSize:'.9em', display:'flex', width:'100%', alignItems:'end', flexDirection:message.sent_by === 'business' ? 'row':'row-reverse'}}  key={`message-${index}`}  >
-                      {(message.sent_by === 'business' && !isNextMessageBot)&& <div style={{marginBottom:'0'}}><img alt='chatLogo' src={'/images/matil.svg'} width='20px'/></div>}
-                          <div style={{maxWidth:'82%',display:'flex',flexDirection:'column',alignItems:'end', animation:index > 1 ?message.sent_by === 'business'? 'expandFromLeft 0.5s ease-out' : 'expandFromRight 0.5s ease-out':'none'}}> 
-                              <div style={{ marginLeft:(message.sent_by === 'business' && !isNextMessageBot)?'0':'30px', background:message.sent_by === 'business'?'#EDF2F7':'linear-gradient(to right, rgba(0, 102, 204, 1),rgba(51, 153, 255, 1))', color:message.sent_by === 'business'?'black':'white',  padding:'8px', borderRadius: message.sent_by === 'business'? (isNextMessageBot && isLastMessageBot)? '.2rem .7rem .7rem .2rem' : isNextMessageBot?'.7rem .7rem .7rem .2rem': isLastMessageBot ? '.2rem .7rem .7rem .7rem':'.7rem' : (!isNextMessageBot && !isLastMessageBot && !isLastMessage)? '.7rem .2rem .2rem .7rem' : (isNextMessageBot || isLastMessage)?'.7rem .2rem .7rem .7rem':'.7rem .7rem .2rem .7rem'}}>
-                              <ShowMessage type={message.type} content={message.content}/>
-                              </div>
-                          </div>
-                      </div>
-                </div>
-              </div>)
-              })}
-            {waitingMessage &&<div> 
-              <div style={{display:'flex',  marginTop:'15px', gap:'10px',  width:'100%', alignItems:'end' }}>
-                  <img alt='chatLogo' src={'/images/matil.svg'} width='20px'/>
-                  <div style={{maxWidth:'82%', background:'#eeeeee', animation: 'expandFromLeft 0.5s ease-out',color:'black', padding:'8px', borderRadius:'.7rem'}} >
-                      <div className="writing-animation">
-                          <span className="bounce-dot"></span>
-                          <span className="bounce-dot"></span>
-                          <span className="bounce-dot"></span>
-                      </div>
+    <div style={{zIndex:2, backgroundColor:'white',  height:'100%', width:'100%', backgroundImage:`radial-gradient(circle at 100% 110%, ${customInfo?.mesh_colors?.[0]} 0px, transparent 60%), radial-gradient(circle at 0% 130%, ${customInfo?.mesh_colors?.[1]} 0px, transparent 50%)`, }}>  
+    
+
+        <div style={{height:'580px', padding:'50px 10px 50px 10px', fontWeight:400,  fontSize:'1.1em',  overflow:'scroll'}} ref={scrollRef}>
+          
+            <div style={{width:'100%', display:'flex', marginBottom:'20px', flexDirection:'column', alignItems:'center', justifyContent:'center'}}>
+                    <img alt='chatLogo' src={customInfo?.chat_avatar} width='40px'/>
+                   
+                  <span style={{marginTop:'5px', fontWeight:500}}>{customInfo?.bot_name || 'Tilda'}{t('AiAssistant')}</span>
+               </div>
+
+          {messages.map((message, index)=>{
+
+          const isNextMessageBot = messages[index + 1] ? messages[index + 1].sent_by !== 'client' : false
+          const isPreviousMessageBot = messages[index - 1] ? messages[index - 1].sent_by !== 'client' : false
+          const isLastMessage = index === messages.length - 1 
+          
+          const calcBorderRadius  = calculateBorderRadius(message.sent_by !== 'client',isPreviousMessageBot, isNextMessageBot, isLastMessage)
+          
+
+          return(
+          <div style={{animation:message.sent_by !== 'client'? 'expandFromLeft 0.5s ease-out' : 'expandFromRight 0.5s ease-out'}}>  
+            <div style={{ marginTop: index === 0 ? '0px' : (( ((message.sent_by === 'client') && (messages[index - 1].sent_by === 'client')) ||((message.sent_by !== 'client') && (messages[index - 1].sent_by !== 'client')))  ? '3px':'15px')}}> 
+            
+             
+            <div  style={{ fontSize:'14px',gap:'10px', display:'flex', width:'100%', alignItems:'end', flexDirection:message.sent_by !== 'client' ? 'row':'row-reverse'}}  key={`message-${index}`}  >
+                <div style={{maxWidth:'82%',display:'flex',flexDirection:'column',alignItems:'end'}}> 
+                    <div style={{ wordBreak: 'break-word', overflowWrap: 'break-word', background:message.sent_by !== 'client'?`rgba(237, 242, 247, ${customInfo?.messages_opacity ?customInfo?.messages_opacity:0.5 })`:`linear-gradient(to right, ${customInfo?.client_background?customInfo.client_background[0]:'green'},${customInfo?.client_background?customInfo.client_background[1]:'green'})`, color:message.sent_by !== 'client'?'black':customInfo?.client_color,  padding:'14px', borderRadius:calcBorderRadius}}>
+                        <div style={{display:'flex', justifyContent:'space-between'}}>
+                        {message.sent_by !== 'client'  && 
+                            <div style={{display:'flex', alignItems:'center', gap:'8px', marginBottom:'12px'}}>
+                            <img alt='chatLogo' src={customInfo?.chat_avatar} width='20px'/>
+                            <span style={{fontWeight:400}}>{`${customInfo?.bot_name || 'Tilda'}${t('AiAssistant')}`}</span>
+                            </div>}
+                        </div>
+                        <ShowMessage type={message.type} content={message.content}/>
                     </div>
-                  </div>
+                </div>
+            </div>
+            </div>
+          </div>)
+          })}
+
+          {waitingMessage &&
+              <div style={{  display:'flex', gap:'10px',  marginTop:'20px', fontSize:'14px', overflowWrap: 'break-word', animation:'expandFromLeft 0.5s ease-out' }}>
+                    <img alt='chatLogo' src={customInfo?.chat_avatar} width='20px'/>
+                    <span style={{ fontWeight: 400,  display: 'flex', alignItems: 'center' }}>
+                      {t('Thinking')}
+                      <span style={{ display: 'flex', marginLeft: '4px', marginTop:'7px' }}>
+                        <span className="dot" />
+                        <span className="dot" />
+                        <span className="dot" />
+                      </span>
+                    </span>
+      
               </div>}
-              </Box>
-        </Box>
+
+       
+        </div>
 
         <TextAreaContainer/>
-     
-      </Flex>
 
+      </div>   
    </>)
 }
 

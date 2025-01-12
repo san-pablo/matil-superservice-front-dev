@@ -42,7 +42,6 @@ function HelpCenters ({helpCentersData, setHelpCentersData}:{helpCentersData:{id
         //FUNCTION FOR DELETING AN AUTOMATION
         const createHelpCenter = async () => {
             const newData = {...newHelpCenter, is_live:false, style:{}, languages:[auth.authData.userData?.language], created_by:auth.authData.userId, updated_by:auth.authData.userId}
-            console.log(newData)
             const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/help_centers`, getAccessTokenSilently, method:'post', setWaiting:setWaitingCreate, requestForm:newData,  auth, toastMessages:{works:t('CorrectCreatedHelpCenter'), failed:t('FailedCreatedHelpCenter')}})
             if (response?.status === 200) setHelpCentersData(prev => [...prev as {name: string, is_live: boolean, id: string}[], {name: newData.name, is_live: false, id: newData.id} ])
             setShowCreate(false)

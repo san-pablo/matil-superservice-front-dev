@@ -6,7 +6,7 @@ import { useLocation, useNavigate } from "react-router-dom"
 //FETCH DATA
 import fetchData from "../../API/fetchData"
 //FRONT
-import { motion, isValidMotionProp, AnimatePresence } from 'framer-motion'
+import { motion, isValidMotionProp } from 'framer-motion'
 import { Text, Box, Flex, Button, Skeleton, Tooltip, IconButton, chakra, shouldForwardProp, Icon, Switch, Spinner, Portal } from "@chakra-ui/react"
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 //PYTHON CODE EDITOR
@@ -20,14 +20,13 @@ import ConfirmBox from "../../Components/Reusable/ConfirmBox"
 import SectionSelector from "../../Components/Reusable/SectionSelector"
 import VariableTypeChanger from "../../Components/Reusable/VariableTypeChanger"
 import CollapsableSection from "../../Components/Reusable/CollapsableSection"
+import ActionsButton from "../../Components/Reusable/ActionsButton"
 import '../../Components/styles.css'
 //FUNCTIONS
-import copyToClipboard from "../../Functions/copyTextToClipboard"
-import useOutsideClick from "../../Functions/clickOutside"
 import parseMessageToBold from "../../Functions/parseToBold"
+import parseNumber from "../../Functions/parseNumbers"
 //ICONS
-import { IconType } from "react-icons"
-import { FaPlus, FaEye } from "react-icons/fa6"
+import { FaPlus } from "react-icons/fa6"
 import { FaCheckCircle, FaTimesCircle, FaEdit } from "react-icons/fa"
 import { IoIosArrowDown,  } from "react-icons/io"
 import { IoWarning, IoChatbubbleEllipses } from "react-icons/io5"
@@ -42,6 +41,7 @@ import { MdOutlineFormatListBulleted } from "react-icons/md"
 //TYPING
 import { FunctionsData, FunctionTableData, ConfigProps } from "../../Constants/typing"
 import { useAuth0 } from "@auth0/auth0-react"
+import { t } from "i18next"
 
   
  
@@ -52,6 +52,23 @@ interface FunctionResultType {
     result:{outputs:{[key:string]:string}, motherstructure_updates:{[key:string]:string}, errors:{message: string, line: number, timestamp: string, arguments: {name: string, type: string, value: any}[]}[]}
     error_message:string 
     error_line:number
+}
+interface LogsType  {
+    function_uuid: string
+    occurred_at: string
+    successful: boolean
+    execution_time_ms: number
+    memory_usage_kb: number
+    result: any
+    arguments:any
+}
+interface ErrorsType {
+    function_uuid: string
+    occurred_at: string
+    uuid:string
+    description: string
+    line:number
+    arguments:any
 }
   
 type parameterType = {confirm: boolean, description:string, name: string, required: boolean, type: string, default:any, enum:any[]}
@@ -86,6 +103,10 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
         errors:[],
         matilda_configurations_uuids:[]
     }
+
+    // CURRENT SECTIO SIDEBAR
+    const [currentSectionSideBar, setCurrentSectionSideBar ] = useState<'data' | 'errors' | 'logs'>('data')
+
     //SHOW NOT SAVED DATA WARNING
     const [showNoSaveWarning, setShowNoSaveWarning] = useState<boolean>(false)
 
@@ -99,10 +120,7 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
     //CODE BOX WIDHT
     const [clientBoxWidth, setClientBoxWidth] = useState(500)
      
-    //SHOW ERRORS
-    const [showErrors, setShowErrros] = useState<boolean>(false)
-    useOutsideClick({ref1:errorButtonRef, ref2:errorBoxRef, onOutsideClick:setShowErrros})
-
+ 
     //SHOW MORE INFO BOX
     const [sectionsExpanded, setSectionsExpanded] = useState<string[]>(['Parameters', 'TildaActive', 'ActiveChannels' ])
 
@@ -116,6 +134,16 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
     //FUNCTION DATA
     const functionDataRef = useRef<FunctionsData | null>(null)
     const [functionData, setFunctionData] = useState<FunctionsData | null>(null)
+
+    // LOGS AND ERRORS DATA
+    const [errors, setErrors] = useState<{errors:ErrorsType[]}>({errors:[]}) 
+    const [errorSelectedArgs, setErrorSelectedArgs] = useState<{uuid:string, args:any} | null>(null)
+
+    const [logs, setLogs] = useState<{logs:LogsType[]}>({logs:[]}) 
+    
+
+
+    //SELECT PARAMETERS
     const [selectedParameter, setSelectedParameter] = useState<number | null>(null)
 
     //CONFIGURATIONS DATA
@@ -128,6 +156,9 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
             if (selectedUuid === '-1') {setFunctionData(newFunction);functionDataRef.current = newFunction}
             else {
                 const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions/${selectedUuid}`, getAccessTokenSilently,setValue:setFunctionData, auth, setRef:functionDataRef})
+                const responseErrors = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions/errors`, params:{function_uuid:selectedUuid}, getAccessTokenSilently,setValue:setErrors, auth})
+                const responseLogs = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions/logs`, params:{function_uuid:selectedUuid}, getAccessTokenSilently,setValue:setLogs, auth})
+
             }
             const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/matilda_configurations`, getAccessTokenSilently,auth, setValue:setInternalChannelsData})
         }
@@ -185,24 +216,26 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
           })
     }
 
-    //BOX FOR CONFIRMING THE DELETION OF A FUNCTION
-    const memoizedDeleteBox = useMemo(() => (
-        <ConfirmBox setShowBox={setShowConfirmDelete}> 
-                <Box p='15px'> 
-                    <Text fontSize={'1.2em'}   fontWeight={'medium'}>{t('DeleteFunction')}</Text>
-                    <Box height={'1px'} width={'100%'} bg='gray.300' mt='1vh' mb='1vh'/>
-                    <Text>{parseMessageToBold(t('DeleteFunctionAnswer', {name:functionData?.name}))}</Text>
-                </Box>
-                 
-                <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-                    <Button size='sm' variant={'delete'}onClick={handleDeleteFunctions}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
-                    <Button  size='sm' variant={'common'} onClick={() => setShowConfirmDelete(false)}>{t('Cancel')}</Button>
-                </Flex>
-            </ConfirmBox>
-    ), [showConfirmDelete])
+ 
+    //EDIT FUNCTIONS ORDER
+    const onDragEnd = (result:any) => {
+        if (!result.destination) return
+        const items = Array.from(functionData?.parameters || [])
+        const [reorderedItem] = items.splice(result.source.index, 1)
+        items.splice(result.destination.index, 0, reorderedItem)
+        setFunctionData(prev => ({...prev as FunctionsData, parameters:items}))
+     }
 
+    //ACTION ON EXIT
+    const onExitAction = () => {
+        if (location.split('/')[2]) navigate(`/conversations/conversation/${location.split('/')[3]}`)
+        if (JSON.stringify(functionData) !== JSON.stringify(functionDataRef.current) && functionData?.code !== '' && pythonRegex.test(functionData?.name || '')) setShowNoSaveWarning(true)
+        else navigate('/functions')
+    }   
+
+ 
     //TEST BOX
-    const TestFunction = () => {
+    const TestFunction = ({}) => {
 
         //FUNCTION TESTED
         const [functionResult, setFunctionResult] = useState<FunctionResultType | null>(null)
@@ -327,54 +360,62 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
         </>)
     }
  
-    //EDIT FUNCTIONS ORDER
-    const onDragEnd = (result:any) => {
-        if (!result.destination) return
-        const items = Array.from(functionData?.parameters || [])
-        const [reorderedItem] = items.splice(result.source.index, 1)
-        items.splice(result.destination.index, 0, reorderedItem)
-        setFunctionData(prev => ({...prev as FunctionsData, parameters:items}))
-     }
 
-    //ACTION ON EXIT
-    const onExitAction = () => {
-        if (location.split('/')[2]) navigate(`/conversations/conversation/${location.split('/')[3]}`)
-        if (JSON.stringify(functionData) !== JSON.stringify(functionDataRef.current) && functionData?.code !== '' && pythonRegex.test(functionData?.name || '')) setShowNoSaveWarning(true)
-        else navigate('/functions')
-    }   
+    const TestFunctionFromError = () => {
+        const [functionResult, setFunctionResult] = useState<FunctionResultType | null>(null)
+        const [waitingTest, setWaitingTest] = useState<boolean>(true)
+        const testFunction = async () => {
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions/${selectedUuid}/run`, method:'post', getAccessTokenSilently, setWaiting:setWaitingTest, setValue:setFunctionResult,  auth, requestForm:errorSelectedArgs?.args})
+            if (response?.status === 200) {
+                const responseDeleteErrors = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions/errors/${errorSelectedArgs?.uuid}`,method:'delete', getAccessTokenSilently, auth})
+                const responseErrors = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions/errors`, params:{function_uuid:selectedUuid}, getAccessTokenSilently,setValue:setErrors, auth})
+                const responseLogs = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions/logs`, params:{function_uuid:selectedUuid}, getAccessTokenSilently,setValue:setLogs, auth})
+            }
+        }
+        useEffect(() => {testFunction()}, [])
 
-    //EDIT ACTIONS BUTTON
-    const ActionsButton = () => {
-
-        const [showList, setShowList] = useState<boolean>(false)
-        const buttonRef = useRef<HTMLButtonElement>(null)
-        const boxRef = useRef<HTMLDivElement>(null)
-        useOutsideClick({ref1:buttonRef, ref2:boxRef, onOutsideClick:setShowList})
-
-        return(
-            <Flex position={'relative'} flexDir='column' alignItems={'end'}>  
-                <IconButton ref={buttonRef}  aria-label="open-options" variant={'common'} size='sm' icon={<BsThreeDots size={'18px'}/>} onClick={() =>setShowList(true)}/>
-                <AnimatePresence> 
-                    {showList &&  
-                        <Portal> 
-                            <MotionBox ref={boxRef} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.95 }}  transition={{ duration: '0.1', ease: 'easeOut'}}
-                                style={{ transformOrigin: 'top' }} minW={buttonRef.current?.getBoundingClientRect().width } right={window.innerWidth - (buttonRef.current?.getBoundingClientRect().right || 0)} mt='5px'  top={buttonRef.current?.getBoundingClientRect().bottom }  position='absolute' bg='white' p='5px'  zIndex={1000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.200' borderWidth='1px' borderRadius='.5rem'>
-                            
-                               <Flex fontSize={'.8em'} p='7px' gap='10px'  borderRadius='.5rem'  cursor={'pointer'} onClick={() => {setShowList(false)}} alignItems={'center'} _hover={{bg:'brand.gray_2'}}>
-                                    <Icon color='gray.600' as={TbCopyPlusFilled}/>
-                                    <Text whiteSpace={'nowrap'}>{t('Double')}</Text>
+        return (<> 
+                <Box p='15px'> 
+                    <Text fontSize={'1.2em'}   fontWeight={'medium'}>{t('FunctionResult')}</Text>
+                    <Box height={'1px'} width={'100%'} bg='gray.300' mt='1vh' mb='1vh'/>
+                </Box>
+                        {(functionResult) ?<>
+                            <Box px='15px'> 
+                                {functionResult.run_successful ? <>
+                                    <Flex gap='10px' alignItems={'center'} mb='1vh'> 
+                                        <Icon as={FaCheckCircle} color={'green'}/>
+                                        <Text fontWeight={'medium'}>{t('RunSuccessefully')}</Text>
+                                    </Flex>
+                                    <Text fontWeight={'medium'}>{t('OutputsReturned')}</Text>
+                                    <Text>{JSON.stringify(functionResult.result)}</Text>
+                                
+                                </>:<> 
+                                <Flex gap='10px' alignItems={'center'} mb='1vh'> 
+                                    <Icon as={FaTimesCircle} color={'red'}/>
+                                    <Text>{t('RunError')}</Text>
                                 </Flex>
-                                <Flex  fontSize={'.8em'}  p='7px' gap='10px'  borderRadius='.5rem'  color='red' cursor={'pointer'} onClick={() => {setShowConfirmDelete(true);setShowList(false)}} alignItems={'center'} _hover={{bg:'red.100'}}>
-                                    <Icon as={HiTrash}/>
-                                    <Text whiteSpace={'nowrap'}>{t('Delete')}</Text>
-                                </Flex>
-                            </MotionBox >
-                        </Portal>}
-                </AnimatePresence>
-            </Flex>
-        )
+                                <Text color='red' fontSize={'.8em'}>{functionResult.error_message}</Text>
+                                <Text fontSize={'.8em'} mt='.5vh' color='red'>[{t('ErrorLine', {line:functionResult.error_line})}]</Text>
+
+                              
+                                </>}
+                            </Box>
+                            <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+                                <Button size='sm' variant={'common'} onClick={() => setErrorSelectedArgs(null)}>{t('Accept')}</Button>
+                            </Flex>
+                            </>
+                        :
+                        <Flex w='100%' p='15px' h='20vh' justifyContent={'center'} alignItems={'center'}> 
+                            <Spinner/>
+                        </Flex>
+                        }
+               
+                  
+                    
+        </>)
     }
 
+    // BOX FOR EXITING WITH NO SAVED DATA
     const memoizedNoSavedWarning = useMemo(() => (<> 
         <ConfirmBox setShowBox={setShowNoSaveWarning} > 
             <Box p='20px' > 
@@ -388,8 +429,34 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
         </ConfirmBox>    
     </>), [showNoSaveWarning])
 
+    //BOX FOR CONFIRMING THE DELETION OF A FUNCTION
+    const memoizedDeleteBox = useMemo(() => (
+        <ConfirmBox setShowBox={setShowConfirmDelete}> 
+                <Box p='15px'> 
+                    <Text fontSize={'1.2em'}   fontWeight={'medium'}>{t('DeleteFunction')}</Text>
+                    <Box height={'1px'} width={'100%'} bg='gray.300' mt='1vh' mb='1vh'/>
+                    <Text>{parseMessageToBold(t('DeleteFunctionAnswer', {name:functionData?.name}))}</Text>
+                </Box>
+                 
+                <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+                    <Button size='sm' variant={'delete'}onClick={handleDeleteFunctions}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
+                    <Button  size='sm' variant={'common'} onClick={() => setShowConfirmDelete(false)}>{t('Cancel')}</Button>
+                </Flex>
+            </ConfirmBox>
+    ), [showConfirmDelete])
+
+
     //MEMOIZED TEST BOX COMPONENT
     const memoizedTestFunction = useMemo(() => (<>{showTestFunction && <TestFunction/>}</>), [showTestFunction])
+
+    //MEMOIZED TEST FUNCTION WITH ARGS
+    const memoizedTestFunctionFromError= useMemo(() => (<> 
+        {errorSelectedArgs && <ConfirmBox  setShowBox={() => setErrorSelectedArgs(null)} > 
+            <TestFunctionFromError/>
+        </ConfirmBox>}
+    </>), [errorSelectedArgs])
+
+
 
     //MEMOIZED ADD PARAMETER COMPONENT
     const memoizedAddParameter= useMemo(() => (<> 
@@ -406,12 +473,13 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
     </>), [showAddChannels])
 
     //MEMOIZED ACTIONS BUTTON
-    const memoizedActionsButton = useMemo(() => (<ActionsButton/>), [])
+    const memoizedActionsButton = useMemo(() => (<ActionsButton deleteAction={() => setShowConfirmDelete(true)} copyAction={() => {}} />), [])
 
-    const sendBoxWidth = `calc(100vw - 55px - ${clientBoxWidth}px)`
+    const sendBoxWidth = `calc(100vw - 45px - ${clientBoxWidth}px)`
 
-    //FRONT
+     //FRONT
     return(<>
+        {memoizedTestFunctionFromError}
         {selectedParameter !== null && memoizedAddParameter}
         {showNoSaveWarning && memoizedNoSavedWarning}
         {showConfirmDelete && memoizedDeleteBox}
@@ -421,7 +489,6 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
             <MotionBox   initial={{ width: sendBoxWidth  }} animate={{ width: sendBoxWidth}} exit={{ width: sendBoxWidth }} transition={{ duration: '.2' }}  
             width={sendBoxWidth} overflowY={'hidden'}  borderRightWidth={'1px'} borderRightColor='gray.200' >
                 <Flex px='1vw' gap='2vw' height={'60px'} alignItems={'center'} justifyContent={'space-between'}  borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
-
                     <Flex flex={1} gap='20px' alignItems={'center'}> 
                         <IconButton  aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'20px'}/>} onClick={() =>setHideFunctions(prev => (!prev))}/>
                         <EditText  regex={pythonRegex} placeholder={t('name')}  value={functionData?.name} setValue={(value) => setFunctionData(prev => ({...prev as FunctionsData, name:value}))} className={'title-textarea-collections'}/>
@@ -431,10 +498,10 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
                         {selectedUuid !== '-1' && memoizedActionsButton}
                         <Button variant={'common'} size='sm' leftIcon={<IoChatbubbleEllipses/>} onClick={() => setShowTestFunction(true)}>{t('Test')}</Button>
                          <Button  variant={'main'} size='sm' isDisabled={JSON.stringify(functionData) === JSON.stringify(functionDataRef.current) || functionData?.code === '' || !pythonRegex.test(functionData?.name || '')} onClick={handleEditFunctions}>{waitingEdit?<LoadingIconButton/>:selectedUuid !== '-1'?t('SaveChanges'):t('CreateFunction')}</Button>
-                        {clientBoxWidth === 0 && <IconButton  aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'20px'}/>} onClick={() =>setClientBoxWidth(400)}/>}
+                        {clientBoxWidth === 0 && <IconButton  aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'20px'}/>} onClick={() =>setClientBoxWidth(500)}/>}
                     </Flex>
-                    
                 </Flex>
+
                 <Flex width={'100%'} height={'100%'} justifyContent={'center'} overflow={'scroll'} >
                     <Box  width={'100%'} height={'100%'}  >
                         <Skeleton isLoaded={functionData !== null} style={{overflow:'hidden'}}> 
@@ -444,12 +511,16 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
                 </Flex>
             </MotionBox>
 
-            <MotionBox display={'flex'} flexDir={'column'} h='100vh' width={clientBoxWidth + 'px'}  whiteSpace={'nowrap'} initial={{ width: clientBoxWidth + 'px' }} animate={{ width: clientBoxWidth + 'px' }} exit={{ width: clientBoxWidth + 'px' }} transition={{ duration: '.2'}}> 
-                <Flex  p='1vw'  height={'60px'} justifyContent={'space-between'} alignItems={'center'} borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
-                    <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('FunctionData')}</Text>
-                    <IconButton aria-label="close-tab" variant={'common'} bg='transparent' size='sm' icon={<RxCross2 size={'20px'}/>} onClick={() =>setClientBoxWidth(0)}/>
+            <MotionBox display={'flex'} maxW={500}  flexDir={'column'} h='100vh' width={clientBoxWidth + 'px'}  whiteSpace={'nowrap'} initial={{ width: clientBoxWidth + 'px' }} animate={{ width: clientBoxWidth + 'px' }} exit={{ width: clientBoxWidth + 'px' }} transition={{ duration: '.2'}}> 
+                <Flex  px='1vw'  height={'60px'} justifyContent={'space-between'} alignItems={'center'} borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
+                    <SectionSelector sections={['data', 'errors', 'logs']} sectionsMap={{'data':[t('Data'), <></>], 'errors':[t('Errors') + ` [${errors?.errors?.length}]`, <></>], 'logs':[t('Logs') + ` [${logs?.logs?.length}]`,<> </>]}} selectedSection={currentSectionSideBar} onChange={(value) => setCurrentSectionSideBar(value)} notSection/>
+                      <IconButton aria-label="close-tab" variant={'common'} bg='transparent' size='sm' icon={<RxCross2 size={'20px'}/>} onClick={() =>setClientBoxWidth(0)}/>
                 </Flex>
-                <Box flex='1' p='1vw' pb='10vh' height={'100%'} overflow={'scroll'}> 
+                <Box flex='1'   pb='10vh' height={'100%'} overflow={'scroll'}> 
+             
+                    {currentSectionSideBar === 'data' ? 
+                    <> 
+                    <Box p='1vw'> 
                     <Text mb='.5vh' fontWeight={'semibold'}  fontSize={'.9em'}>{t('Description')}</Text>
                     <EditText  maxLength={2000} hideInput={false} isTextArea placeholder={`${t('Description')}...`}  value={functionData?.description} setValue={(value) => setFunctionData((prev) => ({...prev as FunctionsData, description:value}))}/>
 
@@ -503,49 +574,37 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
                         {functionData?.uuid === '-1' && <Text mt='1vh' color='red' fontSize={'.8em'}>{t('SaveChannelsWarning')}</Text>}
                         
                         </>}
-                    
                     </CollapsableSection>
+                    </Box>
+                    </>
+                    : <>
+                        {currentSectionSideBar === 'errors' ?  
+                        <>
+                            <Box px='1vw' pt='1vw' > 
+                                <Text whiteSpace={'wrap'}   fontSize={'.9em'} color='gray.600'>{t('ReproduceErrorWarning')}</Text>
+                                <Text mt='2vh' mb='1vh' fontWeight={'semibold'}>{t('Errors')}</Text>
+                            </Box>
+                            {(errors?.errors || []).map((error, index) => (
+                                <ErrorBox error={error} key={`error-${index}`} onClickError={(args) => {setErrorSelectedArgs(args)}}/>
+                            ))}
+                        </>
+                        :
+                        <>
+                            <Box px='1vw' pt='1vw' > 
+                                 <Text mb='1vh' fontWeight={'semibold'}>{t('Logs')}</Text>
+                            </Box>
+                          {(logs.logs || []).map((log, index) => (
+                                <LogBox log={log} key={`error-${index}`}/>
+                            ))}
+                        </>
+                        }
 
-                
+                        </>
+                    }
                 </Box>
             </MotionBox>
         </Flex>
-            
-        {(functionData?.errors?.length || 0) > 0 &&
-            <Box position={'absolute'} right={'2vw'} bottom={'2vw'}  > 
-                <Box position='relative'> 
-                    {!showErrors && <Button  shadow='xl' ref={errorButtonRef} bg="red.500" leftIcon={<IoWarning/>} color='white' _hover={{ bg:'red.600'}} onClick={() => setShowErrros(true)}>{t('ErrorsCount', {count:functionData?.errors.length})}</Button>}
-                    
-                    <AnimatePresence> 
-                        {showErrors && 
-                        <MotionBox initial={{ opacity: 0, marginBottom:-10 }} animate={{ opacity: 1, marginBottom: 0}}  exit={{ opacity: 0,bottom: -10}} transition={{ duration: '.2', ease: 'easeOut'}}
-                            right={'2vw'} width={'700px'} maxWidth={'40vw'}  bottom={'2vw'} maxH='80vh' gap='10px' boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000}   position={'fixed'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
-                            <Flex p='15px' justifyContent={'space-between'}> 
-                                <Text fontSize={'1.1em'} fontWeight={'medium'}>{t('Errors')}</Text>
-                                <IconButton isRound bg='transparent' size='sm' onClick={()=>setShowErrros(false)} aria-label="show-client" icon={<IoIosArrowDown size={'16px'}/>}/>
-                            </Flex>
-
-                            {functionData?.errors.map((error, index) => (
-                                <Flex bg={index % 2 === 0?'gray.100':'gray.50'} p='15px' alignItems={'center'} key={`error-${index}`} justifyContent={'space-between'} gap='10px'>
-                                    <Box flex='1' gap='30px' >
-                                        <Flex gap='10px'> 
-                                            <Text textOverflow={'ellipsis'} fontSize={'.9em'} whiteSpace={'nowrap'} fontWeight={'medium'}>{error.timestamp}</Text>
-                                            <Box fontSize={'.8em'}> 
-                                                <Text>{error.message}</Text>
-                                                <Text color='red'>[{t('ErrorLine', {line:error.line})}] {Object.keys(error.arguments).map((arg, argIndex) => (<span>{t('ErrorArgument', {name:arg, value:error.arguments[arg as any]})}{argIndex === error.arguments.length - 1 ?'':', '}</span>))} </Text>
-                                            </Box>
-                                        </Flex>
-                                    </Box>        
-                                    <Tooltip label={t('CopyError')}  placement='top' hasArrow bg='black' color='white'  borderRadius='.4rem' fontSize='sm' p='6px'> 
-                                        <IconButton size='xs' onClick={() => copyToClipboard(error.message, t('CorrectCopiedError'))}  aria-label={'copy-invitation-code'} icon={<BsClipboard2Check/>}/>
-                                    </Tooltip>
-                                </Flex>
-                            ))} 
-                        </MotionBox>}
-                    </AnimatePresence>
-                </Box>
-            </Box>
-        }
+    
 
         {memoizedTestFunction}
  
@@ -554,6 +613,58 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
 
 export default Function
 
+
+const ErrorBox = ({error, onClickError}:{error:ErrorsType, onClickError:(args:{uuid:string, args:any}) => void}) => {
+
+    const { t } = useTranslation('settings')
+    const [expandDescription, setExpandDescription] = useState<boolean>(true)
+    
+    return (
+    <Box  px='1vw' _hover={{bg:'brand.gray_2'}} cursor={'ponter'}   w='100%'  onClick={() => onClickError({uuid:error.uuid, args:error.arguments})}>
+        <Flex pt='10px' cursor={'pointer'} onClick={() => setExpandDescription(!expandDescription) } justifyContent={'space-between'} alignItems={'center'}>
+            <Flex fontSize={'.8em'} alignItems={'center'} gap='10px'> 
+                <Text >{error.occurred_at}</Text>
+                <Text   color='red'>Error: {t('Line')} {error.line}</Text>
+             </Flex>
+         </Flex>
+        <Box py='10px'> 
+            <Text whiteSpace={'wrap'}fontSize={'.8em'} color={'gray.600'}>{error.description}</Text>
+        </Box>
+        <Box h='1px' w='100%' bg='gray.200' />
+        
+    </Box>)
+}
+
+const LogBox = ({log}:{log:LogsType}) => {
+
+    const { t, i18n } = useTranslation('settings')
+    const [expandDescription, setExpandDescription] = useState<boolean>(false)
+    
+    return (
+        <Box  px='1vw' _hover={{bg:'brand.gray_2'}}     w='100%' >
+            <Box pt='10px'  cursor={'pointer'}  onClick={() => setExpandDescription(!expandDescription) }> 
+                <Flex justifyContent={'space-between'} alignItems={'center'}>
+                    <Flex fontSize={'.8em'} alignItems={'center'} gap='10px'> 
+                        <Text >{log.occurred_at}</Text>
+                        <Text   color={log.successful ?'green':'red'}>{log.successful ? t('RunSuccessful'):'Error'}</Text>
+                    </Flex>
+                    <IoIosArrowDown  className={expandDescription ? "rotate-icon-up" : "rotate-icon-down"}/>
+
+                </Flex>
+                <Text mt='5px' whiteSpace={'wrap'}fontSize={'.8em'}><span style={{fontWeight:500}}>{t('ExecutionTime')}:</span> {parseNumber(i18n, log.execution_time_ms)} ms, <span style={{fontWeight:500}}>{t('MemoryUsage')}:</span> {parseNumber(i18n, log.memory_usage_kb)} KB</Text>
+            </Box>
+            <Box py='7px'> 
+                 <div className={`expandable-container ${expandDescription ? 'expanded' : 'collapsed'}`} style={{ overflow: expandDescription ? 'visible' : 'hidden',   transition: expandDescription ?'max-height .2s ease-in-out, opacity 0.2s ease-in-out': 'max-height .2s ease-out, opacity 0.2s ease-out'}}>      
+                    <Text mt='3px' whiteSpace={'wrap'}fontSize={'.7em'} color='gray.600'><span style={{fontWeight:600}}> {t('ArgumentsLog')}:</span> {JSON.stringify(log.arguments)}</Text>
+                    <Text mt='10px' whiteSpace={'wrap'}fontSize={'.7em'} color='gray.600'><span style={{fontWeight:600}}> {t('Result')}:</span> {JSON.stringify(log.result)}</Text>
+                </div>
+            </Box>
+            <Box h='1px' w='100%' bg='gray.200' />
+            
+        </Box>
+
+  )
+}
 
 //CREATING A VARIABLE
 const CreateVariable = ({variableData,  index, setIndex, editFunctionData}:{variableData:parameterType | undefined, index:number, setIndex:Dispatch<SetStateAction<number | null>>, editFunctionData:(keyToEdit:'parameters' ,value:any, type?:'add' | 'delete' | 'edit', index?:number, secondKey?:'name' | 'type' | 'default' | 'required' | 'confirm' | 'is_active' | '' ) => void }) => {

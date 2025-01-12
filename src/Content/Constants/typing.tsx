@@ -329,10 +329,10 @@ export const statesMap:{[key in 'new' | 'open' |'solved' | 'pending' | 'closed
     'new':['yellow.100', '#B7791F'],
     'completed':['green.100', '#2F855A'],
     'ongoing':['cyan.100', '#00A3C4'],
-    'open':['red.100', '#C53030'],
-    'pending':['cyan.100', '#00A3C4',],
-    'solved':['green.100', '#2F855A'],
-    'closed':['gray.100', '#4A5568']
+    'open':['red.200', '#C53030'],
+    'pending':['blue.100', '#00A3C4',],
+    'solved':['#B7F1CB', '#2F855A'],
+    'closed':['gray.200', '#4A5568']
 }
 
 //FILTERS AND MAPPING
@@ -372,13 +372,7 @@ export interface ActionDataType  {
 }
  
 //MATILDA CONFIGURATION PROPS
-export interface ConfigProps { 
-    uuid:string 
-    name:string 
-    description:string 
-    channels_ids:string[]
-    icon:string
-}
+ 
 export interface MatildaConfigProps {
     uuid:string 
     name:string 
@@ -497,10 +491,17 @@ export interface ConfigProps { 
     name:string 
     description:string 
     channels_ids:string[]
-    icon:string
 }
 
   
  
+export interface ChannelsType  {
+    id: string
+    uuid: string
+    display_id: string
+    name: string
+    channel_type: string
+    is_active: boolean
+}
 
   

@@ -3,15 +3,15 @@
 */
 
 //FRONT
-import { Flex } from '@chakra-ui/react'
+import { Flex, Box } from '@chakra-ui/react'
 import '../styles.css'
 
 //MAIN FUNCTION
 const CustomCheckbox = ({id,  onChange, isChecked}:{id:string, onChange:() => void, isChecked:boolean}) => {
     return (
-        <Flex  > 
-            <div className="checkbox-wrapper-4">
-                <input onChange={onChange} onFocus={(e) => e.stopPropagation()} className="inp-cbx" id={id} type="checkbox" checked={isChecked} />
+        <Flex   alignItems={'center'} h='100%' > 
+             <div className="checkbox-wrapper-4" style={{marginTop:'2px'}}>
+                <input onChange={onChange}  onFocus={(e) => e.stopPropagation()} className="inp-cbx" id={id} type="checkbox" checked={isChecked} />
                 <label className="cbx" htmlFor={id}>
                 <span>
                     <svg width="12px" height="10px">
@@ -25,7 +25,7 @@ const CustomCheckbox = ({id,  onChange, isChecked}:{id:string, onChange:() => vo
                     </symbol>
                 </svg>
             </div>
-        </Flex>
+         </Flex>
     )
 }
 

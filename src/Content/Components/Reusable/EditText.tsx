@@ -113,7 +113,7 @@ const EditText  = ({ value = '', setValue, hideInput = true, maxLength, regex, t
     :
     <>
     {className ?  
-        <textarea value={tempValue}className={className} onChange={handleInputChange} placeholder={placeholder} rows={1} onBlur={() => {if ((regex && value) ? regex.test(value) : true) {console.log(tempValue);updateData(tempValue as string)} }} style={{borderColor:(regex && value !== undefined) && !regex.test(value) && value !== '' ? 'red':''}}/>
+        <textarea value={tempValue}className={className} onChange={handleInputChange} placeholder={placeholder} rows={1} onBlur={() => {if ((regex && value) ? regex.test(value) : true) {updateData(tempValue as string)} }} style={{borderColor:(regex && value !== undefined) && !regex.test(value) && value !== '' ? 'red':''}}/>
 
     :<>   
         {searchInput ?    
