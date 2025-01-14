@@ -381,6 +381,7 @@ function Knowledege () {
                 </motion.div>
             </Flex>
 
+
             <Flex bg='brand.hover_gray' h='100vh' flexDir={'column'}  width={hideFunctions ? tableWidthHideView:tableWidthShowView} transition={'width ease-in-out .2s'} right={0}   position="absolute" top={0} >
                      <Suspense fallback={<></>}>    
                         <Routes >
@@ -388,12 +389,12 @@ function Knowledege () {
                             <Route path="/fonts" element={<Fonts setHideFunctions={setHideFunctions}/>} />
                             <Route path="/folder/*" element={<Content setHideFunctions={setHideFunctions} folders={folders} handleFolderUpdate={handleFolderUpdate} />}  />
 
-                            <Route path="/article/*" element={<Article folders={folders}/>} />
+                            <Route path="/article/*" element={<Article folders={folders} setHideFunctions={setHideFunctions}/>} />
 
-                            <Route path="/website/*" element={<Website folders={folders}/>} />
+                            <Route path="/website/*" element={<Website folders={folders} setHideFunctions={setHideFunctions}/>} />
                             
-                            <Route path="/pdf/*" element={<Pdf folders={folders}/>} />
-                            <Route path="/snippet/*" element={<TextSection folders={folders}/>} />
+                            <Route path="/pdf/*" element={<Pdf  folders={folders} setHideFunctions={setHideFunctions}/>} />
+                            <Route path="/snippet/*" element={<TextSection folders={folders} setHideFunctions={setHideFunctions}/>} />
                         </Routes>
                     </Suspense>
              </Flex>

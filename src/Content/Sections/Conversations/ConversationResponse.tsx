@@ -201,9 +201,6 @@ function ConversationResponse ({socket, fetchConversationsDataWithFilter }:Respu
   
     //UPDATE MESSAGES ON A NEW SOCKET ENTRY
     const updateMessagesList = (newMessage:any, type:'message'| 'scheduled-new' | 'scheduled-canceled' ) => {
-    
-        console.log(newMessage)
-        console.log(type)
 
         if (type === 'message' && newMessage.id === conversationDataRef?.current?.id) {
             setMessagesList((prev: MessagesData | null) => {
@@ -634,12 +631,14 @@ function ConversationResponse ({socket, fetchConversationsDataWithFilter }:Respu
                                                 {clientConversations && <>
                                                     {clientConversations.page_data.map((con, index) => (<>
                                                         
-                                                        <Box position={'relative'} key={`conversations-${index}`} onClick={() => {navigate(`/conversations/conversation/${con.id}`)}}  p='10px' borderRadius={'.5rem'} cursor={'pointer'}  bg={ conversationData?.id  === con.id?'brand.gray_2':'transparent'}  transition={'box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out, background-color 0.2s ease-in-out'}   boxShadow={conversationData?.id  === con.id ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''} borderWidth={'1px'} borderColor={conversationData?.id  === con.id ? 'brand.gray_2':'transparent'}  _hover={{bg:conversationData?.id  === con.id?'brand.gray_2':'brand.hover_gray'}}>
-                                                            {index !== clientConversations.page_data.length - 1 && <Box position={'absolute'} height={'calc(100%)'} mt='10px' ml='4px'  width={'2px'} bg='gray.400' zIndex={1}/>}
+                                                        <Box position={'relative'}  key={`conversations-${index}`}  gap='10px' onClick={() => {navigate(`/conversations/conversation/${con.id}`)}} boxShadow={conversationData?.id  === con.id  ?'0 0 3px 0px rgba(0, 0, 0, 0.1)':''} borderWidth={'1px'} borderColor={conversationData?.id  === con.id ? 'gray.200':'transparent'} justifyContent='space-between'   bg={conversationData?.id  === con.id?'white':'transparent'}   transition={conversationData?.id  === con.id?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}  fontWeight={conversationData?.id  === con.id?  'medium':'normal'}fontSize={'.9em'} cursor={'pointer'} borderRadius={'.5rem'} p='10px'>
+
+
+                                                             {index !== clientConversations.page_data.length - 1 && <Box position={'absolute'} height={'calc(100%)'} mt='10px' ml='4px'  width={'2px'} bg='gray.400' zIndex={1}/>}
 
                                                             <Flex alignItems={'center'}  gap='20px'> 
                                                                 <Box borderRadius={'.2rem'}  bg={statesMap[con.status as 'new' | 'open' | 'pending' | 'solved' | 'closed'][1]} zIndex={10} height={'10px'} width='10px' />
-                                                                <Text flex='1' whiteSpace={'nowrap'} fontWeight={conversationData?.id  === con.id ?'medium':'normal'} textOverflow={'ellipsis'} overflow={'hidden'} fontSize={'.8em'}>{con.title ? con.title:t('NoDescription')}</Text>
+                                                                <Text flex='1' whiteSpace={'nowrap'} fontWeight={conversationData?.id  === con.id ?'medium':'normal'}  transition={'transform .1s ease-in-out'}   transformOrigin="left center" transform={conversationData?.id  === con.id ?'scale(1.02)':'scale(1)'} textOverflow={'ellipsis'} overflow={'hidden'} fontSize={'.8em'}>{con.title ? con.title:t('NoDescription')}</Text>
                                                             </Flex>
                                                 
                                                             <Flex ml='30px' justifyContent={'space-between'} alignItems={'end'}>

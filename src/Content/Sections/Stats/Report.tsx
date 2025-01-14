@@ -8,7 +8,7 @@ import { useAuth0 } from "@auth0/auth0-react"
 //FETCH DATA
 import fetchData from "../../API/fetchData"
 //FRONT
-import { Flex, Box, Text, chakra, shouldForwardProp, Button, Portal, Icon, Tooltip, Switch, NumberInput, NumberInputField, NumberInputStepper, NumberIncrementStepper, NumberDecrementStepper, Radio, IconButton } from "@chakra-ui/react"
+import { Flex, Box, Text, chakra, shouldForwardProp, Button, Portal, Icon, Tooltip, Switch, NumberInput, NumberInputField, NumberInputStepper, NumberIncrementStepper, NumberDecrementStepper, Radio, IconButton, Skeleton } from "@chakra-ui/react"
 import { motion, isValidMotionProp, AnimatePresence } from 'framer-motion'
 import "../../Components/styles.css"
 import LoadingIconButton from "../../Components/Reusable/LoadingIconButton"
@@ -32,7 +32,6 @@ import { FaQuestionCircle } from "react-icons/fa"
 import { IoStatsChart,  IoSettingsSharp} from "react-icons/io5";
 import { FaChartBar,FaCheck,  FaChartColumn,FaTable, FaChartLine, FaChartArea, FaChartPie, FaPen, FaPlus,FaClock, FaCalendarDay, FaCalendarWeek, FaCalendarDays, FaClockRotateLeft, FaLock } from "react-icons/fa6"
 import { TbSquareNumber7Filled , TbCopyPlusFilled } from "react-icons/tb"
-import { IoIosArrowDown } from "react-icons/io"
 import { HiTrash } from "react-icons/hi2"
 import { MdOutlineDragIndicator } from "react-icons/md"
 import { TiArrowSortedDown } from "react-icons/ti"
@@ -78,15 +77,21 @@ const Report = ({hideReports, setHideReports}:{hideReports:boolean, setHideRepor
         data: []
     }
 
-    //CHARTS BOX REF
-    const chartBoxRef = useRef<HTMLDivElement>(null)
-    const gridWidth = useRef<number>(0)
-
     //REPORT DATA 
     const reportDataRef = useRef<ReportType | null>(null)
     const [reportData, setReportData] = useState<ReportType | null>(null)
+    const [waitingInfo, setWaitingInfo] = useState<boolean>(false)
      
  
+    //FETCH FUNCTION DATA
+    useEffect(() => {      
+        const fetchInitialData = async() => {
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/reports/${reportId}`, getAccessTokenSilently, setWaiting:setWaitingInfo, setValue:setReportData, auth, setRef:reportDataRef})
+        }
+        fetchInitialData()
+    }, [location])
+
+
     //SELECTED CHART
     const [selectedChart, setSelectedChart] = useState<ChartType | null>(null)
     const [waitingSave, setWaitingSave] = useState<boolean>(false)
@@ -157,28 +162,24 @@ const Report = ({hideReports, setHideReports}:{hideReports:boolean, setHideRepor
     {selectedChart ? <EditChartComponent chartData={selectedChart} setChartData={setSelectedChart} reportData={reportData as ReportType} setReportData={setReportData}/>:
 
 
-    <Box bg='white' height={'100vh'} width={hideReports?'calc(100vw - 45px)': 'calc(100vw - 285px)'} overflowY={'hidden'} p='1vw'>
-    <Flex flexDir={'column'} height={'calc(100vh - 4vw)'} width={'100%'} top={0} left={0}>
-    
-        <Box> 
-            <Flex height={'50px'}  alignItems={'center'} gap='32px' justifyContent={'space-between'}>
-                <Flex gap='20px'> 
-                    <IconButton  aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'20px'}/>} onClick={() => setHideReports(prev => (!prev))}/>
-                    <Box > 
-                        <EditText  placeholder={t('name')} value={reportData?.name} setValue={(value) => setReportData(prev => ({...prev as ReportType, name:value})) } className={'title-textarea-collections'}/>
-                        <EditText  placeholder={t('AddDescription')} value={reportData?.description} setValue={(value) => setReportData(prev => ({...prev as ReportType, description:value})) } className={'description-textarea-functions'}/>
-                    </Box>
-                </Flex> 
-                <Flex gap='15px' > 
-                    {memoizedActionsButton}
-                    <Button variant={'common'} size='sm' isDisabled={JSON.stringify(reportDataRef.current) === JSON.stringify(reportData)} onClick={saveChanges}>{waitingSave? <LoadingIconButton/>:t('SaveChanges')}</Button>
-                    <Button variant={'main'} leftIcon={<FaPlus/>} size='sm' onClick={() => setSelectedChart(newChart)}>{t('NewChart')}</Button>
-                </Flex>
+    <Flex flexDir='column'bg='white' height={'100vh'} width={hideReports?'calc(100vw - 45px)': 'calc(100vw - 265px)'} position={'absolute'} right={0} overflowY={'hidden'}  transition={'width ease-in-out .2s'}>
+       
+        <Flex px='1vw' gap='2vw' height={'60px'} alignItems={'center'} justifyContent={'space-between'}  borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
+            <Flex flex={1} gap='10px' alignItems={'center'}> 
+                <IconButton  aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'18px'}/>}  h='28px' w='28px'  onClick={() =>setHideReports(prev => (!prev))}/>
+                <Skeleton isLoaded={reportData !== null && !waitingInfo} style={{marginTop:'7px'}}> 
+                    <EditText  placeholder={t('name')} value={reportData?.name} setValue={(value) => setReportData(prev => ({...prev as ReportType, name:value})) } className={'title-textarea-collections'}/>
+                </Skeleton>
             </Flex>
-            <Box width='100%' bg='gray.300' height='1px' mt='1vh'/>
-        </Box>
+            <Flex gap='10px' > 
+                {memoizedActionsButton}
+                <Button variant={'common'} size='sm' isDisabled={JSON.stringify(reportDataRef.current) === JSON.stringify(reportData)} onClick={saveChanges}>{waitingSave? <LoadingIconButton/>:t('SaveChanges')}</Button>
+                <Button variant={'main'} leftIcon={<FaPlus/>} size='sm' onClick={() => setSelectedChart(newChart)}>{t('NewChart')}</Button>
+            </Flex>
+        </Flex>
+   
 
-        <Box flex='1'   overflow={'scroll'}>
+        <Box flex='1' overflow={'scroll'}>
             {reportData?.charts.length === 0 ? 
                 <Flex width={'100%'} height={'100%'}  justifyContent={'center'} alignItems={'center'}>
                     <Box textAlign={'center'} mt='-10vh'> 
@@ -188,13 +189,13 @@ const Report = ({hideReports, setHideReports}:{hideReports:boolean, setHideRepor
                 </Flex>
             :
             <Box width={hideReports?'calc(100vw - 45px)': 'calc(100vw - 265px)'} >
-                {reportData && <ChartGrid gridWidth={hideReports?window.innerWidth - 45:window.innerWidth - 265} setSelectedChart={setSelectedChart} reportData={reportData} setReportData={setReportData}/>}
+                {reportData && <ChartGrid gridWidth={hideReports?window.innerWidth  - 45:window.innerWidth  - 265} setSelectedChart={setSelectedChart} reportData={reportData} setReportData={setReportData}/>}
             </Box> 
             }
         </Box>
+        
     
-    </Flex>
-    </Box>}
+    </Flex>}
     </>)
 }
  
@@ -446,7 +447,7 @@ const EditChartComponent = ({chartData, setChartData, reportData, setReportData}
      
     <Flex flexDir={'column'} w='100%' bg='white' h='100vh'> 
   
-        <Flex height={'60px'} px='1vw' gap='32px' alignItems={'center'} justifyContent={'space-between'}> 
+        <Flex height={'60px'} px='2vw' gap='32px' alignItems={'center'} justifyContent={'space-between'}> 
             <Box w='100%' mt='10px' maxW={'800px'}> 
                 <EditText  placeholder={t('name')} value={currentChart?.title} setValue={(value) => setCurrentChart(prev => ({...prev, title:value}))} className={'title-textarea-collections'}/>
             </Box>
@@ -457,7 +458,7 @@ const EditChartComponent = ({chartData, setChartData, reportData, setReportData}
             </Flex>
         </Flex>
          
-        <Flex height={'calc(100vh - 60px)'} >
+        <Flex height={'calc(100vh - 50px)'} >
             <Box flex='4'  p='1vw' bg='brand.hver_gray' borderTopColor={'gray.200'} borderTopWidth={'1px'} borderRightColor={'gray.200'} borderRightWidth={'1px'}> 
                 <SectionSelector onChange={(section) => editChartType(section) } selectedSection={currentChart.type} sections={['KPI', 'column', 'bar', 'donut', 'line', 'area', 'table']} sectionsMap={{'KPI':[t('KPI'),<TbSquareNumber7Filled size='20px'/>], 'column':[t('Column'),<FaChartColumn size='20px'/>], 'bar':[t('Bar'),<FaChartBar size='20px'/>], 'donut':[t('Donut'),<FaChartPie size='20px'/>], 'line':[t('Line'),<FaChartLine size='20px'/>], 'area':[t('Area'),<FaChartArea size='20px'/>], 'table':[t('Table'),<FaTable size='20px'/>]}}/>
                 <Box mt='5vh' width={'100%'} height={(currentChart.type === 'column' || currentChart.type === 'donut' || currentChart.type === 'area' || currentChart.type === 'line') ? '400px': (currentChart.type === 'bar' || currentChart.type === 'table')?'600px':'200px'}> 
@@ -906,6 +907,9 @@ const ChartGrid = ({ reportData, setReportData, gridWidth, setSelectedChart }:{r
     const { t } = useTranslation('stats')
     const initialRender = useRef<boolean>(true)
 
+    const [hoverStates, setHoverStates] = useState<any>(Array(reportData.charts.length).fill(false))
+
+
     const layoutData = reportData.charts.map((chart,index) => {
         let x = chart.configuration.x
         let y = chart.configuration.y
@@ -932,16 +936,30 @@ const ChartGrid = ({ reportData, setReportData, gridWidth, setSelectedChart }:{r
         else initialRender.current = false
     }
 
-    console.log(gridWidth)
+    const handleMouseEnter = (index:number) => {
+        setHoverStates((prev:any) => {
+            const newState = [...prev]
+            newState[index] = true
+            return newState
+        });
+    }
+
+    const handleMouseLeave = (index:number) => {
+        setHoverStates((prev:any) => {
+            const newState = [...prev]
+            newState[index] = false
+            return newState
+        })
+    }
+
     return (
 
-        <GridLayout draggableHandle=".drag-handle" style={{overflow: 'visible'}} containerPadding={[20, 40]}  onLayoutChange={handleLayoutChange}  margin={[20, 20]} autoSize={true} className="layout" cols={6}  rowHeight={gridWidth/12} width={gridWidth}>
+        <GridLayout draggableHandle=".drag-handle" style={{overflow: 'visible'}} containerPadding={[window.innerWidth * 0.02, window.innerHeight * 0.02]}  onLayoutChange={handleLayoutChange}  margin={[window.innerHeight * 0.02, window.innerHeight * 0.02]} autoSize={true} className="layout" cols={6}   rowHeight={gridWidth/12} width={gridWidth}>
             {layoutData.map((chart, index) => {
-                const [isHovered, setIsHovered] = useState(false)
-                return (
-                    <div key={`chart-${index}`} style={{position:'relative'}} data-grid={{ x: chart.x, y: chart.y, w: chart.w, h: chart.h}} onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
+                 return (
+                    <div key={`chart-${index}`} style={{position:'relative'}} data-grid={{ x: chart.x, y: chart.y, w: chart.w, h: chart.h}}    onMouseEnter={() => handleMouseEnter(index)}                     onMouseLeave={() => handleMouseLeave(index)}>
                         <Flex px='20px' gap='15px' color='gray.600' flexDir={'row-reverse'} position='absolute' w={'100%'}  top={0} height={'60px'}>
-                            {isHovered && <> 
+                            {hoverStates[index] && <> 
                             <Tooltip hasArrow label={t('DragChart')} placement='top' color={'black'} bg='white' boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.15)'} borderWidth={'1px'} borderColor={'gray.200'} borderRadius='.4rem' fontSize='sm' fontWeight={'medium'} p='6px'>
                                 <Box className="drag-handle" mt='20px' height={'25px'}> 
                                     <Icon boxSize={'25px'} transform={'rotate(90deg)'} as={MdOutlineDragIndicator}  cursor={'pointer'}/>
