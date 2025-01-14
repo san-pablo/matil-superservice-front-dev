@@ -14,7 +14,8 @@ import '../../Components/styles.css'
 //FUNCTIONS
 import useOutsideClick from '../../Functions/clickOutside'
 //ICONS
-import { FaPen, FaFileCsv, FaClone } from "react-icons/fa6"
+import { FaPen, FaFileCsv, FaClone, FaCloudArrowUp } from "react-icons/fa6"
+ 
 import { IoIosArrowDown } from "react-icons/io"
 //TYPING
 import { ViewType } from '../../Constants/typing'
@@ -92,36 +93,40 @@ const ActionsButton = ({items, view, section}:ButtonProps) =>{
 
     //FRONT
     return (
+
         <Flex position={'relative'} flexDir='column' alignItems={'end'}>  
             <Button size='sm'   ref={buttonRef} leftIcon={<IoIosArrowDown className={showList ? "rotate-icon-up" : "rotate-icon-down"}/>}variant='common' onClick={() => {setShowList(!showList)}} >
-                {t('Actions')}
-            </Button>
-            <AnimatePresence> 
-                
-                {showList && 
-                <Portal>
-                    <MotionBox  id="custom-portal"  ref={boxRef} initial={{ opacity: 0, scale: 0.95, }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.95 }}  transition={{ duration: '0.1', ease: 'easeOut'}}
-                        style={{ transformOrigin: 'top right' }} p='8px' top={buttonRef.current?.getBoundingClientRect().bottom} right={'2vw'} overflow={'hidden'}  fontSize={'.8em'} marginTop={'5px'}  position='fixed' bg='white' zIndex={1000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.200' borderWidth='1px' borderRadius='.5rem'>
-                        <Flex onClick={handleDownloadCSV}  cursor={'pointer'}  px='15px' py='10px' gap='10px' borderRadius={'.5rem'}  alignItems={'center'} _hover={{bg:'brand.gray_2'}}>
-                            <Icon  color='gray.600' as={FaFileCsv}/>
+                {section === 'conversations'?t('Actions'):t('More')}
+            </Button>        
+        <AnimatePresence> 
+            {showList &&  
+                <Portal> 
+                    <MotionBox  id="custom-portal" ref={boxRef} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.95 }}  transition={{ duration: '0.1', ease: 'easeOut'}}
+                        style={{ transformOrigin: 'top' }} minW={buttonRef.current?.getBoundingClientRect().width } right={section === 'conversations'?'2vw':undefined} left={section === 'conversations'?undefined:(buttonRef.current?.getBoundingClientRect().left || 0)} mt='5px'  top={buttonRef.current?.getBoundingClientRect().bottom }  position='absolute' bg='white' p='5px'  zIndex={1000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.200' borderWidth='1px' borderRadius='.5rem'>
+                    
+                       <Flex fontSize={'.8em'} p='7px' gap='10px'  borderRadius='.5rem'  cursor={'pointer'} onClick={handleDownloadCSV}  alignItems={'center'} _hover={{bg:'brand.gray_2'}}>
+                            <Icon color='gray.600' as={FaFileCsv}/>
                             <Text whiteSpace={'nowrap'}>{t('CSV')}</Text>
                         </Flex>
-                
+                        {section === 'contacts' &&
+                        <Flex fontSize={'.8em'} p='7px' gap='10px'  borderRadius='.5rem'  cursor={'pointer'} onClick={() => {}}  alignItems={'center'} _hover={{bg:'brand.gray_2'}}>
+                            <Icon color='gray.600' as={FaCloudArrowUp}/>
+                            <Text whiteSpace={'nowrap'}>{t('ImportData')}</Text>
+                        </Flex>}
                         {(section === 'conversations' && view?.type !== 'deleted' && !(!isAdmin && view?.type === 'shared')) &&<>
-                        <Flex onClick={handleEditView} px='15px' py='10px' cursor={'pointer'} gap='10px'  borderRadius={'.5rem'}  alignItems={'center'} _hover={{bg:'brand.gray_2'}}>
+                        <Flex fontSize={'.8em'} p='7px' gap='10px'  borderRadius='.5rem'  cursor={'pointer'} onClick={handleEditView}  alignItems={'center'} _hover={{bg:'brand.gray_2'}}>
                             <Icon color='gray.600'  as={FaPen}/>
                             <Text whiteSpace={'nowrap'}>{t('EditView')}</Text>
                         </Flex>
-                        <Flex  onClick={handleCloneView} px='15px' py='10px'cursor={'pointer'} gap='10px' alignItems={'center'}  borderRadius={'.5rem'}  _hover={{bg:'brand.gray_2'}}>
-                            <Icon color='gray.600' as={FaClone}/>
+                        <Flex fontSize={'.8em'} p='7px' gap='10px'  borderRadius='.5rem'  cursor={'pointer'} onClick={handleCloneView}  alignItems={'center'} _hover={{bg:'brand.gray_2'}}>
+                        <Icon color='gray.600' as={FaClone}/>
                             <Text whiteSpace={'nowrap'}>{t('CloneView')}</Text>
-                        </Flex></> }
-                   </MotionBox >
-                   </Portal>
-                }
-         
-            </AnimatePresence>
-        </Flex>
+                        </Flex></>}
+                    </MotionBox >
+                </Portal>}
+        </AnimatePresence>
+    </Flex>
+
     )
 }
 

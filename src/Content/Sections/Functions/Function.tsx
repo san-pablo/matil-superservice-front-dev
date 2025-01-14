@@ -490,7 +490,7 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
             width={sendBoxWidth} overflowY={'hidden'}  borderRightWidth={'1px'} borderRightColor='gray.200' >
                 <Flex px='1vw' gap='2vw' height={'60px'} alignItems={'center'} justifyContent={'space-between'}  borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
                     <Flex flex={1} gap='20px' alignItems={'center'}> 
-                        <IconButton  aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'20px'}/>} onClick={() =>setHideFunctions(prev => (!prev))}/>
+                        <IconButton  aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'18px'}/>}  h='28px' w='28px'  onClick={() =>setHideFunctions(prev => (!prev))}/>
                         <EditText  regex={pythonRegex} placeholder={t('name')}  value={functionData?.name} setValue={(value) => setFunctionData(prev => ({...prev as FunctionsData, name:value}))} className={'title-textarea-collections'}/>
                     </Flex>
                     
@@ -498,7 +498,7 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
                         {selectedUuid !== '-1' && memoizedActionsButton}
                         <Button variant={'common'} size='sm' leftIcon={<IoChatbubbleEllipses/>} onClick={() => setShowTestFunction(true)}>{t('Test')}</Button>
                          <Button  variant={'main'} size='sm' isDisabled={JSON.stringify(functionData) === JSON.stringify(functionDataRef.current) || functionData?.code === '' || !pythonRegex.test(functionData?.name || '')} onClick={handleEditFunctions}>{waitingEdit?<LoadingIconButton/>:selectedUuid !== '-1'?t('SaveChanges'):t('CreateFunction')}</Button>
-                        {clientBoxWidth === 0 && <IconButton  aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'20px'}/>} onClick={() =>setClientBoxWidth(500)}/>}
+                        {clientBoxWidth === 0 && <IconButton  aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'18px'}/>}  h='28px' w='28px'  onClick={() =>setClientBoxWidth(500)}/>}
                     </Flex>
                 </Flex>
 

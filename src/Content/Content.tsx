@@ -14,7 +14,7 @@ import { useAuth0 } from "@auth0/auth0-react"
 import fetchData from './API/fetchData'
 import io from 'socket.io-client' 
 //FRONT
-import { Flex, Box, Icon, Avatar, Text, Tooltip, Button, chakra, shouldForwardProp, Image, Portal } from '@chakra-ui/react'
+import { Flex, Box, Icon, Avatar, Text, Tooltip, Button, chakra, shouldForwardProp, Image, IconButton, Skeleton } from '@chakra-ui/react'
 import './Components/styles.css'
 import { motion, AnimatePresence, isValidMotionProp } from 'framer-motion' 
 //COMPONENTS
@@ -339,33 +339,74 @@ function Content ({userInfo}:{userInfo:userInfo}) {
     //MEMOIZED CALL WIDGET
     const memoizedCallWidget = useMemo(() => <CallWidget />, [])
     const barRef = useRef<HTMLDivElement>(null)
+    const barRef2 = useRef<HTMLDivElement>(null)
+
 
     //REFS
+    const lastSection = useRef<string>(location.split('/')[1])
+
     const conversationsRef = useRef<HTMLDivElement>(null)
     const clientsRef = useRef<HTMLDivElement>(null)
     const flowsRef = useRef<HTMLDivElement>(null)
     const knowledgeRef = useRef<HTMLDivElement>(null)
     const statsRef = useRef<HTMLDivElement>(null)
     const settingsRef = useRef<HTMLDivElement>(null)
-    const sectionsRefs = {conversations:conversationsRef, contacts:clientsRef, 'knowledge':knowledgeRef, 'functions':flowsRef, 'stats':statsRef, 'settings':settingsRef}
+    const sectionsRefs = {conversations:conversationsRef, contacts:clientsRef, 'knowledge':knowledgeRef, 'functions':flowsRef, 'stats':statsRef, settings:settingsRef}
 
     useEffect(() => {
         const updateBarPosition = () => {
             const currentSection = location.split('/')[1] as 'conversations' | 'contacts' | 'knowledge' | 'functions' | 'stats' | 'settings'
-            console.log(currentSection)
-            console.log(sectionsRefs[currentSection]?.current)
-            if (sectionsRefs[currentSection]?.current && barRef.current) {
+
+            if (sectionsRefs[currentSection]?.current && barRef.current && barRef2.current) {
+
+                 const sectionTop = sectionsRefs[currentSection]?.current?.getBoundingClientRect().top || 0
+                 localStorage.setItem('currentSectionTop', String(sectionTop))
+             
+                if (currentSection === 'settings' || lastSection.current === 'settings') {
+                    
+                    if (lastSection.current === 'settings') {
+                        barRef.current.style.transition = 'box-shadow .25s ease, background-color .25s ease'
+                        barRef.current.style.backgroundColor = 'white'
+                        barRef.current.style.backgroundColor = '0 0 3px 0px rgba(0, 0, 0, 0.1)'  
+                        barRef2.current.style.backgroundColor = ''
+                        barRef2.current.style.boxShadow = ''
+                        barRef.current.style.transform = `translateY(${sectionTop}px)` 
+
+                    }
+                    else {
+                        barRef.current.style.transition = 'box-shadow .25s ease, background-color .25s ease'
+                        barRef2.current.style.transition = 'box-shadow .25s ease, background-color .25s ease'
+                        barRef2.current.style.backgroundColor = 'white'
+                        barRef2.current.style.boxShadow = ''
+
+                        barRef.current.style.backgroundColor = ''
+                        barRef.current.style.boxShadow = ''
+                        barRef.current.style.transform = `translateY(${(sectionsRefs as any)[lastSection.current]?.current?.getBoundingClientRect().top}px)` 
+
+                    }
+                }
+                else {
+                    barRef.current.style.transform = `translateY(${sectionTop}px)` 
+                    if (!isFirstSection.current) barRef.current.style.transition = 'transform .25s ease, box-shadow .25s ease, background-color .25s ease'
+                    barRef.current.style.backgroundColor = 'white'
+                    barRef.current.style.backgroundColor = '0 0 3px 0px rgba(0, 0, 0, 0.1)'
+                    barRef2.current.style.backgroundColor = ''
+                    barRef2.current.style.boxShadow = ''
+
+                }
                 isFirstSection.current = false
-                const sectionTop = sectionsRefs[currentSection]?.current?.getBoundingClientRect().top || 0
-                localStorage.setItem('currentSectionTop', String(sectionTop))
-                barRef.current.style.transform = `translateY(${sectionTop}px)` 
-            }
+                lastSection.current = currentSection
+
+                  
+             }
         }    
         updateBarPosition()
         window.addEventListener('resize', updateBarPosition)
         return () => {window.removeEventListener('resize', updateBarPosition)}
-    }, [location, sectionsRefs, barRef])
+    }, [location.split('/')[1].split('?')[0], barRef.current, barRef2.current])
     
+
+    console.log(location.split('/')[1].split('?')[0])
 
     //JOIN TO AN ORGANIZATION FUNCTION
     const addOrganization = async ({invitationCode, setInvitationCode}:{invitationCode:string, setInvitationCode:Dispatch<SetStateAction<string>>}) => {
@@ -424,7 +465,7 @@ function Content ({userInfo}:{userInfo:userInfo}) {
  
             <Flex alignItems='center' flexDir='column' >
                 <Box  width='100%'> 
-                    <Flex width={'100%'} justifyContent={'center'} mb='5vh'> 
+                    <Flex width={'100%'} justifyContent={'center'} mb='4vh'> 
                         {MatilImage}
                     </Flex>
                     <NavBarItem ref={conversationsRef} icon={IoFileTrayFull} section={'conversations'}/>
@@ -437,7 +478,7 @@ function Content ({userInfo}:{userInfo:userInfo}) {
             <Flex  alignItems='center' flexDir='column' position={'relative'}>
             {isAdmin && <NavBarItem ref={settingsRef} icon={IoIosSettings} section={'settings'}/>}
 
-                <Flex width='40px' bg='gray.300' height='1px' mb='2vh' mt='2vh'/>
+                <Flex width='31px' bg='gray.300' height='1px' mb='2vh' mt='2vh'/>
                 <LogoutBox userInfoApp={userInfoApp} auth={auth} addOrganization={addOrganization} changeOrganization={changeOrganization}/>
             </Flex>
         </>
@@ -472,31 +513,31 @@ function Content ({userInfo}:{userInfo:userInfo}) {
 
     //FRONT 
     return(<> 
-        <Box ref={barRef} borderRadius={'.5rem'} zIndex={1} boxShadow={'0 0 3px 0px rgba(0, 0, 0, 0.1)'}  transform={`translateY(${localStorage.getItem('currentSectionTop')})px)`} style={{position: 'absolute', left: '4px', width: '38px', top:0, backgroundColor: 'white', height:'38px'}}   transition={isFirstSection.current ? 'none':'transform 0.25s ease'} />
+        <Box  ref={barRef2} borderRadius={'.5rem'} transition={'box-shadow 0.25s ease, background-color 0.25s ease'} zIndex={1}  style={{position: 'absolute', left: '4px', top:settingsRef.current?.getBoundingClientRect().top,  width: '37px',   height:'37px'}}/>
+        <Box ref={barRef} transition={isFirstSection.current ? 'none':'transform 0.25s ease'} borderRadius={'.5rem'}  zIndex={1}  transform={`translateY(${localStorage.getItem('currentSectionTop')})px)`} style={{position: 'absolute', left: '4px', width: '37px', top:0,  height:'37px'}}/>
 
-         {socket.current ? 
+        {socket.current ? 
 
         <Flex width={'100vw'} height={'100vh'} overflow={'hidden'}> 
 
             {memoizedCallWidget}
         
             {/*SIDEBAR*/}
-            <Flex flexDir='column'  alignItems='center' justifyContent='space-between' height={'100vh'} width='45px' py='3vh' bg='brand.gray_1' >
+            <Flex flexDir='column'  alignItems='center' justifyContent='space-between' height={'100vh'} width='45px' py='calc(2vh + 5px)' bg='brand.gray_1' >
                 {memoizedNavbar}
             </Flex>
 
             {/*CONTENT OF THE SECTIONS*/}
             <Box  height={'100vh'} >
                 <Box>
-                    <Suspense fallback={<></>}>    
+                    <Suspense fallback={<SuspenseSectionComponent/>}>    
                         <Routes >
                             <Route path="/conversations/*" element={<ConversationsTable socket={socket}/>}/>
                             <Route path="/contacts/*" element={<Contacts socket={socket}/>}/>
                             <Route path="/functions/*" element={<FunctionsTable/>}/>
  
                             <Route path="/knowledge/*" element={<Knowledge/>}/>
-                            <Route path="/stats" element={<ReportsTable/>}/>
-                            <Route path="/stats/*" element={<Report/>}/>
+                            <Route path="/stats/*" element={<ReportsTable/>}/>
 
                             <Route path="/settings/*" element={<Settings />}/>
                             <Route path="*" element={<NotFound />} />
@@ -537,7 +578,7 @@ const NavBarItem = forwardRef<HTMLDivElement, NavBarItemProps>(({icon, section }
     //FRONT
     return (
         <Tooltip isOpen={isHovered} label={sectionsMap[section]} placement='right' color={'black'} bg='white' boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.15)'} borderWidth={'1px'} borderColor={'gray.200'} borderRadius='.4rem' fontSize='sm' fontWeight={'medium'} p='6px'>
-            <Flex zIndex={10} position={'relative'} borderRadius={'.5rem'} ref={ref} justifyContent='center' alignItems='center' h='38px' width={'38px'} cursor='pointer'  bg={'transparent'} color={(isSelected) ? 'rgba(59, 90, 246)' : 'gray.600'} _hover={{color:isSelected?'rgba(59, 90, 246)':'black'}} onClick={handleClick} onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
+            <Flex mt='.5vh' zIndex={10} position={'relative'} borderRadius={'.5rem'} ref={ref} justifyContent='center' alignItems='center' h='37px' width={'37px'} cursor='pointer'  bg={'transparent'} color={(isSelected) ? 'black' : 'gray.600'} _hover={{color:'rgba(59, 90, 246)'}} onClick={handleClick} onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
                 <Icon as={icon} boxSize='18px'/>
             </Flex>
         </Tooltip>
@@ -743,6 +784,40 @@ const LogoutBox = ({ userInfoApp, auth, addOrganization, changeOrganization }:{u
             </AnimatePresence>
         </Flex>
         </>)
+}
+
+
+const SuspenseSectionComponent = () => {
+    return (
+        <Flex position={'relative'} width={'calc(100vw - 45px)'} bg='brand.hover_gray' height={'100vh'}> 
+
+        <Flex zIndex={10} h='100vh' overflow={'hidden'} w='220px'  gap='20px' py='2vh' flexDir={'column'} justifyContent={'space-between'} borderRightColor={'gray.200'} borderRightWidth={'1px'}>
+            <Flex bg='brand.hover_gray' px='1vw' zIndex={100} h='100vh'  flexDir={'column'} justifyContent={'space-between'}  >
+                    <Box> 
+                        <Flex  alignItems={'center'} justifyContent={'space-between'}> 
+                            <Skeleton> <Text  fontWeight={'semibold'} fontSize={'1.2em'}>{t('Functions')}</Text></Skeleton>
+                            <Skeleton><IconButton bg='transparent' borderWidth={'1px'} borderColor={'gray.200'}  h='28px' w='28px'  _hover={{bg:'brand.gray_1', color:'brand.text_blue'}} variant={'common'} icon={<FaPlus size={'16px'}/>} aria-label="create-function" size='xs' /></Skeleton>
+                        </Flex>
+                        <Box h='1px' w='100%' bg='gray.300' mt='2vh' mb='2vh'/>
+
+                    </Box>
+
+                    <Box flex='1' > 
+                        
+                        {['Hola','Hola','Hola','Hola','Hola','Hola','Hola',]?.map((name, index) => {
+                            return (
+                            <Skeleton key={`function-${index}`} style={{borderRadius:'2rem', height:'20px', width:'100%', marginTop:'1vh'}}> 
+                              
+                            </Skeleton>)
+                        })}
+                    </Box>
+                </Flex>
+        </Flex>
+
+        <Flex bg='brand.hover_gray' w='calc(100vw - 265px)' h='100vh' ></Flex>
+    </Flex>
+
+    )
 }
 
  

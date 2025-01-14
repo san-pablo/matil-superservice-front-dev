@@ -1,13 +1,14 @@
 //REACT
-import { useState, useEffect,  useMemo } from "react"
+import { useState, useEffect,  useMemo, Suspense, lazy } from "react"
 import { useTranslation } from "react-i18next"
 import { useAuth } from "../../../AuthContext"
-import { useNavigate } from "react-router-dom"
+import { Routes, Route, useNavigate, useLocation } from "react-router-dom"
 import { useAuth0 } from "@auth0/auth0-react"
+
 //FETCH DATA
 import fetchData from "../../API/fetchData"
 //FRONT
-import { Flex, Box, Text, Button, Skeleton, Textarea } from '@chakra-ui/react'
+import { Flex, Box, Text, Button, Skeleton, Icon, IconButton } from '@chakra-ui/react'
 //COMPONENTS
 import EditText from "../../Components/Reusable/EditText"
 import LoadingIconButton from "../../Components/Reusable/LoadingIconButton"
@@ -16,8 +17,12 @@ import IconsPicker from "../../Components/Reusable/IconsPicker"
 //ICONS
 import { FaPlus } from "react-icons/fa6"
 //TYPING
-import { ReportDataType } from "../../Constants/typing"
-  
+ import { ReportDataType } from "../../Constants/typing"
+//COMPONENTS
+const Report = lazy(() => import('./Report'))
+const CreateReport = lazy(() => import('./CreateReport'))
+
+
 const tryReport = {uuid:'', icon:'', name:'Hola', description:'Hola', user_id:'matilda'}
  
 //MAIN FUNCTION
@@ -29,10 +34,12 @@ function ReportsTable () {
     const auth = useAuth()
     const navigate = useNavigate()
     const { t } = useTranslation('stats')
+    const location = useLocation().pathname
  
     //CREATE BOX AND FOLDER
     const [showCreate, setShowCreate] = useState<boolean>(false)
- 
+    const [hideReports, setHideReports] = useState<boolean>(false)
+
     //GET REPORTS
     const [reports, setReports] = useState<ReportDataType[] | null>(null)
 
@@ -101,51 +108,60 @@ function ReportsTable () {
         </ConfirmBox>
     ), [showCreate])
 
+
+    const tableWidthHideView =`calc(100vw - 45px)`  
+    const tableWidthShowView =`calc(100vw - 45px - 220px)`  
+    
+    
     //FRONT
     return(<>
         {showCreate && memoizedDeleteBox}
-        <Flex flexDir={'column'} height={'100vh'} width={'calc(100vw - 55px)'} bg='brand.hover_gray'  p='1vw'> 
-            <Box> 
-                <Flex justifyContent={'space-between'} alignItems={'end'}> 
-                    <Box> 
-                        <Text mb='2vh' fontSize={'1.4em'} fontWeight={'medium'}>{t('Reports')}</Text>
-                        <Box w='350px'> 
-                            <EditText value={text} setValue={(value:string) => setText(value)} searchInput={true}/>
+        <Flex position={'relative'} width={'calc(100vw - 45px)'} bg='brand.hover_gray' height={'100vh'}> 
+
+                <Flex zIndex={10} h='100vh' overflow={'hidden'} width={hideReports ? 0:220}transition={'width ease-in-out .2s'}  gap='20px' py='2vh' flexDir={'column'} justifyContent={'space-between'} borderRightColor={'gray.200'} borderRightWidth={'1px'}>
+                    <Flex bg='brand.hover_gray' px='1vw' zIndex={100} h='100vh'  flexDir={'column'} justifyContent={'space-between'}  >
+                        <Box> 
+                            <Flex  alignItems={'center'} justifyContent={'space-between'}> 
+                                <Text  fontWeight={'semibold'} fontSize={'1.2em'}>{t('Reports')}</Text>
+                                <IconButton bg='transparent' borderWidth={'1px'} borderColor={'gray.200'}  h='28px' w='28px'  _hover={{bg:'brand.gray_1', color:'brand.text_blue'}} variant={'common'} icon={<FaPlus size={'16px'}/>} aria-label="create-function" size='xs'  onClick={() => setShowCreate(true)}/>
+                            </Flex>
+                            <Box h='1px' w='100%' bg='gray.300' mt='2vh' mb='2vh'/>
                         </Box>
-                    </Box>
-                    <Button size={'sm'} variant={'main'} leftIcon={<FaPlus/>} onClick={() => setShowCreate(true)}>{t('CreateReport')}</Button>
-                </Flex>
-                <Box height={'1px'} width={'100%'} bg='gray.300' mt='1vh'  />
-            </Box>
 
-            <Box style={{paddingBottom:'3vh', paddingTop:'3vh', flex:1, overflow:'scroll'}}> 
-                {(filteredReports.length === 0 && reports) ? 
-                <Flex height={'100%'} top={0} left={0} width={'100%'}  alignItems={'center'} justifyContent={'center'}> 
-                    <Box maxW={'580px'} textAlign={'center'}> 
-                        <Text fontWeight={'medium'} fontSize={'2em'} mb='2vh'>{t('NoReports')}</Text>               
-                        <Button  variant='main'  onClick={() => setShowCreate(true)} leftIcon={<FaPlus/>}>{t('CreateReport')}</Button>
-                    </Box>
-                </Flex> 
-                    :
 
-                <Flex flexWrap={'wrap'} gap='32px'  >
-                    {(reports ? filteredReports: [tryReport, tryReport, tryReport])?.map((rep, index) => (
-                        <Skeleton isLoaded={reports !== null} style={{borderRadius:'1rem'}}> 
-                            <Box p='20px' overflow={'hidden'}  width={'400px'}  onClick={() => navigate(rep.uuid)} cursor={'pointer'} borderWidth={'1px'} key={`help-center-${index}`} transition={'box-shadow 0.3s ease-in-out'} _hover={{shadow:'lg'}} shadow={'sm'} borderRadius={'1rem'}>
-                                <Flex gap='15px'>
-                                    <IconsPicker disabled selectedIcon={rep?.icon || 'FaChartBar'} setSelectedIcon={() => {}}/> 
-                                    <Box flex='1'> 
-                                        <Text fontWeight={'medium'} fontSize={'1.2em'}>{rep.name}</Text>
-                                        <Text color='gray.600' w='295px' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}  fontSize={'.9em'}>{rep.description?rep.description:t('NoDescription')}</Text>
-                                    </Box>
-                                </Flex>                       
-                                <Text mt='1vh' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{t('Created_by', {user: rep.user_id === 'matilda' ?'Matilda':rep.user_id === 'no_user' ? t('NoAgent'):(auth?.authData?.users?.[rep.user_id as string | number].name || '')})}</Text>
-                            </Box>
-                        </Skeleton>
-                    ))}
+                        <Box flex='1' > 
+                            {reports?.length === 0 ? 
+                                <Button w='100%'  mt='2vh' onClick={() => setShowCreate(true)} leftIcon={<FaPlus/>} bg='transparent' borderColor={'gray.300'} borderWidth={'1px'} variant={'common'} size='xs'>{t('CreateReport')}</Button>
+                                :
+                                <> 
+                                    {(reports ? reports: [tryReport, tryReport, tryReport])?.map((func, index) => {
+                                        const isSelected = func.uuid === location.split('/')[location.split('/').length - 1]
+
+                                        return (
+                                        <Skeleton key={`function-${index}`} isLoaded={reports !== null} style={{borderRadius:'.5rem'}}> 
+                                            <Flex gap='10px' alignItems={'center'}  bg={isSelected?'white':'transparent'}  transition={isSelected?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}    boxShadow={isSelected ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''} borderWidth={'1px'} borderColor={isSelected ? 'gray.200':'transparent'} key={`shared-view-${index}`} onClick={() => navigate(`report/${func.uuid}`)} _hover={{bg:isSelected?'white':'brand.gray_2'}}  fontWeight={isSelected? 'medium':'normal'}fontSize={'.9em'} cursor={'pointer'} borderRadius={'.5rem'} p='6px'>
+                                                    <Text transition={'transform .1s ease-in-out'}   transformOrigin="left center" transform={isSelected?'scale(1.02)':'scale(1)'} whiteSpace={'nowrap'} textOverflow={'ellipsis'}   overflow={'hidden'}>{func.name}</Text>
+                                                </Flex>
+                                        </Skeleton>)
+                                    })}
+                            </>
+                            }  
+                        </Box>
+                    </Flex>
                 </Flex>
-                }
-            </Box>
+                            
+                <Flex bg='brand.hover_gray' h='100vh' flexDir={'column'}  width={hideReports ? tableWidthHideView:tableWidthShowView} transition={'width ease-in-out .2s'} right={0}   position="absolute" top={0} >
+
+                    <Suspense fallback={<></>}>    
+                        <Routes >
+                            <Route path="/" element={<CreateReport setReports={setReports}/>}/>
+
+                            <Route path="/report/*" element={<Report hideReports={hideReports} setHideReports={setHideReports}/>}/>
+                        </Routes>
+                    </Suspense>
+
+                </Flex>
+
         </Flex>
     </>)
 }

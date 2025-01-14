@@ -149,7 +149,10 @@
     "Inactive":"Inactivo",
     "NoConversationSelected":"No hay niguna converación seleccionada",
     "Search":"Buscar",
-    "HideViews":"Esconder vistas"
+    "HideViews":"Esconder vistas",
+    "More":"Más",
+    "ConversationsFilter":"El estado es",
+    "ImportData":"Importar datos"
 
 
 

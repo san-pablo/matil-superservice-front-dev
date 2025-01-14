@@ -1,5 +1,5 @@
 //REACT
-import { useState, useEffect, useMemo, Dispatch, SetStateAction, lazy, useRef } from "react"
+import { useState, useEffect, useMemo, Dispatch, SetStateAction, lazy, useRef, ReactElement } from "react"
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from "../../../AuthContext" 
 import { useTranslation } from "react-i18next"
@@ -14,6 +14,8 @@ import { Flex, Box, Text, Tooltip, IconButton, Skeleton,Button, chakra, shouldFo
 import Table from "../../Components/Reusable/Table"
 import ConfirmBox from "../../Components/Reusable/ConfirmBox"
 import CreateBusiness from "./CreateBusiness"
+import ActionsButton from "../Conversations/ActionsButton"
+import FilterButton from "../../Components/Reusable/FilterButton"
 //FUNCTIONS
 import timeAgo from "../../Functions/timeAgo"
 import timeStampToDate from "../../Functions/timeStampToString"
@@ -21,7 +23,7 @@ import useOutsideClick from "../../Functions/clickOutside"
 //ICONS
 import { IoSend } from "react-icons/io5";
 import { PiSidebarSimpleBold } from "react-icons/pi"
-import { FaPlus } from "react-icons/fa6"
+import { FaPlus, FaCalendar } from "react-icons/fa6"
 //TYPING
 import { ContactBusinessesProps } from "../../Constants/typing"
    //SECTION
@@ -69,6 +71,20 @@ function BusinessesTable ({showCreateBusiness, setShowCreateBusiness, socket, se
 
     //MAPPING CONSTANTS
     const columnsBusinessesMap:{[key:string]:[string, number]} = {name: [t('name'), 200], labels:  [t('labels'), 350], created_at:  [t('created_at'), 150], last_interaction_at:  [t('last_interaction_at'), 150], notes: [t('notes'), 350]}
+
+    const statesMap: Record<string, [string, ReactElement]> = {
+        'any':[t('anymoment'),<></>],
+        'today':[t('today'),<></>],
+        'yesterday':[t('yesterday'),<></>],
+        'start_of_week':[t('start_of_week'),<></>],
+        'start_of_month':[t('start_of_month'),<></>],
+     }
+
+    const [statusFilter, setStatusFilter] = useState<string[]>(['any'])
+    const toggleChannelsList = (element:string) => {
+        setStatusFilter([element])
+    }
+
 
     //EXPAND CLIENT
     const [expandClient, setExpandClient] = useState<boolean>(false)
@@ -184,15 +200,22 @@ function BusinessesTable ({showCreateBusiness, setShowCreateBusiness, socket, se
                     <Text flex='1' minW={0} fontWeight={'medium'} fontSize={'1.2em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{t('Businesses')}</Text>
                 </Flex>
                 <Button variant='main' size={'sm'} leftIcon={<FaPlus/>} onClick={() => setShowCreateBusiness(true)}>{t('CreateBusiness')}</Button> 
-            </Flex>    
+            </Flex>   
 
-            <Flex mt='2vh' gap='20px' alignItems={'center'}> 
+            <Flex mt='2vh'> 
+                <FilterButton selectList={Object.keys(statesMap)} itemsMap={statesMap} selectedElements={statusFilter} setSelectedElements={(element:string) => toggleChannelsList(element)}  icon={FaCalendar} initialMessage={t('BusinessFilterMessages')}/>
+            </Flex>
+
+            <Flex gap='20px' mt='2vh' alignItems={'center'} > 
                 <Skeleton  isLoaded={!waitingInfo} >
                     <Text fontWeight={'medium'} color='gray.600' > {t('BusinessesCount', {count:businesses?.total_contact_businesses})}</Text> 
                 </Skeleton>
-                <Button leftIcon={<IoSend/>} size='sm' variant={'common'} >{t('NewMessages')}</Button>
+                <Button leftIcon={<IoSend/>} size='sm' variant={'common'} >{t('NewMessage')}</Button>
+                <ActionsButton items={businesses?.page_data} section={'contacts'} view={null}/>
             </Flex>
-            <Box ref={tableContainerRef}> 
+
+ 
+            <Box ref={tableContainerRef} mt='2vh'> 
                 <Table data={businesses?.page_data || []} CellStyle={CellStyle} noDataMessage={t('NoBusinesses')} excludedKeys={['id']} columnsMap={columnsBusinessesMap} onClickRow={rowClick} requestSort={requestSort} getSortIcon={getSortIcon} currentIndex={selectedIndex}/>
             </Box>
         </Box>

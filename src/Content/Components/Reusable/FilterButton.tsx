@@ -4,7 +4,7 @@
 
 
 //REACT
-import { useState, useRef, useEffect, RefObject, CSSProperties } from 'react'
+import { useState, useRef, useEffect, RefObject, CSSProperties, ReactElement } from 'react'
 //FRONT
 import { motion, isValidMotionProp, AnimatePresence } from 'framer-motion'
 import { Text, Box, Flex, Icon, Portal, chakra, shouldForwardProp } from '@chakra-ui/react'
@@ -22,9 +22,9 @@ interface FilterButtonProps {
     selectList: Array<string>
     selectedElements: Array<string>
     setSelectedElements: (value:string) => void
-    icon: IconType
+    icon: IconType | null
     initialMessage:string
-    itemsMap:{[key:string]:[string, IconType | null]}
+    itemsMap:{[key:string]:[string, any  | null]}
     containerRef?: RefObject<HTMLDivElement>
 }
 
@@ -52,8 +52,8 @@ const FilterButton = ({selectList, selectedElements, setSelectedElements, icon, 
     //FRONT
     return (
         <Box> 
-            <Flex whiteSpace={'normal'} height={'33px'} alignItems={'center'} cursor={'pointer'} bg='brand.gray_2' fontWeight='medium' gap='10px' px='7px' borderRadius={'.5rem'} fontSize={'1em'} ref={buttonRef} onClick={() => {setShowList(!showList)}} _hover={{color:'brand.text_blue'}}>
-                <Icon as={icon}/>
+            <Flex whiteSpace={'normal'} height={'33px'} alignItems={'center'} cursor={'pointer'} bg='brand.gray_2' fontWeight='medium' gap='7px' px='7px' borderRadius={'.5rem'} fontSize={'1em'} ref={buttonRef} onClick={() => {setShowList(!showList)}} _hover={{color:'brand.text_blue'}}>
+                {icon && <Icon boxSize={'14px'} as={icon}/>}
                 <Text fontSize={'.9em'} whiteSpace={'nowrap'}>
                 {initialMessage + ' '} 
                 {
@@ -74,9 +74,9 @@ const FilterButton = ({selectList, selectedElements, setSelectedElements, icon, 
                         style={{ transformOrigin: boxStyle.top ? 'top':'bottom' }}  fontSize={'.8em'} width={boxStyle.width} left={boxStyle.left} marginTop={'5px'} marginBottom={'5px'}  top={boxStyle.top || undefined}  bottom={boxStyle.bottom ||undefined} position='absolute' bg='white' p='8px'  zIndex={1000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.200' borderWidth='1px' borderRadius='.7rem'>
 
                         {selectList.map((element, index) => (
-                            <Flex key={`select-list-${index}`} borderRadius={'.5rem'} p='7px' cursor='pointer' onClick={()=>{setSelectedElements(element)}} gap='10px'  justifyContent={'space-between'} alignItems={'center'} color={selectedElements.includes(element)?'brand.text_blue':'black'} _hover={{bg:'brand.gray_2'}}>
+                            <Flex key={`select-list-${index}`} borderRadius={'.5rem'}color={selectedElements.includes(element)?'brand.text_blue':'black'} p='7px' cursor='pointer' onClick={()=>{setSelectedElements(element)}} gap='10px'  justifyContent={'space-between'} alignItems={'center'} _hover={{bg:'brand.gray_2'}}>
                                 <Flex alignItems={'center'} gap='10px'> 
-                                    {itemsMap[element][1] && <Icon color={selectedElements.includes(element)?'brand.text_blue':'gray.600'} as={itemsMap[element][1] as IconType}/>}
+                                    {itemsMap[element][1] && <> {itemsMap[element][1]} </>}
                                     <Text> {itemsMap[element][0]}</Text>
                                 </Flex>
                                 {selectedElements.includes(element) && <Icon as={FaCheck} color={'brand.text_blue'}/>}

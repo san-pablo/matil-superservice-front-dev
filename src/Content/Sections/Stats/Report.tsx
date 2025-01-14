@@ -22,6 +22,7 @@ import 'react-grid-layout/css/styles.css'
 import DateRangePicker from "../../Components/Reusable/DatePicker"
 import CustomSelect from "../../Components/Reusable/CustomSelect"
 import EditText from "../../Components/Reusable/EditText"
+import ActionsButton from "../../Components/Reusable/ActionsButton"
 //FUNCTIONS
 import parseMessageToBold from "../../Functions/parseToBold"
 import useOutsideClick from "../../Functions/clickOutside"
@@ -31,11 +32,12 @@ import { FaQuestionCircle } from "react-icons/fa"
 import { IoStatsChart,  IoSettingsSharp} from "react-icons/io5";
 import { FaChartBar,FaCheck,  FaChartColumn,FaTable, FaChartLine, FaChartArea, FaChartPie, FaPen, FaPlus,FaClock, FaCalendarDay, FaCalendarWeek, FaCalendarDays, FaClockRotateLeft, FaLock } from "react-icons/fa6"
 import { TbSquareNumber7Filled , TbCopyPlusFilled } from "react-icons/tb"
-import { IoIosArrowDown, IoIosArrowBack } from "react-icons/io"
+import { IoIosArrowDown } from "react-icons/io"
 import { HiTrash } from "react-icons/hi2"
 import { MdOutlineDragIndicator } from "react-icons/md"
 import { TiArrowSortedDown } from "react-icons/ti"
 import { RxCross2 } from "react-icons/rx"
+import { PiSidebarSimpleBold } from "react-icons/pi"
 //TYPING
 import { ReportType, ChartType, MetricType, metrics } from "../../Constants/typing" 
  
@@ -53,7 +55,7 @@ const formatDate = (date: Date) => date.toISOString().split("T")[0]
 const initialRange = `${formatDate(yesterday)} to ${formatDate(today)}`
 
 //MAIN FUNCTION 
-const Report = () => {
+const Report = ({hideReports, setHideReports}:{hideReports:boolean, setHideReports:Dispatch<SetStateAction<boolean>>}) => {
     
     //CONSTANTS
     const { getAccessTokenSilently } = useAuth0()
@@ -83,18 +85,7 @@ const Report = () => {
     //REPORT DATA 
     const reportDataRef = useRef<ReportType | null>(null)
     const [reportData, setReportData] = useState<ReportType | null>(null)
-    useEffect(() => {        
-        document.title = `${t('Stats')} - ${t('Report')} - Matil`
-        const reportId = location.split('/')[2]
-        const fetchInitialData = async() => {
-            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/reports/${reportId}`, auth, setValue:setReportData,getAccessTokenSilently, setRef:reportDataRef})
-        }
-        fetchInitialData()
-
-        gridWidth.current = chartBoxRef.current?.getBoundingClientRect().width || 0
-
-    }, [])
-
+     
  
     //SELECTED CHART
     const [selectedChart, setSelectedChart] = useState<ChartType | null>(null)
@@ -111,39 +102,7 @@ const Report = () => {
         else navigate('/stats')
     }   
 
-    //EDIT ACTIONS BUTTON
-    const ActionsButton = () => {
-
-        const [showList, setShowList] = useState<boolean>(false)
-        const buttonRef = useRef<HTMLButtonElement>(null)
-        const boxRef = useRef<HTMLDivElement>(null)
-        useOutsideClick({ref1:buttonRef, ref2:boxRef, onOutsideClick:setShowList})
-        return(
-            <Flex position={'relative'} flexDir='column' alignItems={'end'}>  
-            <Button size='sm'  ref={buttonRef} leftIcon={<IoIosArrowDown className={showList ? "rotate-icon-up" : "rotate-icon-down"}/>}variant='common' onClick={() => {setShowList(!showList)}} >
-                {t('Actions')}
-            </Button>
-            <AnimatePresence> 
-                {showList &&  
-                    <Portal> 
-                        <MotionBox ref={boxRef} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.95 }}  transition={{ duration: '0.1', ease: 'easeOut'}}
-                            style={{ transformOrigin: 'top' }} minW={buttonRef.current?.getBoundingClientRect().width } right={window.innerWidth - (buttonRef.current?.getBoundingClientRect().right || 0)} mt='5px'  top={buttonRef.current?.getBoundingClientRect().bottom }  position='absolute' bg='white' p='8px'  zIndex={1000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.200' borderWidth='1px' borderRadius='.7rem'>
-                           
-                           <Flex fontSize={'.8em'} p='7px' gap='10px'  borderRadius='.5rem'  cursor={'pointer'} onClick={() => {setShowList(false)}} alignItems={'center'} _hover={{bg:'brand.gray_2'}}>
-                                    <Icon color='gray.600' as={TbCopyPlusFilled}/>
-                                    <Text whiteSpace={'nowrap'}>{t('Double')}</Text>
-                                </Flex>
-                                <Flex  fontSize={'.8em'}  p='7px' gap='10px'  borderRadius='.5rem'  color='red' cursor={'pointer'} onClick={() => {setShowDeleteBox(true);setShowList(false)}} alignItems={'center'} _hover={{bg:'red.100'}}>
-                                    <Icon as={HiTrash}/>
-                                    <Text whiteSpace={'nowrap'}>{t('Delete')}</Text>
-                                </Flex>
  
-                        </MotionBox >
-                    </Portal>}
-            </AnimatePresence>
-        </Flex>
-        )
-    }
     //SHOW DELETE BOX
     const [showDeleteBox, setShowDeleteBox] = useState<boolean>(false)
 
@@ -187,7 +146,7 @@ const Report = () => {
             </Flex>
         </ConfirmBox>    
     </>), [showNoSaveWarning])
-    const memoizedActionsButton = useMemo(() => (<ActionsButton/>), [])
+    const memoizedActionsButton = useMemo(() => (<ActionsButton copyAction={() => {}} deleteAction={() => setShowDeleteBox(true)} />), [])
 
  
     return (<>      
@@ -198,18 +157,16 @@ const Report = () => {
     {selectedChart ? <EditChartComponent chartData={selectedChart} setChartData={setSelectedChart} reportData={reportData as ReportType} setReportData={setReportData}/>:
 
 
-    <Box bg='white' height={'100vh'} width={'calc(100vw - 55px)'} overflowY={'hidden'} p='1vw'>
+    <Box bg='white' height={'100vh'} width={hideReports?'calc(100vw - 45px)': 'calc(100vw - 285px)'} overflowY={'hidden'} p='1vw'>
     <Flex flexDir={'column'} height={'calc(100vh - 4vw)'} width={'100%'} top={0} left={0}>
     
         <Box> 
             <Flex height={'50px'}  alignItems={'center'} gap='32px' justifyContent={'space-between'}>
                 <Flex gap='20px'> 
-                    <Tooltip label={t('GoBack')}  placement='bottom' hasArrow bg='black'  color='white'  borderRadius='.4rem' fontSize='.75em' p='4px'> 
-                        <IconButton  aria-label='go-back' size='sm' variant={'common'} bg='transparent' onClick={onExitAction} icon={<IoIosArrowBack size='20px'/>}/>
-                    </Tooltip>
+                    <IconButton  aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'20px'}/>} onClick={() => setHideReports(prev => (!prev))}/>
                     <Box > 
-                     <EditText  placeholder={t('name')} value={reportData?.name} setValue={(value) => setReportData(prev => ({...prev as ReportType, name:value})) } className={'title-textarea-collections'}/>
-                     <EditText  placeholder={t('AddDescription')} value={reportData?.description} setValue={(value) => setReportData(prev => ({...prev as ReportType, description:value})) } className={'description-textarea-functions'}/>
+                        <EditText  placeholder={t('name')} value={reportData?.name} setValue={(value) => setReportData(prev => ({...prev as ReportType, name:value})) } className={'title-textarea-collections'}/>
+                        <EditText  placeholder={t('AddDescription')} value={reportData?.description} setValue={(value) => setReportData(prev => ({...prev as ReportType, description:value})) } className={'description-textarea-functions'}/>
                     </Box>
                 </Flex> 
                 <Flex gap='15px' > 
@@ -230,8 +187,8 @@ const Report = () => {
                     </Box>
                 </Flex>
             :
-            <Box width={'100%'}  ref={chartBoxRef}>
-                {reportData && <ChartGrid gridWidth={gridWidth.current} setSelectedChart={setSelectedChart} reportData={reportData} setReportData={setReportData}/>}
+            <Box width={hideReports?'calc(100vw - 45px)': 'calc(100vw - 265px)'} >
+                {reportData && <ChartGrid gridWidth={hideReports?window.innerWidth - 45:window.innerWidth - 265} setSelectedChart={setSelectedChart} reportData={reportData} setReportData={setReportData}/>}
             </Box> 
             }
         </Box>
@@ -487,7 +444,7 @@ const EditChartComponent = ({chartData, setChartData, reportData, setReportData}
  return(<>
     {showDeleteBox && DeleteBox}
      
-    <Flex flexDir={'column'} w='calc(100vw - 55px)' h='100vh'> 
+    <Flex flexDir={'column'} w='100%' bg='white' h='100vh'> 
   
         <Flex height={'60px'} px='1vw' gap='32px' alignItems={'center'} justifyContent={'space-between'}> 
             <Box w='100%' mt='10px' maxW={'800px'}> 
@@ -975,9 +932,10 @@ const ChartGrid = ({ reportData, setReportData, gridWidth, setSelectedChart }:{r
         else initialRender.current = false
     }
 
+    console.log(gridWidth)
     return (
 
-        <GridLayout draggableHandle=".drag-handle" style={{overflow: 'visible'}}     containerPadding={[20, 40]}  onLayoutChange={handleLayoutChange}  margin={[20, 20]} autoSize={true} className="layout" cols={6}  rowHeight={gridWidth/12} width={gridWidth}>
+        <GridLayout draggableHandle=".drag-handle" style={{overflow: 'visible'}} containerPadding={[20, 40]}  onLayoutChange={handleLayoutChange}  margin={[20, 20]} autoSize={true} className="layout" cols={6}  rowHeight={gridWidth/12} width={gridWidth}>
             {layoutData.map((chart, index) => {
                 const [isHovered, setIsHovered] = useState(false)
                 return (

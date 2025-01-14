@@ -1,5 +1,5 @@
 //REACT
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, Dispatch, SetStateAction } from "react"
 import { useTranslation } from "react-i18next"
 import { useAuth } from "../../../AuthContext"
 import { useSession } from "../../../SessionContext"
@@ -19,7 +19,7 @@ import { CreateBox, CreateFolder, CellStyle } from "./Utils"
 import { IconType } from "react-icons"
 import { FaFolder, FaPlus, FaLock, FaFilePdf, FaFileLines, FaFilter } from "react-icons/fa6"
 import { IoBook } from "react-icons/io5"
-import { IoIosArrowForward, IoIosArrowBack } from "react-icons/io"
+import { PiSidebarSimpleBold } from "react-icons/pi"
 import { BiWorld } from "react-icons/bi"
 import { PiDesktopTowerFill } from "react-icons/pi"
 //TYPING
@@ -39,7 +39,7 @@ interface ContentFilters {
  
  
 //MAIN FUNCTION
-function Content ({folders, handleFolderUpdate}:{folders:Folder[], handleFolderUpdate:(type: 'edit' | 'add' | 'delete' | 'move', newFolderData: Folder, parentId: string | null) => void}) {
+function Content ({folders, handleFolderUpdate, setHideFunctions}:{folders:Folder[], handleFolderUpdate:(type: 'edit' | 'add' | 'delete' | 'move', newFolderData: Folder, parentId: string | null) => void, setHideFunctions:Dispatch<SetStateAction<boolean>>}) {
 
     //AUTH CONSTANT
     const auth = useAuth()
@@ -152,11 +152,14 @@ function Content ({folders, handleFolderUpdate}:{folders:Folder[], handleFolderU
         {showCreate && memoizedCreateBox}
         {showCreateFolder && memoizedCreateFolderBox}
 
-        <Box> 
+        <Box px='2vw' py='2vh'> 
             <Flex justifyContent={'space-between'} alignItems={'end'}> 
-                <Box> 
-                    <Text fontSize={'1.4em'} fontWeight={'medium'}>{selectedFolder ? selectedFolder.emoji + ' ' + selectedFolder.name :t('Content')}</Text>
-                </Box>
+                <Flex  alignItems={'center'} gap='10px' >
+                    <IconButton  aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'18px'}/>}  h='28px' w='28px'  onClick={() =>setHideFunctions(prev => (!prev))}/>
+                    <Text fontWeight={'medium'} fontSize={'1.2em'}>{selectedFolder ? selectedFolder.emoji + ' ' + selectedFolder.name :t('Content')}</Text>
+                </Flex>
+
+               
                 <Flex gap='10px'> 
                     <Button size={'sm'} variant={'common'} leftIcon={<FaFolder/>} onClick={() => setShowCreateFolder(true)}>{folderUuid ? t('CreateSubFolder'):t('CreateFolder')}</Button>
                     <Button size={'sm'} variant={'main'} leftIcon={<FaPlus/>} onClick={() => setShowCreate(true)}>{t('CreateContent')}</Button>
@@ -168,18 +171,13 @@ function Content ({folders, handleFolderUpdate}:{folders:Folder[], handleFolderU
                     <EditText  filterData={(text:string) => {fetchClientDataWithFilter({...filters, search:text})}}  value={filters?.search || ''} setValue={(value:string) => setFilters(prev => ({...prev, search:value}))} searchInput={true}/>
                 </Box>
                 <FilterButton selectList={Object.keys(logosMap)} itemsMap={logosMap} selectedElements={filters.type} setSelectedElements={(element) => toggleChannelsList(element as sourcesType)} icon={PiDesktopTowerFill} initialMessage={t('SourceFilterMessage')}/>
-                <Button leftIcon={<FaFilter/>} size='sm' variant={'common'}  onClick={() => fetchClientDataWithFilter({...filters, page_index:1})}>{t('ApplyFilters')}</Button>
-            </Flex>
+             </Flex>
 
-            <Flex  mt='2vh' justifyContent={'space-between'} alignItems={'end'}>
+            <Flex  mt='2vh' mb='2vh' justifyContent={'space-between'} alignItems={'end'}>
                 <Skeleton isLoaded={!waitingInfo && contentData !== null}> 
-                    <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('ContentCount', {count:contentData?.number_of_sources})}</Text>
+                    <Text fontWeight={'medium'} >{t('ContentCount', {count:contentData?.number_of_sources})}</Text>
                 </Skeleton>
-                <Flex  alignItems={'center'} justifyContent={'end'} gap='10px' flexDir={'row-reverse'}>
-                    <IconButton isRound size='xs'  variant={'common'}  aria-label='next-page' icon={<IoIosArrowForward />} isDisabled={filters?.page_index >= Math.floor((contentData?.number_of_sources || 0)/ 50)} onClick={() => fetchClientDataWithFilter({...filters,page_index:filters?.page_index + 1})}/>
-                    <Text fontWeight={'medium'} fontSize={'.9em'} color='gray.600'>{t('Page', {count:filters?.page_index})}</Text>
-                    <IconButton isRound size='xs' variant={'common'} aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={filters?.page_index === 1} onClick={() => fetchClientDataWithFilter({...filters,page_index:filters?.page_index - 1})}/>
-                </Flex>
+              
             </Flex>
 
             <Skeleton isLoaded={!waitingInfo && contentData !== null}> 

@@ -41,10 +41,10 @@ const FunctionsStats = ({functionsList, setHideFunctions}:{functionsList:Functio
 
 
     return (
-    <Flex h='100vh' w='100%' p ='1vw'  flexDir={'column'}>
+    <Flex h='100vh' w='100%' px ='2vw' py='2vh' overflow={'hidden'}  flexDir={'column'}>
  
         <Flex mb='1vw' alignItems={'center'} gap='10px' >
-            <IconButton  aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'20px'}/>} onClick={() =>setHideFunctions(prev => (!prev))}/>
+            <IconButton  aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'18px'}/>}  h='28px' w='28px'  onClick={() =>setHideFunctions(prev => (!prev))}/>
 
             <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('Stats')}</Text>
         </Flex>
@@ -61,7 +61,7 @@ const FunctionsStats = ({functionsList, setHideFunctions}:{functionsList:Functio
                      </Skeleton>
                 ))} 
             </Flex>
-            <Grid mt='1vw' flex='1' templateColumns="repeat(2, 1fr)" gap='1vw'>
+            <Grid mt='1vw' overflow={'hidden'}  flex='1' templateColumns="repeat(2, 1fr)" gap='1vw'>
                 
                 {['total_calls', 'total_errors', 'mean_execution_time_ms', 'mean_memory_consumed_kb']?.map((stat, index) => {
                     
@@ -75,7 +75,7 @@ const FunctionsStats = ({functionsList, setHideFunctions}:{functionsList:Functio
                     <Skeleton key={`func-${index}`} isLoaded={data !== null} style={{flex:1}}>
                         <Flex flexDir={'column'} width={'100%'} h='100%'> 
                             <Text fontWeight={'medium'}>{t(stat)}</Text>
-                            <Box height={'calc(100% - 20px)'}  > 
+                            <Box height={'calc(100% - 20px)'} w='100%' minW={0} > 
                                 <ColumnChart  segmentxAxis={[]} yaxisSum={[]} key={`func-${index}`} xaxis={functionsList?.map((func) => {return func.name}) || []} yaxis={[ totalList ]} ytitle={[t(stat)]} chartType={'column'} configuration={{show_percentage:false, is_stacked:false}}/>
                             </Box>
                         </Flex>
