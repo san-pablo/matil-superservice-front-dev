@@ -217,23 +217,19 @@ function Business ({socket}: {socket:any}) {
     return (<> 
 
         <Flex flexDir={'column'} height={'100vh'}   width={'100%'}>
-            <Box px='1vw' pt='1vw' > 
-                <Flex   gap='3vw' justifyContent={'space-between'}> 
-                    <Flex  flex='1' gap='20px'  alignItems={'center'}>
-                        <IconButton  aria-label='expand-data' icon={<PiSidebarSimpleBold size='18px'/>} size='sm'  variant={'common'} bg='transparent'  onClick={() => navigate('/contacts/businesses') }/>
-                            <Flex gap='10px'  flex='1'  alignItems={'center'}>
-                            <Avatar size='sm' name={businessDataEdit?.name}/>
-                            <Skeleton width={'100%'} isLoaded={businessDataEdit !== null}> 
-                                <EditText fontSize="1.2em" nameInput={true} size='md' maxLength={70} updateData={(text:string | undefined) => updateData({...businessDataEdit as ContactBusinessesTable, name:text as string})} value={businessDataEdit?.name === ''? t('WebClient'):businessDataEdit?.name} setValue={handelChangeName}/>
-                            </Skeleton>
-                        </Flex>
 
-                    </Flex>
-                
+
+        <Flex borderBottomWidth={'1px'} borderBottomColor={'gray.200'} h='50px' px='1vw'  gap='3vw' justifyContent={'space-between'}> 
+                <Flex  flex='1' gap='10px'  alignItems={'center'}>
+                    <Skeleton  isLoaded={businessDataEdit !== null}> 
+                        <Avatar size='xs' name={businessDataEdit?.name}/>
+                    </Skeleton>
+                    <Skeleton isLoaded={businessDataEdit !== null} style={{flex:1}}> 
+                        <EditText  nameInput maxLength={70} fontSize="1em"  updateData={(text:string | undefined) => updateData({...businessDataEdit as ContactBusinessesTable, name:text as string})} value={businessDataEdit?.name === ''? t('WebClient'):businessDataEdit?.name} setValue={handelChangeName}/>
+                    </Skeleton>
                 </Flex>
-                <Box h='1px' w='100%' bg='gray.200' mt='2vh'/>
-            </Box>
-
+               
+            </Flex>
        
             <Flex flex='1'> 
                 <Box flex='1' py='2vh'  ref={scrollRef1} px='1vw' borderRightColor={'gray.200'} borderRightWidth={'1px'}  overflow={'scroll'}  >

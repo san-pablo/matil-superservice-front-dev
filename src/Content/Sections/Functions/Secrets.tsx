@@ -131,10 +131,10 @@ const Secrets = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<bo
     {deleteIndex !== null && memoizedDeleteSecretBox}
     {showCreate !== null && memoizedAddThemeBox}
 
-    <Flex flexDir={'column'} width={'100%'} height={'100%'} p='1vw'>
+    <Flex flexDir={'column'} width={'100%'} height={'100%'} px ='2vw' py='2vh'  >
         <Flex alignItems={'center'} justifyContent={'space-between'}>
             <Flex gap='10px' alignItems={'center'}> 
-                <IconButton  aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'20px'}/>} onClick={() =>setHideFunctions(prev => (!prev))}/>
+                <IconButton  aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'18px'}/>}  h='28px' w='28px'  onClick={() =>setHideFunctions(prev => (!prev))}/>
                 <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('Secrets')}</Text>
             </Flex>
             <Button variant={'main'} size='sm' leftIcon={<FaPlus/>} onClick={() => setShowCreate(-1)}>{t('CreateSecret')}</Button>

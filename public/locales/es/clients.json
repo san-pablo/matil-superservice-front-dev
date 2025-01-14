@@ -59,6 +59,8 @@
     "phone":"Teléfono",
     "ClientsFilterMessage":"Los canales son",
     "Deblock":"Desbloquear",
-    "HideSidebar":"Esconder barra"
+    "HideSidebar":"Esconder barra",
+    "NewMessage":"Nuevo mensaje",
+    "CreateClient":"Crear cliente"
 
 }

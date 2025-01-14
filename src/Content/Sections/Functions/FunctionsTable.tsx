@@ -39,7 +39,7 @@ const FunctionsTable = () => {
  
     //FUNCTIONS DATA
     const [hideFunctions, setHideFunctions] = useState<boolean>(false)
-  
+ 
 
     const [functionsData, setFunctionsData] = useState<FunctionTableData[] | null>(null)
 
@@ -56,37 +56,17 @@ const FunctionsTable = () => {
         }
         fetchInitialData()
     }, [])
+ 
 
-    // FILTER FUNCTIONS
-    const [text, setText] = useState<string>('')
-    const [filteredFunctions, setFilteredFunctions] = useState<FunctionTableData[]>([])
-    useEffect(() => {
-    const filterUserData = () => {
-        if (functionsData) {
-            const filtered = functionsData.filter(flow =>
-                flow.name.toLowerCase().includes(text.toLowerCase()) ||
-                flow.description.toLowerCase().includes(text.toLowerCase()) || 
-                flow.uuid.toLowerCase().includes(text.toLowerCase())
-            )
-            setFilteredFunctions(filtered)
-        }
-    }
-    filterUserData()
-    }, [text, functionsData])
-
-
-    const functionsWidth = hideFunctions ? 0 : 260
-    const functionBoxWidth = `calc(100vw - 45px - ${functionsWidth}px)`
-
+    const tableWidthHideView =`calc(100vw - 45px)`  
+    const tableWidthShowView =`calc(100vw - 45px - 220px)`  
     
     return (<> 
 
         <Flex position={'relative'} width={'calc(100vw - 45px)'} bg='brand.hover_gray' height={'100vh'}> 
 
-            <MotionBox initial={{ width: functionsWidth  }} animate={{ width: functionsWidth}} exit={{ width: functionsWidth }} transition={{ duration: '.2' }}  
-                width={functionsWidth}    overflow={'hidden'} >
-
-                <Flex bg='brand.hover_gray' px='1vw' w='260px' zIndex={100} h='100vh'  py='2vh' flexDir={'column'} justifyContent={'space-between'}  >
+            <Flex zIndex={10} h='100vh' overflow={'hidden'} width={hideFunctions ? 0:220}transition={'width ease-in-out .2s'}  gap='20px' py='2vh' flexDir={'column'} justifyContent={'space-between'} borderRightColor={'gray.200'} borderRightWidth={'1px'}>
+                <Flex bg='brand.hover_gray' px='1vw' zIndex={100} h='100vh'  flexDir={'column'} justifyContent={'space-between'}  >
                     <Box> 
                         <Flex  alignItems={'center'} justifyContent={'space-between'}> 
                             <Text  fontWeight={'semibold'} fontSize={'1.2em'}>{t('Functions')}</Text>
@@ -97,12 +77,12 @@ const FunctionsTable = () => {
                         <Flex gap='10px' alignItems={'center'}  bg={location.endsWith('functions')?'white':'transparent'}  transition={location.endsWith('functions')?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}    boxShadow={location.endsWith('functions') ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''} borderWidth={'1px'} borderColor={location.endsWith('functions') ? 'gray.200':'transparent'}  onClick={() => navigate('/functions')} _hover={{bg:location.endsWith('functions')?'white':'brand.gray_2'}}  fontWeight={location.endsWith('functions')? 'medium':'normal'}fontSize={'.9em'} cursor={'pointer'} borderRadius={'.5rem'} p='6px'>
                             <Icon as={FaChartSimple}/>
                             <Text transition={'transform .1s ease-in-out'}   transformOrigin="left center" transform={location.endsWith('functions')?'scale(1.02)':'scale(1)'} whiteSpace={'nowrap'} textOverflow={'ellipsis'}   overflow={'hidden'}>{t('Stats')}</Text>
-                         </Flex>
+                            </Flex>
                         <Flex gap='10px' alignItems={'center'}  bg={location.endsWith('secrets')?'white':'transparent'}  transition={location.endsWith('secrets')?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}    boxShadow={location.endsWith('secrets') ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''} borderWidth={'1px'} borderColor={location.endsWith('secrets') ? 'gray.200':'transparent'}  onClick={() => navigate('secrets')} _hover={{bg:location.endsWith('secrets')?'white':'brand.gray_2'}}  fontWeight={location.endsWith('secrets')? 'medium':'normal'}fontSize={'.9em'} cursor={'pointer'} borderRadius={'.5rem'} p='6px'>
                             <Icon as={FaEye}/>
                             <Text transition={'transform .1s ease-in-out'}   transformOrigin="left center" transform={location.endsWith('functions')?'scale(1.02)':'scale(1)'} whiteSpace={'nowrap'} textOverflow={'ellipsis'}   overflow={'hidden'}>{t('Secrets')}</Text>
-                         </Flex>
-                     </Box>
+                            </Flex>
+                        </Box>
 
 
                     <Box ref={scrollRef} flex='1' > 
@@ -110,7 +90,7 @@ const FunctionsTable = () => {
                             <Button w='100%'  mt='2vh' onClick={() => navigate('/functions/function/new')} leftIcon={<FaPlus/>} bg='transparent' borderColor={'gray.300'} borderWidth={'1px'} variant={'common'} size='xs'>{t('CreateFunction')}</Button>
                             :
                             <> 
-                                {(functionsData ? filteredFunctions: [tryData, tryData, tryData])?.map((func, index) => {
+                                {(functionsData ? functionsData: [tryData, tryData, tryData])?.map((func, index) => {
                                     const isSelected = func.uuid === location.split('/')[location.split('/').length - 1]
 
                                     return (
@@ -118,27 +98,27 @@ const FunctionsTable = () => {
                                         <Flex gap='10px' alignItems={'center'}  bg={isSelected?'white':'transparent'}  transition={isSelected?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}    boxShadow={isSelected ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''} borderWidth={'1px'} borderColor={isSelected ? 'gray.200':'transparent'} key={`shared-view-${index}`} onClick={() => navigate(`function/${func.uuid}`)} _hover={{bg:isSelected?'white':'brand.gray_2'}}  fontWeight={isSelected? 'medium':'normal'}fontSize={'.9em'} cursor={'pointer'} borderRadius={'.5rem'} p='6px'>
                                             <Icon color={func?.is_active?'#68D391':'#ECC94B'} as={FaCircleDot}/>
 
-                                             <Text transition={'transform .1s ease-in-out'}   transformOrigin="left center" transform={isSelected?'scale(1.02)':'scale(1)'} whiteSpace={'nowrap'} textOverflow={'ellipsis'}   overflow={'hidden'}>{func.name}</Text>
-                                         </Flex>
+                                                <Text transition={'transform .1s ease-in-out'}   transformOrigin="left center" transform={isSelected?'scale(1.02)':'scale(1)'} whiteSpace={'nowrap'} textOverflow={'ellipsis'}   overflow={'hidden'}>{func.name}</Text>
+                                            </Flex>
                                     </Skeleton>)
                                 })}
                         </>
                         }  
                     </Box>
                 </Flex>
-            </MotionBox>
+            </Flex>
 
-            <MotionBox  initial={{ width: functionBoxWidth }} animate={{ width: functionBoxWidth,}} exit={{ width: functionBoxWidth, }}  overflowY={'scroll'}  transition={{ duration: '.2'}} 
-                zIndex={100} bg='white' height={'100vh'} overflowX={'hidden'}>
-                <Suspense fallback={<></>}>    
-                        <Routes >
-                            <Route path="/" element={<FunctionsStats functionsList={functionsData} setHideFunctions={setHideFunctions}/>}/>
-                            <Route path="/secrets" element={<Secrets  setHideFunctions={setHideFunctions}/>}/>
-                            <Route path="/function/*" element={<Function setHideFunctions={setHideFunctions}/>}/>
-                        </Routes>
-                    </Suspense>
+            <Flex bg='brand.hover_gray' h='100vh' flexDir={'column'}  width={hideFunctions ? tableWidthHideView:tableWidthShowView} transition={'width ease-in-out .2s'} right={0}   position="absolute" top={0} >
 
-            </MotionBox>
+                    <Suspense fallback={<></>}>    
+                            <Routes >
+                                <Route path="/" element={<FunctionsStats functionsList={functionsData} setHideFunctions={setHideFunctions}/>}/>
+                                <Route path="/secrets" element={<Secrets  setHideFunctions={setHideFunctions}/>}/>
+                                <Route path="/function/*" element={<Function setHideFunctions={setHideFunctions}/>}/>
+                            </Routes>
+                        </Suspense>
+
+                </Flex>
         </Flex>
 
       

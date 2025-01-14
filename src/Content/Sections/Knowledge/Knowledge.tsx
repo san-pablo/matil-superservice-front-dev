@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next'
 //FETCH DATA
 import fetchData from "../../API/fetchData"
 //FRONT
-import { Box, Flex, Text, Icon, Skeleton, Button, Portal, chakra, shouldForwardProp } from '@chakra-ui/react'
+import { Box, Flex, Text, Icon, Skeleton, Button, Portal, chakra, shouldForwardProp, IconButton } from '@chakra-ui/react'
 import '../../Components/styles.css'
 import { motion, isValidMotionProp } from 'framer-motion'
 //COMPONENTS
@@ -79,7 +79,7 @@ const Section = ({ folder, level, onFolderUpdate, handleFoldersDisabled}: { fold
     //IS HOVERING
     const [isHovering, setIsHovering] = useState<boolean>(false)
     const [settingsBoxPosition, setSettingsBoxPosition] = useState<boxPosition>(null)
-
+ 
     //ACTIONS LIST
     const [showCreate, setShowCreate] = useState<boolean>(false)
     const [showEdit, setShowEdit] = useState<boolean>(false)
@@ -191,10 +191,10 @@ const Section = ({ folder, level, onFolderUpdate, handleFoldersDisabled}: { fold
       {showDelete && DeleteBox}
       {showMove && MoveBox}
 
-        <Flex  borderColor={selectedSection === folder.uuid ? 'gray.200':'transparent'}  fontWeight={selectedSection === folder.uuid ? 'medium':'normal'} bg={selectedSection === folder.uuid ?'white':'transparent'}  transition={selectedSection === folder.uuid ?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}    boxShadow={selectedSection === folder.uuid  ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''}  gap="10px" justifyContent={'space-between'} p="5px" ml={`${(level + 1) * 20}px`} _hover={{bg:selectedSection === folder.uuid ?'white':'brand.gray_2'}}  onClick={() => { navigateToSection(`${folder.uuid}`)}} cursor="pointer" alignItems="center" borderRadius=".5rem" onMouseLeave={() => setIsHovering(false)} onMouseEnter={() => setIsHovering(true)}>
+        <Flex  borderColor={selectedSection === folder.uuid ? 'gray.200':'transparent'}  fontWeight={selectedSection === folder.uuid ? 'medium':'normal'} bg={selectedSection === folder.uuid ?'white':'transparent'}  transition={selectedSection === folder.uuid ?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}    boxShadow={selectedSection === folder.uuid  ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''}  gap="10px" justifyContent={'space-between'} p="5px" ml={`${(level + 1) * 15}px`} _hover={{bg:selectedSection === folder.uuid ?'white':'brand.gray_2'}}  onClick={() => { navigateToSection(`${folder.uuid}`)}} cursor="pointer" alignItems="center" borderRadius=".5rem" onMouseLeave={() => setIsHovering(false)} onMouseEnter={() => setIsHovering(true)}>
             <Flex flex='1' gap="10px" alignContent={'center'}> 
                 {folder.emoji ? <Text>{folder.emoji}</Text>:<Icon boxSize="16px" as={FaFolder} />}
-                <Text  transition={'transform .1s ease-in-out'}   transformOrigin="left center" transform={selectedSection === folder.uuid?'scale(1.02)':'scale(1)'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{folder.name}</Text>
+                <Text  transition={'transform .1s ease-in-out'}   fontSize={'.9em'}   transformOrigin="left center" transform={selectedSection === folder.uuid?'scale(1.02)':'scale(1)'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{folder.name}</Text>
             </Flex>
             <Box width={'15px'} ref={buttonRef}> 
                 {(isHovering || (settingsBoxPosition?.id === folder.uuid)) && <BsThreeDots size='15px' onClick={(e) => {e.stopPropagation();determineBoxPosition(folder.uuid) }}/>}
@@ -251,6 +251,9 @@ function Knowledege () {
 
     //SCROLL REF 
     const scrollRef = useRef<HTMLDivElement>(null)
+
+    const [hideFunctions, setHideFunctions] = useState<boolean>(false)
+
 
     //SHOW FOLDERS
     const [hoverMain, setHoverMain] = useState<boolean>(false)
@@ -334,24 +337,32 @@ function Knowledege () {
         </ConfirmBox>
     ), [showCreate])
 
+    const tableWidthHideView =`calc(100vw - 45px)`  
+    const tableWidthShowView =`calc(100vw - 45px - 220px)`  
+
     //FRONT
     return(<>
         {showCreate && CreateBox}
  
-        <Flex>  
-            <Flex flexDir="column" height={'100vh'}   bg='brand.hover_gray' width='260px' pt='1vw' borderRightWidth="1px" borderRightColor="gray.200">
+        <Flex position={'relative'} width={'calc(100vw - 45px)'} bg='brand.hover_gray' height={'100vh'}> 
+
+            <Flex zIndex={10} h='100vh' overflow={'hidden'} width={hideFunctions ? 0:220}transition={'width ease-in-out .2s'} py='2vh' flexDir={'column'}  borderRightColor={'gray.200'} borderRightWidth={'1px'}>
                 <Box px='1vw'> 
-                    <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('Knowledge')}</Text>
+                    <Flex  alignItems={'center'} justifyContent={'space-between'}> 
+                        <Text  fontWeight={'semibold'} fontSize={'1.2em'}>{t('Knowledge')}</Text>
+                        <IconButton bg='transparent' borderWidth={'1px'} borderColor={'gray.200'}  h='28px' w='28px'  _hover={{bg:'brand.gray_1', color:'brand.text_blue'}} variant={'common'} icon={<FaPlus size={'16px'}/>} aria-label="create-function" size='xs'  onClick={() => navigate('/functions/function/new')}/>
+                    </Flex>
+
                     <Box height={'1px'} width={'100%'} bg='gray.300' mt='2vh' mb='2vh'/>
 
-                    <Flex mt="1vh" gap="10px" p="5px"  _hover={{bg:location.split('/')[2] === 'fonts' ?'white':'brand.gray_2'}}   borderColor={location.split('/')[2] === 'fonts' ? 'gray.200':'transparent'}  fontWeight={location.split('/')[2] === 'fonts'? 'medium':'normal'} bg={location.split('/')[2] === 'fonts'?'white':'transparent'}  transition={location.split('/')[2] === 'fonts'?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}    boxShadow={location.split('/')[2] === 'fonts' ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''}  onClick={() => navigate('fonts')} cursor="pointer" alignItems="center" borderRadius=".5rem">
+                    <Flex   gap="10px" p="5px"  _hover={{bg:location.split('/')[2] === 'fonts' ?'white':'brand.gray_2'}}   borderColor={location.split('/')[2] === 'fonts' ? 'gray.200':'transparent'}  fontWeight={location.split('/')[2] === 'fonts'? 'medium':'normal'} bg={location.split('/')[2] === 'fonts'?'white':'transparent'}  transition={location.split('/')[2] === 'fonts'?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}    boxShadow={location.split('/')[2] === 'fonts' ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''}  onClick={() => navigate('fonts')}   fontSize={'.9em'}  cursor="pointer" alignItems="center" borderRadius=".5rem">
                         <Icon boxSize="16px" as={FaBox} />
                         <Text  transition={'transform .1s ease-in-out'}   transformOrigin="left center" transform={location.split('/')[2] === 'fonts'?'scale(1.02)':'scale(1)'}>{t('Fonts')}</Text>
                     </Flex>
-                    <Flex onMouseEnter={() => setHoverMain(true)}  _hover={{bg:location.split('/')[2] === 'content' ?'white':'brand.gray_2'}}  onMouseLeave={() => setHoverMain(false)} mt="1vh"  p="5px"   cursor="pointer" alignItems="center" borderRadius=".5rem" justifyContent={'space-between'}    borderColor={location.split('/')[2] === 'content' ? 'gray.200':'transparent'}  fontWeight={location.split('/')[2] === 'content'? 'medium':'normal'} bg={location.split('/')[2] === 'content'?'white':'transparent'}  transition={location.split('/')[2] === 'content'?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}    boxShadow={location.split('/')[2] === 'content' ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''}   onClick={() => navigate('content')}>
+                    <Flex mb='.5vh' onMouseEnter={() => setHoverMain(true)}  _hover={{bg:location.split('/')[2] === 'content' ?'white':'brand.gray_2'}}  onMouseLeave={() => setHoverMain(false)} mt="1vh"  p="5px"   cursor="pointer" alignItems="center" borderRadius=".5rem" justifyContent={'space-between'}    borderColor={location.split('/')[2] === 'content' ? 'gray.200':'transparent'}  fontWeight={location.split('/')[2] === 'content'? 'medium':'normal'} bg={location.split('/')[2] === 'content'?'white':'transparent'}  transition={location.split('/')[2] === 'content'?'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out':'box-shadow .2s ease-out, border-color .2s ease-out, background-color .2s ease-out'}    boxShadow={location.split('/')[2] === 'content' ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''}   onClick={() => navigate('content')}>
                         <Flex gap="10px" alignItems={'center'}> 
                             <Icon boxSize="16px" as={BsFillLayersFill} />
-                            <Text transition={'transform .1s ease-in-out'}   transformOrigin="left center" transform={location.split('/')[2] === 'content'?'scale(1.02)':'scale(1)'}>{t('Content')}</Text>
+                            <Text transition={'transform .1s ease-in-out'}   fontSize={'.9em'}   transformOrigin="left center" transform={location.split('/')[2] === 'content'?'scale(1.02)':'scale(1)'}>{t('Content')}</Text>
                         </Flex>
                         <Flex gap="10px" alignContent={'center'}> 
                             {hoverMain && <FaPlus onClick={() => setShowCreate(true)} />}
@@ -359,7 +370,7 @@ function Knowledege () {
                         </Flex>
                     </Flex>
                 </Box>
-                <motion.div initial={{height:showFolders?'auto':0}} animate={{height:showFolders?0:'auto' }} exit={{height:showFolders?'auto':0 }} transition={{duration:.2}} style={{overflow:'hidden', padding:'0 1vw 1vw 1vw', maxHeight:1000}}>           
+                <motion.div initial={{height:showFolders?'auto':0}} animate={{height:showFolders?0:'auto' }} exit={{height:showFolders?'auto':0 }} transition={{duration:.2}} style={{overflow:'hidden',padding:'0 1vw 0 1vw', maxHeight:1000}}>           
                     <Skeleton isLoaded={folders !== null}>
                         {folders.map((folder, index) => (
                             <Fragment key={`settings-section-${folder.uuid}`}>
@@ -370,13 +381,12 @@ function Knowledege () {
                 </motion.div>
             </Flex>
 
-            <Box width={'calc(100vw - 315px)'} position={'relative'} bg='brand.hover_gray' p='1vw' height={'100vh'} ref={scrollRef}>
-                <Flex height={'100vh'}flexDir={'column'} justifyContent={'space-between'}> 
-                    <Suspense fallback={<></>}>    
+            <Flex bg='brand.hover_gray' h='100vh' flexDir={'column'}  width={hideFunctions ? tableWidthHideView:tableWidthShowView} transition={'width ease-in-out .2s'} right={0}   position="absolute" top={0} >
+                     <Suspense fallback={<></>}>    
                         <Routes >
-                            <Route path="/content" element={<Content folders={folders} handleFolderUpdate={handleFolderUpdate} />} />
-                            <Route path="/fonts" element={<Fonts/>} />
-                            <Route path="/folder/*" element={<Content folders={folders} handleFolderUpdate={handleFolderUpdate} />}  />
+                            <Route path="/content" element={<Content setHideFunctions={setHideFunctions} folders={folders} handleFolderUpdate={handleFolderUpdate} />} />
+                            <Route path="/fonts" element={<Fonts setHideFunctions={setHideFunctions}/>} />
+                            <Route path="/folder/*" element={<Content setHideFunctions={setHideFunctions} folders={folders} handleFolderUpdate={handleFolderUpdate} />}  />
 
                             <Route path="/article/*" element={<Article folders={folders}/>} />
 
@@ -386,8 +396,7 @@ function Knowledege () {
                             <Route path="/snippet/*" element={<TextSection folders={folders}/>} />
                         </Routes>
                     </Suspense>
-                </Flex>   
-            </Box>
+             </Flex>
             
         </Flex>
     </>)

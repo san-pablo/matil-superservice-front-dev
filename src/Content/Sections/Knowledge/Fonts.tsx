@@ -22,6 +22,7 @@ import { AiFillAppstore } from "react-icons/ai"
 import { BiWorld } from "react-icons/bi"
 import { FiEdit } from "react-icons/fi"
 import { FaCloudUploadAlt } from "react-icons/fa"
+import { PiSidebarSimpleBold } from "react-icons/pi"
 //TYPING
 import { ContentData, languagesFlags } from "../../Constants/typing"
 import { useSession } from "../../../SessionContext"
@@ -33,7 +34,7 @@ import { useAuth0 } from "@auth0/auth0-react"
 
 
 //MAIN FUNCTION
-function Fonts () {
+function Fonts ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<boolean>>}) {
 
     //AUTH CONSTANT
     const  { t } = useTranslation('knowledge')
@@ -111,19 +112,21 @@ function Fonts () {
         {showAddPdf && memoizedAddPdfBox}
         {showCreate && memoizedCreateBox}
 
-        <Box> 
-            <Flex mb='1vh' justifyContent={'space-between'}> 
-                <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Fonts')}</Text>
-            </Flex>    
+        <Box px='2vw' pt='2vh'> 
+            <Flex mb='2vh' alignItems={'center'} gap='10px' >
+                <IconButton  aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'18px'}/>}  h='28px' w='28px'  onClick={() =>setHideFunctions(prev => (!prev))}/>
+                <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('Fonts')}</Text>
+            </Flex>
+
             <Flex justifyContent={'space-between'} alignItems={'end'}>   
                 <SectionSelector selectedSection={selectedSection} sections={sectionsList} sectionsMap={sectionsMap}  onChange={(section) => {setSelectedSection(section  as 'all' | 'help-center')}} /> 
                 <Button size='sm' variant={'main'} leftIcon={<FaPlus/>} onClick={() => setShowCreate(true)}>{t('CreateContent')}</Button>
             </Flex>    
-            <Box height={'1px'} width={'100%'} bg='gray.300' mt='2vh' mb='3vh'/>
+            <Box height={'1px'} width={'100%'} bg='gray.300' mt='2vh' />
 
         </Box>
         
-        <Box px='1px' flex='1' overflow={'scroll'}>
+        <Box px='2vw' py='5vh' flex='1' overflow={'scroll'}>
             <Skeleton isLoaded={isDataLoaded}> 
                 <Box p='20px' borderRadius={'.7em'} borderColor={'gray.300'} borderWidth={'1px'}>
                     <Flex justifyContent={'space-between'} > 

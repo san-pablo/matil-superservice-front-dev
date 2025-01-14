@@ -1,5 +1,5 @@
 //REACT
-import { useState, useEffect, lazy, Dispatch, SetStateAction, useRef } from "react"
+import { useState, useEffect, lazy, Dispatch, SetStateAction, useRef, ReactElement } from "react"
 import { useTranslation } from "react-i18next"
 import { useAuth } from "../../../AuthContext"
 import { useSession } from "../../../SessionContext"
@@ -10,7 +10,7 @@ import fetchData from "../../API/fetchData"
 import { motion, isValidMotionProp, AnimatePresence } from 'framer-motion'
 import { Flex, Box, Text, Button, IconButton, Skeleton, Tooltip, chakra, shouldForwardProp } from '@chakra-ui/react'
 //COMPONENTS
-import EditText from "../../Components/Reusable/EditText"
+import ActionsButton from "../Conversations/ActionsButton"
 import FilterButton from "../../Components/Reusable/FilterButton"
 import Table from "../../Components/Reusable/Table"
 //FUNCTIONS
@@ -19,9 +19,9 @@ import timeAgo from "../../Functions/timeAgo"
 import useOutsideClick from "../../Functions/clickOutside"
 //ICONS
 import { IconType } from "react-icons"
-import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io"
+import { IoSend } from "react-icons/io5";
 import { PiDesktopTowerFill } from "react-icons/pi"
-import { FaFilter, FaPhone } from "react-icons/fa"
+import { FaFilter, FaPhone, FaPlus } from "react-icons/fa"
 import { IoMdMail, IoLogoWhatsapp } from "react-icons/io"
 import { IoChatboxEllipses, IoLogoGoogle } from "react-icons/io5"
 import { AiFillInstagram } from "react-icons/ai"
@@ -94,14 +94,14 @@ function ClientsTable ({socket, setHideViews}:{socket:any, setHideViews:Dispatch
     const navigate = useNavigate()
     const { t } = useTranslation('clients')
     const columnsClientsMap:{[key:string]:[string, number]} = {name: [t('name'), 200], contact: [t('contact'), 150], labels: [t('labels'), 350], last_interaction_at: [t('last_interaction_at'), 180], created_at: [t('created_at'), 150], rating: [t('rating'), 60], language: [t('language'), 150], notes: [t('notes'), 350],  is_blocked: [t('is_blocked'), 150]}
-    const logosMap:{[key in Channels]: [string, IconType]} = { 
-        'email':[ t('email'), IoMdMail],
-        'voip':[ t('voip'), FaCloud],
-        'whatsapp':[ t('whatsapp'), IoLogoWhatsapp ], 
-        'webchat':[ t('webchat'), IoChatboxEllipses], 
-        'google_business':[ t('google_business'), IoLogoGoogle],
-        'instagram': [t('instagram'), AiFillInstagram], 
-        'phone':[ t('phone'), FaPhone]
+    const logosMap:{[key in Channels]: [string, ReactElement]} = { 
+        'email':[ t('email'), <IoMdMail color='#4A5568'/>],
+        'voip':[ t('voip'), <FaCloud color='#4A5568'/>],
+        'whatsapp':[ t('whatsapp'), <IoLogoWhatsapp color='#4A5568'/> ], 
+        'webchat':[ t('webchat'), <IoChatboxEllipses color='#4A5568'/>], 
+        'google_business':[ t('google_business'), <IoLogoGoogle color='#4A5568'/>],
+        'instagram': [t('instagram'), <AiFillInstagram color='#4A5568'/>], 
+        'phone':[ t('phone'), <FaPhone color='#4A5568'/>]
     }
 
     //EXPAND CLIENT
@@ -214,19 +214,22 @@ function ClientsTable ({socket, setHideViews}:{socket:any, setHideViews:Dispatch
                     <IconButton bg='transparent' _hover={{bg:'brand.gray_1', color:'brand.text_blue'}} icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'18px'}/>} variant={'common'}  h='28px' w='28px' aria-label="hide-sidebar" size='xs' onClick={() => setHideViews(prev => (!prev))} />
                 </Tooltip>
                 <Text flex='1' minW={0} fontWeight={'medium'} fontSize={'1.2em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{t('Clients')}</Text>
-            </Flex>
-    
-            <Flex gap='15px' mt='1vh'  > 
+                <Button size={'sm'} variant={'main'} leftIcon={<FaPlus/>}>{t('CreateClient')}</Button>
+            </Flex>     
+            <Flex mt='2vh'> 
                 <FilterButton selectList={Object.keys(logosMap)} itemsMap={logosMap} selectedElements={filters?.channel_types} setSelectedElements={(element) => toggleChannelsList(element as Channels)}  icon={PiDesktopTowerFill} initialMessage={t('ClientsFilterMessage')}/>
-             </Flex>
-
-            <Flex mt='1vh'  justifyContent={'space-between'} alignItems={'center'}> 
+            </Flex>
+             
+            <Flex gap='20px' mt='2vh' alignItems={'center'} > 
                 <Skeleton  isLoaded={!waitingInfo} >
                     <Text fontWeight={'medium'} color='gray.600' > {t('ClientsCount', {count:clients?.total_contacts})}</Text> 
                 </Skeleton>
+                <Button leftIcon={<IoSend/>} size='sm' variant={'common'} >{t('NewMessage')}</Button>
+                <ActionsButton items={clients?.page_data} section={'contacts'} view={null}/>
             </Flex>
-
-            <Box mt='1vh' ref={tableContainerRef}> 
+ 
+ 
+            <Box mt='2vh' ref={tableContainerRef}> 
             <Table data={clients?.page_data || []} CellStyle={CellStyle} noDataMessage={t('NoClients')} columnsMap={columnsClientsMap} requestSort={requestSort} getSortIcon={getSortIcon} onClickRow={clickRow} excludedKeys={['id', 'contact_business_id', 'phone_number', 'email_address', 'instagram_username', 'webchat_uuid', 'google_business_review_id']} waitingInfo={waitingInfo} currentIndex={selectedIndex} />
             </Box>
         </Box>

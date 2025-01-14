@@ -78,5 +78,5 @@ const Contacts = ({socket}:{socket:any}) => {
         </Flex>
     )
 }
-
+ 
 export default Contacts
