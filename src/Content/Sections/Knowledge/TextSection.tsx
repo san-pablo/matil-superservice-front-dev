@@ -31,7 +31,7 @@ import { useAuth0 } from "@auth0/auth0-react"
 //MOTION BOX
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)}) 
 
-const TextSection = ({folders}:{folders:Folder[]}) => {
+const TextSection = ({folders, setHideFunctions}:{folders:Folder[], setHideFunctions:Dispatch<SetStateAction<boolean>>}) => {
 
     //CONSTANTS
     const { t } = useTranslation('knowledge')
@@ -103,7 +103,7 @@ const TextSection = ({folders}:{folders:Folder[]}) => {
     const [showDeleteBox, setShowDeleteBox] = useState<boolean>(false)
 
     const [clientBoxWidth, setClientBoxWidth] = useState(400)
-    const sendBoxWidth = `calc(100vw - 315px - ${clientBoxWidth}px)`
+    const sendBoxWidth = `calc(100vw - 45px - ${clientBoxWidth}px)`
     
      //DELETE A FOLDER
      const DeleteArticle = () => {
@@ -136,13 +136,15 @@ const TextSection = ({folders}:{folders:Folder[]}) => {
     return (<>
     {showDeleteBox && DeleteBox}
    
-    <Flex flex='1' position='absolute' width={'calc(100vw - 315px)'} height={'100vh'} top={0} left={0} bg='white'>
+    <Flex flex='1'  width={'100%'} height={'100vh'} top={0} left={0} bg='white'>
         <MotionBox   initial={{ width: sendBoxWidth  }} animate={{ width: sendBoxWidth}} exit={{ width: sendBoxWidth }} transition={{ duration: '.2' }}  
         width={sendBoxWidth} overflowY={'hidden'}  borderRightWidth={'1px'} borderRightColor='gray.200' >
-            <Flex px='2vw' height={'60px'} alignItems={'center'} justifyContent={'space-between'}  borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
-                <Skeleton isLoaded={articleData !== null}> 
+            <Flex px='1vw' height={'60px'} alignItems={'center'} justifyContent={'space-between'}  borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
+             
+                <Flex  alignItems={'center'} gap='10px' >
+                    <IconButton  aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'18px'}/>}  h='28px' w='28px'  onClick={() =>setHideFunctions(prev => (!prev))}/>
                     <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('TextFragment')}</Text>
-                </Skeleton>
+                </Flex>   
                 <Flex gap='15px'>
                     <Button leftIcon={<HiTrash/>} variant={'delete'} isDisabled={location.split('/')[3].startsWith('create')} size='sm' onClick={() => setShowDeleteBox(true)}>{t('Delete')}</Button>
                     <Button variant={'main'} size='sm' isDisabled={JSON.stringify(articleData) === JSON.stringify(articleDataRef.current)} onClick={saveChanges}>{waitingSave?<LoadingIconButton/>:location.split('/')[3].startsWith('create') ? t('Create'):t('SaveChanges')}</Button>
@@ -157,7 +159,11 @@ const TextSection = ({folders}:{folders:Folder[]}) => {
                  </Box>
             </Flex>
         </MotionBox>
+        
+        <MotionBox display={'flex'} flexDir={'column'} h='100vh' width={clientBoxWidth + 'px'}  whiteSpace={'nowrap'} initial={{ width: clientBoxWidth + 'px' }} animate={{ width: clientBoxWidth + 'px' }} exit={{ width: clientBoxWidth + 'px' }} transition={{ duration: '.2'}}> 
+
         <SourceSideBar clientBoxWidth={clientBoxWidth} setClientBoxWidth={setClientBoxWidth} sourceData={articleData} setSourceData={setArticleData} folders={folders}/>
+        </MotionBox>
 
     </Flex>
     </>)

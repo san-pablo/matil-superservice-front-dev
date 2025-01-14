@@ -6,8 +6,8 @@ const KPI = ({ value, configuration }:{value:string | number, configuration:any 
     const { t, i18n } = useTranslation('stats')
 
     return (
-    <Box height={'100%'} width={'100%'} >
-         <Text fontSize={'2.5rem'} fontWeight={'semibold'}>{parseNumber(i18n, value)} {configuration.show_unit && configuration.unit}</Text>
+    <Box height={'100%'} width={'100%'} minW={0}>
+         <Text    fontSize={'2rem'}  fontWeight={'semibold'}>{parseNumber(i18n, value)} {configuration.show_unit && configuration.unit}</Text>
          {configuration.show_objective && <Text color='gray.600'>{t('ObjectiveValue')}: {configuration.objective_value} {configuration.show_unit && configuration.unit}</Text>}
     </Box>  
     )

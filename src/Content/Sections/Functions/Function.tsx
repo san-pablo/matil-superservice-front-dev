@@ -87,11 +87,7 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
     const navigate = useNavigate()
     const { getAccessTokenSilently } = useAuth0()
     const pythonRegex = /^[a-zA-Z_][a-zA-Z0-9_]*$/
-
-    //BUTTON REF
-    const errorButtonRef = useRef<HTMLButtonElement>(null)
-    const errorBoxRef = useRef<HTMLDivElement>(null)
-
+ 
     const selectedUuid = location.split('/')[location.split('/').length - 1] === 'new' ? '-1': location.split('/')[location.split('/').length - 1]
     const newFunction:FunctionsData = {
         uuid:'-1',
@@ -118,7 +114,7 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
     const [showAddChannels, setShowAddChannels] = useState<boolean>(false)
 
     //CODE BOX WIDHT
-    const [clientBoxWidth, setClientBoxWidth] = useState(500)
+    const [clientBoxWidth, setClientBoxWidth] = useState(400)
      
  
     //SHOW MORE INFO BOX
@@ -134,6 +130,7 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
     //FUNCTION DATA
     const functionDataRef = useRef<FunctionsData | null>(null)
     const [functionData, setFunctionData] = useState<FunctionsData | null>(null)
+    const [waitingInfo, setWaitingInfo] = useState<boolean>(false)
 
     // LOGS AND ERRORS DATA
     const [errors, setErrors] = useState<{errors:ErrorsType[]}>({errors:[]}) 
@@ -487,18 +484,22 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
 
         <Flex flex='1'  width={'100%'} height={'100vh'} top={0} left={0} bg='white'>
             <MotionBox   initial={{ width: sendBoxWidth  }} animate={{ width: sendBoxWidth}} exit={{ width: sendBoxWidth }} transition={{ duration: '.2' }}  
-            width={sendBoxWidth} overflowY={'hidden'}  borderRightWidth={'1px'} borderRightColor='gray.200' >
+                width={sendBoxWidth} overflowY={'hidden'}  borderRightWidth={'1px'} borderRightColor='gray.200' >
+                
                 <Flex px='1vw' gap='2vw' height={'60px'} alignItems={'center'} justifyContent={'space-between'}  borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
-                    <Flex flex={1} gap='20px' alignItems={'center'}> 
+                    <Flex flex={1} gap='10px' alignItems={'center'}> 
                         <IconButton  aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'18px'}/>}  h='28px' w='28px'  onClick={() =>setHideFunctions(prev => (!prev))}/>
-                        <EditText  regex={pythonRegex} placeholder={t('name')}  value={functionData?.name} setValue={(value) => setFunctionData(prev => ({...prev as FunctionsData, name:value}))} className={'title-textarea-collections'}/>
+                        <Skeleton isLoaded={functionData !== null && !waitingInfo} style={{marginTop:'7px'}}> 
+
+                            <EditText  regex={pythonRegex} placeholder={t('name')}  value={functionData?.name} setValue={(value) => setFunctionData(prev => ({...prev as FunctionsData, name:value}))} className={'title-textarea-collections'}/>
+                        </Skeleton>
                     </Flex>
                     
                     <Flex gap='10px'>                        
                         {selectedUuid !== '-1' && memoizedActionsButton}
                         <Button variant={'common'} size='sm' leftIcon={<IoChatbubbleEllipses/>} onClick={() => setShowTestFunction(true)}>{t('Test')}</Button>
                          <Button  variant={'main'} size='sm' isDisabled={JSON.stringify(functionData) === JSON.stringify(functionDataRef.current) || functionData?.code === '' || !pythonRegex.test(functionData?.name || '')} onClick={handleEditFunctions}>{waitingEdit?<LoadingIconButton/>:selectedUuid !== '-1'?t('SaveChanges'):t('CreateFunction')}</Button>
-                        {clientBoxWidth === 0 && <IconButton  aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'18px'}/>}  h='28px' w='28px'  onClick={() =>setClientBoxWidth(500)}/>}
+                        {clientBoxWidth === 0 && <IconButton  aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'18px'}/>}  h='28px' w='28px'  onClick={() =>setClientBoxWidth(400)}/>}
                     </Flex>
                 </Flex>
 
@@ -511,7 +512,8 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
                 </Flex>
             </MotionBox>
 
-            <MotionBox display={'flex'} maxW={500}  flexDir={'column'} h='100vh' width={clientBoxWidth + 'px'}  whiteSpace={'nowrap'} initial={{ width: clientBoxWidth + 'px' }} animate={{ width: clientBoxWidth + 'px' }} exit={{ width: clientBoxWidth + 'px' }} transition={{ duration: '.2'}}> 
+            <MotionBox display={'flex'} maxW={400}  flexDir={'column'} h='100vh' width={clientBoxWidth + 'px'}  whiteSpace={'nowrap'} initial={{ width: clientBoxWidth + 'px' }} animate={{ width: clientBoxWidth + 'px' }} exit={{ width: clientBoxWidth + 'px' }} transition={{ duration: '.2'}}> 
+                <Box w='400px' maxW='400px'> 
                 <Flex  px='1vw'  height={'60px'} justifyContent={'space-between'} alignItems={'center'} borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
                     <SectionSelector sections={['data', 'errors', 'logs']} sectionsMap={{'data':[t('Data'), <></>], 'errors':[t('Errors') + ` [${errors?.errors?.length}]`, <></>], 'logs':[t('Logs') + ` [${logs?.logs?.length}]`,<> </>]}} selectedSection={currentSectionSideBar} onChange={(value) => setCurrentSectionSideBar(value)} notSection/>
                       <IconButton aria-label="close-tab" variant={'common'} bg='transparent' size='sm' icon={<RxCross2 size={'20px'}/>} onClick={() =>setClientBoxWidth(0)}/>
@@ -580,8 +582,8 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
                     : <>
                         {currentSectionSideBar === 'errors' ?  
                         <>
-                            <Box px='1vw' pt='1vw' > 
-                                <Text whiteSpace={'wrap'}   fontSize={'.9em'} color='gray.600'>{t('ReproduceErrorWarning')}</Text>
+                            <Box px='1vw' pt='1vw' w='400px' > 
+                                <Text whiteSpace={'normal'}   fontSize={'.8em'} color='gray.600'>{t('ReproduceErrorWarning')}</Text>
                                 <Text mt='2vh' mb='1vh' fontWeight={'semibold'}>{t('Errors')}</Text>
                             </Box>
                             {(errors?.errors || []).map((error, index) => (
@@ -601,6 +603,7 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
 
                         </>
                     }
+                </Box>
                 </Box>
             </MotionBox>
         </Flex>

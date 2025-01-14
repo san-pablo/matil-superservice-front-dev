@@ -37,7 +37,7 @@ import LoadingIconButton from "../../Components/Reusable/LoadingIconButton"
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)}) 
 
 
-const Article = ({folders}:{folders:Folder[]}) => {
+const Article = ({folders, setHideFunctions}:{folders:Folder[], setHideFunctions:Dispatch<SetStateAction<boolean>>}) => {
 
     //CONSTANTS
     const { t } = useTranslation('knowledge')
@@ -109,8 +109,7 @@ const Article = ({folders}:{folders:Folder[]}) => {
     const [showDeleteBox, setShowDeleteBox] = useState<boolean>(false)
 
     const [clientBoxWidth, setClientBoxWidth] = useState(400)
-    const sendBoxWidth = `calc(100vw - 315px - ${clientBoxWidth}px)`
-    
+     
     //DELETE A FOLDER
     const DeleteArticle = () => {
         const [waitingDelete, setWaitingDelete] = useState<boolean>(false)
@@ -142,17 +141,24 @@ const Article = ({folders}:{folders:Folder[]}) => {
     ), [showDeleteBox])
 
  
+ 
+    const sendBoxWidth = `calc(100vw - 45px - ${clientBoxWidth}px)`
+
 
     return (<>
     {showDeleteBox && DeleteBox}
  
-    <Flex flex='1' position='absolute' width={'calc(100vw - 315px)'} height={'100vh'} top={0} left={0} bg='white'>
+    <Flex flex='1'  width={'100%'} height={'100vh'} top={0} left={0} bg='white' >
+ 
+        
         <MotionBox   initial={{ width: sendBoxWidth  }} animate={{ width: sendBoxWidth}} exit={{ width: sendBoxWidth }} transition={{ duration: '.2' }}  
         width={sendBoxWidth} overflowY={'hidden'}  borderRightWidth={'1px'} borderRightColor='gray.200' >
             <Flex px='1vw' height={'60px'} alignItems={'center'} justifyContent={'space-between'}  borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
-                <Skeleton isLoaded={articleData !== null}> 
+                    
+                <Flex  alignItems={'center'} gap='10px' >
+                    <IconButton  aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'18px'}/>}  h='28px' w='28px'  onClick={() =>setHideFunctions(prev => (!prev))}/>
                     <Text fontSize={'1.2em'} fontWeight={'medium'}>{articleData?.type === 'public_article'?t('PublicArticle'):t('InternalArticle')}</Text>
-                </Skeleton>
+                </Flex>               
                 <Flex gap='15px'>
                     <Button leftIcon={<HiTrash/>} variant={'delete'} isDisabled={location.split('/')[3].startsWith('create')} size='sm' onClick={() => setShowDeleteBox(true)}>{t('Delete')}</Button>
                     {articleData?.type === 'public_article' && <Button variant={'common'} size='sm' onClick={() => setArticleData(prev => ({...prev as ContentData, public_article_status:'published'}))}>{articleData?.public_article_status === 'published'?t('Hide'):t('Publish')}</Button>}
@@ -168,7 +174,9 @@ const Article = ({folders}:{folders:Folder[]}) => {
             </Flex>
         </MotionBox>
         
-        <SourceSideBar clientBoxWidth={clientBoxWidth} setClientBoxWidth={setClientBoxWidth} sourceData={articleData} setSourceData={setArticleData} folders={folders}/>
+        <MotionBox display={'flex'} flexDir={'column'} h='100vh' width={clientBoxWidth + 'px'}  whiteSpace={'nowrap'} initial={{ width: clientBoxWidth + 'px' }} animate={{ width: clientBoxWidth + 'px' }} exit={{ width: clientBoxWidth + 'px' }} transition={{ duration: '.2'}}> 
+            <SourceSideBar clientBoxWidth={clientBoxWidth} setClientBoxWidth={setClientBoxWidth} sourceData={articleData} setSourceData={setArticleData} folders={folders}/>
+        </MotionBox>
     </Flex>
     </>)
 }

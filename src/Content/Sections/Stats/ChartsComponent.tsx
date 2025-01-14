@@ -115,9 +115,9 @@ const ChartComponent = ({chartData}:{chartData:ChartType}) => {
         }
 
         return (
-            <Flex flexDir={'column'} justifyContent={'center'} width={'100%'} height={'100%'} borderRadius={'.5rem'} p='20px' boxShadow={'0 0 10px rgba(0, 0, 0, 0.2)'}> 
+            <Flex   alignItems="start" flexDir={'column'} justifyContent={'center'} minW={0} width={'100%'} height={'100%'} borderRadius={'.5rem'} p='20px' boxShadow={'0 0 10px rgba(0, 0, 0, 0.2)'}> 
                 
-                <Text fontSize={'1.5rem'} fontWeight={'medium'}>{t(chartData.metrics[0].legend_label)}</Text>
+                <Text whiteSpace={'nowrap'}  minW="0" textOverflow={'ellipsis'} overflow={'hidden'} fontSize={'1.2rem'} fontWeight={'medium'}>{t(chartData.metrics[0].legend_label)}</Text>
                 <Box  width={'100%'} > 
                     <KPI configuration={chartData.configuration} value={value}/>
                 </Box>
@@ -166,7 +166,7 @@ const ChartComponent = ({chartData}:{chartData:ChartType}) => {
 
         return (
         <Flex flexDir={'column'} width={'100%'} height={'100%'} borderRadius={'.5rem'} p='20px' boxShadow={'0 0 10px rgba(0, 0, 0, 0.2)'}> 
-            <Text fontSize={'1.5rem'} fontWeight={'medium'}>{chartData.title}</Text>
+            <Text fontSize={'1.2rem'} fontWeight={'medium'}>{chartData.title}</Text>
             <Box height={'calc(100% - 20px)'}  width={'100%'} > 
                 <ColumnChart  segmentxAxis={segmentxAxis} key={chartData.type} xaxis={xAxis} yaxis={valuesList} ytitle={yaxis} yaxisSum={totalPerXAxis} chartType={chartData.type} configuration={chartData.configuration}/>
             </Box>
@@ -180,7 +180,7 @@ const ChartComponent = ({chartData}:{chartData:ChartType}) => {
 
         return (
         <Flex flexDir={'column'} width={'100%'} height={'100%'}  borderRadius={'.5rem'} p='20px' boxShadow={'0 0 10px rgba(0, 0, 0, 0.2)'}> 
-            <Text fontSize={'1.5rem'} fontWeight={'medium'}>{chartData.title}</Text>
+            <Text fontSize={'1.2rem'} fontWeight={'medium'}>{chartData.title}</Text>
             <Box height={'calc(100% - 20px)'} width={'100%'} > 
                 <PieChartComponent configuration={chartData.configuration}  xaxis={xAxis} values={valuesList} />
             </Box>
@@ -231,7 +231,7 @@ const ChartComponent = ({chartData}:{chartData:ChartType}) => {
 
         return (
             <Flex flexDir={'column'} width={'100%'} height={'100%'} borderRadius={'.5rem'} p='20px' boxShadow={'0 0 10px rgba(0, 0, 0, 0.2)'}> 
-                <Text fontSize={'1.5rem'} fontWeight={'medium'}>{chartData.title}</Text>
+                <Text fontSize={'1.2rem'} fontWeight={'medium'}>{chartData.title}</Text>
                 <Box height={'calc(100% - 20px)'} width={'100%'} > 
                     <LineChartComponent chartType={chartData.type}  xaxis={xAxis} segmentxAxis={segmentxAxis} yaxis={valuesList} ytitle={yaxis} configuration={chartData.configuration} yaxisSum={totalPerXAxis}/>
                 </Box>
@@ -306,7 +306,7 @@ const ChartComponent = ({chartData}:{chartData:ChartType}) => {
             return(
                 <Flex flexDir={'column'} width={'100%'} height={'100%'}  borderRadius={'.5rem'} p='20px' boxShadow={'0 0 10px rgba(0, 0, 0, 0.2)'}> 
                     <Box ref={textRef}> 
-                        <Text fontSize={'1.5rem'} fontWeight={'medium'}>{chartData.title}</Text>
+                        <Text fontSize={'1.2rem'} fontWeight={'medium'}>{chartData.title}</Text>
                     </Box>
                     <Box height={'calc(100% - 20px)'} ref={boxRef} width={'100%'} > 
                         <Table noDataMessage={t('NoData')} CellStyle={CellStyle} height={boxHeight} data={chartData.data} columnsMap={columnsMap} excludedKeys={[]} showAccRow={chartData.configuration.show_acc_row} accMessage={t('Total')} accColumn={'view_by'}/>

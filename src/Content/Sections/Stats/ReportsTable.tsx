@@ -46,6 +46,7 @@ function ReportsTable () {
     useEffect(() => {
         const fetchSourceData = async () => {
             const response  = await fetchData({endpoint:`${auth.authData.organizationId}/admin/reports`, setValue:setReports,getAccessTokenSilently, auth})
+            if (response?.data.length > 0) navigate(`report/${response?.data[0].uuid}`)
         }
         document.title = `${t('Stats')} - ${auth.authData.organizationName} - Matil`
         localStorage.setItem('currentSection', 'stats')

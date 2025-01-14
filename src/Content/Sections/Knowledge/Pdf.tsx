@@ -27,7 +27,7 @@ import { ContentData, Folder } from "../../Constants/typing"
  //MOTION BOX
  const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)}) 
  
- const Pdf = ({folders}:{folders:Folder[]}) => {
+ const Pdf = ({folders,setHideFunctions}:{folders:Folder[],setHideFunctions:Dispatch<SetStateAction<boolean>>}) => {
  
      //CONSTANTS
      const { t } = useTranslation('knowledge')
@@ -91,7 +91,7 @@ import { ContentData, Folder } from "../../Constants/typing"
      const [showDeleteBox, setShowDeleteBox] = useState<boolean>(false)
  
      const [clientBoxWidth, setClientBoxWidth] = useState(400)
-     const sendBoxWidth = `calc(100vw - 315px - ${clientBoxWidth}px)`
+     const sendBoxWidth = `calc(100vw - 45px - ${clientBoxWidth}px)`
      
       //DELETE A FOLDER
       const DeleteArticle = () => {
@@ -124,13 +124,15 @@ import { ContentData, Folder } from "../../Constants/typing"
      return (<>
      {showDeleteBox && DeleteBox}
     
-     <Flex flex='1' position='absolute' width={'calc(100vw - 315px)'} height={'100vh'} top={0} left={0}>
+     <Flex flex='1'  width={'100%'} height={'100vh'} top={0} left={0} bg='white'>
          <MotionBox   initial={{ width: sendBoxWidth  }} animate={{ width: sendBoxWidth}} exit={{ width: sendBoxWidth }} transition={{ duration: '.2' }}  
          width={sendBoxWidth} overflowY={'hidden'} flex={'1'}  borderRightWidth={'1px'} borderRightColor='gray.200' >
-             <Flex px='2vw' height={'60px'} alignItems={'center'} justifyContent={'space-between'}  borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
-                 <Skeleton isLoaded={articleData !== null}> 
-                     <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('PDF')}</Text>
-                 </Skeleton>
+             <Flex px='1vw' height={'60px'} alignItems={'center'} justifyContent={'space-between'}  borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
+                 
+                 <Flex  alignItems={'center'} gap='10px' >
+                    <IconButton  aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'18px'}/>}  h='28px' w='28px'  onClick={() =>setHideFunctions(prev => (!prev))}/>
+                    <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('PDF')}</Text>
+                </Flex>   
                  <Flex gap='15px'>
                      <Button leftIcon={<HiTrash/>} variant={'delete'} isDisabled={location.split('/')[3].startsWith('create')} size='sm' onClick={() => setShowDeleteBox(true)}>{t('Delete')}</Button>
                      <Button variant={'main'} size='sm' isDisabled={JSON.stringify(articleData) === JSON.stringify(articleDataRef.current)} onClick={saveChanges}>{waitingSave?<LoadingIconButton/>:t('SaveChanges')}</Button>
@@ -145,7 +147,11 @@ import { ContentData, Folder } from "../../Constants/typing"
                   </Box>
              </Flex>
          </MotionBox>
+
+         <MotionBox display={'flex'} flexDir={'column'} h='100vh' width={clientBoxWidth + 'px'}  whiteSpace={'nowrap'} initial={{ width: clientBoxWidth + 'px' }} animate={{ width: clientBoxWidth + 'px' }} exit={{ width: clientBoxWidth + 'px' }} transition={{ duration: '.2'}}> 
          <SourceSideBar clientBoxWidth={clientBoxWidth} setClientBoxWidth={setClientBoxWidth} sourceData={articleData} setSourceData={setArticleData} folders={folders}/>
+        </MotionBox>
+
      </Flex>
      </>)
  }
@@ -169,6 +175,7 @@ import { ContentData, Folder } from "../../Constants/typing"
      return (
      <Flex height={'calc(100vh - 70px - 4vw)'}   flexDir={'column'}>
         <Box  px='20px' position={'relative'}> 
+        
             <textarea ref={textAreaTitleRef} value={articleData?.title} className="title-textarea"  onChange={(e) => {setArticleData(prev => ({...prev as ContentData, title:e.target.value}))}}  placeholder={t('NoTitleText')} rows={1}  />
         </Box>
         <Flex flex='1' mt='30px' px='20px' overflow={'scroll'}   flexDir={'column'} position='relative' alignItems={'center'}> 

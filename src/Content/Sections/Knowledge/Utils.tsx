@@ -275,7 +275,7 @@ export const SourceSideBar = ({clientBoxWidth, setClientBoxWidth, sourceData, se
         <>
             {showEditFolder && MoveBox}
 
-            <MotionBox overflowX={'hidden'} width={clientBoxWidth + 'px'}  whiteSpace={'nowrap'} initial={{ width: clientBoxWidth + 'px' }} animate={{ width: clientBoxWidth + 'px' }} exit={{ width: clientBoxWidth + 'px' }} style={{overflow:'hidden'}} transition={{ duration: '.2'}}> 
+            <Box overflow={'hidden'} w='400px'> 
                 <Flex p='2vh' height={'60px'} justifyContent={'space-between'} alignItems={'center'} borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
                     <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('Information')}</Text>
                     <IconButton aria-label="close-tab" variant={'common'} bg='transparent' size='sm' icon={<RxCross2 size={'20px'}/>} onClick={() =>setClientBoxWidth(0)}/>
@@ -320,7 +320,7 @@ export const SourceSideBar = ({clientBoxWidth, setClientBoxWidth, sourceData, se
                     </CollapsableSection>
 
                 </Box>
-            </MotionBox>
+            </Box>
         </>)
     }
  
