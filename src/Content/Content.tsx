@@ -367,7 +367,9 @@ function Content ({userInfo}:{userInfo:userInfo}) {
                     if (lastSection.current === 'settings') {
                         barRef.current.style.transition = 'box-shadow .25s ease, background-color .25s ease'
                         barRef.current.style.backgroundColor = 'white'
-                        barRef.current.style.backgroundColor = '0 0 3px 0px rgba(0, 0, 0, 0.1)'  
+                        barRef.current.style.boxShadow = '0 0 3px 0px rgba(0, 0, 0, 0.1)'  
+                        barRef.current.style.borderColor = '#E2E8F0'  
+
                         barRef2.current.style.backgroundColor = ''
                         barRef2.current.style.boxShadow = ''
                         barRef.current.style.transform = `translateY(${sectionTop}px)` 
@@ -377,19 +379,21 @@ function Content ({userInfo}:{userInfo:userInfo}) {
                         barRef.current.style.transition = 'box-shadow .25s ease, background-color .25s ease'
                         barRef2.current.style.transition = 'box-shadow .25s ease, background-color .25s ease'
                         barRef2.current.style.backgroundColor = 'white'
-                        barRef2.current.style.boxShadow = ''
+                        barRef2.current.style.boxShadow = '0 0 3px 0px rgba(0, 0, 0, 0.1)'
+                        barRef.current.style.borderColor = '#E2E8F0'  
 
                         barRef.current.style.backgroundColor = ''
                         barRef.current.style.boxShadow = ''
                         barRef.current.style.transform = `translateY(${(sectionsRefs as any)[lastSection.current]?.current?.getBoundingClientRect().top}px)` 
-
                     }
                 }
                 else {
                     barRef.current.style.transform = `translateY(${sectionTop}px)` 
                     if (!isFirstSection.current) barRef.current.style.transition = 'transform .25s ease, box-shadow .25s ease, background-color .25s ease'
                     barRef.current.style.backgroundColor = 'white'
-                    barRef.current.style.backgroundColor = '0 0 3px 0px rgba(0, 0, 0, 0.1)'
+                    barRef.current.style.boxShadow = '0 0 3px 0px rgba(0, 0, 0, 0.1)'
+                    barRef.current.style.borderColor = '#E2E8F0'  
+
                     barRef2.current.style.backgroundColor = ''
                     barRef2.current.style.boxShadow = ''
 
