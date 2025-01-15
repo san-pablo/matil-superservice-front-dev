@@ -54,62 +54,62 @@ const ConversationsData = () => {
     
  
 return(<>
-    <SaveChanges data={conversationsData} setData={setConversationsData} dataRef={conversationsDataRef} onSaveFunc={sendNewConversationData}/>
+        <SaveChanges data={conversationsData} setData={setConversationsData} dataRef={conversationsDataRef} onSaveFunc={sendNewConversationData}/>
 
-    <Flex justifyContent={'space-between'} alignItems={'end'}> 
-        <Box> 
-            <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Conversations')}</Text>
-            <Text color='gray.600' fontSize={'.9em'}>{t('ConversationsDes')}</Text>
-        </Box>
-     </Flex>
-    <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/>
+        <Flex justifyContent={'space-between'} alignItems={'end'}> 
+            <Box> 
+                <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Conversations')}</Text>
+                <Text color='gray.600' fontSize={'.9em'}>{t('ConversationsDes')}</Text>
+            </Box>
+        </Flex>
+
+        <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/>
     
-   
-    <Box overflow={'scroll'} flex='1' pb='2vh' > 
-        <Skeleton   isLoaded={conversationsData !== null} width={'100%'} maxW={'1000px'} minW={'500px'}> 
-            <Text fontWeight={'medium'}>{t('DaysToClose')}</Text>
-            <Text mb='.5vh' fontSize={'.8em'} color='gray.600'>{t('DaysToCloseDes')}</Text>
-            <Box maxW={'350px'}px='2px'> 
-                <VariableTypeChanger customType inputType="int" value={conversationsData?.solved_to_closed_days} setValue={(valueString) => handleEditKey('solved_to_closed_days', parseInt(valueString))}  min={0} max={30} />
-            </Box>
-
-            <Text mt='3vh' fontWeight={'medium'}>{t('InactivityDaysToClose')}</Text>
-            <Text mb='.5vh' fontSize={'.8em'} color='gray.600'>{t('InactivityDaysToCloseDes')}</Text>
-            <Box maxW={'350px'}px='2px'> 
-                <VariableTypeChanger customType inputType="int" value={conversationsData?.no_activity_to_closed_days} setValue={(valueString) => handleEditKey('no_activity_to_closed_days', parseInt(valueString))}  min={0} max={30} />
-            </Box>
-
-            <Flex mt='3vh' gap='10px'alignItems={'center'}>
-                <Switch isChecked={conversationsData?.auto_move_to_bin_closed} onChange={(e) => handleEditKey('auto_move_to_bin_closed', e.target.checked)}/>
-                <Text fontWeight={'medium'}>{t('MoveTrash')}</Text>  
-            </Flex>  
-            <Text mt='.5vh' fontSize={'.8em'} color='gray.600'>{t('MoveTrashDes')}</Text>
-
-            {conversationsData?.auto_move_to_bin_closed && <>   
-                <Text mt='3vh' fontWeight={'medium'}>{t('DaysToDelete')}</Text>
-                <Text   mb='.5vh' fontSize={'.8em'} color='gray.600'>{t('DaysToDelete')}</Text>
+        <Box overflow={'scroll'} flex='1' pb='2vh' > 
+            <Skeleton   isLoaded={conversationsData !== null} width={'100%'} maxW={'1000px'} minW={'500px'}> 
+                <Text fontWeight={'medium'}>{t('DaysToClose')}</Text>
+                <Text mb='.5vh' fontSize={'.8em'} color='gray.600'>{t('DaysToCloseDes')}</Text>
                 <Box maxW={'350px'}px='2px'> 
-                    <VariableTypeChanger customType inputType="int" value={conversationsData?.closed_to_bin_days} setValue={(valueString) => handleEditKey('closed_to_bin_days', parseInt(valueString))}  min={0} max={30} />
+                    <VariableTypeChanger customType inputType="int" value={conversationsData?.solved_to_closed_days} setValue={(valueString) => handleEditKey('solved_to_closed_days', parseInt(valueString))}  min={0} max={30} />
                 </Box>
-             
-            </>}
 
-            <Flex mt='3vh' gap='10px'alignItems={'center'}>
-                <Switch isChecked={conversationsData?.auto_delete_bin} onChange={(e) => handleEditKey('auto_delete_bin', e.target.checked)}/>
-                <Text fontWeight={'medium'}>{t('DeleteBinConversations')}</Text>  
-            </Flex>  
-            <Text mt='.5vh' fontSize={'.8em'} color='gray.600'>{t('MoveTrashDes')}</Text>
-
-            {conversationsData?.auto_delete_bin && <>   
-                <Text mt='3vh' fontWeight={'medium'}>{t('DaysToDeleteBin')}</Text>
-                <Text mb='.5vh' fontSize={'.8em'} color='gray.600'>{t('DaysToDeleteBinDes')}</Text>
+                <Text mt='3vh' fontWeight={'medium'}>{t('InactivityDaysToClose')}</Text>
+                <Text mb='.5vh' fontSize={'.8em'} color='gray.600'>{t('InactivityDaysToCloseDes')}</Text>
                 <Box maxW={'350px'}px='2px'> 
-                    <VariableTypeChanger customType inputType="int" value={conversationsData?.bin_to_deleted_days} setValue={(valueString) => handleEditKey('bin_to_deleted_days', parseInt(valueString))}  min={0} max={30} />
+                    <VariableTypeChanger customType inputType="int" value={conversationsData?.no_activity_to_closed_days} setValue={(valueString) => handleEditKey('no_activity_to_closed_days', parseInt(valueString))}  min={0} max={30} />
                 </Box>
-            </>}   
-        </Skeleton>
-    </Box>
- 
+
+                <Flex mt='3vh' gap='10px'alignItems={'center'}>
+                    <Switch isChecked={conversationsData?.auto_move_to_bin_closed} onChange={(e) => handleEditKey('auto_move_to_bin_closed', e.target.checked)}/>
+                    <Text fontWeight={'medium'}>{t('MoveTrash')}</Text>  
+                </Flex>  
+                <Text mt='.5vh' fontSize={'.8em'} color='gray.600'>{t('MoveTrashDes')}</Text>
+
+                {conversationsData?.auto_move_to_bin_closed && <>   
+                    <Text mt='3vh' fontWeight={'medium'}>{t('DaysToDelete')}</Text>
+                    <Text   mb='.5vh' fontSize={'.8em'} color='gray.600'>{t('DaysToDelete')}</Text>
+                    <Box maxW={'350px'}px='2px'> 
+                        <VariableTypeChanger customType inputType="int" value={conversationsData?.closed_to_bin_days} setValue={(valueString) => handleEditKey('closed_to_bin_days', parseInt(valueString))}  min={0} max={30} />
+                    </Box>
+                
+                </>}
+
+                <Flex mt='3vh' gap='10px'alignItems={'center'}>
+                    <Switch isChecked={conversationsData?.auto_delete_bin} onChange={(e) => handleEditKey('auto_delete_bin', e.target.checked)}/>
+                    <Text fontWeight={'medium'}>{t('DeleteBinConversations')}</Text>  
+                </Flex>  
+                <Text mt='.5vh' fontSize={'.8em'} color='gray.600'>{t('MoveTrashDes')}</Text>
+
+                {conversationsData?.auto_delete_bin && <>   
+                    <Text mt='3vh' fontWeight={'medium'}>{t('DaysToDeleteBin')}</Text>
+                    <Text mb='.5vh' fontSize={'.8em'} color='gray.600'>{t('DaysToDeleteBinDes')}</Text>
+                    <Box maxW={'350px'}px='2px'> 
+                        <VariableTypeChanger customType inputType="int" value={conversationsData?.bin_to_deleted_days} setValue={(valueString) => handleEditKey('bin_to_deleted_days', parseInt(valueString))}  min={0} max={30} />
+                    </Box>
+                </>}   
+            </Skeleton>
+        </Box>
+        
     </>)
 }
 

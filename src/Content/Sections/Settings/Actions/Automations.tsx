@@ -125,7 +125,7 @@ function Automations ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
         {automationToDeleteIndex !== null && memoizedDeleteBox}
         {(selectedIndex >= -1 && automationData !==  null) ? <EditAutomation triggerData={selectedIndex === -1 ?newAutomation:automationData?.[selectedIndex] as ActionDataType} selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex}  allTriggers={automationData} setAllTriggers={setAutomationData} scrollRef={scrollRef}/>:<>
         
-        <Box> 
+        <Box px='2vw' py='2vh'> 
             <Flex justifyContent={'space-between'} alignItems={'end'}> 
                 <Box> 
                     <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Automations')}</Text>
@@ -248,175 +248,176 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
 
     //FRONT
     return (<>
+        <Box px='2vw' py='2vh'> 
+            <SaveChanges data={currentAutomationData} disabled={selectedIndex === -1} setData={setCurrentAutomationData} dataRef={automationDataRef} onSaveFunc={sendTrigger}/>
 
-        <SaveChanges data={currentAutomationData} disabled={selectedIndex === -1} setData={setCurrentAutomationData} dataRef={automationDataRef} onSaveFunc={sendTrigger}/>
+            <Flex alignItems={'end'} justifyContent={'space-between'}>
+                <Flex fontWeight={'medium'} fontSize={'1.4em'} gap='10px' alignItems={'center'}> 
+                    <Text onClick={() => setSelectedIndex(-2)}  color='brand.text_blue' cursor={'pointer'}>{t('Automations')}</Text>
+                    <Icon as={IoIosArrowForward}/>
+                    <Text>{currentAutomationData.name}</Text>
+                </Flex>
+                {selectedIndex === -1 && <Button variant={'main'} onClick={sendTrigger} size={'sm'} leftIcon={<FaPlus/>}>{waitingSend ? <LoadingIconButton/>: t('Create')}</Button>}
 
-        <Flex alignItems={'end'} justifyContent={'space-between'}>
-            <Flex fontWeight={'medium'} fontSize={'1.4em'} gap='10px' alignItems={'center'}> 
-                <Text onClick={() => setSelectedIndex(-2)}  color='brand.text_blue' cursor={'pointer'}>{t('Automations')}</Text>
-                <Icon as={IoIosArrowForward}/>
-                <Text>{currentAutomationData.name}</Text>
             </Flex>
-            {selectedIndex === -1 && <Button variant={'main'} onClick={sendTrigger} size={'sm'} leftIcon={<FaPlus/>}>{waitingSend ? <LoadingIconButton/>: t('Create')}</Button>}
+            <Box width='100%' bg='gray.300' height='1px' mt='2vh'/>
 
-        </Flex>
-        <Box width='100%' bg='gray.300' height='1px' mt='2vh'/>
+            <Box flex='1' overflow={'scroll'} pt='3vh'> 
+                <Text mb='.5vh' fontSize={'1.1em'}  fontWeight={'medium'}>{t('Name')}</Text>
+                <Box maxW='500px'> 
+                    <EditText  value={currentAutomationData.name} setValue={(value) => {setCurrentAutomationData((prev) => ({...prev, name:value}))}} hideInput={false}/>
+                </Box>
 
-        <Box flex='1' overflow={'scroll'} pt='3vh'> 
-            <Text mb='.5vh' fontSize={'1.1em'}  fontWeight={'medium'}>{t('Name')}</Text>
-            <Box maxW='500px'> 
-                 <EditText  value={currentAutomationData.name} setValue={(value) => {setCurrentAutomationData((prev) => ({...prev, name:value}))}} hideInput={false}/>
-            </Box>
+                <Text fontSize={'1.1em'} mt='3vh' mb='.5vh'  fontWeight={'medium'}>{t('Description')}</Text>
+                <Textarea maxW={'500px'} resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('Description')}...`} maxH='300px' value={currentAutomationData.description} onChange={(e) => setCurrentAutomationData((prev) => ({...prev, description:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "brand.text_blue", borderWidth: "2px"}}/>
 
-            <Text fontSize={'1.1em'} mt='3vh' mb='.5vh'  fontWeight={'medium'}>{t('Description')}</Text>
-            <Textarea maxW={'500px'} resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('Description')}...`} maxH='300px' value={currentAutomationData.description} onChange={(e) => setCurrentAutomationData((prev) => ({...prev, description:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "brand.text_blue", borderWidth: "2px"}}/>
+            
+                <Text fontWeight={'medium'} fontSize={'1.1em'} mt='3vh'>{t('Conditions')}</Text>
+                <Text fontSize={'.8em'} color='gray.600'>{t('ConditionsDes')}</Text>
 
-          
-            <Text fontWeight={'medium'} fontSize={'1.1em'} mt='3vh'>{t('Conditions')}</Text>
-            <Text fontSize={'.8em'} color='gray.600'>{t('ConditionsDes')}</Text>
+                <Flex gap='30px' mt='1.5vh'> 
+                    <Box flex='1'> 
+                        <Text fontSize={'.9em'} fontWeight={'medium'}>{t('AllConditionsAut')}</Text>
+                        <Text fontSize={'.8em'} color='gray.600'>{t('AllConditionsAutDes')}</Text>
 
-            <Flex gap='30px' mt='1.5vh'> 
-                <Box flex='1'> 
-                    <Text fontSize={'.9em'} fontWeight={'medium'}>{t('AllConditionsAut')}</Text>
-                    <Text fontSize={'.8em'} color='gray.600'>{t('AllConditionsAutDes')}</Text>
+                        <Flex flexWrap={'wrap'} gap='10px' mt='2vh'> 
+                            {currentAutomationData.all_conditions.map((condition, index) => (<> 
+                                <Flex alignItems={'center'}  key={`all-automation-${index}`}  gap='10px'>
+                                    <Box flex={'1'}> 
+                                        <EditStructure deleteFunc={() => removeElement('all_conditions', index)} typesMap={typesMap} data={condition} setData={(newCondition) => {editElement('all_conditions', index, newCondition)}} scrollRef={scrollRef} operationTypesDict={operationTypesDict}/>
+                                    </Box>
+                                </Flex>
+                                {index < currentAutomationData.all_conditions.length -1 && <Flex bg='brand.gray_2' p='7px' borderRadius={'.5rem'} fontWeight={'medium'}>{t('AND')}</Flex>}
+                            </>))}
+                            <IconButton variant={'common'} aria-label='add' icon={<FaPlus/>} size='sm'  onClick={() => addElement('all_conditions')}/>
 
-                    <Flex flexWrap={'wrap'} gap='10px' mt='2vh'> 
-                        {currentAutomationData.all_conditions.map((condition, index) => (<> 
-                            <Flex alignItems={'center'}  key={`all-automation-${index}`}  gap='10px'>
+                        </Flex>
+                    </Box>
+
+                    <Box flex='1'> 
+                        <Text fontSize={'.9em'}  fontWeight={'medium'}>{t('AnyConditionsAut')}</Text>
+                        <Text fontSize={'.8em'} color='gray.600'>{t('AnyConditionsAutDes')}</Text>
+
+                        <Flex flexWrap={'wrap'} gap='10px' mt='2vh'> 
+
+                        {currentAutomationData.any_conditions.map((condition, index) => (<> 
+                            <Flex  alignItems={'center'} key={`any-automation-${index}`} gap='10px'>
                                 <Box flex={'1'}> 
-                                    <EditStructure deleteFunc={() => removeElement('all_conditions', index)} typesMap={typesMap} data={condition} setData={(newCondition) => {editElement('all_conditions', index, newCondition)}} scrollRef={scrollRef} operationTypesDict={operationTypesDict}/>
+                                    <EditStructure deleteFunc={() => removeElement('any_conditions', index)} typesMap={typesMap} data={condition} setData={(newCondition) => {editElement('any_conditions', index, newCondition)}} scrollRef={scrollRef} operationTypesDict={operationTypesDict}/>
                                 </Box>
                             </Flex>
-                            {index < currentAutomationData.all_conditions.length -1 && <Flex bg='brand.gray_2' p='7px' borderRadius={'.5rem'} fontWeight={'medium'}>{t('AND')}</Flex>}
-                        </>))}
-                        <IconButton variant={'common'} aria-label='add' icon={<FaPlus/>} size='sm'  onClick={() => addElement('all_conditions')}/>
-
-                    </Flex>
-                 </Box>
-
-                <Box flex='1'> 
-                    <Text fontSize={'.9em'}  fontWeight={'medium'}>{t('AnyConditionsAut')}</Text>
-                    <Text fontSize={'.8em'} color='gray.600'>{t('AnyConditionsAutDes')}</Text>
-
-                    <Flex flexWrap={'wrap'} gap='10px' mt='2vh'> 
-
-                    {currentAutomationData.any_conditions.map((condition, index) => (<> 
-                        <Flex  alignItems={'center'} key={`any-automation-${index}`} gap='10px'>
-                            <Box flex={'1'}> 
-                                <EditStructure deleteFunc={() => removeElement('any_conditions', index)} typesMap={typesMap} data={condition} setData={(newCondition) => {editElement('any_conditions', index, newCondition)}} scrollRef={scrollRef} operationTypesDict={operationTypesDict}/>
-                            </Box>
-                         </Flex>
-                        {index < currentAutomationData.any_conditions.length -1 && <Flex bg='brand.gray_2' p='7px' borderRadius={'.5rem'} fontWeight={'medium'}>{t('OR')}</Flex>}
-                        </>
-                    ))}
-                    <IconButton variant={'common'} aria-label='add' icon={<FaPlus/>} size='sm'  onClick={() => addElement('any_conditions')}/>
-                    </Flex>
-                </Box>
-            </Flex>
-
-            <Text fontWeight={'medium'} fontSize={'1.1em'} mt='3vh'>{t('ActionsToDo')}</Text>
-            <Text fontSize={'.8em'} color='gray.600'>{t('ActionsToDoDes')}</Text>
-
-            {currentAutomationData.actions.map((action, index) => (
-                <Box shadow='md' maxW={'1000px'} mt='2vh'  borderColor={'gray.200'} borderWidth={'1px'} p='15px' borderRadius={'.5rem'} key={`arg-${index}`}>
-
-                    <Flex alignItems={'center'} justifyContent={'space-between'}> 
-                        <Text mb='.3vh' fontSize={'.9em'} fontWeight={'medium'}>{t('ActionType')}</Text>
-                        <Button size='xs' leftIcon={<HiTrash/>} variant={'delete'} onClick={() => removeElement('actions', index)}>{t('Delete')}</Button>
-                    </Flex>
-                    <Box maxW='350px' mb='2vh'> 
-                        <CustomSelect containerRef={scrollRef} hide={false} selectedItem={action.type} setSelectedItem={(value) => {editActions(index, value)}} options={actionsList} labelsMap={actionsMap} />
+                            {index < currentAutomationData.any_conditions.length -1 && <Flex bg='brand.gray_2' p='7px' borderRadius={'.5rem'} fontWeight={'medium'}>{t('OR')}</Flex>}
+                            </>
+                        ))}
+                        <IconButton variant={'common'} aria-label='add' icon={<FaPlus/>} size='sm'  onClick={() => addElement('any_conditions')}/>
+                        </Flex>
                     </Box>
-                    {(() => {
-                           switch (action.type){
-                            case 'email_csat':
-                                return (<>
-                                    <Text mb='.5vh' fontSize={'.9em'} fontWeight={'medium'}>{t('EditTemplate')}</Text>
-                                    <CodeMirror value={action.arguments.content} height="100%" maxHeight={`300px`} extensions={[html()]} onChange={(value) => editActions(index, 'email_csat', 'content', value)} theme={oneDark}/>
-                                    <Text mt='3vh' mb='.5vh' fontSize={'.9em'} fontWeight={'medium'}>{t('CSATProbability')}</Text>
-                                    <Text fontSize={'.8em'} color='gray.600'>{t('CSATProbabilityDes')}</Text>
-                                    <Slider value={action.arguments.probability} mb='1vh' mt='5vh' aria-label='slider-ex' onChange={(value) => editActions(index, 'email_csat', 'probability', value)}>
-                                        <SliderMark ml='-4' value={25} mt='1vh' fontWeight={'medium'}>25%</SliderMark>
-                                        <SliderMark ml='-4'value={50}  mt='1vh'  fontWeight={'medium'}>50%</SliderMark>
-                                        <SliderMark ml='-4' value={75 }mt='1vh'  fontWeight={'medium'}>75%</SliderMark>
-                                        <SliderMark ml='-6' borderRadius={'.3em'} value={action.arguments.probability} textAlign='center' bg='blackAlpha.800' color='white' mt='-10'  w='12'>
-                                            {action.arguments.probability} %
-                                        </SliderMark>
-                                        <SliderTrack>
-                                            <SliderFilledTrack  bg="brand.text_blue" />
-                                        </SliderTrack>
-                                        <SliderThumb />
-                                    </Slider>
-                                </>)
-                            case 'whatsapp_csat':
-                                return (<> 
-                                <Box maxW={'600px'}>
-                                    <Text fontSize={'.9em'} fontWeight={'medium'}>{t('Header')}</Text>
-                                    <EditText placeholder={t('HeaderPlaceholder')} value={action.arguments.header} setValue={(value) => editActions( index, 'whatsapp_csat', 'header', value)} hideInput={false}/>
-                                    <Text mt='1vh' fontSize={'.9em'} fontWeight={'medium'}>{t('Body')}</Text>
-                                    <EditText placeholder={t('BodyPlaceholder')}  value={action.arguments.body} setValue={(value) => editActions( index, 'whatsapp_csat', 'body', value)}hideInput={false}/>
-                                    <Text mt='1vh' fontSize={'.9em'} fontWeight={'medium'}>{t('Footer')}</Text>
-                                    <EditText placeholder={t('FooterPlaceholder')}  value={action.arguments.footer}setValue={(value) => editActions( index, 'whatsapp_csat', 'footer', value)}hideInput={false}/>
-                                    <Text mt='1vh'  fontSize={'.9em'} fontWeight={'medium'}>{t('CTA')}</Text>
-                                    <EditText placeholder={t('CTAPlaceholder')}  value={action.arguments.cta} setValue={(value) => editActions( index, 'whatsapp_csat', 'cta', value)} hideInput={false}/>
-                                </Box>
-                                    <Text mt='3vh' mb='.5vh' fontSize={'.9em'} fontWeight={'medium'}>{t('CSATProbability')}</Text>
-                                    <Text fontSize={'.8em'} color='gray.600'>{t('CSATProbabilityDes')}</Text>
-                                    <Slider  value={action.arguments.probability} width={'100%'}  mb='1vh' mt='5vh' aria-label='slider-ex-1' onChange={(value) => editActions(index, 'whatsapp_csat', 'probability', value)}>
-                                        <SliderMark ml='-4' value={25} mt='1vh' fontWeight={'medium'}>25%</SliderMark>
-                                        <SliderMark ml='-4'value={50} mt='1vh'  fontWeight={'medium'}>50%</SliderMark>
-                                        <SliderMark ml='-4'value={75}mt='1vh'  fontWeight={'medium'}>75%</SliderMark>
-                                        <SliderMark ml='-6'  borderRadius={'.3em'} value={action.arguments.probability} textAlign='center' bg='blackAlpha.800' color='white' mt='-10' w='12'>
-                                            {action.arguments.probability} %
-                                        </SliderMark>
-                                        <SliderTrack>
-                                            <SliderFilledTrack  bg="brand.text_blue"/>
-                                        </SliderTrack>
-                                        <SliderThumb />
-                                    </Slider>
-                                    </>)
-                            case 'webchat_csat':
-                                return <>
-                                    <Text mt='3vh' mb='.5vh' fontSize={'.9em'} fontWeight={'medium'}>{t('CSATProbability')}</Text>
-                                    <Text fontSize={'.8em'} color='gray.600'>{t('CSATProbabilityDes')}</Text>
-                                    <Slider  value={action.arguments.probability} mb='1vh' mt='5vh' aria-label='slider-ex-2' onChange={(value) => editActions(index, 'webchat_csat', 'probability', value)}>
-                                        <SliderMark ml='-4'value={25} mt='1vh' fontWeight={'medium'}>25%</SliderMark>
-                                        <SliderMark ml='-4'value={50} mt='1vh'  fontWeight={'medium'}>50%</SliderMark>
-                                        <SliderMark ml='-4'value={75}mt='1vh'  fontWeight={'medium'}>75%</SliderMark>
-                                        <SliderMark ml='-6' borderRadius={'.3em'} value={action.arguments.probability} textAlign='center' bg='blackAlpha.800' color='white' mt='-10'  w='12'>
-                                            {action.arguments.probability} %
-                                        </SliderMark>
-                                        <SliderTrack>
-                                            <SliderFilledTrack  bg="brand.text_blue"/>
-                                        </SliderTrack>
-                                        <SliderThumb />
-                                    </Slider>
-                                    </>
-                            case 'agent_email_notification':
-                                return (
-                                    <>
-                                        <Text mb='.5vh' fontSize={'.9em'} fontWeight={'medium'}>{t('AgentToNotify')}</Text>
-                                        <VariableTypeChanger inputType={'user_id'} value={action.arguments.user_id} setValue={(value) => editActions( index, 'agent_email_notification', 'header', value)} />
-                                        <Text mt='1vh'  mb='.5vh' fontSize={'.9em'} fontWeight={'medium'}>{t('Message')}</Text>
-                                        <Textarea resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('Message')}...`} maxH='300px' value={action.arguments.notification_message} onChange={(e) => editActions( index, 'agent_email_notification', 'notification_message', e.target.value) } p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
-                                    </>
-                                )
-                            case 'motherstructure_update':
-                                {
-                                    const operationTypesDict = {'user_id':['set'], 'group_id':['set'], 'channel_type':['set'], 'title':['set', 'concatenate'], 'theme':['set'], 'urgency_rating':['set', 'add', 'substract'], 'status':['set'], 'unseen_changes':['set'], 'tags':['append', 'remove'], 'is_matilda_engaged':['set'],'is_csat_offered':['set'],
-                                    'contact_business_id':['set'], 'name':['set', 'concatenate'], 'language':['set'], 'rating':['set', 'add', 'substract'], 'notes':['set', 'concatenate'], 'labels':['append', 'remove'],
-                                    'domain':['set', 'concatenate']
-                                    }
-                                    const typesMap2 = {'bool':['set'], 'int':['set', 'add', 'substract'], 'float':['set', 'add', 'substract'],'str': ['set', 'concatenate'], 'timestamp':['set', 'add', 'substract']}
+                </Flex>
 
-                                    return (<EditStructure data={action.arguments} setData={(newCondition) => {editActions(index, 'motherstructure_update', 'new', newCondition)}} scrollRef={scrollRef} operationTypesDict={operationTypesDict} typesMap={typesMap2}/>)
-                                }
-                        }
-                    })()}
-                </Box>
-            ))}
- 
-            <Button variant={'common'} mt='2vh' display={'inline-flex'} leftIcon={<FaPlus/>} size='sm' onClick={() => addElement('actions')}>{t('AddAction')}</Button>
+                <Text fontWeight={'medium'} fontSize={'1.1em'} mt='3vh'>{t('ActionsToDo')}</Text>
+                <Text fontSize={'.8em'} color='gray.600'>{t('ActionsToDoDes')}</Text>
+
+                {currentAutomationData.actions.map((action, index) => (
+                    <Box shadow='md' maxW={'1000px'} mt='2vh'  borderColor={'gray.200'} borderWidth={'1px'} p='15px' borderRadius={'.5rem'} key={`arg-${index}`}>
+
+                        <Flex alignItems={'center'} justifyContent={'space-between'}> 
+                            <Text mb='.3vh' fontSize={'.9em'} fontWeight={'medium'}>{t('ActionType')}</Text>
+                            <Button size='xs' leftIcon={<HiTrash/>} variant={'delete'} onClick={() => removeElement('actions', index)}>{t('Delete')}</Button>
+                        </Flex>
+                        <Box maxW='350px' mb='2vh'> 
+                            <CustomSelect containerRef={scrollRef} hide={false} selectedItem={action.type} setSelectedItem={(value) => {editActions(index, value)}} options={actionsList} labelsMap={actionsMap} />
+                        </Box>
+                        {(() => {
+                            switch (action.type){
+                                case 'email_csat':
+                                    return (<>
+                                        <Text mb='.5vh' fontSize={'.9em'} fontWeight={'medium'}>{t('EditTemplate')}</Text>
+                                        <CodeMirror value={action.arguments.content} height="100%" maxHeight={`300px`} extensions={[html()]} onChange={(value) => editActions(index, 'email_csat', 'content', value)} theme={oneDark}/>
+                                        <Text mt='3vh' mb='.5vh' fontSize={'.9em'} fontWeight={'medium'}>{t('CSATProbability')}</Text>
+                                        <Text fontSize={'.8em'} color='gray.600'>{t('CSATProbabilityDes')}</Text>
+                                        <Slider value={action.arguments.probability} mb='1vh' mt='5vh' aria-label='slider-ex' onChange={(value) => editActions(index, 'email_csat', 'probability', value)}>
+                                            <SliderMark ml='-4' value={25} mt='1vh' fontWeight={'medium'}>25%</SliderMark>
+                                            <SliderMark ml='-4'value={50}  mt='1vh'  fontWeight={'medium'}>50%</SliderMark>
+                                            <SliderMark ml='-4' value={75 }mt='1vh'  fontWeight={'medium'}>75%</SliderMark>
+                                            <SliderMark ml='-6' borderRadius={'.3em'} value={action.arguments.probability} textAlign='center' bg='blackAlpha.800' color='white' mt='-10'  w='12'>
+                                                {action.arguments.probability} %
+                                            </SliderMark>
+                                            <SliderTrack>
+                                                <SliderFilledTrack  bg="brand.text_blue" />
+                                            </SliderTrack>
+                                            <SliderThumb />
+                                        </Slider>
+                                    </>)
+                                case 'whatsapp_csat':
+                                    return (<> 
+                                    <Box maxW={'600px'}>
+                                        <Text fontSize={'.9em'} fontWeight={'medium'}>{t('Header')}</Text>
+                                        <EditText placeholder={t('HeaderPlaceholder')} value={action.arguments.header} setValue={(value) => editActions( index, 'whatsapp_csat', 'header', value)} hideInput={false}/>
+                                        <Text mt='1vh' fontSize={'.9em'} fontWeight={'medium'}>{t('Body')}</Text>
+                                        <EditText placeholder={t('BodyPlaceholder')}  value={action.arguments.body} setValue={(value) => editActions( index, 'whatsapp_csat', 'body', value)}hideInput={false}/>
+                                        <Text mt='1vh' fontSize={'.9em'} fontWeight={'medium'}>{t('Footer')}</Text>
+                                        <EditText placeholder={t('FooterPlaceholder')}  value={action.arguments.footer}setValue={(value) => editActions( index, 'whatsapp_csat', 'footer', value)}hideInput={false}/>
+                                        <Text mt='1vh'  fontSize={'.9em'} fontWeight={'medium'}>{t('CTA')}</Text>
+                                        <EditText placeholder={t('CTAPlaceholder')}  value={action.arguments.cta} setValue={(value) => editActions( index, 'whatsapp_csat', 'cta', value)} hideInput={false}/>
+                                    </Box>
+                                        <Text mt='3vh' mb='.5vh' fontSize={'.9em'} fontWeight={'medium'}>{t('CSATProbability')}</Text>
+                                        <Text fontSize={'.8em'} color='gray.600'>{t('CSATProbabilityDes')}</Text>
+                                        <Slider  value={action.arguments.probability} width={'100%'}  mb='1vh' mt='5vh' aria-label='slider-ex-1' onChange={(value) => editActions(index, 'whatsapp_csat', 'probability', value)}>
+                                            <SliderMark ml='-4' value={25} mt='1vh' fontWeight={'medium'}>25%</SliderMark>
+                                            <SliderMark ml='-4'value={50} mt='1vh'  fontWeight={'medium'}>50%</SliderMark>
+                                            <SliderMark ml='-4'value={75}mt='1vh'  fontWeight={'medium'}>75%</SliderMark>
+                                            <SliderMark ml='-6'  borderRadius={'.3em'} value={action.arguments.probability} textAlign='center' bg='blackAlpha.800' color='white' mt='-10' w='12'>
+                                                {action.arguments.probability} %
+                                            </SliderMark>
+                                            <SliderTrack>
+                                                <SliderFilledTrack  bg="brand.text_blue"/>
+                                            </SliderTrack>
+                                            <SliderThumb />
+                                        </Slider>
+                                        </>)
+                                case 'webchat_csat':
+                                    return <>
+                                        <Text mt='3vh' mb='.5vh' fontSize={'.9em'} fontWeight={'medium'}>{t('CSATProbability')}</Text>
+                                        <Text fontSize={'.8em'} color='gray.600'>{t('CSATProbabilityDes')}</Text>
+                                        <Slider  value={action.arguments.probability} mb='1vh' mt='5vh' aria-label='slider-ex-2' onChange={(value) => editActions(index, 'webchat_csat', 'probability', value)}>
+                                            <SliderMark ml='-4'value={25} mt='1vh' fontWeight={'medium'}>25%</SliderMark>
+                                            <SliderMark ml='-4'value={50} mt='1vh'  fontWeight={'medium'}>50%</SliderMark>
+                                            <SliderMark ml='-4'value={75}mt='1vh'  fontWeight={'medium'}>75%</SliderMark>
+                                            <SliderMark ml='-6' borderRadius={'.3em'} value={action.arguments.probability} textAlign='center' bg='blackAlpha.800' color='white' mt='-10'  w='12'>
+                                                {action.arguments.probability} %
+                                            </SliderMark>
+                                            <SliderTrack>
+                                                <SliderFilledTrack  bg="brand.text_blue"/>
+                                            </SliderTrack>
+                                            <SliderThumb />
+                                        </Slider>
+                                        </>
+                                case 'agent_email_notification':
+                                    return (
+                                        <>
+                                            <Text mb='.5vh' fontSize={'.9em'} fontWeight={'medium'}>{t('AgentToNotify')}</Text>
+                                            <VariableTypeChanger inputType={'user_id'} value={action.arguments.user_id} setValue={(value) => editActions( index, 'agent_email_notification', 'header', value)} />
+                                            <Text mt='1vh'  mb='.5vh' fontSize={'.9em'} fontWeight={'medium'}>{t('Message')}</Text>
+                                            <Textarea resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('Message')}...`} maxH='300px' value={action.arguments.notification_message} onChange={(e) => editActions( index, 'agent_email_notification', 'notification_message', e.target.value) } p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(77, 144, 254)", borderWidth: "2px"}}/>
+                                        </>
+                                    )
+                                case 'motherstructure_update':
+                                    {
+                                        const operationTypesDict = {'user_id':['set'], 'group_id':['set'], 'channel_type':['set'], 'title':['set', 'concatenate'], 'theme':['set'], 'urgency_rating':['set', 'add', 'substract'], 'status':['set'], 'unseen_changes':['set'], 'tags':['append', 'remove'], 'is_matilda_engaged':['set'],'is_csat_offered':['set'],
+                                        'contact_business_id':['set'], 'name':['set', 'concatenate'], 'language':['set'], 'rating':['set', 'add', 'substract'], 'notes':['set', 'concatenate'], 'labels':['append', 'remove'],
+                                        'domain':['set', 'concatenate']
+                                        }
+                                        const typesMap2 = {'bool':['set'], 'int':['set', 'add', 'substract'], 'float':['set', 'add', 'substract'],'str': ['set', 'concatenate'], 'timestamp':['set', 'add', 'substract']}
+
+                                        return (<EditStructure data={action.arguments} setData={(newCondition) => {editActions(index, 'motherstructure_update', 'new', newCondition)}} scrollRef={scrollRef} operationTypesDict={operationTypesDict} typesMap={typesMap2}/>)
+                                    }
+                            }
+                        })()}
+                    </Box>
+                ))}
+    
+                <Button variant={'common'} mt='2vh' display={'inline-flex'} leftIcon={<FaPlus/>} size='sm' onClick={() => addElement('actions')}>{t('AddAction')}</Button>
+            </Box>
         </Box>
     </>)
 }
