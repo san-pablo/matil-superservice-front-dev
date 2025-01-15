@@ -155,8 +155,7 @@ function ReportsTable () {
 
                     <Suspense fallback={<></>}>    
                         <Routes >
-                            <Route path="/" element={<CreateReport setReports={setReports}/>}/>
-
+                            <Route path="/new" element={<CreateReport setReports={setReports}/>}/>
                             <Route path="/report/*" element={<Report hideReports={hideReports} setHideReports={setHideReports}/>}/>
                         </Routes>
                     </Suspense>

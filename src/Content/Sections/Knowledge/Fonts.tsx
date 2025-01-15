@@ -29,9 +29,6 @@ import { useSession } from "../../../SessionContext"
 import { useNavigate } from "react-router-dom"
 import LoadingIconButton from "../../Components/Reusable/LoadingIconButton"
 import { useAuth0 } from "@auth0/auth0-react"
- 
-
-
 
 //MAIN FUNCTION
 function Fonts ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<boolean>>}) {
@@ -42,8 +39,7 @@ function Fonts ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<boo
     const navigate = useNavigate()
     const t_formats = useTranslation('formats').t
     const auth = useAuth()
-    const session = useSession()
-    const sectionsList = ['all', 'help-center']
+        const sectionsList = ['all', 'help-center']
     const sectionsMap:{[key in 'all' | 'help-center']:[string, ReactElement]} = {'all':[t('All'), <AiFillAppstore size={'20px'}/>], 'help-center':[t('HelpCenter'), <IoHelpCircle size={'20px'}/>]}
 
     //SELECTED SECTIONS
