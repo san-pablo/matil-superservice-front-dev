@@ -87,8 +87,9 @@
     "ConfirmDeleteQuestion":"¿Desea eliminar esta conversación?",
     "IDMerge":"Ingrese el ID de una conversación para fusionar",
     "ConfirmMerge":"Confirmar fusión",
-    "ConfirmMergeQuestion_1":"¿Desea fusionar la conversación",
-    "ConfirmMergeQuestion_2":"con la conversación",
+    "ConfirmMergeQuestion":"Fusionar conversación /{#id1}/ con /{#id2}/" ,
+    "ConfirmWarning":"Esta acción no se puede deshacer. La conversación seleccionada se eliminará y se fusionará con la actual.",
+ 
     "CloseAction_1":"Cerrar pestaña",
     "CloseAction_2":"Próxima conversación en la vista",
     "CloseAction_3":"Mantener conversación abierta",

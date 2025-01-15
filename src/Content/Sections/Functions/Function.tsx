@@ -418,11 +418,12 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
             <Box p='20px' > 
                 <Text fontWeight={'medium'}>{t('NoSavedChanges')}</Text>
                 <Text mt={'.5vh'}>{t('NoSavedChangeAnswer')}</Text>
+           
+                <Flex mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+                    <Button  size='sm' variant={'main'} onClick={() => {handleEditFunctions();navigate('/functions')}}>{waitingEdit?<LoadingIconButton/>:t('SaveAndExit')}</Button>
+                    <Button  size='sm'variant={'delete'} onClick={() => navigate('/functions')}>{t('NoSave')}</Button>
+                </Flex>
             </Box>
-            <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-                <Button  size='sm' variant={'main'} onClick={() => {handleEditFunctions();navigate('/functions')}}>{waitingEdit?<LoadingIconButton/>:t('SaveAndExit')}</Button>
-                <Button  size='sm'variant={'delete'} onClick={() => navigate('/functions')}>{t('NoSave')}</Button>
-            </Flex>
         </ConfirmBox>    
     </>), [showNoSaveWarning])
 
@@ -430,12 +431,11 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
     const memoizedDeleteBox = useMemo(() => (
         <ConfirmBox setShowBox={setShowConfirmDelete}> 
                 <Box p='15px'> 
-                    <Text fontSize={'1.2em'}   fontWeight={'medium'}>{t('DeleteFunction')}</Text>
-                    <Box height={'1px'} width={'100%'} bg='gray.300' mt='1vh' mb='1vh'/>
-                    <Text>{parseMessageToBold(t('DeleteFunctionAnswer', {name:functionData?.name}))}</Text>
-                </Box>
+                    <Text fontSize={'1.2em'}>{parseMessageToBold(t('DeleteFunctionAnswer', {name:functionData?.name}))}</Text>
+                    <Text fontSize={'.8em'} mt='2vh' color='gray.600'  fontWeight={'medium'}>{t('DeleteFunctionWarning')}</Text>
+                 </Box>
                  
-                <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+                <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} >
                     <Button size='sm' variant={'delete'}onClick={handleDeleteFunctions}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
                     <Button  size='sm' variant={'common'} onClick={() => setShowConfirmDelete(false)}>{t('Cancel')}</Button>
                 </Flex>
@@ -739,7 +739,7 @@ const CreateVariable = ({variableData,  index, setIndex, editFunctionData}:{vari
             </Flex>  
         </Box>
  
-        <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+        <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} >
             <Button variant={'main'}  isDisabled={currentVariable.name === '' || (index !== -1 && JSON.stringify(variableData) === JSON.stringify(currentVariable))} size='sm' onClick={sendVariable}>{index === -1 ? t('CreateParameter'): t('SaveParameter')}</Button>
             <Button variant={'common'}  size='sm' onClick={() => setIndex(null)}>{t('Cancel')}</Button>
         </Flex>

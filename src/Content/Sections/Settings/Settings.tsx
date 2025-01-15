@@ -266,7 +266,7 @@ function Settings () {
         </Flex>
 
  
-            <Flex height={'100vh'} flexDir={'column'} justifyContent={'space-between'} ref={scrollRef}  bg='white'  width={'calc(100vw - 275px)'} > 
+            <Flex height={'100vh'} flexDir={'column'} justifyContent={'space-between'} ref={scrollRef}  bg='white'  width={'calc(100vw - 265px)'} > 
                 <Suspense fallback={<></>}>    
                     <Routes >
                         <Route path="/main" element={<Main subSections={subSections} sectionsList={sectionsList} subSectionsMap={subSectionsMap}/>} />

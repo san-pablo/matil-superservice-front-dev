@@ -187,17 +187,17 @@ const Fields = () => {
     {fieldToDelete && memoizedDeleteBox}
     {editFieldData && memoizedEditFieldBox}
  
-    <Box height={'100%'} width={'100%'} overflow={'scroll'}> 
+    <Box height={'100%'} width={'100%'} px='2vw' pt='2vh' > 
 
         <Flex justifyContent={'space-between'} alignItems={'end'}> 
             <Box> 
-                <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Fields')}</Text>
-                <Text color='gray.600' fontSize={'.9em'}>{t('FieldsDes')}</Text>
+                <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('Fields')}</Text>
+                <Text color='gray.600' fontSize={'.8em'}>{t('FieldsDes')}</Text>
             </Box>
             <Button size='sm' variant={'main'} leftIcon={<FaPlus/>} onClick={() => setEditFieldData({index:-1, data:{ motherstructure:'conversation', name:'', type:'bool', default:true}})}>{t('CreateField')}</Button>
 
         </Flex>
-        <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/>
+        <Box width='100%' bg='gray.200' height='1px' mt='2vh' mb='2vh'/>
         
         <Box width={'350px'}> 
             <EditText value={text} setValue={setText} searchInput={true}/>

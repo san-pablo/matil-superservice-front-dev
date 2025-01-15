@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next"
 import { useState, useMemo, useRef, useEffect, Fragment, Dispatch, SetStateAction, useCallback } from "react"
 //FRONT
 import { motion, isValidMotionProp } from 'framer-motion'
-import { Flex, Box, Text, IconButton, Skeleton, Icon , chakra, shouldForwardProp} from '@chakra-ui/react'
+import { Flex, Box, Text, IconButton, Skeleton, Icon , chakra, shouldForwardProp } from '@chakra-ui/react'
 import '../styles.css'
 //COMPONENTS
 import CustomCheckbox from "./CheckBox"
@@ -15,6 +15,8 @@ import CustomCheckbox from "./CheckBox"
 import { IoMdArrowDropdown, IoMdArrowDropup } from 'react-icons/io'
 import { HiTrash } from "react-icons/hi2" 
 import { FaMagnifyingGlass } from "react-icons/fa6"
+
+ 
 
 //TYPING
 interface TableProps{
@@ -37,6 +39,9 @@ interface TableProps{
     accMessage?:string
     accColumn?:string
     waitingInfo?:boolean
+
+    onFinishScroll?:any
+    numberOfItems?:any
 }
     
 
@@ -44,12 +49,13 @@ interface TableProps{
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
  
 //MAIN FUNCTION
-const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  columnsMap, excludedKeys = [], onClickRow, selectedElements, onlyOneSelect = false, setSelectedElements, onSelectAllElements, currentIndex = -1, deletableFunction, height, showAccRow, accMessage, accColumn, waitingInfo }:TableProps ) =>{
+const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  columnsMap, excludedKeys = [], onClickRow, selectedElements, onlyOneSelect = false, setSelectedElements, onSelectAllElements, currentIndex = -1, deletableFunction, height, showAccRow, accMessage, accColumn, waitingInfo, onFinishScroll, numberOfItems }:TableProps ) =>{
 
     //CALCULATE DYNAMIC HEIGHT OF TABLE
     const { i18n } = useTranslation('settings')
     const tableBoxRef = useRef<HTMLDivElement>(null)
     const headerRef = useRef<HTMLDivElement>(null)
+    const dateRef = useRef<any>()
     const [selectedIndex, setSelectedIndex] = useState<number>(currentIndex)
     useEffect(()=>{setSelectedIndex(currentIndex)} ,[currentIndex])
     const [boxHeight, setBoxHeight] = useState<number>(1000)
@@ -83,9 +89,9 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
             }
         }
     }
-    
-    
-    
+
+    useEffect(() =>{dateRef.current = data},[data])
+   
     //SHORTCUTS
     useEffect(() => {
         const handleKeyDown = (event:KeyboardEvent) => {
@@ -141,6 +147,55 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
         }, 0) + 20 + (selectedElements ? 58 : 0) + (deletableFunction ? 100 : 0)
       }, [columns])
       
+    //HANDLE SCROLL
+    const [waitingNewItems, setWaitingNewItems] = useState<boolean>(false)
+    const handleScroll = async () => {
+        if (!tableBoxRef.current) return
+
+        const { scrollTop, scrollHeight, clientHeight } = tableBoxRef.current;
+        if (numberOfItems && onFinishScroll && scrollTop + clientHeight >= scrollHeight - 10 && (dateRef.current?.length || 0)%25 < numberOfItems%25 - 1) {
+            setWaitingNewItems(true)
+            await onFinishScroll()
+            setWaitingNewItems(false)
+
+        }
+      }
+    
+      useEffect(() => {
+        const table = tableBoxRef.current;
+        if (table) {
+          table.addEventListener("scroll", handleScroll)
+        }
+        return () => {
+          if (table) {
+            table.removeEventListener("scroll", handleScroll)
+          }
+        };
+      }, [waitingInfo])
+
+      const renderSkeletons = () => {
+        return Array(5).fill(0).map((_, index) => (
+            <Flex key={`skeleton-row-${index}`} height="45px" gap="20px" minWidth={`${totalWidth}px`} borderWidth="0 0px 1px 0px" alignItems="center" p="10px" borderColor="gray.200" bg={'transparent'}>
+            {selectedElements && (
+                <Flex>
+                <Skeleton height="20px" width="20px" borderRadius="4px" />
+                </Flex>
+            )}
+            {columns.map((column, colIndex) => (
+                <Flex key={`skeleton-cell-${index}-${colIndex}`} minW={0} alignItems="center" flex={`${(columnsMap?.[column]?.[1] || 180) / 10} 0 ${columnsMap?.[column]?.[1] || 180 }px`}>
+                <Skeleton height="16px" width="70%" />
+                </Flex>
+            ))}
+            {deletableFunction && (
+                <Flex width="60px">
+                <Skeleton height="20px" width="20px" borderRadius="4px" />
+                </Flex>
+            )}
+            </Flex>
+          ));
+      };
+   
+    //CHECKBOXES LOGIC
     const handleCheckboxChange = useCallback((element:number, isChecked:boolean) => {
         if (selectedElements && setSelectedElements) {
             if (isChecked) {
@@ -182,7 +237,8 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
 
     const dataToWork = (requestSort)? data : sortedData
 
- 
+
+
     //FRONT
     return(
         <>  
@@ -213,30 +269,32 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
                                 {deletableFunction && <Flex width={'60px'}/>}
                             </Flex>
                         </Box>
-                        <Box px={selectedElements ? '2vw':''} position={'relative'} minWidth={`${totalWidth}px`} ref={tableBoxRef} overflowY={'scroll'}        transition="max-height ease-in .15s" maxH={height?height:boxHeight}> 
-                            {dataToWork.map((row:any, index:number) => {  
-                                
-                                 return (<RowComponent key={`row-${index}`} row={row} index={index} selectedIndex={selectedIndex} selectedElements={selectedElements} handleCheckboxChange={handleCheckboxChange} columnsMap={columnsMap} columns={columns} deletableFunction={deletableFunction} CellStyle={CellStyle} totalWidth={totalWidth} onClickRow={onClickRow} excludedKeys={excludedKeys}/>)
+                       
+                        <Box px={selectedElements ? '2vw':''} position={'relative'} minWidth={`${totalWidth}px`} ref={tableBoxRef} overflowY={'scroll'} transition="max-height ease-in .15s" maxH={height?height:boxHeight}> 
+                                    {dataToWork.map((row, index) => (
+                                      <RowComponent key={`row-${index}`} row={row} index={index} selectedIndex={selectedIndex} selectedElements={selectedElements} handleCheckboxChange={handleCheckboxChange} columnsMap={columnsMap} columns={columns} deletableFunction={deletableFunction} CellStyle={CellStyle} totalWidth={totalWidth} onClickRow={onClickRow} excludedKeys={excludedKeys}/>
+                                   ))} 
+                                   {waitingNewItems && renderSkeletons()}
+                            {showAccRow && 
+                            <Flex height={'45px'}zIndex={1000} fontSize={'.9em'}  bottom={0} bg='brand.gray_2' gap='20px'minWidth={`${totalWidth}px`}  borderRadius={'0 0 .5rem .5rem'} borderWidth={'0 1px 1px 1px'}  fontWeight={'medium'} alignItems={'center'} color='black' p='10px'>
+                                <Text flex={`${(columnsMap?.[accColumn || '']?.[1] || 180) / 10} 0 ${(columnsMap?.[accColumn || '']?.[1] || 180)}px`}>{accMessage}</Text>
+                                {columns.filter(column => column !== accColumn).map((column: string, index: number) => {
+                                    const sum = dataToWork.reduce((acc: number, row: any) => {
+                                        const value = row[column]
+                                        return typeof value === 'number' ? acc + value : acc;
+                                    }, 0)
+                                    return (
+                                        <Flex key={`sum-${index}`} minW={0} alignItems={'center'} flex={`${(columnsMap?.[column]?.[1] || 180) / 10} 0 ${(columnsMap?.[column]?.[1] || 180)}px`}>
+                                            <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>
+                                                {sum.toLocaleString(`${i18n.language}-${i18n.language.toLocaleUpperCase()}`, {minimumFractionDigits:0, maximumFractionDigits:2})}
+                                            </Text>
+                                        </Flex>
+                                    )
                                 })}
-                                
-                                {showAccRow && 
-                                    <Flex height={'45px'}zIndex={1000} fontSize={'.9em'}  bottom={0} bg='brand.gray_2' gap='20px'minWidth={`${totalWidth}px`}  borderRadius={'0 0 .5rem .5rem'} borderWidth={'0 1px 1px 1px'}  fontWeight={'medium'} alignItems={'center'} color='black' p='10px'>
-                                        <Text flex={`${(columnsMap?.[accColumn || '']?.[1] || 180) / 10} 0 ${(columnsMap?.[accColumn || '']?.[1] || 180)}px`}>{accMessage}</Text>
-                                        {columns.filter(column => column !== accColumn).map((column: string, index: number) => {
-                                            const sum = dataToWork.reduce((acc: number, row: any) => {
-                                                const value = row[column]
-                                                return typeof value === 'number' ? acc + value : acc;
-                                            }, 0)
-                                            return (
-                                                <Flex key={`sum-${index}`} minW={0} alignItems={'center'} flex={`${(columnsMap?.[column]?.[1] || 180) / 10} 0 ${(columnsMap?.[column]?.[1] || 180)}px`}>
-                                                    <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>
-                                                        {sum.toLocaleString(`${i18n.language}-${i18n.language.toLocaleUpperCase()}`, {minimumFractionDigits:0, maximumFractionDigits:2})}
-                                                    </Text>
-                                                </Flex>
-                                            )
-                                        })}
-                                    </Flex>}
+                            </Flex>}
+
                         </Box>
+           
                     </motion.div>
                 }
                 </>

@@ -991,8 +991,8 @@ const MergeBox = ({t, conversationData, clientName, setShowMerge, fetchConversat
 
         return(
              <Box p='15px'> 
-                    <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('ConfirmMerge')}</Text>
-                    <Text mt='2vh' fontSize={'.9em'}>{t('ConfirmMergeQuestion_1')} <span style={{fontWeight:'500'}}>#{conversationData?.local_id}</span> {t('ConfirmMergeQuestion_2')} <span style={{fontWeight:'500'}}>#{selectedConversationId}?</span></Text>
+                    <Text fontSize={'1.2em'}>{parseMessageToBold(t('ConfirmMergeQuestion', {id1:conversationData?.local_id, id2:selectedConversationId}))}</Text>
+                    <Text fontSize={'.8em'}>{t('ConfirmWarning')}</Text>
           
                 <Flex mt='2vh' gap='15px' flexDir={'row-reverse'}>
                     <Button  size='sm' variant={'main'} onClick={confirmMerge}>{waitingConfirmMerge?<LoadingIconButton/>:t('Merge')}</Button>

@@ -30,19 +30,12 @@ import showToast from "../../Components/Reusable/ToastNotification"
 import useOutsideClick from "../../Functions/clickOutside"
 import parseMessageToBold from "../../Functions/parseToBold"
 //ICONS
-import { IoMdAlert, IoIosCheckmarkCircle } from "react-icons/io";
-import { RiRadioButtonFill } from "react-icons/ri";
-
 import { MdDeselect } from "react-icons/md"
 import { FaExclamationCircle, FaExclamationTriangle, FaInfoCircle, FaCheckCircle, FaRegEdit } from 'react-icons/fa'
-import { FaArrowRotateLeft, FaMagnifyingGlass, FaPlus, FaTable, FaBookmark } from "react-icons/fa6"
+import { FaArrowRotateLeft, FaMagnifyingGlass, FaPlus, FaTable } from "react-icons/fa6"
 import { BiEditAlt } from "react-icons/bi"
 import { HiTrash } from "react-icons/hi2"
 import { PiSidebarSimpleBold } from "react-icons/pi"
-import { PiTrayArrowDownFill, PiTrayArrowUpFill } from "react-icons/pi";
-import { HiMiniEllipsisHorizontalCircle } from "react-icons/hi2";
-import { BiSolidPhoneCall } from "react-icons/bi";
-
 import { TbLayoutSidebarFilled } from "react-icons/tb"
 //TYPING
 import { Conversations, ConversationColumn, Views, ViewType, ConversationsTableProps, logosMap, Channels  } from "../../Constants/typing"
@@ -143,15 +136,7 @@ function ConversationsTable({socket}:{socket:any}) {
     const t_formats = useTranslation('formats').t
     const { getAccessTokenSilently } = useAuth0()
 
-    const statesMap: Record<string, [string, ReactElement]> = {
-        'open':[t('open'),<PiTrayArrowDownFill size={'16px'} color='#C53030'/>],
-        'closed':[t('closed'),<PiTrayArrowUpFill size={'16px'} color='#4A5568'/>],
-        'solved':[t('solved'),<IoIosCheckmarkCircle color='#2F855A' size='16px'/>],
-        'new':[t('new'), <IoMdAlert color='#B7791F'  size='16px'/>],
-        'pending':[t('pending'),<HiMiniEllipsisHorizontalCircle size='16px' color='#00A3C4' />],
-        'completed':[t('completed'),<IoIosCheckmarkCircle color='#2F855A' size='16px'/>],
-        'ongoing':[t('ongoing'),<BiSolidPhoneCall color='#00A3C4' size='16px'/>],
-     }
+   
     //CONSTANTS
     const auth = useAuth()
     const session= useSession()
@@ -170,67 +155,7 @@ function ConversationsTable({socket}:{socket:any}) {
     const columnsConversationsMap:{[key in ConversationColumn]:[string, number]} = {id: [t('id'), 50], local_id: [t('local_id'), 50], status:  [t('status'), 100], channel_type: [t('channel_type'), 100], theme:  [t('theme'), 200], user_id: [t('user_id'), 200], created_at: [t('created_at'), 150],updated_at: [t('updated_at'), 180], solved_at: [t('solved_at'), 150],closed_at: [t('closed_at'), 150],title: [t('title'), 300], urgency_rating: [t('urgency_rating'), 130], deletion_scheduled_at: [t('deletion_date'), 180], unseen_changes: [t('unseen_changes'), 200],  call_status: [t('call_status'), 150], call_duration: [t('call_duration'), 150], }
     
     const [isConversationOpened,setIsConversationOpened] = useState<boolean>(location.pathname.split('/')[location.pathname.split('/').length - 2] === 'conversation')
-   
-    {/* 
-    //WAITING NEW CONVERSATIONS ON LIST
-    const debounce = (func:any, delay:any) => {
-        let timeout:any;
-        return (...args:any) => {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => func(...args), delay);
-        }
-    }
-    
-     
-    const listRef = useRef<HTMLDivElement>(null);
- 
-    const handleScroll = () => {
-        if (listRef.current) {
-            const { scrollTop, scrollHeight, clientHeight } = listRef.current;
-            if (scrollTop + clientHeight >= scrollHeight - 10 && !waitingInfoList) {
-                setWaitingInfoList(true)
-                fetchConversationsDataScroll().finally(() => {
-                    setWaitingInfoList(false)
-                })
-            }
-        }
-    }
 
-    const fetchConversationsDataScroll = async () => {
-
-         if ( Math.floor((conversationsRef.current?.page_data.length || 0)/ 25)  <= Math.floor((conversationsRef.current?.total_conversations || 0)/ 25)) {
-            
-            //APPLY FILTERS 
-            const selectedFilters = {...filters, page_index:Math.floor((conversationsRef.current?.page_data.length || 0)/ 25) + 1}
-
-            //CHOOSE CONFIGURATION DEPENDING ON ITS BIN OR A NORMAL VIEW
-            let endpoint = `${auth.authData.organizationId}/conversations`
-            let viewsToSend:{view_type:string, view_index:number} | {} = {view_type:selectedView.type, view_index:selectedView.index}
-            if (selectedView.type === 'deleted') {endpoint = `${auth.authData.organizationId}/conversations/bin`;viewsToSend = {}}
-            
-            //API CALL
-            const response = await fetchData({endpoint, getAccessTokenSilently, params:{...viewsToSend, ...selectedFilters}, auth})
-            if (response?.status === 200) {
-                setConversations(prev => ({...prev as Conversations, page_data:[...prev?.page_data || [], ...response.data.page_data]} ))
-            }
-        }
-    }
-    
-    useEffect(() => {
-        const listElement = listRef.current
-        const debounceScroll = debounce(handleScroll, 300)
-         if (listElement ) {
-             listElement.addEventListener('scroll', debounceScroll);
-        }
-        return () => {
-            const listElement = listRef.current;
-            if (listElement) {
-                listElement.removeEventListener('scroll', debounceScroll)
-            }
-         }
-    }, [])
-    */}
- 
     const [selectedTableSection, setSelectedTabelSection] = useState<'table' | 'list'>('table')
  
     useEffect(() => {
@@ -247,8 +172,7 @@ function ConversationsTable({socket}:{socket:any}) {
 
     }, [location.search, location.pathname])
 
-   
-
+    
     const [hideViews, setHideViews] = useState<boolean>(false)
 
     //WAIT INFO AND FORCE TH REUPDATE OF THE TABLE ON DELETE
@@ -441,8 +365,8 @@ function ConversationsTable({socket}:{socket:any}) {
         if (applied_filters === null) selectedFilters = filtersRef.current
         else {
             selectedFilters = {...filters, ...applied_filters}
-            setFilters(filters)
-        }
+            filtersRef.current = applied_filters
+         }
 
         //CHOOSE CONFIGURATION DEPENDING ON ITS BIN OR A NORMAL VIEW
         let endpoint = `${auth.authData.organizationId}/conversations`
@@ -450,8 +374,10 @@ function ConversationsTable({socket}:{socket:any}) {
         if (selectedView.type === 'deleted') {endpoint = `${auth.authData.organizationId}/conversations/bin`;viewsToSend = {}}
         
         //API CALL
-        const response = await fetchData({endpoint, setValue:setConversations, setWaiting:setWaitingInfo, getAccessTokenSilently, params:{...viewsToSend, ...selectedFilters}, auth})
-        if (response?.status === 200) {
+        const response = await fetchData({endpoint, getAccessTokenSilently, params:{...viewsToSend, ...selectedFilters}, auth})
+         if (response?.status === 200) {
+            setConversations(prev => ({...prev as any, page_data: [...prev?.page_data as any[], ...response.data.page_data]}) )
+
             setFilters(selectedFilters)
             const newConversation:{data:ConversationsTableProps[] | null, view:{view_type:'shared' | 'private' | 'deleted', view_index:number}, selectedIndex:number, filters:{page_index:number, sort_by?:ConversationColumn | 'not_selected', search?:string, order?:'asc' | 'desc'}} = 
             {data:response.data, view: {view_type: selectedView.type, view_index: selectedView.index}, selectedIndex:-1, filters: selectedFilters}
@@ -690,18 +616,14 @@ function ConversationsTable({socket}:{socket:any}) {
                             </Flex>
                                         
                             <Flex px='2vw' mb='2vh' mt='2vh' ref={tableRef}  alignItems={'end'} justifyContent={'space-between'}  > 
-                                <FilterButton selectList={Object.keys(statesMap)} itemsMap={statesMap} selectedElements={statusFilter} setSelectedElements={(element) => toggleChannelsList(element as Channels)}  icon={null} initialMessage={t('ConversationsFilter')}/>
+                                <FilterButton   selectedElements={statusFilter} setSelectedElements={(element) => toggleChannelsList(element as Channels)} selectedSection="status"/>
                             </Flex>
                             
                             <Box ref={tableContainerRef}> 
-                            <Table height={selectedElements.length > 0 ? window.innerHeight * 0.98   - (tableRef.current?.getBoundingClientRect().bottom || 0) - 85 - window.innerWidth * 0.02:undefined } data={conversations?.page_data} CellStyle={CellStyle} noDataMessage={t('NoConversations')} requestSort={requestSort} getSortIcon={getSortIcon} columnsMap={columnsConversationsMap} excludedKeys={['id', 'conversation_id', 'contact_id',  'is_matilda_engaged', 'state', 'organization_id',  'call_sid', 'call_url', 'channel_id', 'custom_attributes', ] } onClickRow={handleClickRow} selectedElements={selectedElements} setSelectedElements={setSelectedElements} onSelectAllElements={getAllConversationsIds} currentIndex={selectedIndex} waitingInfo={waitingInfo}/>
+                                <Table onFinishScroll={() => fetchConversationsDataWithFilter({...filtersRef.current, page_index:filtersRef.current.page_index + 1})} numberOfItems={conversations?.total_conversations} height={selectedElements.length > 0 ? window.innerHeight * 0.98   - (tableRef.current?.getBoundingClientRect().bottom || 0) - 85 - window.innerWidth * 0.02:undefined } data={conversations?.page_data} CellStyle={CellStyle} noDataMessage={t('NoConversations')} requestSort={requestSort} getSortIcon={getSortIcon} columnsMap={columnsConversationsMap} excludedKeys={['id', 'conversation_id', 'contact_id',  'is_matilda_engaged', 'state', 'organization_id',  'call_sid', 'call_url', 'channel_id', 'custom_attributes', ] } onClickRow={handleClickRow} selectedElements={selectedElements} setSelectedElements={setSelectedElements} onSelectAllElements={getAllConversationsIds} currentIndex={selectedIndex} waitingInfo={waitingInfo}/>
                             </Box>
                         </Flex>
-                          
-                    
-       
-
-                    </MotionBox>
+                    </MotionBox> 
 
                     }
                 </AnimatePresence>

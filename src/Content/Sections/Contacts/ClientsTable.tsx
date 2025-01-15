@@ -217,7 +217,7 @@ function ClientsTable ({socket, setHideViews}:{socket:any, setHideViews:Dispatch
                 <Button size={'sm'} variant={'main'} leftIcon={<FaPlus/>}>{t('CreateClient')}</Button>
             </Flex>     
             <Flex mt='2vh'> 
-                <FilterButton selectList={Object.keys(logosMap)} itemsMap={logosMap} selectedElements={filters?.channel_types} setSelectedElements={(element) => toggleChannelsList(element as Channels)}  icon={PiDesktopTowerFill} initialMessage={t('ClientsFilterMessage')}/>
+                <FilterButton selectedElements={filters?.channel_types} setSelectedElements={(element) => toggleChannelsList(element as Channels)} selectedSection="channel_type"/>
             </Flex>
              
             <Flex gap='20px' mt='2vh' alignItems={'center'} > 

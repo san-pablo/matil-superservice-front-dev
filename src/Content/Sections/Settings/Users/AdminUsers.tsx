@@ -190,18 +190,18 @@ function AdminUsers () {
     ), [userToDelete])
 
     return(
-    <Box>        
+    <Box px='2vw' py='2vh'>        
         {userToDelete && memoizedDeleteBox}
         {showCreateNewUser && memoizedNewUserBox}
 
         <Flex alignItems={'end'} justifyContent={'space-between'}> 
             <Box> 
-                <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('UsersTable')}</Text>
-                <Text color='gray.600' fontSize={'.9em'}>{t('UsersDes')}</Text>
+                <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('UsersTable')}</Text>
+                <Text color='gray.600' fontSize={'.8em'}>{t('UsersDes')}</Text>
             </Box>
             <Button leftIcon={<FaPlus/>} size='sm' variant={'main'} onClick={() => {setShowCreateNewUser(!showCreateNewUser)}}>{t('CreateUser')}</Button>
         </Flex>
-        <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/>
+        <Box width='100%' bg='gray.200' height='1px' mt='2vh' mb='2vh'/>
 
   
         <Box width={'350px'}> 

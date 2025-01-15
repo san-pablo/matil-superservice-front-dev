@@ -58,17 +58,16 @@ function Shortcuts () {
             </Box>)
     }
  
-    return(<>
-    <Box height={'100%'} width={'100%'}> 
-        <Flex justifyContent={'space-between'} alignItems={'end'}> 
-            <Box> 
-                <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Shortcuts')}</Text>
-                <Text color='gray.600' fontSize={'.9em'}>{t('ShortcutsDes')}</Text>
-            </Box>
-        </Flex>
+    return(<Flex flexDir={'column'} h='100vh'>
+        <Box px='2vw' pt='2vh'> 
+            <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('Shortcuts')}</Text>
+            <Text color='gray.600' fontSize={'.8em'}>{t('ShortcutsDes')}</Text>
+            <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='2vh'/>
 
-        <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/>
-        <Box width={'60%'} mt='2vh' minW={'500px'}> 
+        </Box>
+ 
+
+         <Box width={'60%'}  minW={'500px'} px='2vw' pb='2vh'> 
             {currentShorcuts?.map((option, index) => (
                 <Flex key={`option-${index}`} mt={index === 0?'0':'1vh'} justifyContent={'space-between'}  shadow='sm' p='5px' borderRadius='.5rem' borderColor="gray.200" borderWidth="1px"  >
                     <Text fontSize={'.9em'}>{option}</Text>
@@ -78,8 +77,8 @@ function Shortcuts () {
             <AddOptionComponent/>       
         </Box>
              
-    </Box> 
-    </>)
+   
+    </Flex>)
 }
 
 export default Shortcuts

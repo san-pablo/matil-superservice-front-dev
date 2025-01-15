@@ -61,26 +61,26 @@ function Data () {
     }, [])
 
     return(
-    <Box p='2vw'> 
+    <Box p='2vw' py='2vh'> 
         <Flex alignItems={'center'} gap='15px'>
             <Skeleton isLoaded={!waitingInfo}> 
-                <Text fontSize={'1.5em'} fontWeight={'medium'}>{organizationData?.name}</Text>
+                <Text fontSize={'1.2em'} fontWeight={'medium'}>{organizationData?.name}</Text>
             </Skeleton>
             <Skeleton isLoaded={!waitingInfo}> 
                 <Box display="inline-flex" fontSize='.8em'  py='1px' px='5px' fontWeight={'medium'} color={organizationData?.is_active?'green.600':'red.600'}  bg={organizationData?.is_active?'green.100':'red.100'} borderRadius={'.7rem'}> 
-                    <Text>{organizationData?.is_active?t('Active'):t('Inactive')}</Text>
+                    <Text fontSize={'.9em'}>{organizationData?.is_active?t('Active'):t('Inactive')}</Text>
                 </Box>
             </Skeleton>
         </Flex>
         
         <Flex justifyContent={'space-between'}> 
-            <Text color='gray.600' fontSize={'.9em'}>{t('DataDes')}</Text>
+            <Text color='gray.600' fontSize={'.8em'}>{t('DataDes')}</Text>
             <Skeleton isLoaded={!waitingInfo}> 
-                <Text color='gray.600' fontSize={'.9em'}>{t('CreatedAt', {date:timeStampToDate((organizationData?.timestamp_created || ''), t_formats)})} </Text>
+                <Text color='gray.600' fontSize={'.8em'}>{t('CreatedAt', {date:timeStampToDate((organizationData?.timestamp_created || ''), t_formats)})} </Text>
             </Skeleton>
         </Flex>
 
-        <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/>
+        <Box width='100%' bg='gray.200' height='1px' mt='2vh' mb='2vh'/>
 
         <Box flex='1'>
            

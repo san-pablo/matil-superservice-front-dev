@@ -435,20 +435,20 @@ return(
     {deleteFunctionIndex !== null && memoizedDeleteFunction}
     {showDelete && memoizedDeleteConfig}
 
-    <Box px='2vw' pt='2vw'> 
+    <Box px='2vw' pt='2vh'> 
         <Skeleton  isLoaded={(configDict !== null)}> 
             <EditText  placeholder={t('name')}  value={configDict?.name} setValue={(value) => setConfigDict(prev => ({...prev as MatildaConfigProps, name:value}))} className={'title-textarea-collections'}/>
         </Skeleton>
         <Flex justifyContent={'space-between'}> 
             <Box h='40px' > 
                 <SectionSelector notSection selectedSection={currentSection} sections={Object.keys(sectionsMap)} sectionsMap={sectionsMap}  onChange={(sec) => setCurrentSection(sec as any) }/>  
-                </Box>
+            </Box>
             <Flex gap='12px'>
                 {memoizedActionsButton}
                 <Button variant={configUuid !== 'new'?'main':'common'} size='sm' onClick={saveConfig} isDisabled={configDict?.name === ''  || ((JSON.stringify(configDict) === JSON.stringify(configDictRef.current)))}>{waitingSend?<LoadingIconButton/>:configUuid === 'new'? t('CreateConfig'):t('SaveChanges')}</Button> 
             </Flex>
         </Flex>
-        <Box bg='gray.300' h='1px' w='100%'/>
+        <Box bg='gray.200' h='1px' w='100%'/>
     </Box>
 
     <Flex flex='1' overflow={'hidden'}  ref={containerRef} position='relative'> 

@@ -107,18 +107,20 @@ function Themes () {
     {addThemeIndex !== null && memoizedAddThemeBox}
     {deleteThemeIndex !== null && memoizedDeleteThemeBox}
  
-        <Flex justifyContent={'space-between'} alignItems={'end'}> 
-            <Box> 
-                <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Themes')}</Text>
-                <Text color='gray.600' fontSize={'.9em'}>{t('ThemesDes')}</Text>
-            </Box>
-            <Button variant={'main'} leftIcon={<FaPlus/>} size='sm' onClick={() => setAddThemeIndex(-1)}>{t('AddTheme')}</Button>
+        <Box px='2vw' pt='2vh'> 
+            <Flex justifyContent={'space-between'} alignItems={'end'}> 
+                <Box> 
+                    <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('Themes')}</Text>
+                    <Text color='gray.600' fontSize={'.8em'}>{t('ThemesDes')}</Text>
+                </Box>
+                <Button variant={'main'} leftIcon={<FaPlus/>} size='sm' onClick={() => setAddThemeIndex(-1)}>{t('AddTheme')}</Button>
 
-        </Flex>
+            </Flex>
 
-        <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/>
-  
-        <Box flex='1' width={'60%'} mt='2vh' minW={'500px'} pb='2vh'  overflow={'scroll'}> 
+            <Box width='100%' bg='gray.300' height='1px' mt='2vh' />
+        </Box>
+
+        <Box flex='1' width={'60%'} px='2vw' mt='2vh' minW={'500px'} pb='5vh'  overflow={'scroll'}> 
             <Skeleton isLoaded={currentThemes !== null}> 
                 {currentThemes?.map((theme, index) => (
                     <Box cursor={'pointer'} key={`option-${index}`} mt={index === 0?'0':'1vh'} shadow='sm' p='15px' borderRadius='.5rem' borderColor="gray.200" borderWidth="1px" > 

@@ -261,9 +261,9 @@ function Chatbot ({setChannelsData}:{setChannelsData:Dispatch<SetStateAction<Cha
         {showCode && memoizedShowCodeBox}
         
         <SaveChanges data={chatBotData} setData={setChatBotData} dataRef={chatbotDataRef} data2={selectedConfigId} dataRef2={configIdRef} setData2={setSelectedConfigId} onSaveFunc={sendChatBotCofig}  />
-        <Box px='2vw' pt='2vw'> 
+        <Box px='2vw' pt='2vh'> 
             <Skeleton  isLoaded={(chatBotData !== null)}> 
-                <Text fontSize={'1.4em'} fontWeight={'medium'}>{channelDict?.name || ''}</Text>
+                <Text fontSize={'1.2em'} fontWeight={'medium'}>{channelDict?.name || ''}</Text>
             </Skeleton>
             
             <Flex justifyContent={'space-between'}> 
@@ -277,12 +277,12 @@ function Chatbot ({setChannelsData}:{setChannelsData:Dispatch<SetStateAction<Cha
                     <Button leftIcon={<FaCode/>} onClick={() => setShowCode(true)} size='sm' variant={'main'}>{t('ShowCode')}</Button>  
                 </Flex>
             </Flex>
-            <Box bg='gray.300' h='1px' w='100%'/>
+            <Box bg='gray.200' h='1px' w='100%'/>
 
 
         </Box>
 
-        <Flex flex='1' overflow={'hidden'}  ref={containerRef} position='relative'> 
+        <Flex flex='1' overflow={'hidden'} pr='2vw' ref={containerRef} position='relative'> 
             <Flex flex='1'  pt='3vh'  height={'100%'} px='2vw' overflow={'scroll'}> 
                 <Skeleton style={{flex:1}} isLoaded={chatBotData !== null}> 
 
@@ -406,7 +406,7 @@ function Chatbot ({setChannelsData}:{setChannelsData:Dispatch<SetStateAction<Cha
                     
                 </Skeleton>
             </Flex>
-            <Box  flex='1'  px='2vw' height={'calc(100%)'} py='3vh'> 
+            <Box  flex='1'   height={'calc(100%)'} py='3vh'> 
                 <ShowChatBox chatBotData={chatBotData} selectedLanguage={selectedLanguage}/>
             </Box>
         </Flex>     

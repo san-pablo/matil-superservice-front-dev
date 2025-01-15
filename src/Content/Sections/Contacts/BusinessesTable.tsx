@@ -203,7 +203,7 @@ function BusinessesTable ({showCreateBusiness, setShowCreateBusiness, socket, se
             </Flex>   
 
             <Flex mt='2vh'> 
-                <FilterButton selectList={Object.keys(statesMap)} itemsMap={statesMap} selectedElements={statusFilter} setSelectedElements={(element:string) => toggleChannelsList(element)}  icon={FaCalendar} initialMessage={t('BusinessFilterMessages')}/>
+                <FilterButton selectedElements={statusFilter} setSelectedElements={(element:string) => toggleChannelsList(element)} selectedSection="created_at"/>
             </Flex>
 
             <Flex gap='20px' mt='2vh' alignItems={'center'} > 

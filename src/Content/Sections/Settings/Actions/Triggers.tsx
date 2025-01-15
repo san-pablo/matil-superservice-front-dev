@@ -121,13 +121,12 @@ function Triggers ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
             <DeleteComponent/>
         </ConfirmBox>
     ), [triggerToDeleteIndex])
-
-
+    
     //FRONT
     return(<>
         {triggerToDeleteIndex !== null && memoizedDeleteBox}
         {(selectedIndex >= -1 && triggerData !==  null) ? <EditTrigger triggerData={selectedIndex === -1 ?newTrigger :triggerData?.[selectedIndex] as ActionDataType} selectedIndex={selectedIndex} setSelectedIndex={setSelectedIndex}  allTriggers={triggerData} setAllTriggers={setTriggerData} scrollRef={scrollRef}/>:<>
-        
+
         <Box px='2vw' py='2vh'> 
             <Flex justifyContent={'space-between'} alignItems={'end'}> 
                 <Box> 

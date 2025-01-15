@@ -132,18 +132,20 @@ function Groups () {
         </ConfirmBox>
     ), [selectedGroup])
     
-    return(<Box>
+    return(
+        <Box px='2vw' py='2vh'>        
+
         {groupToDelete !== null && memoizedDeleteBox}
         {selectedGroup !== null  && memoizedGroupBox}
         <Flex justifyContent={'space-between'} alignItems={'end'}> 
             <Box> 
-                <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('GroupsTable')}</Text>
-                <Text color='gray.600' fontSize={'.9em'}>{t('GroupsDescription')}</Text>
+                <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('GroupsTable')}</Text>
+                <Text color='gray.600' fontSize={'.8em'}>{t('GroupsDescription')}</Text>
             </Box>
             <Button  variant={'main'}size='sm' leftIcon={<FaPlus/>} onClick={() => setSelectedGroup(newGroup)}>{t('CreateGroup')}</Button>
 
         </Flex>
-        <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/> 
+        <Box width='100%' bg='gray.200' height='1px' mt='2vh' mb='2vh'/> 
         <Box width={'350px'}> 
             <EditText value={text} setValue={setText} searchInput={true}/>
         </Box>
