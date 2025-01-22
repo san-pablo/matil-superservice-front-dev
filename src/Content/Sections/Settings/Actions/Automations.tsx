@@ -20,6 +20,7 @@ import CustomSelect from '../../../Components/Reusable/CustomSelect'
 import Table from '../../../Components/Reusable/Table'
 import VariableTypeChanger from '../../../Components/Reusable/VariableTypeChanger'
 import SaveChanges from '../../../Components/Reusable/SaveChanges'
+import FilterManager from '../../../Components/Reusable/ManageFilters'
 //FUNCTIONS
 import parseMessageToBold from '../../../Functions/parseToBold'
 //ICONS
@@ -27,7 +28,7 @@ import { IoIosArrowForward } from "react-icons/io"
 import { FaPlus } from 'react-icons/fa6'
 import { HiTrash } from 'react-icons/hi2'
 //TYPING 
-import { ActionDataType, ActionsType, FieldAction } from '../../../Constants/typing'
+import { ActionDataType, ActionsType } from '../../../Constants/typing'
   
  
 const CellStyle = ({column, element}:{column:string, element:any}) => {return <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element}</Text>}
@@ -42,8 +43,7 @@ function Automations ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
     const newAutomation:ActionDataType = {
         name: t('NewAutomation'),
         description: '',
-        all_conditions:[],
-        any_conditions:[],
+        filters:{logic:'AND', groups:[]},  
         actions:[]
     }
     
@@ -186,25 +186,17 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
         }
     }
  
-    //ADD A CONDITION OR AN ACTION
-    const addElement = (type: 'all_conditions' | 'any_conditions' | 'actions') => {
-        const newElement = type === 'actions' ? {type:'email_csat', arguments:{content:'',  probability:50}}:{motherstructure:'conversation', is_customizable:false, name:'user_id', op:'eq', value:'matilda'}
-        setCurrentAutomationData((prev) => ({ ...prev, [type]: [...prev[type],newElement]}))
-    }
+   
     //DELETE A CONDITION OR AN ACTION
-    const removeElement = (type: 'all_conditions' | 'any_conditions' | 'actions' , index: number ) => {
-        setCurrentAutomationData((prev) => {
-        const conditionList = [...prev[type]]
-        const updatedConditionList = [...conditionList.slice(0, index), ...conditionList.slice(index + 1)]
-        return {...prev, [type]: updatedConditionList}  
-        })
+    const addActionsElement = () => {
+        const newElement = {type:'email_csat', arguments:{content:'',  probability:50}}
+        setCurrentAutomationData((prev) => ({ ...prev, actions: [...prev.actions as any, newElement]}))
     }
-    //EDIT A CONDITION OR AN ACTION
-    const editElement = (type:'all_conditions' | 'any_conditions' | 'actions', index:number, updatedCondition:FieldAction) => {
+    const removeActionsElement = (index: number ) => {
         setCurrentAutomationData((prev) => {
-            const lastConditionList = [...prev[type]]
-            const updatedConditionList = [...lastConditionList.slice(0, index), updatedCondition, ...lastConditionList.slice(index + 1)]
-            return {...prev, [type]: updatedConditionList}
+        const conditionList = [...prev.actions]
+        const updatedConditionList = [...conditionList.slice(0, index), ...conditionList.slice(index + 1)]
+        return {...prev, actions: updatedConditionList}  
         })
     }
     const editActions = (index:number, actionType:ActionsType, actionKey?:string, value?:any) => {
@@ -275,44 +267,7 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
                 <Text fontWeight={'medium'} fontSize={'1.1em'} mt='3vh'>{t('Conditions')}</Text>
                 <Text fontSize={'.8em'} color='gray.600'>{t('ConditionsDes')}</Text>
 
-                <Flex gap='30px' mt='1.5vh'> 
-                    <Box flex='1'> 
-                        <Text fontSize={'.9em'} fontWeight={'medium'}>{t('AllConditionsAut')}</Text>
-                        <Text fontSize={'.8em'} color='gray.600'>{t('AllConditionsAutDes')}</Text>
-
-                        <Flex flexWrap={'wrap'} gap='10px' mt='2vh'> 
-                            {currentAutomationData.all_conditions.map((condition, index) => (<> 
-                                <Flex alignItems={'center'}  key={`all-automation-${index}`}  gap='10px'>
-                                    <Box flex={'1'}> 
-                                        <EditStructure deleteFunc={() => removeElement('all_conditions', index)} typesMap={typesMap} data={condition} setData={(newCondition) => {editElement('all_conditions', index, newCondition)}} scrollRef={scrollRef} operationTypesDict={operationTypesDict}/>
-                                    </Box>
-                                </Flex>
-                                {index < currentAutomationData.all_conditions.length -1 && <Flex bg='brand.gray_2' p='7px' borderRadius={'.5rem'} fontWeight={'medium'}>{t('AND')}</Flex>}
-                            </>))}
-                            <IconButton variant={'common'} aria-label='add' icon={<FaPlus/>} size='sm'  onClick={() => addElement('all_conditions')}/>
-
-                        </Flex>
-                    </Box>
-
-                    <Box flex='1'> 
-                        <Text fontSize={'.9em'}  fontWeight={'medium'}>{t('AnyConditionsAut')}</Text>
-                        <Text fontSize={'.8em'} color='gray.600'>{t('AnyConditionsAutDes')}</Text>
-
-                        <Flex flexWrap={'wrap'} gap='10px' mt='2vh'> 
-
-                        {currentAutomationData.any_conditions.map((condition, index) => (<> 
-                            <Flex  alignItems={'center'} key={`any-automation-${index}`} gap='10px'>
-                                <Box flex={'1'}> 
-                                    <EditStructure deleteFunc={() => removeElement('any_conditions', index)} typesMap={typesMap} data={condition} setData={(newCondition) => {editElement('any_conditions', index, newCondition)}} scrollRef={scrollRef} operationTypesDict={operationTypesDict}/>
-                                </Box>
-                            </Flex>
-                            {index < currentAutomationData.any_conditions.length -1 && <Flex bg='brand.gray_2' p='7px' borderRadius={'.5rem'} fontWeight={'medium'}>{t('OR')}</Flex>}
-                            </>
-                        ))}
-                        <IconButton variant={'common'} aria-label='add' icon={<FaPlus/>} size='sm'  onClick={() => addElement('any_conditions')}/>
-                        </Flex>
-                    </Box>
-                </Flex>
+                <FilterManager filters={currentAutomationData.filters} setFilters={(filters) => setCurrentAutomationData(prev => ({...prev, filters}))} operationTypesDict={operationTypesDict} typesMap={typesMap} scrollRef={scrollRef} />
 
                 <Text fontWeight={'medium'} fontSize={'1.1em'} mt='3vh'>{t('ActionsToDo')}</Text>
                 <Text fontSize={'.8em'} color='gray.600'>{t('ActionsToDoDes')}</Text>
@@ -322,7 +277,7 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
 
                         <Flex alignItems={'center'} justifyContent={'space-between'}> 
                             <Text mb='.3vh' fontSize={'.9em'} fontWeight={'medium'}>{t('ActionType')}</Text>
-                            <Button size='xs' leftIcon={<HiTrash/>} variant={'delete'} onClick={() => removeElement('actions', index)}>{t('Delete')}</Button>
+                            <Button size='xs' leftIcon={<HiTrash/>} variant={'delete'} onClick={() => removeActionsElement( index)}>{t('Delete')}</Button>
                         </Flex>
                         <Box maxW='350px' mb='2vh'> 
                             <CustomSelect containerRef={scrollRef} hide={false} selectedItem={action.type} setSelectedItem={(value) => {editActions(index, value)}} options={actionsList} labelsMap={actionsMap} />
@@ -416,7 +371,7 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
                     </Box>
                 ))}
     
-                <Button variant={'common'} mt='2vh' display={'inline-flex'} leftIcon={<FaPlus/>} size='sm' onClick={() => addElement('actions')}>{t('AddAction')}</Button>
+                <Button variant={'common'} mt='2vh' display={'inline-flex'} leftIcon={<FaPlus/>} size='sm' onClick={() => addActionsElement()}>{t('AddAction')}</Button>
             </Box>
         </Box>
     </>)

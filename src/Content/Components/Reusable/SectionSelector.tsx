@@ -1,7 +1,3 @@
-/*
-    COMONENT FOR SELECTING BETWEEN A FEW OPTIONS
-*/
-
 //REACT
 import { useEffect, ReactElement, useState } from 'react'
 // FRONT

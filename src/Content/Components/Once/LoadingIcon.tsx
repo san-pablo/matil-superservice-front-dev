@@ -1,10 +1,7 @@
-/* 
-    DOMINO LOADING ICON (INITIAL CHARGE)
-*/
-
 //FRONT
 import { Flex } from '@chakra-ui/react'
-import loadingAnimation from './lottie-2.json'
+//LOTIE
+import loadingAnimation from './lottie.json'
 import Lottie from 'lottie-react'
 
 //MAIN FUNCTION

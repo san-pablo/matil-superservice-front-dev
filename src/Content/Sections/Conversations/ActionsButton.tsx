@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../AuthContext'
 import { useTranslation } from 'react-i18next'
 //FRONT
-import { Button, Flex, Text, Icon, chakra, shouldForwardProp, Portal } from '@chakra-ui/react'
+import { Button, Flex, Text, Icon, chakra, shouldForwardProp, Portal, Box } from '@chakra-ui/react'
 import { motion, isValidMotionProp, AnimatePresence } from 'framer-motion'
 import '../../Components/styles.css'
 //FUNCTIONS
@@ -17,16 +17,14 @@ import useOutsideClick from '../../Functions/clickOutside'
 import { FaPen, FaFileCsv, FaClone, FaCloudArrowUp } from "react-icons/fa6"
  
 import { IoIosArrowDown } from "react-icons/io"
-//TYPING
-import { ViewType } from '../../Constants/typing'
- 
+
 //TYPING
 interface Item {
     [key: string]: any
 }
 interface ButtonProps {
     items: Item[] | undefined | null
-    view: ViewType | null
+    view: any | null
     section: 'contacts' | 'conversations' | 'flows'
 }
 interface downloadCSVProps {
@@ -69,12 +67,10 @@ const ActionsButton = ({items, view, section}:ButtonProps) =>{
     const { t } = useTranslation('conversations')
 
     //CONSTANTS
-    const navigate = useNavigate()
     const auth = useAuth()
-    const isAdmin = auth.authData.users?.[auth.authData?.userId || '']?.is_admin
-
+     
     //SHOW AND HIDE LIST LOGIC
-    const buttonRef = useRef<HTMLButtonElement>(null)
+    const buttonRef = useRef<HTMLDivElement>(null)
     const boxRef = useRef<HTMLDivElement>(null)
     const [showList, setShowList] = useState(false)
     useOutsideClick({ref1:buttonRef, ref2:boxRef, onOutsideClick:setShowList})
@@ -84,50 +80,38 @@ const ActionsButton = ({items, view, section}:ButtonProps) =>{
         downloadCSV({ items, view: view ?view.name : 'Tabla', section })
         setShowList(false)
     }, [items, view, section])
-    const handleEditView = useCallback(() => {
-        if (section === 'conversations' && view) navigate(`/settings/workflows/edit-views/edit/${view.type}/${view.index}`)
-    }, [navigate, section, view])
-    const handleCloneView = useCallback(() => {
-        if (section === 'conversations' && view) navigate(`/settings/workflows/edit-views/edit/${view.type}/${view.index}/copy`)
-    }, [navigate, section, view])
-
+  
     //FRONT
-    return (
+    return (<> 
 
-        <Flex position={'relative'} flexDir='column' alignItems={'end'}>  
-            <Button size='sm'   ref={buttonRef} leftIcon={<IoIosArrowDown className={showList ? "rotate-icon-up" : "rotate-icon-down"}/>}variant='common' onClick={() => {setShowList(!showList)}} >
-                {section === 'conversations'?t('Actions'):t('More')}
-            </Button>        
+        <Flex flexDir='column' alignItems={'end'}> 
+            <Box  ref={buttonRef} > 
+                <Button size='sm'    leftIcon={<IoIosArrowDown className={showList ? "rotate-icon-up" : "rotate-icon-down"}/>}variant='common' onClick={() => {setShowList(true)}} >
+                    {section === 'conversations'?t('Actions'):t('More')}
+                </Button>   
+            </Box>      
+        </Flex>
         <AnimatePresence> 
-            {showList &&  
-                <Portal> 
-                    <MotionBox  id="custom-portal" ref={boxRef} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.95 }}  transition={{ duration: '0.1', ease: 'easeOut'}}
-                        style={{ transformOrigin: 'top' }} minW={buttonRef.current?.getBoundingClientRect().width } right={section === 'conversations'?'2vw':undefined} left={section === 'conversations'?undefined:(buttonRef.current?.getBoundingClientRect().left || 0)} mt='5px'  top={buttonRef.current?.getBoundingClientRect().bottom }  position='absolute' bg='white' p='5px'  zIndex={1000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.200' borderWidth='1px' borderRadius='.5rem'>
-                    
-                       <Flex fontSize={'.8em'} p='7px' gap='10px'  borderRadius='.5rem'  cursor={'pointer'} onClick={handleDownloadCSV}  alignItems={'center'} _hover={{bg:'brand.gray_2'}}>
-                            <Icon color='gray.600' as={FaFileCsv}/>
-                            <Text whiteSpace={'nowrap'}>{t('CSV')}</Text>
-                        </Flex>
-                        {section === 'contacts' &&
-                        <Flex fontSize={'.8em'} p='7px' gap='10px'  borderRadius='.5rem'  cursor={'pointer'} onClick={() => {}}  alignItems={'center'} _hover={{bg:'brand.gray_2'}}>
-                            <Icon color='gray.600' as={FaCloudArrowUp}/>
-                            <Text whiteSpace={'nowrap'}>{t('ImportData')}</Text>
-                        </Flex>}
-                        {(section === 'conversations' && view?.type !== 'deleted' && !(!isAdmin && view?.type === 'shared')) &&<>
-                        <Flex fontSize={'.8em'} p='7px' gap='10px'  borderRadius='.5rem'  cursor={'pointer'} onClick={handleEditView}  alignItems={'center'} _hover={{bg:'brand.gray_2'}}>
-                            <Icon color='gray.600'  as={FaPen}/>
-                            <Text whiteSpace={'nowrap'}>{t('EditView')}</Text>
-                        </Flex>
-                        <Flex fontSize={'.8em'} p='7px' gap='10px'  borderRadius='.5rem'  cursor={'pointer'} onClick={handleCloneView}  alignItems={'center'} _hover={{bg:'brand.gray_2'}}>
-                        <Icon color='gray.600' as={FaClone}/>
-                            <Text whiteSpace={'nowrap'}>{t('CloneView')}</Text>
-                        </Flex></>}
-                    </MotionBox >
-                </Portal>}
-        </AnimatePresence>
-    </Flex>
+        {showList &&  
+            <Portal> 
+                <MotionBox   ref={boxRef} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.95 }}  transition={{ duration: '0.1', ease: 'easeOut'}}
+                    style={{ transformOrigin: 'top' }}  minW={buttonRef.current?.getBoundingClientRect().width } right={section === 'conversations'?'2vw':undefined} left={section === 'conversations'?undefined:(buttonRef.current?.getBoundingClientRect().left || 0)} mt='5px'  top={(buttonRef.current?.getBoundingClientRect().bottom ) + 'px'}  position='fixed' bg='white' p='5px'  zIndex={10000000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.200' borderWidth='1px' borderRadius='.5rem'>
+                
+                   <Flex fontSize={'.8em'} p='7px' gap='10px'  borderRadius='.5rem'  cursor={'pointer'} onClick={handleDownloadCSV}  alignItems={'center'} _hover={{bg:'brand.gray_2'}}>
+                        <Icon color='gray.600' as={FaFileCsv}/>
+                        <Text whiteSpace={'nowrap'}>{t('CSV')}</Text>
+                    </Flex>
+                    {section === 'contacts' &&
+                    <Flex fontSize={'.8em'} p='7px' gap='10px'  borderRadius='.5rem'  cursor={'pointer'} onClick={() => {}}  alignItems={'center'} _hover={{bg:'brand.gray_2'}}>
+                        <Icon color='gray.600' as={FaCloudArrowUp}/>
+                        <Text whiteSpace={'nowrap'}>{t('ImportData')}</Text>
+                    </Flex>}
+             
+                </MotionBox >
+            </Portal>}
+    </AnimatePresence>
 
-    )
+    </>)
 }
 
 export default ActionsButton

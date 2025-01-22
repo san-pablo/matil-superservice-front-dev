@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next"
 import { useAuth } from "../../../AuthContext"
 import { useAuth0 } from "@auth0/auth0-react"
 import { useLocation, useNavigate } from "react-router-dom"
-
 //IMPORT FETCH DATA
 import fetchData from "../../API/fetchData"
 //FRONT
@@ -18,16 +17,13 @@ import StateMap from "./StateMap"
 import timeStampToDate from "../../Functions/timeStampToString"
 import timeAgo from "../../Functions/timeAgo"
 //ICONS
-import { FaExclamationCircle, FaExclamationTriangle, FaInfoCircle, FaCheckCircle, FaRegEdit } from 'react-icons/fa'
-import { FaArrowRotateLeft, FaMagnifyingGlass, FaPlus, FaTable } from "react-icons/fa6"
-import { BiEditAlt } from "react-icons/bi"
-import { HiTrash } from "react-icons/hi2"
+import { FaExclamationCircle, FaExclamationTriangle, FaInfoCircle, FaCheckCircle } from 'react-icons/fa'
+import { FaMagnifyingGlass, FaPlus, FaTable } from "react-icons/fa6"
 import { PiSidebarSimpleBold } from "react-icons/pi"
-import { TbLayoutSidebarFilled } from "react-icons/tb"
 //TYPING
 import { ConversationColumn, logosMap, Channels, languagesFlags } from "../../Constants/typing"
  
-
+//TYPING
 type Status = 'new' | 'open' | 'solved' | 'pending' | 'closed'
 const validStatuses: Status[] = ['new', 'open', 'solved', 'pending', 'closed']
 
@@ -59,7 +55,6 @@ const AlertLevel = ({t,  rating }:{t:any, rating:number}) => {
         </Flex>
     )
 } 
-
 //GET THE CELL STYLE
 const ConversationllStyle = ({column, element}:{column:string, element:any}) => {
 
@@ -156,7 +151,7 @@ const BusinessCellStyle = ({ column, element }:{column:string, element:any}) => 
     else return ( <Text fontSize={'.9em'} whiteSpace={'nowrap'} fontWeight={column === 'name'?'medium':'normal' } textOverflow={'ellipsis'} overflow={'hidden'}>{element === ''?'-':element}</Text>)
 }
 
-
+//MAIN FUNCTION
 const SearchSection = ({selectedSection, hideSideBar, setHideSideBar}:{selectedSection:'conversations' | 'clients' | 'businesses', hideSideBar:boolean, setHideSideBar:Dispatch<SetStateAction<boolean>>}) => {
 
     const auth = useAuth()
@@ -167,7 +162,7 @@ const SearchSection = ({selectedSection, hideSideBar, setHideSideBar}:{selectedS
     const currentSearch = location.search
 
     //COLUMNS MAP
-    const conversationsColumnsMap:{[key in ConversationColumn]:[string, number]} = {id: [t('id'), 50], local_id: [t('local_id'), 50], status:  [t('status'), 100], channel_type: [t('channel_type'), 100], theme:  [t('theme'), 200], user_id: [t('user_id'), 200], created_at: [t('created_at'), 150],updated_at: [t('updated_at'), 180], solved_at: [t('solved_at'), 150],closed_at: [t('closed_at'), 150],title: [t('title'), 300], urgency_rating: [t('urgency_rating'), 130], deletion_scheduled_at: [t('deletion_date'), 180], unseen_changes: [t('unseen_changes'), 200],  call_status: [t('call_status'), 150], call_duration: [t('call_duration'), 150], }
+    const conversationsColumnsMap:{[key in ConversationColumn]:[string, number]} = {local_id: [t('local_id'), 50], status:  [t('status'), 100], channel_type: [t('channel_type'), 100], theme_uuid:  [t('theme'), 200], team_uuid:[t('Team'), 150], tags:[t('tags'), 200], user_id: [t('user_id'), 200], created_at: [t('created_at'), 150],updated_at: [t('updated_at'), 180], solved_at: [t('solved_at'), 150],closed_at: [t('closed_at'), 150],title: [t('title'), 300], unseen_changes: [t('unseen_changes'), 200],  call_status: [t('call_status'), 150], call_duration: [t('call_duration'), 150], }
     const clientsColumnsMap:{[key:string]:[string, number]} = {name: [t('name'), 200], contact: [t('contact'), 150], labels: [t('labels'), 350], last_interaction_at: [t('last_interaction_at'), 180], created_at: [t('created_at'), 150], rating: [t('rating'), 60], language: [t('language'), 150], notes: [t('notes'), 350],  is_blocked: [t('is_blocked'), 150]}
     const businessColumnsMap:{[key:string]:[string, number]} = {name: [t('name'), 200], labels:  [t('labels'), 350], created_at:  [t('created_at'), 150], last_interaction_at:  [t('last_interaction_at'), 150], notes: [t('notes'), 350]}
 

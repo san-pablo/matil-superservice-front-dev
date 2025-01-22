@@ -20,8 +20,7 @@ import { IconType } from "react-icons"
 import { IoLogoWhatsapp, IoIosArrowDown } from "react-icons/io"
 import { IoChatboxEllipses, IoMail } from "react-icons/io5"
 import { RiInstagramFill } from "react-icons/ri";
-import { FaHeadset, FaGear, FaCartShopping, FaCreditCard,FaCloud, FaRobot, FaBookOpen, FaShopify, FaDatabase, FaBars, FaUserGroup,FaPhone,  FaPeopleGroup, FaUser, FaTicket, FaRectangleList, FaArrowsSplitUpAndLeft, FaShapes, FaBookmark, FaClock } from "react-icons/fa6"
-import { HiViewColumns } from "react-icons/hi2"
+import { FaHeadset, FaGear, FaCartShopping, FaCreditCard,FaCloud, FaRobot, FaBookOpen, FaShopify, FaDatabase, FaBars, FaUserGroup,FaPhone,  FaPeopleGroup, FaUser, FaTicket, FaRectangleList, FaArrowsSplitUpAndLeft, FaShapes, FaBookmark, FaClock, FaTag } from "react-icons/fa6"
 import { MdKeyboardCommandKey, MdWebhook } from "react-icons/md"
 import { SiGooglemybusiness } from "react-icons/si"
 //TYPING
@@ -41,20 +40,18 @@ const Groups = lazy(() => import('./Users/Groups'))
 //SUPPORT
 const HelpCenters = lazy(() => import('./HelpCenters/HelpCenters'))
 const HelpCenter = lazy(() => import('./HelpCenters/HelpCenter'))
-
  //TILDA CONFIGS
 const Tilda = lazy(() => import('./Tilda/Tilda'))
 const TildaConfig = lazy(() => import('./Tilda/TildaConfig'))
 //WORKFLOWS
-const ViewsList = lazy(() => import('./Workflows/Views'))
-const EditView = lazy(() => import('./Workflows/EditView'))
 const Shortcuts = lazy(() => import('./Workflows/Shortcuts'))
 const Fields = lazy(() => import('./Workflows/Fields'))
 const Themes = lazy(() => import('./Workflows/Themes'))
 const ConversationsData = lazy(() => import('./Workflows/ConversationsData'))
+const Tags = lazy(() => import('./Workflows/Tags'))
 //ACTIONS
-const Triggers = lazy(() => import('./Actions/Triggers'))
-const Automations = lazy(() => import('./Actions/Automations'))
+//const Triggers = lazy(() => import('./Actions/Triggers'))
+//const Automations = lazy(() => import('./Actions/Automations'))
 //CHANNELS
 const AllChannels = lazy(() => import('./Channels/AllChannels'))
 const Chatbot = lazy(() => import('./Channels/Chatbot'))
@@ -65,8 +62,8 @@ const Whatsapp = lazy(() => import('./Channels/Whatsapp'))
 const Phone = lazy(() => import('./Channels/Phone'))
 const Voip = lazy(() => import('./Channels/Voip'))
 //INTEGRATIOSN
-const IntegrationsStore = lazy(() => import('./Integrations/IntegrationsStore'))
-const Shopify = lazy(() => import('./Integrations/Shopify'))
+//const IntegrationsStore = lazy(() => import('./Integrations/IntegrationsStore'))
+//const Shopify = lazy(() => import('./Integrations/Shopify'))
 
 //TYPING
 interface ExpandableSectionProps {
@@ -194,13 +191,14 @@ function Settings () {
         'admin-users':[t('UsersDes'), FaUserGroup],
         'groups':[t('GroupsDes'), FaPeopleGroup],
         'user':[t('UserDes'), FaUser],
-        'edit-views':[t('ViewsDes'), HiViewColumns],
-
+ 
         'all':[t('HelpCenterDes'), FaHeadset],
 
         'shortcuts':[t('ShortcutsDes'), MdKeyboardCommandKey],
         'conversations':[t('ConversationsDes'), FaTicket],
         'fields':[t('FieldsDes'),  FaShapes],
+        'tags':[t('TagsDes'),  FaTag],
+
         'themes':[t('ThemesDes'),  FaBookmark],
         'surveys':[t('SurveysDes'), FaRectangleList],
         'automations':[t('AutomationsDes'), FaArrowsSplitUpAndLeft],
@@ -219,8 +217,9 @@ function Settings () {
     //SECTIONS MAP
     const [expandedSections, setExpandedSections] =  useState<IconKey[]>(localStorage.getItem('currentSettingsSection')?[localStorage.getItem('currentSettingsSection')?.split('/')[0] as IconKey] :[])
 
-    //const sectionsList: (IconKey | '')[] = isAdmin ? ['organization', 'users', 'support', 'workflows', 'actions', 'channels', 'integrations'] : ['users']
-    const sectionsList: (IconKey | '')[] = isAdmin ? ['organization','channels', 'tilda', 'help-centers', 'users', 'workflows', 'actions', ] : ['users']
+    //const sectionsList: (IconKey | '')[] = isAdmin ? ['organization','channels', 'tilda', 'help-centers', 'users', 'workflows', 'actions', 'integrations' ] : ['users']
+
+    const sectionsList: (IconKey | '')[] = isAdmin ? ['organization','channels', 'tilda', 'help-centers', 'users', 'workflows'] : ['users']
     
     const subSections: SubSectionProps[] = [
         [[t('Data'), 'data'], [t('Hours'), 'hours'], [t('Surveys'), 'surveys']],
@@ -228,9 +227,9 @@ function Settings () {
         [[t('AllConfigs'), 'all-configs'], ...configsList as any],
         [[t('HelpCenters'), 'all'], ...helpCentersList],
         [[t('Profile'), 'user'], [t('Users'),'admin-users'], [t('Groups'),'groups']],
-        [[t('Views'), 'edit-views'], [t('Themes'), 'themes'], [t('Fields'), 'fields'], [t('Shortcuts'), 'shortcuts'], [t('Conversations'), 'conversations']],
-        [[t('Triggers'), 'triggers'], [t('Automations'), 'automations']],
-         //[[t('Store'), 'store'], ...integrationsList]
+        [[t('Tags'), 'tags'], [t('Themes'), 'themes'], [t('Fields'), 'fields'], [t('Shortcuts'), 'shortcuts'], [t('Conversations'), 'conversations']],
+        //[[t('Triggers'), 'triggers'], [t('Automations'), 'automations']],
+        //[[t('Store'), 'store'], ...integrationsList]
     ] 
  
     //CONSTANTS
@@ -285,15 +284,16 @@ function Settings () {
                         <Route path="/help-centers/all" element={<HelpCenters helpCentersData={helpCentersList} setHelpCentersData={setHelpCentersList}/>} />
                         <Route path="/help-centers/help-center/*" element={<HelpCenter scrollRef={scrollRef} setHelpCentersData={setHelpCentersList}/>} />
 
-                        <Route path="/workflows/edit-views" element={<ViewsList />} />
-                        <Route path="/workflows/edit-views/edit/*" element={<EditView scrollRef={scrollRef}/>} />
+                        <Route path="/workflows/tags" element={<Tags />} />
                         <Route path="/workflows/fields" element={<Fields/>} />
                         <Route path="/workflows/themes" element={<Themes/>} />
                         <Route path="/workflows/shortcuts" element={<Shortcuts/>} />
                         <Route path="/workflows/conversations" element={<ConversationsData />} />
-                      
+
+                        {/*
                         <Route path="/actions/triggers" element={<Triggers scrollRef={scrollRef}/>} />
                         <Route path="/actions/automations" element={<Automations scrollRef={scrollRef}/>} />
+                        */}
 
                         <Route path="/channels/all-channels/*" element={<AllChannels channelsData={channelsList}/>} />
                         <Route path="/channels/webchat/*" element={<Chatbot setChannelsData={setChannelsList}/>} />
@@ -304,9 +304,10 @@ function Settings () {
                         <Route path="/channels/email/*" element={<Mail />} />
                         <Route path="/channels/voip/*" element={<Voip />} />
 
+                        {/*
                         <Route path="/integrations/store" element={<IntegrationsStore />} />
                         <Route path="/integrations/shopify" element={<Shopify />} />
-
+                        */}
                     </Routes>
                 </Suspense>
             </Flex>   

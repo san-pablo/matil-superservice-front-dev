@@ -89,7 +89,7 @@ function HelpCenters ({helpCentersData, setHelpCentersData}:{helpCentersData:{id
         
         <Skeleton flex='1' style={{ overflow:'scroll'}} isLoaded={helpCentersData !== null}>
             {helpCentersData?.length === 0 ?   
-            <Flex height={'100%'} top={0} left={0} width={'100%'} position={'absolute'} alignItems={'center'} justifyContent={'center'}> 
+            <Flex height={'100%'} top={0} left={0} width={'100%'} alignItems={'center'} justifyContent={'center'}> 
                 <Box maxW={'580px'} textAlign={'center'}> 
                     <Text fontWeight={'medium'} fontSize={'2em'} mb='2vh'>{t('NoHelpCenters')}</Text>               
                     <Text fontSize={'1em'} color={'gray.600'} mb='2vh'>{t('NoHelpCentersDes')}</Text>               

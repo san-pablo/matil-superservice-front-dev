@@ -1,23 +1,19 @@
-/* 
-    TABLE FOR SHOW  DATA
-*/
-
 //REACT
 import { useTranslation } from "react-i18next"
-import { useState, useMemo, useRef, useEffect, Fragment, Dispatch, SetStateAction, useCallback } from "react"
+import { useState, useMemo, useRef, useEffect, Fragment, Dispatch, SetStateAction, useCallback, ReactElement } from "react"
+import { useLocation } from "react-router-dom"
 //FRONT
 import { motion, isValidMotionProp } from 'framer-motion'
 import { Flex, Box, Text, IconButton, Skeleton, Icon , chakra, shouldForwardProp } from '@chakra-ui/react'
+import { FixedSizeList as List } from 'react-window'
 import '../styles.css'
 //COMPONENTS
 import CustomCheckbox from "./CheckBox"
 //ICONS
-import { IoMdArrowDropdown, IoMdArrowDropup } from 'react-icons/io'
+ import { IoMdArrowDropdown, IoMdArrowDropup } from 'react-icons/io'
 import { HiTrash } from "react-icons/hi2" 
 import { FaMagnifyingGlass } from "react-icons/fa6"
-
  
-
 //TYPING
 interface TableProps{
     data: any[] | null | undefined
@@ -39,9 +35,9 @@ interface TableProps{
     accMessage?:string
     accColumn?:string
     waitingInfo?:boolean
-
     onFinishScroll?:any
     numberOfItems?:any
+    deletableIcon?:ReactElement
 }
     
 
@@ -49,11 +45,12 @@ interface TableProps{
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
  
 //MAIN FUNCTION
-const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  columnsMap, excludedKeys = [], onClickRow, selectedElements, onlyOneSelect = false, setSelectedElements, onSelectAllElements, currentIndex = -1, deletableFunction, height, showAccRow, accMessage, accColumn, waitingInfo, onFinishScroll, numberOfItems }:TableProps ) =>{
+const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  columnsMap, excludedKeys = [], onClickRow, selectedElements, onlyOneSelect = false, setSelectedElements, onSelectAllElements, currentIndex = -1, deletableIcon, deletableFunction, height, showAccRow, accMessage, accColumn, waitingInfo, onFinishScroll, numberOfItems }:TableProps ) =>{
 
     //CALCULATE DYNAMIC HEIGHT OF TABLE
     const { i18n } = useTranslation('settings')
     const tableBoxRef = useRef<HTMLDivElement>(null)
+    const location = useLocation().pathname as string
     const headerRef = useRef<HTMLDivElement>(null)
     const dateRef = useRef<any>()
     const [selectedIndex, setSelectedIndex] = useState<number>(currentIndex)
@@ -111,7 +108,7 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
                     return newIndex
                 })
             }
-            else if (event.code === 'Space' && data && 0 <= selectedIndex && selectedIndex   <= data.length - 1 && selectedElements) {
+            else if (event.code === 'Space' && data && 0 <= selectedIndex && selectedIndex   <= data.length - 1 && selectedElements && isNaN(parseInt((location as string)?.split('/')?.at(-1) || ''))) {
                 event.preventDefault()
                 handleCheckboxChange(selectedIndex, !selectedElements.includes(selectedIndex))
             }
@@ -119,7 +116,7 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
         }
         window.addEventListener('keydown', handleKeyDown)
         return () => {window.removeEventListener('keydown', handleKeyDown)}
-    }, [selectedIndex, selectedElements, data])
+    }, [selectedIndex, selectedElements, data, location])
 
 
     //OBTAIN COLUMNS
@@ -161,17 +158,16 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
         }
       }
     
-      useEffect(() => {
-        const table = tableBoxRef.current;
+    useEffect(() => {
+    const table = tableBoxRef.current
+    if (table) table.addEventListener("scroll", handleScroll)
+    
+    return () => {
         if (table) {
-          table.addEventListener("scroll", handleScroll)
+        table.removeEventListener("scroll", handleScroll)
         }
-        return () => {
-          if (table) {
-            table.removeEventListener("scroll", handleScroll)
-          }
-        };
-      }, [waitingInfo])
+    };
+    }, [waitingInfo])
 
       const renderSkeletons = () => {
         return Array(5).fill(0).map((_, index) => (
@@ -193,8 +189,8 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
             )}
             </Flex>
           ));
-      };
-   
+      }
+
     //CHECKBOXES LOGIC
     const handleCheckboxChange = useCallback((element:number, isChecked:boolean) => {
         if (selectedElements && setSelectedElements) {
@@ -237,13 +233,11 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
 
     const dataToWork = (requestSort)? data : sortedData
 
-
-
     //FRONT
     return(
         <>  
        
-        <Box   ref={headerRef}  width={'100%'}  overflowX={'scroll'}>    
+        <Box  ref={headerRef}  width={'100%'}  overflowX={'scroll'}>    
 
             {(data && dataToWork && !waitingInfo) ?  
                 <>
@@ -253,9 +247,9 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
                         <Text mt='1vh' fontSize={'1em'} fontWeight={'medium'} >{noDataMessage}</Text>
                     </Flex>
                     :        
-                    <motion.div initial={{ opacity: 0 }}  animate={{ opacity: 1 }} transition={{ duration: 0.1, ease: "easeOut" }} style={{ minWidth: `${totalWidth}px`,  }}> 
-                        <Box px={selectedElements ? '2vw':''}> 
-                            <Flex  position={'sticky'}minWidth={`${totalWidth}px`}  borderBottomWidth={'1px'} gap='20px' alignItems={'center'}  color='gray.600' px='10px' h='45px' fontSize={'.9em'} > 
+                    <motion.div initial={{ opacity: 0 }}  animate={{ opacity: 1 }} transition={{ duration: 0.1, ease: "easeOut" }} style={{ minWidth: `${totalWidth}px`  }}> 
+                        <Box pl={selectedElements ? '2vw':''}> 
+                            <Flex  position={'sticky'} minWidth={`${totalWidth}px`}  borderBottomWidth={'1px'} gap='20px' alignItems={'center'}  color='gray.600' px='10px' h='45px' fontSize={'.9em'} > 
                              
                                 {columns.filter(column => column !== 'id').map((column) => (
                                     <Fragment key={`header-${column}`}>
@@ -270,11 +264,14 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
                             </Flex>
                         </Box>
                        
-                        <Box px={selectedElements ? '2vw':''} position={'relative'} minWidth={`${totalWidth}px`} ref={tableBoxRef} overflowY={'scroll'} transition="max-height ease-in .15s" maxH={height?height:boxHeight}> 
-                                    {dataToWork.map((row, index) => (
-                                      <RowComponent key={`row-${index}`} row={row} index={index} selectedIndex={selectedIndex} selectedElements={selectedElements} handleCheckboxChange={handleCheckboxChange} columnsMap={columnsMap} columns={columns} deletableFunction={deletableFunction} CellStyle={CellStyle} totalWidth={totalWidth} onClickRow={onClickRow} excludedKeys={excludedKeys}/>
-                                   ))} 
-                                   {waitingNewItems && renderSkeletons()}
+                        <Box  position={'relative'} minWidth={`${totalWidth}px`} ref={tableBoxRef} overflowY={'scroll'} transition="max-height ease-in .15s" maxH={height?height:boxHeight}> 
+                          
+                            <List height={height?height:boxHeight} style={{overflow:'auto', padding:selectedElements ?'0 0 0 2vw':''}} itemCount={data?.length || 0} itemSize={50} width={Math.max(totalWidth, tableBoxRef.current?.getBoundingClientRect().width || 0) - window.innerWidth * 0.02}> 
+                                {({ index, style }) => (
+                                    <RowComponent key={`row-${index}`} row={dataToWork[index]} index={index} selectedIndex={selectedIndex} deletableIcon={deletableIcon} selectedElements={selectedElements} handleCheckboxChange={handleCheckboxChange} columnsMap={columnsMap} columns={columns} deletableFunction={deletableFunction} CellStyle={CellStyle} totalWidth={totalWidth} onClickRow={onClickRow} excludedKeys={excludedKeys}/>
+                                )} 
+                            </List>
+                            {waitingNewItems && renderSkeletons()}
                             {showAccRow && 
                             <Flex height={'45px'}zIndex={1000} fontSize={'.9em'}  bottom={0} bg='brand.gray_2' gap='20px'minWidth={`${totalWidth}px`}  borderRadius={'0 0 .5rem .5rem'} borderWidth={'0 1px 1px 1px'}  fontWeight={'medium'} alignItems={'center'} color='black' p='10px'>
                                 <Text flex={`${(columnsMap?.[accColumn || '']?.[1] || 180) / 10} 0 ${(columnsMap?.[accColumn || '']?.[1] || 180)}px`}>{accMessage}</Text>
@@ -347,18 +344,18 @@ const Table = ({ data, CellStyle, noDataMessage, requestSort, getSortIcon,  colu
 
 export default Table
  
-
-
-const RowComponent = ({row, index, selectedIndex, selectedElements, handleCheckboxChange, columnsMap, columns, deletableFunction, CellStyle, totalWidth, onClickRow, excludedKeys}:{row:any, index:number,selectedIndex:number, selectedElements:any, handleCheckboxChange:any, columnsMap:any, columns:string[], deletableFunction:any, CellStyle:any, totalWidth:number, onClickRow:any, excludedKeys:string[]}) => {
+//ROW STYLES
+const RowComponent = ({row, index, selectedIndex, selectedElements, handleCheckboxChange, columnsMap, columns, deletableFunction, deletableIcon, CellStyle, totalWidth, onClickRow, excludedKeys}:{row:any, index:number,selectedIndex:number, selectedElements:any, handleCheckboxChange:any, columnsMap:any, columns:string[], deletableFunction:any, deletableIcon:ReactElement | undefined, CellStyle:any, totalWidth:number, onClickRow:any, excludedKeys:string[]}) => {
     const [isHovering, setIsHovering] = useState<boolean>(false)
     const rowRef = useRef<HTMLDivElement>(null)
 
     return (<>
-      <Flex height={'45px'} ref={rowRef}    px='10px' data-index={index}  borderRadius={'.5rem'} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} position={'relative'}  gap='20px' minWidth={`${totalWidth}px`}  cursor={onClickRow?'pointer':'normal'} onClick={() => {if (onClickRow) onClickRow(row, index)}} key={`row-${index}`}   bg={((selectedElements || []).includes(index) || selectedIndex === index)?'white':'transparent'} alignItems={'center'}  fontSize={'.9em'} color='black'   _hover={{bg:((selectedElements || []).includes(index) || selectedIndex === index)?'white':'brand.hover_gray_white'}} 
+      <Flex height={'45px'} ref={rowRef}   px='10px' data-index={index}  borderRadius={'.5rem'} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} position={'relative'}  gap='20px' minWidth={`${totalWidth}px`}  cursor={onClickRow?'pointer':'normal'} onClick={() => {if (onClickRow) onClickRow(row, index)}} key={`row-${index}`}   bg={((selectedElements || []).includes(index) || selectedIndex === index)?'white':'transparent'} alignItems={'center'}  fontSize={'.9em'} color='black'   _hover={{bg:((selectedElements || []).includes(index) || selectedIndex === index)?'white':'brand.hover_gray_white'}} 
         borderWidth={'1px'}  borderColor={selectedIndex === index ? 'gray.200':'transparent'} transition={'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out'}    boxShadow={selectedIndex === index ? '0 0 3px 0px rgba(0, 0, 0, 0.1)':''} 
       > 
              
             {(selectedElements ) &&
+            
                 <MotionBox initial={false} animate={{opacity:(selectedElements && isHovering || (selectedElements && selectedElements.includes(index)))?1:0}} exit={{opacity:(selectedElements && isHovering || (selectedElements && selectedElements.includes(index)))?0:1}} position='absolute' top={0} w='24px' left={'-23px'} mt='2px' alignItems={'center'} h='100%' onClick={(e) => e.stopPropagation()} transition={{ duration: '.2' }} zIndex={10}> 
                      <CustomCheckbox id={`checkbox-${index}`}  onChange={() => handleCheckboxChange(index, !selectedElements.includes(index))} isChecked={selectedElements.includes(index)} />
                 </MotionBox>
@@ -375,9 +372,9 @@ const RowComponent = ({row, index, selectedIndex, selectedElements, handleCheckb
                             }
                     </Flex>}
                 </Fragment>))}
-        {deletableFunction && 
+            {deletableFunction && 
             <Flex width={'60px'}  onClick={(e) => e.stopPropagation()}>
-                <IconButton size={'sm'} color={'red.600'} bg='transparent' variant={'delete'} _hover={{bg:'red.100'}} icon={<HiTrash size={'20px'}/>} aria-label="delete-row" onClick={() => deletableFunction(row, index)}/>
+                <IconButton size={'sm'} bg='transparent' variant={deletableIcon?'common':'delete'}  icon={deletableIcon? deletableIcon: <HiTrash size={'20px'}/>} aria-label="delete-row" onClick={() => deletableFunction(row, index)}/>
             </Flex>
         }
     </Flex>

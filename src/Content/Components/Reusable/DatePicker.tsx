@@ -37,7 +37,7 @@ const DateRangePicker = ({ dateRangeString, onDateChange }: { dateRangeString: s
       setActiveStartDate(prevMonth)
     }
 
-    //DATE RANGE
+    //PARSE DATE RANGES
     const parseDateRangeString = (dateRangeStr: string) => {
       const [startStr, endStr] = dateRangeStr.split(" to ")
       const startDate = startStr ? new Date(startStr) : null
@@ -48,15 +48,15 @@ const DateRangePicker = ({ dateRangeString, onDateChange }: { dateRangeString: s
       const startStr = start ? start.toISOString().split("T")[0] : ""
       const endStr = end ? end.toISOString().split("T")[0] : ""
       return `${startStr} to ${endStr}`
-  }
+    }
 
-  const handleCalendarChange = (value: Date | [Date | null, Date | null] | null) => {
-      if (Array.isArray(value) && value[0] && value[1]) {
-          const [newStart, newEnd] = value as [Date, Date]  // Cast value to type [Date, Date]
-          setDateRange([newStart, newEnd])
-          onDateChange(formatDateRangeString(newStart, newEnd))
-      }
-  }
+    const handleCalendarChange = (value: Date | [Date | null, Date | null] | null) => {
+        if (Array.isArray(value) && value[0] && value[1]) {
+            const [newStart, newEnd] = value as [Date, Date]  // Cast value to type [Date, Date]
+            setDateRange([newStart, newEnd])
+            onDateChange(formatDateRangeString(newStart, newEnd))
+        }
+    }
 
     // DATE RANGE
     const initialDateRange = parseDateRangeString(dateRangeString)

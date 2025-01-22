@@ -1,7 +1,3 @@
-/* 
-  MAKE A CUSTOM COMPONENT TO UPLOAD IMAGES
-*/
-
 //REACT
 import { useState, useEffect } from 'react'
 //FRONT
@@ -10,13 +6,13 @@ import { Flex, Text, Box, Image, IconButton } from '@chakra-ui/react'
 import { RxCross2 } from 'react-icons/rx'
 import { useTranslation } from 'react-i18next'
 
-
 interface ImageUploadProps {
   id: number | string
   initialImage: string | undefined
   onImageUpdate: (file: File | null) => void
   maxImageSize?:number
 }
+
 //MAIN FUNCTION
 const ImageUpload = ({ id, initialImage, onImageUpdate, maxImageSize = 100}:ImageUploadProps) => {
 
@@ -79,7 +75,7 @@ const ImageUpload = ({ id, initialImage, onImageUpdate, maxImageSize = 100}:Imag
 
     //FRONT
     return (<> 
-    <input type="file" accept="image/jpeg, image/png, image/gif, image/svg+xml" onChange={handleImageChange} style={{display:'none'}} id={`image-upload-${id}`} />
+        <input type="file" accept="image/jpeg, image/png, image/gif, image/svg+xml" onChange={handleImageChange} style={{display:'none'}} id={`image-upload-${id}`} />
         <Flex onClick={handleContainerClick} width="100%" alignItems="center" justifyContent="space-between" height="100px" borderRadius=".5em"   bg='brand.gray_2' borderColor={'gray.200'} borderWidth={'1px'} cursor="pointer" position="relative" p='20px'>
           {!image && <Text textAlign={'center'} fontSize={'.9em'} color='brand.text_blue'>{t('DragImage')}</Text>}
           {image && (
@@ -91,14 +87,12 @@ const ImageUpload = ({ id, initialImage, onImageUpdate, maxImageSize = 100}:Imag
                     <Text fontSize=".8em" color='gray.600'>{((typeof(image) === 'string' ?2200:image.size) / 1024).toLocaleString('es-ES', {minimumFractionDigits:0 ,maximumFractionDigits:2})} KB</Text>
                 </Box>
               </Flex>
-
               <IconButton aria-label="Remove image" icon={<RxCross2  size='20px'/>} variant={'common'} size="sm" border='none' bg='transparent' onClick={handleRemoveImage} />
             </>
           )}
         </Flex>
       {error && <Text color="red.500" fontSize=".9em"> {error}</Text>}
-        </>
-    )
+      </>)
   }
 
   export default ImageUpload

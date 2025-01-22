@@ -1,11 +1,16 @@
 
+//REACT
 import { useState, useRef } from "react"
 import { useTranslation } from "react-i18next"
+//FRONT
 import { Box, Text, Icon, Flex, Grid, Portal, chakra, shouldForwardProp } from "@chakra-ui/react"
+import { motion, isValidMotionProp } from 'framer-motion'
+//COMPONENTS
+import EditText from "./EditText"
+//FUNCTIONS
 import useOutsideClick from "../../Functions/clickOutside"
-import { motion, isValidMotionProp, AnimatePresence } from 'framer-motion'
-
 //ICONS
+import { IconType } from "react-icons"
 import { 
     FaArrowRight, FaArrowLeft, FaArrowUp, FaArrowDown,  FaLongArrowAltRight, FaLongArrowAltLeft, FaLongArrowAltUp, FaLongArrowAltDown, FaCaretRight, FaCaretLeft, FaCaretUp,
     FaArrowCircleRight, FaArrowCircleLeft, FaArrowCircleUp, FaArrowCircleDown, FaCaretDown, FaChevronLeft, FaChevronRight,FaChevronDown,FaChevronUp,
@@ -22,10 +27,8 @@ import {
 } from 'react-icons/fa'
 import { IoSettingsSharp } from "react-icons/io5"
 
-import EditText from "./EditText"
-import { IconType } from "react-icons"
-  
 
+//ICONS MAP
 const iconsMap = {FaArrowRight, FaArrowLeft, FaArrowUp, FaArrowDown,  FaLongArrowAltRight, FaLongArrowAltLeft, FaLongArrowAltUp, FaLongArrowAltDown, FaCaretRight, FaCaretLeft, FaCaretUp,
     FaArrowCircleRight, FaArrowCircleLeft, FaArrowCircleUp, FaArrowCircleDown, FaCaretDown, FaChevronLeft, FaChevronRight,FaChevronDown,FaChevronUp,
     FaChartLine, FaMoneyBill, FaBriefcase, FaCreditCard, FaPiggyBank,FaFileContract, FaBriefcaseMedical,FaClipboardList,FaUserTie,FaHandHoldingUsd,FaMoneyCheck,FaStore,
@@ -39,14 +42,16 @@ const iconsMap = {FaArrowRight, FaArrowLeft, FaArrowUp, FaArrowDown,  FaLongArro
     FaUser, FaSmile, FaHandPaper, FaUserFriends, FaUsers, FaChild, FaEye, FaTrash, FaGlobe, FaQuestionCircle,
     FaTools, FaCogs, FaHeart, FaStar, FaExclamationTriangle, FaLightbulb, FaUnlock, FaShieldAlt, FaCode, IoSettingsSharp}
 
-
 //MOTION BOX
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
  
+//MAIN FUNCTION
 const IconsPicker = ({selectedIcon, setSelectedIcon, scrollRef, disabled = false}:{selectedIcon:string, setSelectedIcon:(value:string) => void, scrollRef?:any, disabled?:boolean}) => {
 
+    //CONSTANTS
     const { t } = useTranslation('settings')
 
+    //ICONS CATEGORIES DEFINITIONS
     const iconCategories: { [key: string]: { name: string, icon: IconType, description: string }[] } = {
         'ArrowIcons': [
             { name: 'FaArrowRight', icon: FaArrowRight, description: t('FaArrowRight') },
@@ -210,11 +215,11 @@ const IconsPicker = ({selectedIcon, setSelectedIcon, scrollRef, disabled = false
         (acc, [category, icons]) => {
           const matchedIcons = icons.filter(icon => 
             icon.description.toLowerCase().includes(searchTerm.toLowerCase())
-          );
+          )
           if (matchedIcons.length > 0) {
-            acc.push([category, matchedIcons]); // Mantener categoría e íconos filtrados
+            acc.push([category, matchedIcons])
           }
-          return acc;
+          return acc
         },
         [] as [string, {name:string, icon:IconType, description:string}[]][] 
       )

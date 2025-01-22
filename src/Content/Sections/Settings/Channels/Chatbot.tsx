@@ -79,6 +79,9 @@ const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotion
 //MAIN FUNCTION
 function Chatbot ({setChannelsData}:{setChannelsData:Dispatch<SetStateAction<ChannelsType[]>>}) {
 
+    const URL = import.meta.env.VITE_PUBLIC_API_URL
+
+
     //CONSTANTS
     const { getAccessTokenSilently } = useAuth0()
     const auth = useAuth()
@@ -255,7 +258,8 @@ function Chatbot ({setChannelsData}:{setChannelsData:Dispatch<SetStateAction<Cha
     //MEMOIZED ACTIONS BUTTON
     const memoizedActionsButton = useMemo(() => (<ActionsButton deleteAction={() => setShowConfirmDelete(true)} copyAction={duplicateChannel} />), [channelDict, chatBotData])
 
-    return(<>
+
+     return(<>
 
         {showConfirmDelete && memoizedDeleteBox}
         {showCode && memoizedShowCodeBox}
@@ -273,13 +277,11 @@ function Chatbot ({setChannelsData}:{setChannelsData:Dispatch<SetStateAction<Cha
                  </Box>
                 <Flex gap='12px'>
                     {memoizedActionsButton}
-                    <Button leftIcon={<IoChatbubbleEllipses/>}  onClick={() => window.open(`https://main.d1pm9d6glnzyf9.amplifyapp.com?organization_id=${auth.authData.organizationId}&webchat_uuid=${channelDict?.id}`, '_blank')} size='sm' variant={'main'}>{t('TryWeb')}</Button>  
+                    <Button leftIcon={<IoChatbubbleEllipses/>}  onClick={() => window.open(`${URL.endsWith('v2/') ?'https://main.d2i6gjv5j4jt4q.amplifyapp.com/':'https://main.d1pm9d6glnzyf9.amplifyapp.com'}?organization_id=${auth.authData.organizationId}&webchat_uuid=${channelDict?.id}`, '_blank')} size='sm' variant={'main'}>{t('TryWeb')}</Button>  
                     <Button leftIcon={<FaCode/>} onClick={() => setShowCode(true)} size='sm' variant={'main'}>{t('ShowCode')}</Button>  
                 </Flex>
             </Flex>
             <Box bg='gray.200' h='1px' w='100%'/>
-
-
         </Box>
 
         <Flex flex='1' overflow={'hidden'} pr='2vw' ref={containerRef} position='relative'> 

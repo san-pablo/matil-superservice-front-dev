@@ -8,9 +8,10 @@ import EditText from './EditText'
 import ImageUpload from './ImageUpload'
 import ColorPicker from '../Once/ColorPicker'
 //ICONS
-import { IoMdArrowRoundForward, } from 'react-icons/io'
+import { IoMdArrowRoundForward } from 'react-icons/io'
 import { FaQuestionCircle } from "react-icons/fa"
 
+//EDIT STRINGS
 export const EditStr = ({ title, value, setValue, description, placeholder, isTextArea = false}:{value:string, setValue:(value:string) => void, title:string, description?:string, placeholder?:string, isTextArea?:boolean}) => {
         
     const [hoverDescription, setHoverDescription] = useState<boolean>(false)
@@ -30,6 +31,7 @@ export const EditStr = ({ title, value, setValue, description, placeholder, isTe
     </>)
 }
 
+//EDIT BOOLEANS
 export const EditBool = ({value, setValue, title, description}:{value:boolean, setValue:(value:boolean) => void,title:string, description?:string}) => {
     const [hoverDescription, setHoverDescription] = useState<boolean>(false)
 
@@ -48,7 +50,7 @@ export const EditBool = ({value, setValue, title, description}:{value:boolean, s
     </>)
 }
 
- 
+//EDIT COLORS
 export const EditColor = ({title, value, setValue,description, isGradient = false, containerRef}:{value:string[] | string, setValue:(value:string[] | string) => void, title:string, description?:string, isGradient?:boolean, containerRef:RefObject<HTMLDivElement>}) => {
     const [hoverDescription, setHoverDescription] = useState<boolean>(false)
 
@@ -78,6 +80,7 @@ export const EditColor = ({title, value, setValue,description, isGradient = fals
     </>)
 }   
  
+//EDIT IMAGES
 export const EditImage = ({title, value, setValue, description, maxImageSize = 2000}:{value:string, setValue:(value:string) => void,  title:string, description?:string, maxImageSize?:number }) => {
     const [hoverDescription, setHoverDescription] = useState<boolean>(false)
 
@@ -96,7 +99,7 @@ export const EditImage = ({title, value, setValue, description, maxImageSize = 2
     </>)
 }
 
- 
+//EDIT NUMBERS
 export const EditInt = ({title,value, setValue, description, max, min, unit = 'px'}:{ value:string | number, setValue:(val:string | number) => void, title:string, description?:string, max:number, min:number, unit?:string}) => {
     const [hoverDescription, setHoverDescription] = useState<boolean>(false)
 

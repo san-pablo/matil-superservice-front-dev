@@ -16,13 +16,9 @@ import Table from "../../Components/Reusable/Table"
 import FilterButton from "../../Components/Reusable/FilterButton"
 import { CreateBox, CreateFolder, CellStyle } from "./Utils"
 //ICONS
-import { IconType } from "react-icons"
-import { FaFolder, FaPlus, FaLock, FaFilePdf, FaFileLines, FaFilter } from "react-icons/fa6"
-import { IoBook } from "react-icons/io5"
+import { FaFolder, FaPlus } from "react-icons/fa6"
 import { PiSidebarSimpleBold } from "react-icons/pi"
-import { BiWorld } from "react-icons/bi"
-import { PiDesktopTowerFill } from "react-icons/pi"
-//TYPING
+ //TYPING
 import { ContentData, Folder } from "../../Constants/typing"
 import { useAuth0 } from "@auth0/auth0-react"
   
@@ -32,8 +28,7 @@ interface ContentFilters {
     page_index:number
     type:sourcesType[]
     search?:string
-    sort_by?:string
-    order?:'asc' | 'desc'
+    sort?:{column:string, order:'asc' | 'desc'}
 }
 
  
@@ -48,14 +43,7 @@ function Content ({folders, handleFolderUpdate, setHideFunctions}:{folders:Folde
     const navigate = useNavigate()
     const { t } = useTranslation('knowledge')
     const columnsContentMap:{[key:string]:[string, number]} = {title: [t('title'), 200], type: [t('type'), 150], language: [t('language'), 150], is_available_to_tilda:[t('is_available_to_tilda'), 150], created_at: [t('created_at'), 180], updated_at: [t('updated_at'), 180], created_by:[t('created_by'), 150],updated_by:[t('updated_by'), 150], tags:[t('tags'), 300], public_article_help_center_collections:[t('public_article_help_center_collections'), 300], public_article_status:[t('public_article_status'), 150], description:[t('description'),200]}
-    const logosMap:{[key in 'internal_article' | 'public_article' | 'folder' | 'pdf' | 'snippet' |  'website']: [string, IconType]} = { 
-        'internal_article':[ t('internal_article'), FaLock],
-        'public_article':[ t('public_article'), IoBook ], 
-        'pdf':[ t('pdf'), FaFilePdf], 
-        'snippet':[ t('snippet'), FaFileLines],
-        'folder':[ t('folder'), FaFolder],
-        'website':[ t('website'), BiWorld]
-    }
+   
     const folderUuid = useLocation().pathname.split('/')[3] || null
     const findFolderByUuid = (folders: Folder[], folderUuid: string | null): Folder | null => {
         if (folderUuid === null) return null
@@ -103,9 +91,6 @@ function Content ({folders, handleFolderUpdate, setHideFunctions}:{folders:Folde
     const fetchClientDataWithFilter = async (filters:ContentFilters) => {
         setFilters(filters)
         const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`, setValue:setContentData, getAccessTokenSilently,setWaiting:setWaitingInfo, params:filters, auth})
-        if (response?.status === 200) {            
-            session.dispatch({ type: 'UPDATE_CONTENT_TABLE', payload: {data:response.data, filters:filters} })
-        }
     }
 
    //SELECT CHANNELS LOGIC
@@ -117,12 +102,12 @@ function Content ({folders, handleFolderUpdate, setHideFunctions}:{folders:Folde
 
     //SORT LOGIC
     const requestSort = (key: string) => {
-        const direction = (filters?.sort_by === key && filters?.order === 'asc') ? 'desc' : 'asc';
-        fetchClientDataWithFilter({...filters, sort_by: key, order: direction as 'asc' | 'desc'})
+        const direction = (filters?.sort?.column === key && filters?.sort.order === 'asc') ? 'desc' : 'asc';
+        fetchClientDataWithFilter({...filters, sort: {column: key, order: direction as 'asc' | 'desc'}})
     }
     const getSortIcon = (key: string) => {
-        if (filters?.sort_by === key) { 
-            if (filters?.order === 'asc') return true
+        if (filters?.sort?.column === key) { 
+            if (filters?.sort.order === 'asc') return true
             else return false
         }
         else return null    
@@ -170,7 +155,7 @@ function Content ({folders, handleFolderUpdate, setHideFunctions}:{folders:Folde
                 <Box width={'350px'}> 
                     <EditText  filterData={(text:string) => {fetchClientDataWithFilter({...filters, search:text})}}  value={filters?.search || ''} setValue={(value:string) => setFilters(prev => ({...prev, search:value}))} searchInput={true}/>
                 </Box>
-                <FilterButton selectList={Object.keys(logosMap)} itemsMap={logosMap} selectedElements={filters.type} setSelectedElements={(element) => toggleChannelsList(element as sourcesType)} icon={PiDesktopTowerFill} initialMessage={t('SourceFilterMessage')}/>
+                <FilterButton selectedSection='article_status' selectedElements={filters.type} setSelectedElements={(element) => toggleChannelsList(element as sourcesType)}/>
              </Flex>
 
             <Flex  mt='2vh' mb='2vh' justifyContent={'space-between'} alignItems={'end'}>

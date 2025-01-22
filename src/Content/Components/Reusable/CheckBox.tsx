@@ -1,9 +1,5 @@
-/*
-    CUSTOM CHECKBOX
-*/
-
 //FRONT
-import { Flex, Box } from '@chakra-ui/react'
+import { Flex } from '@chakra-ui/react'
 import '../styles.css'
 
 //MAIN FUNCTION

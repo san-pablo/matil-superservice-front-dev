@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next"
 import { useAuth } from "../../../../AuthContext"
 import { useAuth0 } from "@auth0/auth0-react"
 import { useLocation, useNavigate } from "react-router-dom"
-
 //FETCH DATA
 import fetchData from "../../../API/fetchData"
 //FRONT
@@ -13,15 +12,14 @@ import { Text, Box, Flex, Button, Icon, Skeleton, IconButton, Portal, chakra, sh
 import EmojiPicker, { EmojiClickData } from 'emoji-picker-react'
 //COMPONENTS
 import EditText from "../../../Components/Reusable/EditText"
-import EditStructure from "../../../Components/Reusable/EditStructure"
 import ConfirmBox from "../../../Components/Reusable/ConfirmBox"
 import LoadingIconButton from "../../../Components/Reusable/LoadingIconButton"
 import TestChat from "./TestChat"
-import SaveChanges from "../../../Components/Reusable/SaveChanges"
 import SectionSelector from "../../../Components/Reusable/SectionSelector"
 import ActionsButton from "../../../Components/Reusable/ActionsButton"
 import VariableTypeChanger from "../../../Components/Reusable/VariableTypeChanger"
 import { EditBool, EditStr } from "../../../Components/Reusable/EditSettings"
+import FilterManager from "../../../Components/Reusable/ManageFilters"
 //FUNCTIONS
 import useOutsideClick from "../../../Functions/clickOutside"
 import determineBoxStyle from "../../../Functions/determineBoxStyle"
@@ -34,7 +32,7 @@ import { HiTrash } from "react-icons/hi2"
 import { RiBookMarkedFill } from "react-icons/ri"
 import { PiListBulletsBold } from "react-icons/pi"
 //TYPING
-import { MatildaConfigProps, FieldAction, FunctionTableData, ConfigProps } from "../../../Constants/typing"
+import { MatildaConfigProps, FunctionTableData, ConfigProps } from "../../../Constants/typing"
    
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
 
@@ -46,37 +44,37 @@ const TildaConfig = ({setConfigsData}:{setConfigsData:Dispatch<SetStateAction<Co
     const navigate = useNavigate()
     const {  getAccessTokenSilently } = useAuth0()
     const { t } = useTranslation('settings')
-    const operationTypesDict = {'user_id':['eq', 'neq',  'exists'], 'group_id':['eq', 'neq',  'exists'], 'channel_type':['eq', 'neq', 'exists'], 'title':['eq', 'neq', 'exists'], 'theme':['eq', 'neq', 'exists'], 'urgency_rating':['eq', 'neq', 'leq', 'geq', 'exists'], 'status':['eq', 'neq'], 'unseen_changes':['eq', 'exists'], 'tags':['contains', 'ncontains', 'exists'], 'is_matilda_engaged':['eq', 'exists'],'is_csat_offered':['eq', 'exists'],
+    const operationTypesDict = {'user_id':['eq', 'neq',  'exists'], 'team_uuid':['eq', 'neq',  'exists'], 'channel_type':['eq', 'neq', 'exists'], 'title':['eq', 'neq', 'exists'], 'theme':['eq', 'neq', 'exists'], 'urgency_rating':['eq', 'neq', 'leq', 'geq', 'exists'], 'status':['eq', 'neq'], 'unseen_changes':['eq', 'exists'], 'tags':['contains', 'ncontains', 'exists'], 'is_matilda_engaged':['eq', 'exists'],'is_csat_offered':['eq', 'exists'],
     'contact_business_id':['eq', 'neq',  'exists'], 'name':['eq', 'neq', 'contains', 'ncontains', 'exists'], 'language':['eq', 'neq',  'exists'], 'rating':['eq','neq', 'leq', 'geq', 'exists'], 'notes':['eq', 'neq', 'contains', 'ncontains', 'exists'], 'labels':['contains', 'ncontains', 'exists'],
     'domain':['eq', 'neq', 'contains', 'ncontains', 'exists'], 'hours_since_created':['eq', 'neq', 'leq', 'geq',  'exists'], 'hours_since_updated':['eq', 'neq', 'leq', 'geq',   'exists']
     }
     const typesMap = {'bool':['eq', 'exists'], 'int':['eq','neq', 'leq', 'geq', 'exists'], 'float':['eq','neq', 'leq', 'geq', 'exists'],'str': ['eq', 'neq', 'contains', 'ncontains', 'exists'], 'timestamp':['eq', 'neq', 'leq', 'geq',  'exists']}
+    
+    
     const newConfig:MatildaConfigProps = {
         uuid:'',
         name:t('NewConfig'),
         description:t('NewConfig'),
 
-        base_system_prompt:'', 
         introduce_assistant:true, 
         assistant_name:'Tilda', 
 
         tone: '',
         allowed_emojis: [],
         allow_agent_transfer:true,
+        direct_transfer:true,
         business_hours_agent_transfer_message:'',
         non_business_hours_agent_transfer_message:'',
         allow_sources:true, 
-        help_center_id:'', 
-        all_conditions: [],
-        any_conditions: [],
+ 
+        conversation_filters:{logic:'AND', groups:[]},
+        contact_filters:{logic:'AND', groups:[]},
+        contact_business_filters:{logic:'AND', groups:[]},
+        transfer_to:'',
 
         delay_response:false,
         minimum_seconds_to_respond: 0,
         maximum_seconds_to_respond: 5,
-
-        channel_ids:[],
-        functions_uuids:[],
-        help_centers_ids:[]
     }
     const configUuid:string = location.split('/')[location.split('/').length - 1]
     const sectionsMap:{[key:string]:[string, ReactElement]} = {'mood':[t('mood'), <FaRegFaceGrin/>], 'instructions':[t('instructions'), <FaSitemap/>], 'functions':[t('functions'), <FaCode/>], 'knowledge':[t('knowledge'), <RiBookMarkedFill/>] }
@@ -143,36 +141,8 @@ const TildaConfig = ({setConfigsData}:{setConfigsData:Dispatch<SetStateAction<Co
     const deleteEmoji = (index: number) => {setConfigDict(prev => ({...prev as MatildaConfigProps, allowed_emojis: (prev?.allowed_emojis || []).filter((_, i) => i !== index)}))}
     const handleCheckboxChange = (key: any, value: boolean) => {setConfigDict(prev => ({...prev as MatildaConfigProps, [key]: value}))}
   
-    const addElement = (type: 'all_conditions' | 'any_conditions') => {
-        const newElement = {motherstructure:'contact', is_customizable:false, name:'name', op:'eq', value:''}
-       setConfigDict((prev) => {
-            if (prev) return { ...prev , [type]: [...prev?.[type] || [], newElement]}
-            else return prev
-        })
-    }
-    //DELETE A CONDITION OR AN ACTION
-    const removeElement = (type: 'all_conditions' | 'any_conditions', index: number) => {
-        setConfigDict((prev) => {
-            if (!prev) return prev; // Si no hay estado previo, simplemente lo devolvemos
-    
-            return {
-                ...prev, // Copiar el estado previo
-                [type]: prev[type].filter((_, i) => i !== index), // Crear una nueva lista sin el elemento en `index`
-            };
-        });
-    };
-    
-    //EDIT A CONDITION OR AN ACTION
-    const editElement = (type:'all_conditions' | 'any_conditions' , index:number, updatedCondition:FieldAction) => {
-       setConfigDict((prev) => {
-            if (prev) {
-                const lastConditionList = [...prev[type]]
-                const updatedConditionList = [...lastConditionList.slice(0, index), updatedCondition, ...lastConditionList.slice(index + 1)]
-                return {...prev, [type]: updatedConditionList}
-            }
-            else return prev
-        })
-    }
+  
+   
 
     //EMOJI COMPONENT
     const EmojiComponent = ({emoji, index}:{emoji:string, index:number}) => {
@@ -212,7 +182,7 @@ const TildaConfig = ({setConfigsData}:{setConfigsData:Dispatch<SetStateAction<Co
             setShowAddHelpCenters(false)
         }
 
-        const filteredHelpCenters = (helpCentersData || []).filter(helpCenter => {return !configDict?.help_centers_ids.some(id => id === helpCenter.id)})
+        const filteredHelpCenters = (helpCentersData || []).filter(helpCenter => {return !configDict?.help_centers_ids?.some(id => id === helpCenter.id)})
         return (<> 
             <Box p='15px' > 
                 <Text  fontSize='1.2em' fontWeight={'medium'}>{t('AddHelpCenter')}</Text>
@@ -242,7 +212,7 @@ const TildaConfig = ({setConfigsData}:{setConfigsData:Dispatch<SetStateAction<Co
             setShowAddFunctions(false)
         }
 
-        const filteredFunctions = (functionsData || []).filter(func => {return !configDict?.functions_uuids.some(id => id === func.uuid)})
+        const filteredFunctions = (functionsData || []).filter(func => {return !configDict?.functions_uuids?.some(id => id === func.uuid)})
         return (<> 
             <Box p='15px' > 
                 <Text  fontSize='1.2em' fontWeight={'medium'}>{t('AddConfig')}</Text>
@@ -426,6 +396,7 @@ const TildaConfig = ({setConfigsData}:{setConfigsData:Dispatch<SetStateAction<Co
 const memoizedActionsButton = useMemo(() => (<ActionsButton deleteAction={() => setShowDelete(true)} copyAction={duplicateConfig} />), [configDict])
 
 
+console.log(configDict)
 return(   
     <>
     {testConfigId && memoizedTestChat}
@@ -484,10 +455,6 @@ return(
                                         </Skeleton>
                                     ))}
                                 </Flex>
-                                
-                                <Skeleton isLoaded={configDict !== null} style={{marginTop:'1vh'}}> 
-                                    <EditStr isTextArea placeholder={`${t('Description')}...`} title={t('Prompt')} description={t('PromptDes')} value={configDict?.base_system_prompt || ''} setValue={(value) => setConfigDict(prev => ({ ...prev as MatildaConfigProps, 'base_system_prompt': value }))}/>
-                                </Skeleton> 
 
                                 <Text mt='3vh' fontSize={'.9em'} fontWeight={'semibold'}>{t('AvailableEmojis')}</Text>
                                 <Skeleton isLoaded={configDict !== null} style={{marginTop:'1vh'}}> 
@@ -513,8 +480,13 @@ return(
                                     <Box mt='1vh'> 
                                         <EditBool title={t('AllowAgentTransfer')} description={t('AllowAgentTransferDes')} value={configDict?.allow_agent_transfer || false} setValue={(value) => setConfigDict((prev) => ({...prev as MatildaConfigProps, allow_agent_transfer:value}))}/>
                                     </Box>
+
+                                    <Box mt='1vh'> 
+                                        <EditBool title={t('DirectTransfer')} description={t('DirectTransferDes')} value={configDict?.direct_transfer || false} setValue={(value) => setConfigDict((prev) => ({...prev as MatildaConfigProps, direct_transfer:value}))}/>
+                                    </Box>
+
                                     <Box mt='1vh' mb='1vh'> 
-                                        {configDict?.allow_agent_transfer && <>
+                                        {(configDict?.allow_agent_transfer && configDict?.direct_transfer) && <>
 
                                             <EditStr placeholder={`${t('Message')}...`} title={t('BusinessHourMessage')} value={configDict?.business_hours_agent_transfer_message} setValue={(value) => setConfigDict(prev => ({ ...prev as MatildaConfigProps, 'business_hours_agent_transfer_message': value }))}/>
                                             <Box mt='1vh'> 
@@ -522,8 +494,8 @@ return(
                                             </Box>
                                         </>}
                                     </Box>
-                                    <EditBool title={t('AnswerInmediatly')} description={t('AnswerInmediatlyDes')} value={configDict?.delay_response || false} setValue={(value) => setConfigDict((prev) => ({...prev as MatildaConfigProps, delay_response:value}))}/>
                                     
+                                    <EditBool title={t('AnswerInmediatly')} description={t('AnswerInmediatlyDes')} value={configDict?.delay_response || false} setValue={(value) => setConfigDict((prev) => ({...prev as MatildaConfigProps, delay_response:value}))}/>
                                     {configDict?.delay_response && 
                                         <Flex gap='20px' mt='1vh'> 
                                             <Box> 
@@ -536,43 +508,15 @@ return(
                                             </Box>
                                         </Flex>}
 
-                                    <Text mt='3vh' fontWeight={'semibold'} >{t('ContactConditions')}</Text>
-                
-                            
-                                    <Text mt='1vh' fontSize={'.9em'} fontWeight={'medium'}>{t('contact_all_conditions')}</Text>
-
-                                    <Flex flexWrap={'wrap'} gap='10px' mt='1vh'> 
-                                        {configDict?.all_conditions.map((condition, index) => (<> 
-                                            <Flex alignItems={'center'}  key={`all-automation-${index}`}  gap='10px'>
-                                                <Box flex={'1'}> 
-                                                    <EditStructure excludedFields={['conversation', 'contact_business']} deleteFunc={() => removeElement('all_conditions', index)} typesMap={typesMap} data={condition} setData={(newCondition) => {editElement('all_conditions', index, newCondition)}} scrollRef={containerRef} operationTypesDict={operationTypesDict}/>
-                                                </Box>
-                                            </Flex>
-                                            {index < configDict?.all_conditions.length -1 && <Flex bg='brand.gray_2' p='7px' borderRadius={'.5rem'} fontWeight={'medium'}>{t('AND')}</Flex>}
-                                        </>))}
-                                        <IconButton variant={'common'} aria-label='add' icon={<FaPlus/>} size='sm'  onClick={() => addElement('all_conditions')}/>
-
-                                    </Flex>
-                        
-
-                            
-                                    <Text  mt='2vh'  fontSize={'.9em'}  fontWeight={'medium'}>{t('contact_any_conditions')}</Text>
-
-                                    <Flex flexWrap={'wrap'} gap='10px' mt='1vh'> 
-
-                                    {configDict?.any_conditions.map((condition, index) => (<> 
-                                        <Flex  alignItems={'center'} key={`any-automation-${index}`} gap='10px'>
-                                            <Box flex={'1'}> 
-                                                <EditStructure excludedFields={['conversation', 'contact_business']} deleteFunc={() => removeElement('any_conditions', index)} typesMap={typesMap} data={condition} setData={(newCondition) => {editElement('any_conditions', index, newCondition)}} scrollRef={containerRef} operationTypesDict={operationTypesDict}/>
-                                            </Box>
-                                        </Flex>
-                                        {index < configDict?.any_conditions.length -1 && <Flex bg='brand.gray_2' p='7px' borderRadius={'.5rem'} fontWeight={'medium'}>{t('OR')}</Flex>}
-                                        </>
-                                    ))}
-                                    <IconButton variant={'common'} aria-label='add' icon={<FaPlus/>} size='sm'  onClick={() => addElement('any_conditions')}/>
-                                    </Flex>
-                            
-
+                                    <Text mt='3vh' mb='1vh' fontWeight={'semibold'} >{t('ConversationConditions')}</Text>
+                                    {configDict?.conversation_filters && <FilterManager excludedFields={['contacts', 'contact_businesses']} filters={configDict?.conversation_filters} setFilters={(filters) => setConfigDict(prev => ({...prev as any, conversation_filters:filters}))} operationTypesDict={operationTypesDict} typesMap={typesMap} scrollRef={containerRef}/>}
+ 
+                                    <Text mt='3vh' mb='1vh'  fontWeight={'semibold'} >{t('ContactConditions')}</Text>
+                                    {configDict?.contact_filters && <FilterManager excludedFields={['conversations', 'contact_businesses']} filters={configDict?.contact_filters} setFilters={(filters) => setConfigDict(prev => ({...prev as any, contact_filters:filters}))} operationTypesDict={operationTypesDict} typesMap={typesMap} scrollRef={containerRef}/>}
+ 
+                                    <Text mt='3vh' mb='1vh'  fontWeight={'semibold'} >{t('BusinessConditions')}</Text>
+                                    {configDict?.contact_business_filters && <FilterManager excludedFields={['conversations', 'contacts']} filters={configDict?.contact_business_filters} setFilters={(filters) => setConfigDict(prev => ({...prev as any, contact_business_filters:filters}))} operationTypesDict={operationTypesDict} typesMap={typesMap} scrollRef={containerRef}/>}
+ 
                                 </>)
 
                             case 'functions':
@@ -580,7 +524,7 @@ return(
     
                                     {configDict?.functions_uuids?.length !== 0 && <Flex mb='2vh' gap='15px' alignItems={'center'} justifyContent={'space-between'}> 
                                         <Text   fontWeight={'semibold'} >{t('AvailableFunctions')}</Text>
-                                       <Button variant={'main'} minW={0} display={'inline-flex'} leftIcon={<FaPlus/>} isDisabled={configDict?.functions_uuids.length === functionsData?.length || configUuid === 'new'} onClick={() => setShowAddFunctions(true)} size='sm' >{t('AddFunctions')}</Button>
+                                       <Button variant={'main'} minW={0} display={'inline-flex'} leftIcon={<FaPlus/>} isDisabled={configDict?.functions_uuids?.length === functionsData?.length || configUuid === 'new'} onClick={() => setShowAddFunctions(true)} size='sm' >{t('AddFunctions')}</Button>
                                     </Flex>}
                                         {configDict?.functions_uuids?.length === 0 ? 
                                         <Flex  flexDir={'column'}> 
@@ -612,7 +556,7 @@ return(
  
                                     <Flex mb='2vh' gap='15px' alignItems={'center'} justifyContent={'space-between'}> 
                                         <Text   fontWeight={'semibold'} >{t('HelpCentersToUse')}</Text>
-                                        {configDict?.help_centers_ids?.length !== 0 && <Button variant={'main'}  leftIcon={<FaPlus/>} isDisabled={configDict?.help_centers_ids.length === helpCentersData?.length ||  configUuid === 'new'}  onClick={() => setShowAddHelpCenters(true)} size='sm' >{t('AddHelpCenters')}</Button>}
+                                        {configDict?.help_centers_ids?.length !== 0 && <Button variant={'main'}  leftIcon={<FaPlus/>} isDisabled={configDict?.help_centers_ids?.length === helpCentersData?.length ||  configUuid === 'new'}  onClick={() => setShowAddHelpCenters(true)} size='sm' >{t('AddHelpCenters')}</Button>}
                                     </Flex>
 
                                     <EditBool title={t('UseHelpCenter')} description={t('UseHelpCenterDes')} value={configDict?.allow_sources || false} setValue={(value) => setConfigDict((prev) => ({...prev as MatildaConfigProps, allow_sources:value}))}/>

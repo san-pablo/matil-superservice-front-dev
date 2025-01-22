@@ -1,7 +1,3 @@
-/* 
-    CUSTOM SELECTOR
-*/
-
 //REACT
 import { useState, useRef, RefObject, CSSProperties } from 'react'
 //FRONT
@@ -79,7 +75,7 @@ const CustomSelect = <T extends string | number>({options, selectedItem, setSele
             <AnimatePresence> 
                 {showList && 
                     <Portal>
-                        <MotionBox  id="custom-portal"  initial={{ opacity: 0, marginTop:-10, marginBottom:-10 }} animate={{ opacity: 1, marginTop: 2,marginBottom:0 }}  exit={{ opacity: 0,marginTop:-10,marginBottom:-10}} transition={{ duration: '.2', ease: 'easeOut'}}
+                        <MotionBox id='custom-portal' initial={{ opacity: 0, marginTop:-10, marginBottom:-10 }} animate={{ opacity: 1, marginTop: 2,marginBottom:0 }}  exit={{ opacity: 0,marginTop:-10,marginBottom:-10}} transition={{ duration: '.2', ease: 'easeOut'}}
                         top={boxStyle.top} fontSize={fontSize} bottom={boxStyle.bottom}left={boxStyle.left} width={boxStyle.width} maxH='40vh' overflow={'scroll'} gap='10px' ref={boxRef} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000}   position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
                             
                             {includeNull && 
@@ -94,7 +90,7 @@ const CustomSelect = <T extends string | number>({options, selectedItem, setSele
                                 <Flex key={`${selectedItem}-option-${index}`} px='10px' bg={disabledOptions?.includes(option)?'gray.200':'transparent'}   py='7px' cursor={disabledOptions?.includes(option)?'not-allowed':'pointer'} justifyContent={'space-between'} alignItems={'center'} color={selectedItem === option?'brand.text_blue':'black'} _hover={{bg:disabledOptions?.includes(option)?'gray.200':'brand.hover_gray'}}
                                     onClick={(e) => {if (!disabledOptions?.includes(option)) {e.stopPropagation();setSelectedItem(option as T); setShowList(false); setTimeout( () => updateData(), 0)} }}>
                                     <Flex gap='10px' alignItems={'center'} > 
-                                        {iconsMap && <>{(typeof(iconsMap[option][1]) === 'string') ? <Text>{iconsMap[option]?.[1] as string}</Text>:<Icon  color={iconsMap?.[option]?.[2]?iconsMap?.[option]?.[2]:'black'} as={iconsMap?.[option]?.[1] as IconType}/>}</>}
+                                        {iconsMap && <>{(typeof(iconsMap[option][1]) === 'string') ? <Text>{iconsMap[option]?.[1] as string}</Text>:<Icon   color={selectedItem === option?'brand.text_blue':iconsMap?.[option]?.[2]?iconsMap?.[option]?.[2]:'black'} as={iconsMap?.[option]?.[1] as IconType}/>}</>}
                                         <Text>{iconsMap?iconsMap[option][0]:labelsMap?labelsMap[option]:option}</Text>
                                     </Flex>
                                     {selectedItem === option && <Icon as={FaCheck}/>}

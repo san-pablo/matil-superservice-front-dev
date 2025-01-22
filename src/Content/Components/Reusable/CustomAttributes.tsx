@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../../AuthContext'
 import { useTranslation } from 'react-i18next'
+import { useAuth0 } from '@auth0/auth0-react'
 //FETCH DATA
 import fetchData from '../../API/fetchData'
 //COMPONENTS
@@ -9,24 +10,21 @@ import CustomSelect from './CustomSelect'
 import EditText from './EditText'
 //FRONT
 import { Text, Skeleton, Flex, NumberInput, NumberInputField } from '@chakra-ui/react'
-import { useAuth0 } from '@auth0/auth0-react'
- 
 //TYPING
-type variables = 'bool' | 'int' | 'float' | 'str' | 'timestamp'
-type fieldConfigType = {name:string, type:variables, default:string}
+import { CDAsType } from '../../Constants/typing'
 
 //MAIN FUNCION
-const CustomAttributes = ({motherstructureType, customAttributes, updateCustomAttributes, disabled = false}:{motherstructureType:'conversation' | 'contact' | 'contact_business', customAttributes:{[name:string]:any}, updateCustomAttributes:(attributeName:string, value:any) => void, disabled?:boolean}) => {
+const CustomAttributes = ({motherstructureType, customAttributes, updateCustomAttributes, disabled = false}:{motherstructureType:'conversations' | 'contacts' | 'contact_businesses', customAttributes:{[name:string]:any}, updateCustomAttributes:(attributeName:string, value:any) => void, disabled?:boolean}) => {
 
     //CONSTANTS
     const auth = useAuth()
     const { getAccessTokenSilently } = useAuth0()
 
     //GET ALL ATTRIBUTES
-    const [allAtributtes, setAllAttributes] = useState<{conversation:fieldConfigType[], contact:fieldConfigType[], contact_business:fieldConfigType[]} | null>(null)
+    const [allAtributtes, setAllAttributes] = useState<CDAsType[] | null>(null)
     useEffect(() => {        
         const fetchInitialData = async() => {
-            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/custom_attributes`,getAccessTokenSilently, setValue:setAllAttributes, auth})
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/cdas`,getAccessTokenSilently, setValue:setAllAttributes, auth})
         }
         if (auth.authData.customAttributes) setAllAttributes(auth.authData.customAttributes)
         else fetchInitialData()
@@ -36,21 +34,22 @@ const CustomAttributes = ({motherstructureType, customAttributes, updateCustomAt
     return (
     <Skeleton isLoaded={allAtributtes !== null} style={{width:'100%'}}> 
         {allAtributtes && <>
-            {(allAtributtes?.[motherstructureType] || []).map((att, index) => (
-            <Flex  key={`cusotm-attributre-${index}`}  mt='2vh' alignItems={'center'} gap='10px'>
-                <Text  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}  flex='1' fontWeight={'medium'} fontSize='.8em' color='gray.600' >{att.name}</Text>
-                <Flex  flex='2' w='100%'> 
-                    <InputType key={`custom-attribute-${index}`} disabled={disabled} inputType={att.type} value={customAttributes?.[att.name] !== null?  customAttributes?.[att.name]:att.default} setValue={(value:any) => updateCustomAttributes(att.name, value)} />
-                </Flex>
-            </Flex>
-            ))}
+            {(allAtributtes?.filter(att => att.structure === motherstructureType) || []).map((att, index) => (<>
+                {!att.is_archived && 
+                <Flex key={`cusotm-attributre-${index}`}  mt='2vh' alignItems={'center'} gap='10px'>
+                    <Text  whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}  flex='1' fontWeight={'medium'} fontSize='.8em' color='gray.600' >{att.name}</Text>
+                    <Flex  flex='2' w='100%'> 
+                        <InputType key={`custom-attribute-${index}`} disabled={disabled} inputType={att.type} value={customAttributes?.[att.uuid] !== null?  customAttributes?.[att.uuid]:''} setValue={(value:any) => updateCustomAttributes(att.uuid, value)} />
+                    </Flex>
+                </Flex>}
+            </>))}
         </>}
     </Skeleton>)
 }
 
 export default CustomAttributes
 
-
+//INPUT TYPES
 const InputType = ({inputType, value, setValue, disabled}:{inputType:string,value:string, setValue:(value:any) => void, disabled:boolean}, ) => {
     
     //USEFUL CONSTANTS

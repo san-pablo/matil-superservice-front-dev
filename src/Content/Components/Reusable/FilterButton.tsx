@@ -1,10 +1,5 @@
-/*
-    MAKE A FILTER BUTTON LIKE INTERCOM.
-*/
-
-
 //REACT
-import { useState, useRef, useEffect, RefObject, CSSProperties, ReactElement } from 'react'
+import { useState, useRef, RefObject, CSSProperties, ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../AuthContext'
 
@@ -18,22 +13,24 @@ import determineBoxStyle from '../../Functions/determineBoxStyle'
 import { IconType } from 'react-icons'
 import { FaCheck } from "react-icons/fa"
 import { IoMdAlert, IoIosCheckmarkCircle } from "react-icons/io"
-import { FaBookmark } from "react-icons/fa6"
+import { FaBookmark, FaFolder, FaLock, FaFilePdf, FaFileLines } from "react-icons/fa6"
 import { PiTrayArrowDownFill, PiTrayArrowUpFill } from "react-icons/pi"
 import { HiMiniEllipsisHorizontalCircle } from "react-icons/hi2"
 import { BiSolidPhoneCall } from "react-icons/bi"
 import { IoMdMail, IoLogoWhatsapp } from "react-icons/io"
-import { IoChatboxEllipses, IoLogoGoogle, IoPerson } from "react-icons/io5"
+import { IoChatboxEllipses, IoLogoGoogle, IoPerson, IoBook } from "react-icons/io5"
 import { AiFillInstagram } from "react-icons/ai"
 import { FaPhone } from "react-icons/fa"
 import { FaStar, FaCalendar, FaLanguage } from "react-icons/fa6"
 import { PiDesktopTowerFill } from 'react-icons/pi'
+import { BiWorld } from "react-icons/bi"
+
 //TYPING
 import { languagesFlags } from '../../Constants/typing'
 
 //TYPING
 interface FilterButtonProps {
-    selectedSection:'theme' | 'urgency_rating' | 'status' | 'created_at' | 'updated_at' | 'user_id' | 'channel_type' | 'language'
+    selectedSection:'theme_uuid' | 'urgency_rating' | 'status' | 'created_at' | 'updated_at' | 'user_id' | 'channel_type' | 'language' | 'article_status'
     selectedElements: Array<string>
     setSelectedElements: (value:string) => void
     containerRef?: RefObject<HTMLDivElement>
@@ -42,8 +39,6 @@ interface FilterButtonProps {
 //MOTION BOX
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
 
- 
-
 //MAIN FUNCTION
 const FilterButton = ({selectedSection, selectedElements, setSelectedElements, containerRef}: FilterButtonProps) =>{
 
@@ -51,7 +46,7 @@ const FilterButton = ({selectedSection, selectedElements, setSelectedElements, c
     const auth = useAuth()
 
     let subjectsDict:{[key:number]:[string, null]} = {}
-    if (auth.authData?.conversation_themes) auth.authData?.conversation_themes.map((theme:any) => {if (auth?.authData?.conversation_themes) subjectsDict[theme] = [theme, null]})
+    if (auth.authData?.conversation_themes) auth.authData?.conversation_themes.map((theme:any) => {if (auth?.authData?.conversation_themes) subjectsDict[theme.uuid] = [theme.name, theme.emoji]})
 
     let usersDict:{[key:string]:[string, null]} = {}
     if (auth.authData.users) Object.keys(auth.authData?.users).map((key:any) => {if (auth?.authData?.users) usersDict[key] = [auth?.authData?.users[key].name, null]})
@@ -68,8 +63,17 @@ const FilterButton = ({selectedSection, selectedElements, setSelectedElements, c
         'ongoing':[t('ongoing'),<BiSolidPhoneCall color='#00A3C4' size='16px'/>],
      }
 
+    const articlesMap:{[key in 'internal_article' | 'public_article' | 'folder' | 'pdf' | 'snippet' |  'website']: [string, ReactElement]} = { 
+        'internal_article':[ t('internal_article'), <FaLock size={'16px'} />],
+        'public_article':[ t('public_article'), <IoBook size={'16px'} /> ], 
+        'pdf':[ t('pdf'), <FaFilePdf  size={'16px'} />], 
+        'snippet':[ t('snippet'), <FaFileLines  size={'16px'} />],
+        'folder':[ t('folder'), <FaFolder  size={'16px'} />],
+        'website':[ t('website'), <BiWorld  size={'16px'} />]
+    }
+
     const selectorTypeDefinition:{[key:string]:{icon:IconType, message:string, optionsMap:{[key:string | number]:[string, ReactElement | string | null]}}} = {
-        theme:{icon:FaBookmark, message:t('ThemeMessage'), optionsMap:subjectsDict},
+        theme_uuid:{icon:FaBookmark, message:t('ThemeMessage'), optionsMap:subjectsDict},
         urgency_rating:{icon:FaStar, message:t('RatingMessage'), optionsMap:{0:[`${t('Priority_0')} (0)`, null], 1:[`${t('Priority_1')} (1)`, null], 2:[`${t('Priority_2')} (2)`, null], 3:[`${t('Priority_3')} (3)`, null], 4:[`${t('Priority_4')} (4)`, null]}} ,
         status:{icon:FaBookmark, message:t('StatusMessage'), optionsMap:statesMap},
         created_at:{icon:FaCalendar, message:t('CreatedMessage'), optionsMap:subjectsDict},
@@ -77,6 +81,7 @@ const FilterButton = ({selectedSection, selectedElements, setSelectedElements, c
         user_id:{icon:IoPerson, message:t('UserMessage'), optionsMap:usersDict},
         channel_type:{icon:PiDesktopTowerFill, message:t('ChannelMessage'), optionsMap:{'email':[t('email'), <IoMdMail/>], 'whatsapp':[t('whatsapp'),<IoLogoWhatsapp/>], 'instagram':[t('instagram'),<AiFillInstagram/> ], 'webchat':[t('webchat'), <IoChatboxEllipses/>], 'google_business':[t('google_business'), <IoLogoGoogle/>], 'phone':[t('phone'),<FaPhone/> ] }},
         language:{icon:FaLanguage, message:t('LanguageMessage'), optionsMap:languagesFlags},
+        article_status: {icon:PiDesktopTowerFill, message:t('SourceFilterMessage'), optionsMap:articlesMap}
     }
 
 
@@ -115,10 +120,10 @@ const FilterButton = ({selectedSection, selectedElements, setSelectedElements, c
                     <MotionBox ref={boxRef} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.95 }}  transition={{ duration: '0.1', ease: 'easeOut'}}
                         style={{ transformOrigin: boxStyle.top ? 'top':'bottom' }}  fontSize={'.8em'} width={boxStyle.width} left={boxStyle.left} marginTop={'5px'} marginBottom={'5px'}  top={boxStyle.top || undefined}  bottom={boxStyle.bottom ||undefined} position='absolute' bg='white' p='8px'  zIndex={1000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.200' borderWidth='1px' borderRadius='.7rem'>
 
-                        {Object.keys(selectorTypeDefinition[selectedSection]).map((element, index) => (
+                        {Object.keys(selectorTypeDefinition[selectedSection].optionsMap).map((element, index) => (
                             <Flex key={`select-list-${index}`} borderRadius={'.5rem'}color={selectedElements.includes(element)?'brand.text_blue':'black'} p='7px' cursor='pointer' onClick={()=>{setSelectedElements(element)}} gap='10px'  justifyContent={'space-between'} alignItems={'center'} _hover={{bg:'brand.gray_2'}}>
                                 <Flex alignItems={'center'} gap='10px'> 
-                                    {selectorTypeDefinition[selectedSection].optionsMap[element][1] && <> {selectorTypeDefinition[selectedSection].optionsMap[element][1]} </>}
+                                    {selectorTypeDefinition?.[selectedSection]?.optionsMap?.[element]?.[1] && <> {selectorTypeDefinition[selectedSection].optionsMap[element][1]} </>}
                                     <Text> {selectorTypeDefinition[selectedSection].optionsMap[element][0]}</Text>
                                 </Flex>
                                 {selectedElements.includes(element) && <Icon as={FaCheck} color={'brand.text_blue'}/>}

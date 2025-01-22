@@ -11,19 +11,20 @@ import axios, { isAxiosError } from 'axios'
 import showToast from "../Components/Reusable/ToastNotification"
  
 //SERIALIZE PARAMETERS
-function paramsSerializer(params:string) {
-    const str = [];
-    for (const [key, value] of Object.entries(params)) {
-        if (Array.isArray(value)) {
-            value.forEach(v => {
-                str.push(encodeURIComponent(key) + '=' + encodeURIComponent(v));
-            });
+function paramsSerializer(params:any) {
+    const str:any = [];
+    Object.entries(params).forEach(([key, value]) => {
+        if (typeof value === 'object' && value !== null) {
+            str.push(`${key}=${JSON.stringify(value)}`);
         } else {
-            str.push(encodeURIComponent(key) + '=' + encodeURIComponent(value));
+            str.push(`${key}=${value}`);
         }
-    }
+    });
+    
     return str.join('&')
 }
+
+
 
 //TYPING
 interface fetchDataProps {
@@ -79,11 +80,10 @@ const fetchData = async ({endpoint, setValue, setWaiting, getAccessTokenSilently
         else config.params = {...config.params, ...requestForm}
   
 
-        console.log(requestForm)
         //RESPONSE  
         const response = await axios(config)
 
-        console.log(response.data)
+
         //ACTIONS ON A SUCCESSFUL CALL
         if (setRef)  setRef.current = JSON.parse(JSON.stringify(response.data)) 
         if (setValue) setValue(response.data)
@@ -101,7 +101,7 @@ const fetchData = async ({endpoint, setValue, setWaiting, getAccessTokenSilently
         if (isAxiosError(error) && error.response && error.response.status === 403){
             try {
                 //REQUEST AND CHANGE NEW ACCESS TOKEN
-                const accessToken = await getAccessTokenSilently({authorizationParams: {audience: `https://api.matil/v2/`, scope: "read:current_user"}})
+                 const accessToken = URL.endsWith('v2/') ? 'javier_truco' :await getAccessTokenSilently({authorizationParams: {audience: `https://api.matil/v2/`, scope: "read:current_user"}})
 
                 auth.setAuthData({ accessToken: accessToken})
                 config.headers =  {'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' }

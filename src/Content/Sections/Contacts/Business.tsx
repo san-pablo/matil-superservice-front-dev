@@ -2,25 +2,25 @@
     MAIN CLIENT FUNCTION 
 */
 
-import { useState, useRef, useEffect, ChangeEvent, KeyboardEvent, Dispatch, SetStateAction } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useAuth } from "../../../AuthContext"
 import { useSession } from "../../../SessionContext"
 import { useLocation, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import DOMPurify from 'dompurify'
 //FRONT
-import { Flex, Box, Text, Icon, Textarea, Avatar, Skeleton, IconButton, Tooltip } from '@chakra-ui/react'
+import { Flex, Box, Text, Avatar, Skeleton, IconButton, Tooltip } from '@chakra-ui/react'
 //FETCH DATA
 import fetchData from "../../API/fetchData"
 //COMPONENTS
 import Table from "../../Components/Reusable/Table"
 import EditText from "../../Components/Reusable/EditText"
+import CollapsableSection from "../../Components/Reusable/CollapsableSection"
+import CustomAttributes from "../../Components/Reusable/CustomAttributes"
+import TagEditor from "../../Components/Reusable/TagEditor"
 //FUNCTIONS
 import timeAgo from "../../Functions/timeAgo"
 import timeStampToDate from "../../Functions/timeStampToString"
 //ICONS
-import { PiSidebarSimpleBold } from "react-icons/pi"
-import { RxCross2 } from "react-icons/rx"
 import { IoIosArrowForward, IoIosArrowBack } from "react-icons/io"
 //TYPING
 import { Clients, ContactBusinessesTable, Channels, ClientColumn, languagesFlags } from "../../Constants/typing"
@@ -90,6 +90,8 @@ function Business ({socket}: {socket:any}) {
         }
     })},[])
 
+    
+
     //BUSINESS DATA
     const [businessDataEdit, setBusinessDataEdit] = useState<ContactBusinessesTable | null>( null)
     const businessDataEditRef = useRef<ContactBusinessesTable | null>( null)
@@ -123,11 +125,11 @@ function Business ({socket}: {socket:any}) {
             }
 
             //FETCH THE DATA
-            else {
+            else if (!location.endsWith('businesses')) {
                 const businessResponse = await fetchData({endpoint:`${auth.authData.organizationId}/contact_businesses/${businessId}`, getAccessTokenSilently,setValue:setBusinessDataEdit,  auth})    
 
                 if (businessResponse?.status === 200 ) {
-                    const businessClientsResponse = await fetchData({endpoint:`${auth.authData.organizationId}/contacts`,getAccessTokenSilently, params:{page_index:1, contact_business_id:businessResponse.data.id}, setValue:setBusinessClientsEdit, auth })
+                    const businessClientsResponse = await fetchData({endpoint:`${auth.authData.organizationId}/contacts`,getAccessTokenSilently, params:{page_index:1, filters:{logic:'AND', groups:[{logic:'AND', conditions:[{col:'contact_business_id', op:'eq', val:businessId}]} ]}}, setValue:setBusinessClientsEdit, auth })
                     businessDataEditRef.current = businessResponse?.data
                     session.dispatch({type:'UPDATE_HEADER_SECTIONS',payload:{action:'add', data:{type:'business', id: businessId, data:{businessData:businessResponse?.data, businessClients:businessClientsResponse?.data} }}})
                 }
@@ -167,6 +169,17 @@ function Business ({socket}: {socket:any}) {
         navigate(`/contacts/clients/${client.id}`)
     }
 
+    //EXPAND SECTIONS
+    const [sectionsExpanded, setSectionsExpanded] = useState<string[]>(['contact', 'info', 'custom-attributes'])
+    const onSectionExpand = (section: string) => {
+        setSectionsExpanded((prevSections) => {
+        if (prevSections.includes(section)) return prevSections.filter((s) => s !== section)
+        else return [...prevSections, section]
+        })
+    }
+    
+    
+
     ///////////////////////////
     //EDIT DATA LOGIC   
     ///////////////////////////
@@ -181,39 +194,23 @@ function Business ({socket}: {socket:any}) {
    
     useEffect(() =>{if (businessDataEdit) adjustTextareaHeight(textareaNotasRef.current)}, [businessDataEdit?.notes])
 
-    //TAGS LOGIC
-    const [inputValue, setInputValue] = useState<string>('')
-    const handleKeyDown = (event:KeyboardEvent<HTMLDivElement>) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault()
-          const newTag = inputValue.trim()
-          if (newTag) {
-            let newClientData:ContactBusinessesTable | null = null
-            if (businessDataEdit) {
-                const labelsArray = businessDataEdit.labels ? businessDataEdit.labels.split(',') : []
-                labelsArray.push(newTag)
-                newClientData = { ...businessDataEdit, labels: labelsArray.join(',') }
-            }
-            updateData(newClientData)
-            setBusinessDataEdit(newClientData)
-            setInputValue('')
-          }
-        }
-      } 
-    const removeTag = (index: number) => {
-        let newClientData:ContactBusinessesTable | null = null
-        if (businessDataEdit && businessDataEdit.labels) {
-            const labelsArray = businessDataEdit.labels.split(',')
-            labelsArray.splice(index, 1)
-            newClientData = { ...businessDataEdit, labels: labelsArray.join(',') }
-          }
-          updateData(newClientData)
-          setBusinessDataEdit(newClientData)
-    }
+ 
 
     //CHANGE NAME
     const handelChangeName = (value:string) => {if (businessDataEdit) setBusinessDataEdit(prevData => prevData ? ({ ...prevData, name:value}) as ContactBusinessesTable : null)}
     
+    //UPDATE CUSTOM ATTRIBUTES
+    const updateCustomAttributes = ( attributeName:string, newValue:any) => {
+        const newClientData = { ...businessDataEdit } as ContactBusinessesTable
+        if (newClientData.cdas) {
+            const updatedCustomAttributes = {...newClientData.cdas}
+            updatedCustomAttributes[attributeName] = newValue
+            newClientData.cdas = updatedCustomAttributes
+        }
+        updateData(newClientData)
+        if (businessDataEdit) setBusinessDataEdit(newClientData)
+    }
+
     return (<> 
 
         <Flex flexDir={'column'} height={'100vh'}   width={'100%'}>
@@ -233,54 +230,41 @@ function Business ({socket}: {socket:any}) {
        
             <Flex flex='1'> 
                 <Box flex='1' py='2vh'  ref={scrollRef1} px='1vw' borderRightColor={'gray.200'} borderRightWidth={'1px'}  overflow={'scroll'}  >
-                    <Flex  gap='10px' > 
-                        <Text mt='10px' fontSize='.8em' whiteSpace={'nowrap'} flex='1' textOverflow={'ellipsis'} overflow={'hidden'}  fontWeight={'medium'} color='gray.600'>{t('labels')}</Text>
-                        <Skeleton isLoaded={businessDataEdit !== null} style={{flex:2}}>
                     
-                            <Box  minHeight="30px" maxH="300px" border="1px solid transparent" _hover={{border:"1px solid #CBD5E0"}} transition={'border-color .2s ease-in-out, box-shadow .2s ease-in-out'}  p="5px" _focusWithin={{ borderColor:'transparent', boxShadow:'0 0 0 3px rgb(59, 90, 246)'}} borderRadius=".5rem" overflow="auto" display="flex" gap='5px' flexWrap="wrap" alignItems="center" onKeyDown={handleKeyDown}  tabIndex={0}>
-                                {(!businessDataEdit?.labels ||businessDataEdit?.labels === '') ? <></>:
-                                <> 
-                                    {((businessDataEdit?.labels || '').split(',')).map((label, index) => (
-                                        <Flex key={`label-${index}`}  borderRadius=".4rem" p='4px' fontSize={'.75em'} alignItems={'center'}  bg='brand.gray_1'  gap='5px'>
-                                            <Text>{label}</Text>
-                                            <Icon as={RxCross2} onClick={() => removeTag(index)} cursor={'pointer'} />
-                                        </Flex>
-                                    ))}
-                                </>
-                                }
-                                <Textarea  maxLength={20} p='2px' placeholder={t('labels') + '...'} resize={'none'} borderRadius='.5rem' rows={1} fontSize={'.8em'}  borderColor='transparent' borderWidth='0px' _hover={{borderColor:'transparent',borderWidth:'0px'}} focusBorderColor={'transparent'}  value={inputValue}  onChange={(event) => {setInputValue(event.target.value)}}/>
-                            </Box>
-                        </Skeleton>
-                    </Flex>
+                    <CollapsableSection section={'info'} isExpanded={sectionsExpanded.includes('info')} onSectionExpand={onSectionExpand} sectionsMap={{'info':t('Info'), 'tags':t('Tags'), 'custom-attributes':t('CustomAttributes')}}> 
+                 
+                        <Flex mt='2vh' alignItems={'center'}  gap='10px'  > 
+                            <Text flex='1' fontSize='.8em' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}  fontWeight={'medium'} color='gray.600'>{t('notes')}</Text>
+                            <Skeleton isLoaded={businessDataEdit !== null} style={{flex:2}}>
+                                <EditText placeholder={t('notes') + '...'} value={businessDataEdit?.notes} setValue={(value:string) => setBusinessDataEdit(prevData => prevData ? ({ ...prevData, notes:value}) as ContactBusinessesTable : null)           }/>
+                            </Skeleton>
+                        </Flex>
 
-                    <Flex mt='2vh' alignItems={'center'}  gap='10px'  > 
-                        <Text flex='1' fontSize='.8em' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}  fontWeight={'medium'} color='gray.600'>{t('notes')}</Text>
-                        <Skeleton isLoaded={businessDataEdit !== null} style={{flex:2}}>
-                            <EditText placeholder={t('notes') + '...'} value={businessDataEdit?.notes} setValue={(value:string) => setBusinessDataEdit(prevData => prevData ? ({ ...prevData, notes:value}) as ContactBusinessesTable : null)           }/>
-                        </Skeleton>
-                    </Flex>
+                        <Flex mt='2vh' alignItems={'center'}  gap='10px'  > 
+                            <Text flex='1' fontSize='.8em' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}  fontWeight={'medium'} color='gray.600'>{t('created_at')}</Text>
+                            <Text flex='2' p='7px' ml='7px' fontSize={'.8em'}>{timeAgo(businessDataEdit?.created_at, t_formats)}</Text>
+                        </Flex>
 
-                    <Flex mt='2vh' alignItems={'center'}  gap='10px'  > 
-                        <Text flex='1' fontSize='.8em' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}  fontWeight={'medium'} color='gray.600'>{t('created_at')}</Text>
-                        <Text flex='2' p='7px' ml='7px' fontSize={'.8em'}>{timeAgo(businessDataEdit?.created_at, t_formats)}</Text>
-                    </Flex>
+                        <Flex mt='2vh' alignItems={'center'}  gap='10px'  > 
+                            <Text flex='1' fontSize='.8em' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}  fontWeight={'medium'} color='gray.600'>{t('last_interaction_at')}</Text>
+                            <Text flex='2' p='7px' ml='7px' fontSize={'.8em'}>{timeAgo(businessDataEdit?.last_interaction_at, t_formats)}</Text>
+                        </Flex>
+                    </CollapsableSection>
 
-                    <Flex mt='2vh' alignItems={'center'}  gap='10px'  > 
-                        <Text flex='1' fontSize='.8em' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}  fontWeight={'medium'} color='gray.600'>{t('last_interaction_at')}</Text>
-                        <Text flex='2' p='7px' ml='7px' fontSize={'.8em'}>{timeAgo(businessDataEdit?.last_interaction_at, t_formats)}</Text>
-                    </Flex>
+                    <CollapsableSection mt='3vh' section={'tags'} isExpanded={sectionsExpanded.includes('tags')} onSectionExpand={onSectionExpand} sectionsMap={{'info':t('Info'), 'tags':t('Tags'), 'custom-attributes':t('CustomAttributes')}}> 
+                        <TagEditor section="contacts" data={businessDataEdit} setData={setBusinessDataEdit as any}/>
+                    </CollapsableSection>
+
+                    <CollapsableSection mt='3vh' section={'custom-attributes'} isExpanded={sectionsExpanded.includes('custom-attributes')} onSectionExpand={onSectionExpand} sectionsMap={{'info':t('Info'), 'tags':t('Tags'), 'custom-attributes':t('CustomAttributes')}}> 
+                        <CustomAttributes motherstructureType="contact_businesses" customAttributes={businessDataEdit?.cdas || {}} updateCustomAttributes={updateCustomAttributes}/>
+                    </CollapsableSection>
+
                 </Box>
                 <Flex flex='2' py='2vh'  overflow={'hidden'} flexDir={'column'} px='1vw'> 
                     <Flex  justifyContent={'space-between'} >
                         <Skeleton isLoaded={businessClientsEdit !== null}> 
                             <Text fontWeight={'medium'}>{t('Clients', {count:businessClientsEdit?.page_data.length})}</Text>
                         </Skeleton>
-
-                        <Flex p='10px' mb='1vh' alignItems={'center'} justifyContent={'end'} gap='10px' flexDir={'row-reverse'}>
-                            <IconButton isRound size='xs' aria-label='next-page' icon={<IoIosArrowForward />} isDisabled={clientsFilters.page_index > Math.floor((businessClientsEdit?.total_contacts || 0)/ 25)} onClick={() => updateTable({...clientsFilters,page_index:clientsFilters.page_index + 1})}/>
-                            <Text fontWeight={'medium'} fontSize={'.8em'} color='gray.600'>{t('Page')} {clientsFilters.page_index}</Text>
-                            <IconButton isRound size='xs' aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={clientsFilters.page_index === 1} onClick={() => updateTable({...clientsFilters,page_index:clientsFilters.page_index - 1})}/>
-                        </Flex>
                     </Flex>
                     <Table data={businessClientsEdit?.page_data || []} CellStyle={CellStyle} noDataMessage={t('NoClients')}   excludedKeys={['id', 'contact_business_id', 'phone_number', 'email_address', 'instagram_username', 'webchat_uuid', 'google_business_review_id']}columnsMap={columnsClientsMap} onClickRow={clickRow} />
                 </Flex>

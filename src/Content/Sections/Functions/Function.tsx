@@ -3,11 +3,12 @@ import { useEffect, useRef, useState, useMemo, Fragment, ReactNode, Dispatch, Se
 import { useAuth } from "../../../AuthContext"
 import { useTranslation } from "react-i18next"
 import { useLocation, useNavigate } from "react-router-dom"
+import { useAuth0 } from "@auth0/auth0-react"
 //FETCH DATA
 import fetchData from "../../API/fetchData"
 //FRONT
 import { motion, isValidMotionProp } from 'framer-motion'
-import { Text, Box, Flex, Button, Skeleton, Tooltip, IconButton, chakra, shouldForwardProp, Icon, Switch, Spinner, Portal } from "@chakra-ui/react"
+import { Text, Box, Flex, Button, Skeleton, IconButton, chakra, shouldForwardProp, Icon, Switch, Spinner } from "@chakra-ui/react"
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 //PYTHON CODE EDITOR
 import CodeMirror from "@uiw/react-codemirror"
@@ -29,23 +30,18 @@ import parseNumber from "../../Functions/parseNumbers"
 import { FaPlus } from "react-icons/fa6"
 import { FaCheckCircle, FaTimesCircle, FaEdit } from "react-icons/fa"
 import { IoIosArrowDown,  } from "react-icons/io"
-import { IoWarning, IoChatbubbleEllipses } from "react-icons/io5"
-import {  BsClipboard2Check, BsThreeDots, BsThreeDotsVertical } from "react-icons/bs"
+import { IoChatbubbleEllipses } from "react-icons/io5"
+import { BsThreeDotsVertical } from "react-icons/bs"
 import { RxCross2 } from "react-icons/rx"
 import { PiSidebarSimpleBold } from "react-icons/pi"
 import { AiOutlineCheckCircle, AiOutlineCalendar } from "react-icons/ai"
 import { FiHash, FiType } from "react-icons/fi"
 import { HiTrash } from "react-icons/hi2"
-import { TbCopyPlusFilled, TbMathFunction } from "react-icons/tb"
+import { TbMathFunction } from "react-icons/tb"
 import { MdOutlineFormatListBulleted } from "react-icons/md"
 //TYPING
-import { FunctionsData, FunctionTableData, ConfigProps } from "../../Constants/typing"
-import { useAuth0 } from "@auth0/auth0-react"
-import { t } from "i18next"
-
+import { FunctionsData, ConfigProps } from "../../Constants/typing"
   
- 
- 
 //TYPING  
 interface FunctionResultType {
     run_successful:boolean

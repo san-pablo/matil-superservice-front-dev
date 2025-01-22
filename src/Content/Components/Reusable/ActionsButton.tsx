@@ -1,3 +1,4 @@
+//REACT
 import { useState, useRef } from "react"
 import { useTranslation } from "react-i18next"
 //FRONT
@@ -9,17 +10,17 @@ import useOutsideClick from "../../Functions/clickOutside"
 import { BsThreeDots } from "react-icons/bs"
 import { TbCopyPlusFilled } from "react-icons/tb"
 import { HiTrash } from "react-icons/hi2"
-
 //MOTION BOX
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
 
- 
-
+//MAIN FUNCTION 
 const ActionsButton = ({copyAction, deleteAction, showCopy = true}:{copyAction:() => void, deleteAction:() => void, showCopy?:boolean}) => {
 
+    //CONSTANTS
     const { t } = useTranslation('settings')
+
+    //CONTROL OPTIONS VISIBILITY
     const [showList, setShowList] = useState<boolean>(false)
-      
     const buttonRef = useRef<HTMLButtonElement>(null)
     const boxRef = useRef<HTMLDivElement>(null)
     useOutsideClick({ref1:buttonRef, ref2:boxRef, onOutsideClick:setShowList})

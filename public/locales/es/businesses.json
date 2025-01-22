@@ -31,7 +31,10 @@
     "yesterday":"ayer",
     "start_of_week":"a principio de esta semana",
     "start_of_month":"a principio de este mes",
-    "anymoment":"en cualquier momento"
+    "anymoment":"en cualquier momento",
+    "Businesses":"Empresas de contacto",
+    "tags":"Etiquetas",
+    "domain":"Dominio"
 
 
 }

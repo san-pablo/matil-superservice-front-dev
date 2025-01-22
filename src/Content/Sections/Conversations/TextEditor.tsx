@@ -35,7 +35,7 @@ import { RxCross2 } from "react-icons/rx"
 import { BsStars } from "react-icons/bs"
 import { MdNoteAlt } from "react-icons/md"
 //TYPING
-import { DeleteHeaderSectionType, ConversationsTableProps, statesMap,  ConversationsData } from '../../Constants/typing'
+import { ConversationsTableProps, statesMap,  ConversationsData } from '../../Constants/typing'
 import downloadFile from '../../Functions/downloadFile'
 import { useAuth0 } from '@auth0/auth0-react'
    
@@ -276,7 +276,7 @@ function TextEditor({clientName, conversationData, updateData, takeConversationC
                     return urlInfo
                 })
             )
-            messageContent = {type, content: {theme:conversationData?.theme, html:htmlValueRef.current, text:textValueRef.current, attachments:sendAttachments} }
+            messageContent = {type, content: {theme:'', html:htmlValueRef.current, text:textValueRef.current, attachments:sendAttachments} }
             setHtmlValue('')
             setAttachmentsFiles([])
         }

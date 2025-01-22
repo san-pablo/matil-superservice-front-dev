@@ -80,28 +80,30 @@
     "Delete":"Eliminar",
     "CopyCode":"Copiar código",
 
-    "Groups":"Grupos",
-    "GroupsDes":"Crea grupos de usuarios para mejorar la organización y eficiencia.",
+    "Groups":"Equipos",
+    "GroupsDes":"Crea equipos para mejorar la organización y eficiencia.",
 
-    "GroupsTable":"Tabla de grupos",
+    "GroupsTable":"Tabla de equipos",
     "GroupsDescription":"Organiza a los integrantes del equipo en función de su experiencia, ubicación, idioma u otros criterios para proporcionar un soporte más específico.",
-    "CreateGroup":"Crear grupo",
-    "GroupsCount_one":"{{count}} grupo",
-    "GroupsCount_other":"{{count}} grupos",
-    "NoGroups":"No hay grupos disponibles",
+    "CreateGroup":"Crear equipo",
+    "GroupsCount_one":"{{count}} equipo",
+    "GroupsCount_other":"{{count}} equipos",
+    "NoGroups":"No hay equipos disponibles",
     "NewGroup":"Nuevo grupo",
-    "DeleteGroup":"Eliminar grupo",
-    "AddUsersGroup":"Añadir usuarios al grupo",
+    "DeleteGroup":"Eliminar equipo",
+    "AddUsersGroup":"Añadir usuarios al equipo",
     "NoCoincidence":"No hay ninguna coincidencia",
     "FindUser":"Filtar por nombre y apellidos...",
     "NoUsers":"No hay usuarios seleccionados",
-    "CorrectAddedGroup":"Grupo creado correctamente",
-    "FailedAddedGroup":"Hubo un error al crear el grupo",
-    "CorrectEditedGroup":"Grupo editado correctamente",
-    "FailedEditedGroup":"Hubo un error al editar el grupo",
-    "CorrectDeletedGroup":"Grupo eliminado con éxito",
-    "FailedDeletedGroup":"Hubo un error al eliminar el grupo",
-    "ConfirmDeleteGroup":"¿Estás seguro de eliminar el siguiente grupo?",
+    "CorrectAddedGroup":"Equipo creado correctamente",
+    "FailedAddedGroup":"Hubo un error al crear el equipo",
+    "CorrectEditedGroup":"Equipo editado correctamente",
+    "FailedEditedGroup":"Hubo un error al editar el equipo",
+    "CorrectDeletedGroup":"Equipo eliminado con éxito",
+    "FailedDeletedGroup":"Hubo un error al eliminar el equipo",
+    "ConfirmDeleteGroup":"Eliminar el equipo/{ {{name}}}/",
+    "DeleteGroupWarning":"Esta acción no se puede deshacer. El equipo desaparecrá para todos los usarios pertencientes a éste, y las redirecciones dejarán de funcionar.",
+
 
    
     "User":"Usuario",
@@ -188,7 +190,7 @@
     "FieldsCount_one":"{{count}} campo",
     "FieldsCount_other":"{{count}} campos",
     "NoFields":"No hay campos disponibles",
-    "DeleteAllFields":"¿Deseas eliminar el campo/{ {{name}} }/ de la estructura/{ {{structure}}}/?",
+    "DeleteAllFields":"Archivar el atributo/{ {{name}} }/",
     "CorrectCreatedFields":"Campo creado con éxito",
     "FailedCreatedFields":"Hubo un error al crear el campos",
     "CorrectUpdatedFields":"Campo actualizado con éxito",
@@ -574,7 +576,12 @@
     "AddTheme":"Añadir tema",
     "EditTheme":"Editar tema",
     "AddTitle":"Añadir título",
-    "DeleteThemeQuestion":"¿Estás seguro que deseas eliminar el tema/{ {{name}}}/?",
+    "DeleteThemeQuestion":"Eliminar el tema/{ {{name}}}/",
+    "DeleteThemeWarning":"Esta acción no se puede deshacer. Al eliminar el tema, los tickets asociados a éste qeudarán sin tema y desaparcerá de las estadísticas.",
+    "CorrectDeletedTheme":"Tema elimnado correctamente",
+    "FailedDeletedTheme":"Hubo un error al eliminar el tema",
+    "CreateNewTheme":"Crear nuevo tema",
+ 
 
 
     "Automations":"Automatizaciones",
@@ -671,7 +678,7 @@
     "AvailableTilda":"Tilda",
     "AvailableTildaDes":"Al activarlo, Tilda comnezará a usar esta función en su flujo de trabajo.",
     "list":"Lista",
-    "AllowedValues":"Valores permitidos:",
+    "AllowedValues":"Valores permitidos",
     "Required":"Parámetro obligatorio",
     "AskConfirmation":"Solicitar confirmación",
     "NoValues":"Cualquier valor",
@@ -995,15 +1002,41 @@
     "ArgumentsLog":"Argumentos",
     "Result":"Resultado",
     "NoSecrets":"No hay secretos todavía",
-    "Value":"Valor"
+    "Value":"Valor",
 
-
-
-
-
-
-
-
-
-    
+    "Tags":"Etiquetas",
+    "TagsDes":"Administra conversaciones, clientes y empresas de contacto con etiquetas activas o archivadas",
+    "archivedtags":"Archivadas",
+    "activetags":"Activas",
+    "TagsCount":"{{count}} etiquetas",
+    "NoTags":"No hay etiquetas",
+    "CreateTag":"Crear etiqueta",
+    "EditTag":"Editar etiqueta",
+    "created_by":"Creado por",
+    "conversations_affected":"Conversaciones",
+    "contacts_affected":"Clientes",
+    "contact_businesses_affected":"Empresas",
+    "CorrectDeletedTags":"Etiqueta archivada con éxito",
+    "FailedDeletedTags":"Hubo un error al archivar la etiqueta",
+    "CorrectCreatedTag":"Etiqueta creada con éxito",
+    "CorrectEditedTag":"Etiqueta editada con éxito",
+    "FailedCreatedTag":"Hubo un error al crear la etiqueta",
+    "FailedEditedTag":"Hubo un error al editar la etiqueta",
+    "NoArchivedTags":"No hay etiquetas archivadas",
+    "description":"Descripción",
+    "activefields":"Activos",
+    "archivedfields":"Archivados",
+    "array":"Lista",
+    "Any":"Cualquiera",
+    "NoArchivedFields":"No hay campos archivados",
+    "EditField":"Editar campo",
+    "Format":"Tipo",
+    "Archive":"Archivar",
+    "ArchiveFieldWarning":"Esta acción se puede deshacer. Las estructuras con este atributo dejarán de recogerlo y mostrarlo. ",
+    "StatusMessage":"El estado es",
+    "any":"cualquiera",
+    "DistributionMethod":"Método de distribución",
+    "round_robin":"Round Robin",
+    "manual":"Manual",
+    "AddFilter":"Añadir grupo"
  }  

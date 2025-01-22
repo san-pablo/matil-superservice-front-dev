@@ -7,11 +7,12 @@ import { useRef, useEffect, ChangeEvent, KeyboardEvent, useState } from 'react'
 import DOMPurify from 'dompurify'
 //FRONT
 import { Box, Input, Icon, Spinner, Textarea } from '@chakra-ui/react'
+import '../styles.css'
 //ICONS
+import { IconType } from 'react-icons'
 import { FaMagnifyingGlass } from 'react-icons/fa6'
 import { RxCross2 } from 'react-icons/rx'
-import '../styles.css'
-
+  
 //TYPING
 interface EditTextProps {
     value: string | undefined
@@ -24,6 +25,7 @@ interface EditTextProps {
     size?:string
     fontSize?:string
     searchInput?:boolean
+    searchIcon?:IconType
     updateData?: (text?:string) => void 
     isDisabled?:boolean
     nameInput?:boolean
@@ -36,7 +38,7 @@ interface EditTextProps {
 }
 
 //MAIN FUNCTION
-const EditText  = ({ value = '', setValue, hideInput = true, maxLength, regex, type='text', placeholder='', size='sm', searchInput=false, updateData=() => {}, isDisabled = false, nameInput=false, waitingResult = false, focusOnOpen = false, fontSize = '.8em', borderRadius = '.5rem', className = null, filterData, isTextArea}: EditTextProps) => {
+const EditText  = ({ value = '', setValue, hideInput = true, maxLength, regex, type='text', placeholder='', size='sm', searchInput=false, searchIcon, updateData=() => {}, isDisabled = false, nameInput=false, waitingResult = false, focusOnOpen = false, fontSize = '.8em', borderRadius = '.5rem', className = null, filterData, isTextArea}: EditTextProps) => {
     
     //INPUT REF
     const inputRef = useRef<HTMLInputElement>(null)
@@ -118,10 +120,10 @@ const EditText  = ({ value = '', setValue, hideInput = true, maxLength, regex, t
     :<>   
         {searchInput ?    
         <Box  position="relative" width={'100%'} alignItems={'center'} >
-            <Box left="0" top="0" bottom="0" px='8px' borderLeftRadius={'.5rem'} color='gray.600'  position='absolute' bg='brand.gray_2'>
-                {waitingResult ?<Spinner mt='10px' size='xs'/> :<Icon  as={FaMagnifyingGlass} height='13px' mt='9px' color='gray.600' cursor={'pointer'} />}
+            <Box left="0" top="0" bottom="0" px='8px'  color='gray.600'  position='absolute'>
+                {waitingResult ?<Spinner mt='10px' size='xs'/> :<Icon  as={searchIcon ? searchIcon:FaMagnifyingGlass} height='13px' mt='9px' color='gray.600' cursor={'pointer'} />}
             </Box> 
-            <Input pl='40px' placeholder='Buscar...' size='sm' _focus={{ borderColor: "brand.text_blue", borderWidth: "2px" }} borderRadius={'.5rem'} borderColor={'gray.300'} value={tempValue} onChange={handleInputChange}/>
+            <Input pl='40px' placeholder={placeholder} size='sm' bg='transparent' outline='none' borderBottom="1px solid" borderColor={'gray.200'} value={tempValue} onChange={handleInputChange}/>
             {(value && value !== '') && <Icon mt='8px' ml='-22px' zIndex={100} as={RxCross2} position='absolute' color='gray.600' cursor={'pointer'} onClick={() => setTempValue('')} />}
         </Box> :
         <Box width={'100%'}>

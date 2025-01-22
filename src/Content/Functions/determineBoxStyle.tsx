@@ -25,7 +25,7 @@ const determineBoxStyle = ({buttonRef, setBoxStyle, boxPosition, changeVariable}
             const newBoxStyle: CSSProperties = {
                 top: buttonRect.bottom > halfScreenHeight ? undefined : `${buttonRect.bottom + window.scrollY}px`,
                 bottom: buttonRect.bottom > halfScreenHeight ? `${window.innerHeight - buttonRect.top - window.scrollY}px` : undefined,
-                right: boxPosition === 'right' ? `${window.innerWidth - buttonRect.right}px`:undefined,
+                right:`${buttonRect.right}px`,
                 left: boxPosition === 'right' ? undefined :`${buttonRect.left}px`,
                 width: `${buttonRect.width}px`
             }

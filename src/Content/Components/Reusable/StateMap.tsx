@@ -1,7 +1,3 @@
-/*
-    MAKE THE STATUS SYMBOL
-*/
-
 //TRANSLATION
 import { useTranslation } from 'react-i18next'
 //FRONT
@@ -12,7 +8,7 @@ import { statesMap } from '../../Constants/typing'
 //MAIN FUNCTION
 const StateMap = ({state, mini}:{state:'new' | 'open' |'solved' | 'pending' | 'closed' | 'ongoing' | 'completed', mini?:boolean}) => {
    
-     //CONSTANTS
+    //CONSTANTS
     const { t } = useTranslation('conversations')
     
     //FRONT
