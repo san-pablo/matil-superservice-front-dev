@@ -728,37 +728,39 @@ function HelpCenter ({scrollRef, setHelpCentersData}:{scrollRef:RefObject<HTMLDi
 
     return(<>
 
-    <SaveChanges data={helpCenterData} dataRef={helpCenterDataRef} setData={setHelpCenterData} onSaveFunc={() => updateHelpCenter(helpCenterData as any)} />
+        <SaveChanges data={helpCenterData} dataRef={helpCenterDataRef} setData={setHelpCenterData} onSaveFunc={() => updateHelpCenter(helpCenterData as any)} />
 
 
         {showCreateCollection && memoizedCreateCollectionBox}
         {showDelete && memoizedDeleteBox}
         {showEdit && memoizedEditBox}
-        <Box> 
+        <Box pt='2vh' px='2vw'> 
             <Flex justifyContent={'space-between'} alignItems={'end'}> 
                 <Box> 
-                    <EditText nameInput updateData={() => updateHelpCenter(helpCenterData as HelpCenterData)} fontSize={'1.5em'} size='md' value={helpCenterData?.name} setValue={(value) => setHelpCenterData(prev =>({...prev as HelpCenterData, name:value}))}/>
+                    <EditText  updateData={() => updateHelpCenter(helpCenterData as HelpCenterData)} value={helpCenterData?.name}  className={'title-textarea-collections'} setValue={(value) => setHelpCenterData(prev =>({...prev as HelpCenterData, name:value}))}/>
                 </Box>
-                <Flex gap='10px'> 
+            </Flex>
+
+            <Flex justifyContent={'space-between'}> 
+                <Box h='40px' > 
+                    <SectionSelector notSection selectedSection={currentSection} sections={sectionsList} sectionsMap={sectionsMap} onChange={() => setCurrentSection(prev => (prev === 'collections'?'styles':'collections'))}/>
+                </Box>
+                <Flex gap='12px'>
                     <ActionsButton isLanguage={false}/>
                     <Button  variant='common' size={'sm'} onClick={() => updateHelpCenter({...helpCenterData as HelpCenterData, is_live:!helpCenterData?.is_live })} leftIcon={<FaCircleDot color={helpCenterData?.is_live?'#68D391':'#ECC94B'}/>}>{helpCenterData?.is_live?t('IsLive'):t('NotIsLive')}</Button>
                 </Flex>
             </Flex>
-            <Flex mt='2vh' justifyContent={'space-between'} alignItems={'end'} mb='2vh'> 
-                <Skeleton  isLoaded={(helpCenterData !== null && collectionsData !== null)}> 
-                <SectionSelector selectedSection={currentSection} sections={sectionsList} sectionsMap={sectionsMap} onChange={() => setCurrentSection(prev => (prev === 'collections'?'styles':'collections'))}/>
-                </Skeleton>
-             </Flex>
-            <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/>
+            <Box bg='gray.200' h='1px' w='100%'/>
+ 
         </Box>
   
         <Box ref={stylesHeaderRef} flex='1' >
         {(currentSection === 'styles') ? 
-        <Skeleton flex='1'  isLoaded={(helpCenterData !== null && collectionsData !== null)}>
-            <EditStyles currentStyles={helpCenterData?.style as StylesConfig} currentCollections={selectedCollectionsByLanguage} publicArticlesData={publicArticlesData as ArticleData[]} stylesRef={stylesRef}  stylesHeaderRef={stylesHeaderRef} saveStyles={saveStyles}/>
-        </Skeleton>
+            <Flex flexDir={'column'} flex='1'  py='2vh'  px='2vw' >
+                <EditStyles currentStyles={helpCenterData?.style as StylesConfig} currentCollections={selectedCollectionsByLanguage} publicArticlesData={publicArticlesData as ArticleData[]} stylesRef={stylesRef}  stylesHeaderRef={stylesHeaderRef} saveStyles={saveStyles}/>
+            </Flex>
         :
-        <Box flex='1'>
+        <Box flex='1' py='2vw' px='2vw'>
             <Flex flexDir={'row-reverse'} justifyContent={'space-between'}>
                 <Button leftIcon={<FaPlus/>} size='sm' onClick={() => setShowCreateCollection(true)} variant='common'>{t('AddCollection')}</Button>
                 <ChangeLanguage/>

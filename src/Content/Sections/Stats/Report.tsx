@@ -3,19 +3,17 @@ import { useState, useEffect, useRef, Dispatch, SetStateAction, useMemo, CSSProp
 import { useTranslation } from "react-i18next"
 import { useAuth } from "../../../AuthContext"
 import { useLocation, useNavigate } from "react-router-dom"
-import { useSession } from "../../../SessionContext"
 import { useAuth0 } from "@auth0/auth0-react"
 //FETCH DATA
 import fetchData from "../../API/fetchData"
 //FRONT
 import { Flex, Box, Text, chakra, shouldForwardProp, Button, Portal, Icon, Tooltip, Switch, NumberInput, NumberInputField, NumberInputStepper, NumberIncrementStepper, NumberDecrementStepper, Radio, IconButton, Skeleton } from "@chakra-ui/react"
-import { motion, isValidMotionProp, AnimatePresence } from 'framer-motion'
+import { motion, isValidMotionProp } from 'framer-motion'
 import "../../Components/styles.css"
 import LoadingIconButton from "../../Components/Reusable/LoadingIconButton"
 //COMPONENTS
 import ConfirmBox from "../../Components/Reusable/ConfirmBox"
 import SectionSelector from "../../Components/Reusable/SectionSelector"
-import VariableTypeChanger from "../../Components/Reusable/VariableTypeChanger"
 import ChartComponent from "./ChartsComponent"
 import GridLayout from "react-grid-layout"
 import 'react-grid-layout/css/styles.css'
@@ -23,6 +21,7 @@ import DateRangePicker from "../../Components/Reusable/DatePicker"
 import CustomSelect from "../../Components/Reusable/CustomSelect"
 import EditText from "../../Components/Reusable/EditText"
 import ActionsButton from "../../Components/Reusable/ActionsButton"
+import FilterManager from "../../Components/Reusable/ManageFilters"
 //FUNCTIONS
 import parseMessageToBold from "../../Functions/parseToBold"
 import useOutsideClick from "../../Functions/clickOutside"
@@ -30,12 +29,11 @@ import determineBoxStyle from "../../Functions/determineBoxStyle"
 //ICONS
 import { FaQuestionCircle } from "react-icons/fa"
 import { IoStatsChart,  IoSettingsSharp} from "react-icons/io5";
-import { FaChartBar,FaCheck,  FaChartColumn,FaTable, FaChartLine, FaChartArea, FaChartPie, FaPen, FaPlus,FaClock, FaCalendarDay, FaCalendarWeek, FaCalendarDays, FaClockRotateLeft, FaLock } from "react-icons/fa6"
-import { TbSquareNumber7Filled , TbCopyPlusFilled } from "react-icons/tb"
+import { FaChartBar, FaChartColumn,FaTable, FaChartLine, FaChartArea, FaChartPie, FaPen, FaPlus,FaClock, FaCalendarDay, FaCalendarWeek, FaCalendarDays, FaClockRotateLeft, FaLock } from "react-icons/fa6"
+import { TbSquareNumber7Filled  } from "react-icons/tb"
 import { HiTrash } from "react-icons/hi2"
 import { MdOutlineDragIndicator } from "react-icons/md"
 import { TiArrowSortedDown } from "react-icons/ti"
-import { RxCross2 } from "react-icons/rx"
 import { PiSidebarSimpleBold } from "react-icons/pi"
 //TYPING
 import { ReportType, ChartType, MetricType, metrics } from "../../Constants/typing" 
@@ -73,7 +71,7 @@ const Report = ({hideReports, setHideReports}:{hideReports:boolean, setHideRepor
         view_by:{type:'time',configuration:{granularity:'day'}},
         segment_by:{type:null,configuration:{}},
         configuration: {x:0, y:0, h:1, w:2, show_objective:false, objective_value:'0', show_unit:false, unit:''},
-        metrics: [{uuid:'', report_chart_uuid: '',aggregation_type:'count', metric_name: 'total_conversations',  legend_label: '', configurations: {}, filter_conjunction:'AND',filters:[]}],
+        metrics: [{uuid:'', report_chart_uuid: '',aggregation_type:'count', metric_name: 'total_conversations',  legend_label: '', configurations: {}, filters:{logic:'AND', groups:[]}}],
         data: []
     }
 
@@ -318,7 +316,7 @@ const EditChartComponent = ({chartData, setChartData, reportData, setReportData}
  
     //EDIT METRICS
     const addMetric = () => {
-        const newMetric:MetricType = {uuid:'', report_chart_uuid: currentChart.uuid, aggregation_type:'count', metric_name: currentChart.metrics[currentChart.metrics.length - 1].metric_name,  legend_label: '', configurations: {}, filter_conjunction:'AND',filters:[]}
+        const newMetric:MetricType = {uuid:'', report_chart_uuid: currentChart.uuid, aggregation_type:'count', metric_name: currentChart.metrics[currentChart.metrics.length - 1].metric_name,  legend_label: '', configurations: {}, filters:{logic:'AND', groups:[]}}
         setCurrentChart(prev => ({...prev, metrics:[...prev.metrics, newMetric]}))
     }
     
@@ -650,14 +648,10 @@ const EditChartStyles = ({chartData, setChartData}:{chartData:ChartType, setChar
 const EditMetric = ({metric, index, setChartData, metricsDefinition, chartData, containerRef}:{metric:MetricType, index:number,  setChartData:Dispatch<SetStateAction<ChartType>>, metricsDefinition:any, chartData:ChartType,containerRef:RefObject<HTMLDivElement>}) => {
 
     const { t } = useTranslation('stats')
- 
-    const editFilter = (type:'edit' | 'add' | 'delete', index?:number, data?:{field_name: string, operator: operationsTypes, value: any}) => {
-        let newFilters = metric.filters
-        if (type === 'add') newFilters = [...metric.filters, {field_name:'channel_type', 'operator':'eq', value:'webchat'}]
-        else if (type === 'edit' && index !== undefined && data) newFilters[index] = data
-        else if (type === 'delete' && index !== undefined) newFilters.splice(index, 1);
-        editMetric('edit', {...metric, filters:newFilters})
-    }
+    const operationTypesDict = {'user_id':['eq', 'neq',  'exists'], 'updated_at': ['between', 'exists'], 'created_at': ['between', 'exists'], 'solved_at': ['between', 'exists'],'closed_at': ['between', 'exists'],'channel_type':['eq', 'neq', 'exists'], 'channel_id':['eq', 'neq', 'exists'], 'title':['eq', 'neq', 'exists'], 'theme':['eq', 'neq', 'exists'], 'urgency_rating':['eq', 'neq', 'leq', 'geq', 'exists'], 'status':['eq', 'neq'], 'unseen_changes':['eq', 'exists'], 'tags':['contains', 'ncontains', 'exists'], 'is_csat_opened':['eq', 'exists'], 'is_nps_offered':['eq', 'exists'],  'is_matilda_engaged':['eq', 'exists'],'is_csat_offered':['eq', 'exists'],
+        'rating':['eq','neq', 'leq', 'geq', 'exists'], 'is_transferred':['eq', 'neq']
+    }     
+
     const editMetric = (type:'edit' | 'delete', newMetric?: MetricType) => {
         setChartData(prevChartData => {
             if (!prevChartData) return prevChartData
@@ -741,165 +735,15 @@ const EditMetric = ({metric, index, setChartData, metricsDefinition, chartData, 
                         <CustomSelect hide={false} selectedItem={metric.aggregation_type} labelsMap={{'sum':t('sum'), 'avg':t('average'), 'median':t('median'), 'count':t('count'), 'min':t('min'), 'max':t('max') }} setSelectedItem={(value) => editMetric('edit', {...metric, aggregation_type:value})} options={metricsDefinition[metric.metric_name].aggregation_type} />
                     </Box> 
                 </>}
-                {metric.filters.map((filter, index) => (<> 
-                    <EditFilter filter={filter} index={index} metric={metric} metricsDefinition={metricsDefinition} editMetric={editMetric} editFilter={editFilter}/>
-                </>))}
-                <Button mt='2vh' variant={'common'} size={'sm'} leftIcon={<FaPlus/>} onClick={() => editFilter('add')}>{t('AddFilter')}</Button>
-            </Box>
+        
+                <FilterManager filters={metric.filters} setFilters={(filters) => editMetric('edit', {...metric, filters})} operationTypesDict={operationTypesDict} typesMap={{}} excludedFields={['contacts', 'contact_businesses', 'custom']} scrollRef={containerRef} />
+              
+             </Box>
         </Box>
     )
 }
 
-//EDIT FILTERS
-const EditFilter = ({filter, index, metric, metricsDefinition, editMetric, editFilter}:{filter:{field_name: string, operator: operationsTypes, value: any}, index:number,metric:any, metricsDefinition:any, editMetric:any, editFilter:any}) => {
-
-    const {t } = useTranslation('stats')
-    const textRef = useRef<HTMLParagraphElement>(null)
-    const boxRef = useRef<HTMLDivElement>(null)
-
-    const [showBoxPosition, setShowBoxPosition] = useState<boolean>(false)
-
-    useOutsideClick({ref1:textRef, ref2:boxRef, onOutsideClick:setShowBoxPosition})
-    const [boxStyle, setBoxStyle] = useState<CSSProperties>({})
-    determineBoxStyle({buttonRef:textRef, setBoxStyle, boxPosition:'none', changeVariable:showBoxPosition})
-         
-    return (
-    <Flex gap='10px' height={'37px'} mt='1vh' alignItems={'center'}> 
-      
-        <EditChartFilter data={filter} metric={metric} metricsDefinition={metricsDefinition} index={index} editFilter={editFilter}  />
-        {index !== metric.filters.length -1 && 
-        <Flex mt='1vh' mb='1vh' p='4px' position='relative'>
-            <Text ref={textRef} fontWeight={'semibold'}  _hover={{color:'brand.text_blue'}} cursor={'pointer'} onClick={() => setShowBoxPosition(true)}>{t(metric.filter_conjunction)}</Text>
-            {showBoxPosition && 
-            <Portal>
-                    <MotionBox initial={{ opacity: 0, marginTop:-10, marginBottom:-10 }} animate={{ opacity: 1, marginTop: 0,marginBottom:0 }}  exit={{ opacity: 0,marginTop:-10,marginBottom:-10}} transition={{ duration: '.2', ease: 'easeOut'}}
-                    top={boxStyle.top} bottom={boxStyle.bottom}left={boxStyle.left} ml='-60px' width={'80px'} maxH='40vh' overflow={'scroll'} gap='10px' ref={boxRef} fontSize={'.9em'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000}   position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
-                    {['AND', 'OR'].map((option, index) => ( 
-                        <Flex key={`option-${index}`} px='10px'   py='7px' cursor={'pointer'} justifyContent={'space-between'} alignItems={'center'} color={metric.filter_conjunction === option?'brand.text_blue':'black'} _hover={{bg:'brand.hover_gray'}}
-                            onClick={() => {setShowBoxPosition(false); editMetric({...metric, filter_conjunction:option as 'AND' | 'OR'})}}>
-                            <Flex gap='10px' alignItems={'center'} > 
-                                <Text fontWeight={'medium'}>{t(option)}</Text>
-                            </Flex>
-                            {metric.filter_conjunction === option && <Icon as={FaCheck}/>}
-                        </Flex>
-                    ))}
-                </MotionBox>
-            </Portal>
-            }
-        </Flex> }
-    </Flex>)
-}
-
-//EDIT FILTERS
-const EditChartFilter = ({data, metric, metricsDefinition,  scrollRef, index, editFilter}:{data:{field_name: string, operator: operationsTypes, value: any}, metric:MetricType, metricsDefinition:any, scrollRef?:RefObject<HTMLDivElement>, index:number, editFilter:any}) => {
-
-    //TRANSLATION
-    const auth = useAuth()
-    const session = useSession()
-    const { t } = useTranslation('settings')
-    const t_con = useTranslation('conversations').t
-    const fieldsLabelsMap = {'user_id': t('user_id'), 'updated_at': t('updated_at'), 'created_at': t('created_at'),'solved_at': t('solved_at'), 'status': t('status'), 'channel_type': t('channel_type'), 'channel_id': t('channel_id'),'theme': t('theme'), 'closed_at': t('closed_at'), 'title': t('title'), 'urgency_rating': t('urgency_rating'), 'is_transferred':t('is_transferred'),'is_csat_opened': t('is_csat_opened'), 'is_nps_offered':t('is_nps_offered')}
-    const operationLabelsMap = {'between':t('between'),'eq':t('eq'), 'exists':t('exists'), 'neq':t('neq'), 'leq':t('leq'), 'geq':t('geq'), 'in':t('in'), 'nin':t('nin'), 'l':t('l'), 'g':t('g')}
-    const operationTypesDict = {'user_id':['eq', 'neq',  'exists'], 'updated_at': ['between', 'exists'], 'created_at': ['between', 'exists'], 'solved_at': ['between', 'exists'],'closed_at': ['between', 'exists'],'channel_type':['eq', 'neq', 'exists'], 'channel_id':['eq', 'neq', 'exists'], 'title':['eq', 'neq', 'exists'], 'theme':['eq', 'neq', 'exists'], 'urgency_rating':['eq', 'neq', 'leq', 'geq', 'exists'], 'status':['eq', 'neq'], 'unseen_changes':['eq', 'exists'], 'tags':['contains', 'ncontains', 'exists'], 'is_csat_opened':['eq', 'exists'], 'is_nps_offered':['eq', 'exists'],  'is_matilda_engaged':['eq', 'exists'],'is_csat_offered':['eq', 'exists'],
-        'rating':['eq','neq', 'leq', 'geq', 'exists'], 'is_transferred':['eq', 'neq']
-    }       
-    
-
-    //IS HOVERING
-    const [isHovering, setIsHovering] = useState<boolean>(false)
-
-    //BOOLEAN TO CONTROL THE VISIBILITY OF THE LIST AND CLOSE ON OUTSIDE CLICK
-    const buttonRef = useRef<HTMLDivElement>(null)
-    const boxRef = useRef<HTMLDivElement>(null)
-    const [showList, setShowList] = useState<boolean>(false)
-    useOutsideClick({ref1:buttonRef, ref2:boxRef, containerRef:scrollRef, onOutsideClick:setShowList})
-
-    //BOX POSITION LOGIC, TO SHOW IT UP OR DOWN OF THE INPUT, DEPENDING ON THE POSITION
-    const [boxStyle, setBoxStyle] = useState<CSSProperties>({})
-    determineBoxStyle({buttonRef, setBoxStyle, boxPosition:'none', changeVariable:showList})
-
-    //CHANGE DATA ON NAME CHANGE
-    useEffect(() => {
-        editFilter('edit', index, {...data, value:data.value || '', operator:(operationTypesDict[data.field_name as keyof typeof operationTypesDict] || [])[0] as operationsTypes})
-    },[data.field_name])
-
-    const getValue = (inputType:string, value:any) => {
-        switch(inputType) {
-            case 'user_id':
-                {
-                    let usersDict:{[key:string]:string} = {}
-                    if (auth.authData.users) Object.keys(auth.authData?.users).map((key:any) => {if (auth?.authData?.users) usersDict[key] = auth?.authData?.users[key].name})
-                    usersDict['no_user'] = t('NoAgent')
-                    usersDict['matilda'] = 'Matilda'
-                    return usersDict[value]
-                }
-            case 'channel_type':
-                return t(value)
-            case 'channel_id':
-                const channels = session?.sessionData?.additionalData?.channels || []
-                return channels?.find(channel => channel?.id === value)?.name || ''
-    
-            case 'urgency_rating':
-                const ratingMapDic = {0:`${t('Priority_0')} (0)`, 1:`${t('Priority_1')} (1)`, 2:`${t('Priority_2')} (2)`, 3:`${t('Priority_3')} (3)`, 4:`${t('Priority_4')} (4)`}
-                return (ratingMapDic as any)[value]
-            
-            case 'status':
-                const statusMapDic = {'new':t_con('new'), 'open':t_con('open'), solved:t_con('solved'), 'pending':t_con('pending'), 'closed':t_con('closed')}
-                return (statusMapDic as any)[value] 
-            case 'is_transferred':
-            case 'is_csat_opened':
-            case 'is_nps_opened':
-                return value?t('true'):t('false')
-
-            case 'created_at':
-            case 'updated_at':
-            case 'solved_at':
-            case 'closed_at':{
-                const [startDate, endDate] = value.split(' to ')
-            
-                return (startDate && endDate) ? `${new Date(startDate).toLocaleDateString()} - ${new Date(endDate).toLocaleDateString()}`:'-'
-            }
-            default: 
-                return value
-            }
-        }
-
-   return(
-        <>
-            <Flex flex='1' position={'relative'} ref={buttonRef} p='7px' borderRadius={'.5rem'} bg='brand.gray_1' cursor={'pointer'} alignItems={'center'} justifyContent={'space-between'} _hover={{color:'brand.text_blue'}} onClick={()=> setShowList(true)} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
-                <Text fontWeight={'medium'} fontSize={'.9em'}>{(fieldsLabelsMap as any)[data?.field_name] || ''} {operationLabelsMap[data.operator].toLocaleLowerCase()} {getValue(data?.field_name, data?.value)}</Text>
-                {isHovering && <Icon position={'absolute'} right={'7px'} boxSize={'16px'} as={RxCross2} onClick={(e) => {e.stopPropagation(); editFilter('delete', index)}}/>}
-            </Flex>
-            <AnimatePresence> 
-                {showList && 
-                    <Portal>
-                        <MotionBox initial={{ opacity: 0, marginTop:-10, marginBottom:-10 }} animate={{ opacity: 1, marginTop: 0,marginBottom:0 }}  exit={{ opacity: 0,marginTop:-10,marginBottom:-10}} transition={{ duration: '.2', ease: 'easeOut'}}
-                        top={boxStyle.top}  onClick={(e) => e.stopPropagation()}  bottom={boxStyle.bottom} marginTop='10px' marginBottom='10px' left={boxStyle.left} width={boxStyle.width} maxH='40vh' overflow={'scroll'} gap='10px' ref={boxRef} fontSize={'.9em'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000}   position={'absolute'} borderRadius={'.5rem'} >
-                            <Box p='15px' alignItems={'center'} gap='10px' >
-                                <Box mb='2vh' flex='1'> 
-                                    <CustomSelect variant="title" containerRef={scrollRef} hide={true} selectedItem={data.field_name} setSelectedItem={(value) => editFilter('edit', index, {...data, 'field_name':value})} options={metricsDefinition[metric.metric_name].allowed_filters} labelsMap={fieldsLabelsMap} />
-                                </Box>
-                                {((operationTypesDict[data.field_name as keyof typeof operationTypesDict] || []) as operationsTypes[]).map((op, opIndex) => (
-                                    <Box mt='1vh' key={`operation-${opIndex}`}>
-                                        <Flex mb='.5vh'   gap='10px' alignItems={'center'}>
-                                            <Radio isChecked={data.operator === op}  onClick={() => editFilter('edit', index, {...data, 'operator':op})}/>
-                                            <Text fontWeight={'medium'} color='gray.600' fontSize={'.9em'}>{operationLabelsMap[op]}</Text>
-                                        </Flex>
-                                        {data.operator === op && 
-                                        <Box ml='30px'>
-                                            <VariableTypeChanger variant={'styled'} customType={false} inputType={data.field_name} value={data.value} setValue={(value:any) => editFilter('edit', index, {...data, value})} operation={data.operator}/>
-                                        </Box>}
-                                    </Box>
-                                ))}
-                            </Box>
-                            <Flex py='10px' justifyContent={'center'} borderTopColor={'gray.200'} borderTopWidth={'1px'}>
-                                <Text cursor={'pointer'} _hover={{color:'rgb(59, 90, 246, 0.9)'}} onClick={() => setShowList(false)} fontWeight={'medium'} color='brand.text_blue'>{t('Ready')}</Text>
-                            </Flex>
-                        </MotionBox>
-                    </Portal>}
-            </AnimatePresence> 
-        </>)
-}
+ 
 
 //CHARTS GRID
 const ChartGrid = ({ reportData, setReportData, gridWidth, setSelectedChart }:{reportData:ReportType,  setReportData:Dispatch<SetStateAction<ReportType | null>>, gridWidth:number, setSelectedChart:Dispatch<SetStateAction<ChartType | null>>}) => {

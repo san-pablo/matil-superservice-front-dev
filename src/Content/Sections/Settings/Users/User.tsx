@@ -103,85 +103,87 @@ const User = () => {
  
     return(<>
         <SaveChanges data={organizationData} setData={setOrganizationData} dataRef={organizationDataRef} onSaveFunc={() => {}}/>
-        <Box>
-            <Flex alignItems={'end'} justifyContent={'space-between'}> 
-                <Box> 
-                    <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Profile')}</Text>
-                    <Text color='gray.600' fontSize={'.9em'}>{t('ProfileDes')}</Text>
-                </Box>
-             </Flex>
-            <Box width='100%' bg='gray.300' height='1px' mt='2vh' />
-        </Box>
-        <Box flex='1'> 
-            <Flex  maxW={'1200px'} pt='3vh' gap='50px' > 
-                
-        
-                <Box flex={'1'} bg='white'display={'inline-block'}  borderWidth={'1px'}  borderColor={'gray.200'} borderRadius={'.7rem'} p='20px'  > 
-                    <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('GeneralInfo')}</Text>
-                    <Text color='gray.600' fontSize={'.9em'}>{t('GeneralInfoDes')}</Text>
-                
-                <Flex mt='3vh' gap='15px' alignItems={'center'}>
-                        <Text fontWeight={'medium'}>{t('Name')}</Text>
-                        <Box maxW={'400px'}> 
-                            <EditText hideInput={true} value={userData.name} setValue={(value) => handleEditKey('name', value)}/>
-                        </Box>
+        <Box px='2vw' py='2vh'> 
+            <Box>
+                <Flex alignItems={'end'} justifyContent={'space-between'}> 
+                    <Box> 
+                        <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('Profile')}</Text>
+                        <Text color='gray.600' fontSize={'.8em'}>{t('ProfileDes')}</Text>
+                    </Box>
                 </Flex>
-        
-                <Flex mt='1vh' gap='15px' alignItems={'center'}>
-                        <Text fontWeight={'medium'}>{t('Surname')}</Text>
-                        <Box maxW={'400px'}> 
-                            <EditText hideInput={true} value={userData.surname} setValue={(value) => handleEditKey('surname', value)}/>
-                        </Box>
-                </Flex>
-
-                <Box bg='gray.200' height={'1px'} mt='2vh' mb='2vh' width={'100%'}/>
-
-                <Flex gap='15px' alignItems={'center'}>
-                        <Text fontWeight={'medium'}>{t('Mail')}</Text>
-                        <Box maxW={'400px'}> 
-                            <EditText hideInput={true} regex={/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/} value={userData.email_address} setValue={(value) => handleEditKey('email_address', value)}/>
-                        </Box>
-                </Flex>
-
-                <Flex mt='1vh' gap='15px' alignItems={'center'}>
-                        <Text fontWeight={'medium'}>{t('Password')}</Text>
-                        <Box maxW={'400px'}> 
-                            <EditText hideInput={true} value={userData.password} setValue={(value) => handleEditKey('password', value)}/>
-                        </Box>
-                </Flex>
-
-
-                <Box bg='gray.200' height={'1px'} mt='2vh' mb='2vh' width={'100%'}/>
-
-                <Flex mt='1vh' gap='15px' alignItems={'center'}>
-                <Text fontWeight={'medium'}>{t('Language')}</Text>
-                        <Box w={'250px'}> 
-                            <CustomSelect labelsMap={languagesMap}  selectedItem={userData.language}  setSelectedItem={(value) => handleEditKey('language', value)} options={Object.keys(languagesMap)} hide={true} />
-                        </Box>
-                </Flex>
-                </Box>
-                <Box flex={'1'} bg='white'display={'inline-block'}  borderWidth={'1px'}  borderColor={'gray.200'} borderRadius={'.7rem'} p='20px'  > 
-                    <Text fontWeight={'medium'}  fontSize={'1.2em'}>{t('OrgInfo', {name:auth.authData.organizationName})}</Text>
-                    <Text color='gray.600' fontSize={'.9em'}>{t('OrgInfoDes')}</Text>
-
-                    <Flex alignItems={'center'} justifyContent={'space-between'} mt='3vh'>
-                        <Flex alignItems={'center'} gap='10px'>
-                            <Avatar src={organizationData.avatar_image_url}/>
-                            <Box alignItems={'center'} gap='10px'>
-                                <Text fontWeight={'medium'}>{t('ProfilePicture')}</Text>
-                                <Text color={'gray.600'} fontSize={'.9em'}>{t('ProfilePicture_Exp')}</Text>
+                <Box width='100%' bg='gray.200' height='1px' mt='2vh' />
+            </Box>
+            <Box flex='1' py='2vh'> 
+                <Flex  maxW={'1200px'}  gap='50px' > 
+                    
+            
+                    <Box flex={'1'} bg='white'display={'inline-block'}  borderWidth={'1px'}  borderColor={'gray.200'} borderRadius={'.7rem'} p='20px'  > 
+                        <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('GeneralInfo')}</Text>
+                        <Text color='gray.600' fontSize={'.9em'}>{t('GeneralInfoDes')}</Text>
+                    
+                    <Flex mt='3vh' gap='15px' alignItems={'center'}>
+                            <Text fontWeight={'medium'}>{t('Name')}</Text>
+                            <Box maxW={'400px'}> 
+                                <EditText hideInput={true} value={userData.name} setValue={(value) => handleEditKey('name', value)}/>
                             </Box>
-                        </Flex>
-                        <Flex alignItems={'center'} gap='10px'>
-                            <Button size='xs' variant={'common'}>{t('AddNewPicture')}</Button>
-                            <Button size='xs' variant={'delete'} >{t('Delete')}</Button>
-                        </Flex>
                     </Flex>
-    
-                </Box>
-    
-    
-            </Flex>
+            
+                    <Flex mt='1vh' gap='15px' alignItems={'center'}>
+                            <Text fontWeight={'medium'}>{t('Surname')}</Text>
+                            <Box maxW={'400px'}> 
+                                <EditText hideInput={true} value={userData.surname} setValue={(value) => handleEditKey('surname', value)}/>
+                            </Box>
+                    </Flex>
+
+                    <Box bg='gray.200' height={'1px'} mt='2vh' mb='2vh' width={'100%'}/>
+
+                    <Flex gap='15px' alignItems={'center'}>
+                            <Text fontWeight={'medium'}>{t('Mail')}</Text>
+                            <Box maxW={'400px'}> 
+                                <EditText hideInput={true} regex={/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/} value={userData.email_address} setValue={(value) => handleEditKey('email_address', value)}/>
+                            </Box>
+                    </Flex>
+
+                    <Flex mt='1vh' gap='15px' alignItems={'center'}>
+                            <Text fontWeight={'medium'}>{t('Password')}</Text>
+                            <Box maxW={'400px'}> 
+                                <EditText hideInput={true} value={userData.password} setValue={(value) => handleEditKey('password', value)}/>
+                            </Box>
+                    </Flex>
+
+
+                    <Box bg='gray.200' height={'1px'} mt='2vh' mb='2vh' width={'100%'}/>
+
+                    <Flex mt='1vh' gap='15px' alignItems={'center'}>
+                    <Text fontWeight={'medium'}>{t('Language')}</Text>
+                            <Box w={'250px'}> 
+                                <CustomSelect labelsMap={languagesMap}  selectedItem={userData.language}  setSelectedItem={(value) => handleEditKey('language', value)} options={Object.keys(languagesMap)} hide={true} />
+                            </Box>
+                    </Flex>
+                    </Box>
+                    <Box flex={'1'} bg='white'display={'inline-block'}  borderWidth={'1px'}  borderColor={'gray.200'} borderRadius={'.7rem'} p='20px'  > 
+                        <Text fontWeight={'medium'}  fontSize={'1.2em'}>{t('OrgInfo', {name:auth.authData.organizationName})}</Text>
+                        <Text color='gray.600' fontSize={'.9em'}>{t('OrgInfoDes')}</Text>
+
+                        <Flex alignItems={'center'} justifyContent={'space-between'} mt='3vh'>
+                            <Flex alignItems={'center'} gap='10px'>
+                                <Avatar src={organizationData.avatar_image_url}/>
+                                <Box alignItems={'center'} gap='10px'>
+                                    <Text fontWeight={'medium'}>{t('ProfilePicture')}</Text>
+                                    <Text color={'gray.600'} fontSize={'.9em'}>{t('ProfilePicture_Exp')}</Text>
+                                </Box>
+                            </Flex>
+                            <Flex alignItems={'center'} gap='10px'>
+                                <Button size='xs' variant={'common'}>{t('AddNewPicture')}</Button>
+                                <Button size='xs' variant={'delete'} >{t('Delete')}</Button>
+                            </Flex>
+                        </Flex>
+        
+                    </Box>
+        
+        
+                </Flex>
+            </Box>
         </Box>
        
     </>)

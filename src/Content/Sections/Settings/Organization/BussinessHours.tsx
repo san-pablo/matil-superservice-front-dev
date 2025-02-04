@@ -99,23 +99,23 @@ function BusinessHours () {
     }
  
     return(
-    <Box  p='2vw'>
+    <Flex py='2vh' px='2vw' flexDir={'column'} h='100vh'>
         <SaveChanges data={organizationData} setData={setOrganizationData} dataRef={orgDataRef} onSaveFunc={saveChanges} onDiscardFunc={onDiscardFunc}/>
         <Box>
             <Flex alignItems={'end'} justifyContent={'space-between'}> 
                 <Skeleton isLoaded={!waitingInfo}> 
-                    <Text fontSize={'1.5em'} fontWeight={'medium'}>{t('Hours')}</Text>
-                    <Text color='gray.600' fontSize={'.9em'}>{t('HoursDes')}</Text>
+                    <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('Hours')}</Text>
+                    <Text color='gray.600' fontSize={'.8em'}>{t('HoursDes')}</Text>
                 </Skeleton>
             </Flex>
-            <Box width='100%' bg='gray.300' height='1px' mt='2vh'/>
+            <Box width='100%' bg='gray.200' height='1px' mt='2vh'/>
         </Box>
-        <Box flex='1' maxW={'1000px'}  overflow={'scroll'} pt='3vh'>
+        <Box flex='1' maxW={'1000px'}  overflow={'scroll'} pt='2vh'>
             {(organizationData && selectedIntervals) && <HoursSlider selectedIntervals={selectedIntervals} setSelectedIntervals={setSelectedIntervals} setHours={setOrganizationData}/>}
         </Box>
         
  
-    </Box>)
+    </Flex>)
 }
 
 export default BusinessHours
@@ -192,7 +192,7 @@ const HoursSlider = ({selectedIntervals, setSelectedIntervals, setHours}:{select
             {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day, index) => {            
                 return (
                 <Box key={`day-${index}`} position={'relative'}> 
-                    <Text fontWeight={'semibold'} mt='2vh'>{t(`WeekDay${index + 1}`)}</Text>
+                    <Text fontWeight={'medium'} fontSize={'.9em'} mt='2vh'>{t(`WeekDay${index + 1}`)}</Text>
                     <IntervalComponent day={day} intervals={selectedIntervals[day]} handleSliderChange={handleSliderChange} addInterval={addNewInterval} deleteInterval={deleteInterval}/>
                 </Box>)
             })}

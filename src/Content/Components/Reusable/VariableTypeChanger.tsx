@@ -66,7 +66,7 @@ const FindBusinessComponent = ({value, setValue, auth}:{value:number, setValue:a
             
             <AnimatePresence> 
                 {showSearch && 
-                <MotionBox initial={{ opacity: 5, marginTop: -5 }} animate={{ opacity: 1, marginTop: 5 }}  exit={{ opacity: 0,marginTop:-5}} transition={{ duration: '0.2', ease: 'easeIn'}}
+                <MotionBox id='custom-portal' initial={{ opacity: 5, marginTop: -5 }} animate={{ opacity: 1, marginTop: 5 }}  exit={{ opacity: 0,marginTop:-5}} transition={{ duration: '0.2', ease: 'easeIn'}}
                     maxH='30vh' overflow={'scroll'} width='140%' gap='10px' ref={boxRef} fontSize={'.9em'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000} position={'absolute'} right={0} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
                     <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Buscar..." style={{border:'none', outline:'none', background:'transparent', padding:'10px'}}/>
                     <Box height={'1px'} width={'100%'} bg='gray.200'/>
@@ -142,6 +142,8 @@ const VariableTypeChanger = ({inputType, value, setValue, operation, customType,
             case 'str':
             case 'string':
             case 'list':
+            case 'array':
+
                 return <EditText placeholder='-' isDisabled={disabled}  value={value} setValue={(value) => setValue(value) } hideInput={false} />
             case 'timestamp':
                 const datesMap = {'{today}':t('Today'), '{yesterday}':t('Yesterday'), '{start_of_week}':t('WeekStart'),'{start_of_month}':t('StartMonth')}
@@ -180,10 +182,14 @@ const VariableTypeChanger = ({inputType, value, setValue, operation, customType,
         case 'labels':
         case 'domain':
             return <EditText value={value} setValue={(value) => setValue(value) } hideInput={false} />
-        case 'theme':
-            let subjectsDict:{[key:number]:string} = {}
-            if (auth.authData?.conversation_themes) auth.authData?.conversation_themes.map((theme:any) => {if (auth?.authData?.conversation_themes) subjectsDict[theme] = theme})
-            return (<CustomSelect  variant={variant} hide={false} selectedItem={value} setSelectedItem={(value) => setValue(value) }  options={Object.keys(subjectsDict)} labelsMap={subjectsDict} />)
+        case 'theme_uuid':
+            let themesDict:{[key:string]:[string, string]} = {}
+            auth.authData?.conversation_themes.map((theme:any) => {themesDict[theme.uuid] = [theme.name, theme.emoji]})
+            return (<CustomSelect  variant={variant} hide={false} selectedItem={value} setSelectedItem={(value) => setValue(value) }  options={Object.keys(themesDict)} iconsMap={themesDict} />)
+        case 'team_uuid':
+            let teamsDict:{[key:string]:[string, string]} = {}
+            auth.authData?.teams.map((team:any) => {themesDict[team.uuid] = [team.name, team.emoji]})
+            return (<CustomSelect  variant={variant} hide={false} selectedItem={value} setSelectedItem={(value) => setValue(value) }  options={Object.keys(teamsDict)} iconsMap={teamsDict} />)
         case 'urgency_rating':
             const ratingMapDic = {0:`${t('Priority_0')} (0)`, 1:`${t('Priority_1')} (1)`, 2:`${t('Priority_2')} (2)`, 3:`${t('Priority_3')} (3)`, 4:`${t('Priority_4')} (4)`}
             return (<CustomSelect  variant={variant} hide={false} selectedItem={value} setSelectedItem={(value) => setValue(value) }  options={Object.keys(ratingMapDic).map(key => parseInt(key))} labelsMap={ratingMapDic} />)
@@ -236,42 +242,3 @@ const VariableTypeChanger = ({inputType, value, setValue, operation, customType,
 
 export default VariableTypeChanger
 
-
-//INPUT DEPENDING ON THE VARIABLE TYPE
-const InputType = ({inputType, value, setValue}:{inputType:string,value:string, setValue:(value:any) => void}) => {
-    
-    //USEFUL CONSTANTS
-    const { t } = useTranslation('settings')
-    const boolDict = {true:t('True'), false:t('False')}
-    const datesMap = {'{today}':t('today'), '{yesterday}':t('yesterday'), '{start_of_week}':t('start_of_week'),'{start_of_month}':t('start_of_month')}
-
-    const [currentValue, setCurrentValue] = useState<string | null>(value) 
-
-    switch(inputType) {
-        case 'boolean':
-            return <CustomSelect hide={false} selectedItem={value} setSelectedItem={(value) => setValue(value) }  options={Object.keys(boolDict)} labelsMap={boolDict}/>
-        case 'integer':
-        case 'float':  {  
-             const handleBlur = () => {
-                const normalizedValueString = currentValue?.replace(',', '.')
-                if (normalizedValueString) {
-                    if (!(normalizedValueString && isNaN((parseFloat(normalizedValueString)))) ) setValue(null)
-                    if (inputType === 'integer') setValue(parseInt(normalizedValueString))
-                    else if (inputType === 'float') return setValue(parseInt(normalizedValueString))
-                }
-            } 
-            return (
-            <NumberInput value={value || undefined} onBlur={handleBlur} onChange={(value) => setCurrentValue(value) } clampValueOnBlur={false} >
-                <NumberInputField borderRadius='.5rem'  fontSize={'.9em'} height={'37px'}  borderColor={'gray.300'} _hover={{ border:'1px solid #CBD5E0'}} _focus={{ px:'11px', borderColor: "rgb(77, 144, 254)", borderWidth: "2px" }} px='12px' />
-            </NumberInput>)
-        }           
-        case 'string':
-        case 'list':
-                return <EditText value={value} setValue={(value) => setValue(value) } hideInput={false} />
-        case 'timestamp':
-            return <CustomSelect hide={false} selectedItem={value}  setSelectedItem={(value) => setValue(value)}  options={Object.keys(datesMap)} labelsMap={datesMap}/>
-
-        default: 
-            return null
-    }
-} 

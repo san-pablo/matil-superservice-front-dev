@@ -1,7 +1,3 @@
-/*
-    ICON FOR SHOW IN THE LOAD OF A BUTTON
-*/
-
 //FRONT
 import '../styles.css'
 

@@ -58,7 +58,7 @@ const NewUserBox = ({userData, setUserData, setShowCreateNewUser}:NewUserBoxProp
            const newInvitationKey = response.data.invitation_key
            const newUser = {...newUserInfo, is_active:true, invitation_key:newInvitationKey, name:response.data.name, surname:response.data.surname}
            setUserData([...userData, newUser])
-           auth.setAuthData({users:{...auth.authData.users, [response.data.id]:{name:response.data.name, surname:response.data.surname, email_address:newUserInfo.email, last_login:'', is_admin:newUserInfo.is_admin}}})
+           auth.setAuthData({users:{...auth.authData.users, [response.data.id]:{name:response.data.name, surname:response.data.surname, email_address:newUserInfo.email, profile_picture:'', is_admin:newUserInfo.is_admin}}})
            setShowCreateNewUser(false)
            setNewUserInfo({email:'', is_admin:true})
            setShowError('')
@@ -190,18 +190,18 @@ function AdminUsers () {
     ), [userToDelete])
 
     return(
-    <Box>        
+    <Box px='2vw' py='2vh'>        
         {userToDelete && memoizedDeleteBox}
         {showCreateNewUser && memoizedNewUserBox}
 
         <Flex alignItems={'end'} justifyContent={'space-between'}> 
             <Box> 
-                <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('UsersTable')}</Text>
-                <Text color='gray.600' fontSize={'.9em'}>{t('UsersDes')}</Text>
+                <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('UsersTable')}</Text>
+                <Text color='gray.600' fontSize={'.8em'}>{t('UsersDes')}</Text>
             </Box>
             <Button leftIcon={<FaPlus/>} size='sm' variant={'main'} onClick={() => {setShowCreateNewUser(!showCreateNewUser)}}>{t('CreateUser')}</Button>
         </Flex>
-        <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/>
+        <Box width='100%' bg='gray.200' height='1px' mt='2vh' mb='2vh'/>
 
   
         <Box width={'350px'}> 

@@ -19,7 +19,7 @@
     "contact_business_id": "Empresa",
     "contact":"Contacto",
     "name": "Nombre",
-    "language": "Idioma",
+    "language": "Idioma", 
     "rating": "Rating",
     "SuccessBlocked":"Cliente bloqueado con éxito",
     "last_interaction_at": "Última interacción",
@@ -61,6 +61,8 @@
     "Deblock":"Desbloquear",
     "HideSidebar":"Esconder barra",
     "NewMessage":"Nuevo mensaje",
-    "CreateClient":"Crear cliente"
+    "CreateClient":"Crear cliente",
+    "tags":"Etiquetas",
+    "instagram_followers":"Seguidores instagram"
 
 }

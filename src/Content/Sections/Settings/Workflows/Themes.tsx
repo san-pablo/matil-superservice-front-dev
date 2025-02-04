@@ -1,25 +1,27 @@
 
 //REACT
-import  { useState, useEffect, useMemo } from 'react'
+import  { useState, useEffect, useMemo, useRef } from 'react'
 import { useAuth } from '../../../../AuthContext'
-
+import { useAuth0 } from '@auth0/auth0-react'
 //FETCH DATA
 import fetchData from "../../../API/fetchData"
 //FRONT
-import { Flex, Text, Box, IconButton, Button, Textarea, Skeleton } from "@chakra-ui/react"
+import { Flex, Text, Box, IconButton, Button, Icon, Skeleton, Portal } from "@chakra-ui/react"
 //COMPONENTS
 import EditText from '../../../Components/Reusable/EditText'
 import LoadingIconButton from '../../../Components/Reusable/LoadingIconButton'
 import ConfirmBox from '../../../Components/Reusable/ConfirmBox'
+import EmojiPicker, { EmojiClickData } from 'emoji-picker-react'
 //FUNCTIONS
 import parseMessageToBold from '../../../Functions/parseToBold'
+import useOutsideClick from '../../../Functions/clickOutside'
 //ICONS
 import { useTranslation } from 'react-i18next'
-import { FaPlus, } from 'react-icons/fa6'
- import { FaEdit } from 'react-icons/fa'
+import { FaBookmark, FaPlus, } from 'react-icons/fa6'
+import { FaEdit } from 'react-icons/fa'
 import { HiTrash } from 'react-icons/hi2'
-import { useAuth0 } from '@auth0/auth0-react'
-//MAIN FUNCTION
+
+ //MAIN FUNCTION
 function Themes () {
 
     //CONSTANTS
@@ -31,7 +33,8 @@ function Themes () {
     const [addThemeIndex, setAddThemeIndex] = useState<number | null>(null)
     const [deleteThemeIndex, setDeleteThemeIndex] = useState<number | null>(null)
 
-    const [currentThemes, setCurrentThemes] = useState<{name:string, description:string}[] | null>(null)
+    const [currentThemes, setCurrentThemes] = useState<{uuid:string, name:string, description:string, emoji:string}[] | null>(null)
+    useEffect(() => {if (currentThemes) auth.setAuthData({conversation_themes:currentThemes})},[currentThemes])
 
     //MODIFY TITLE
     useEffect (() => {
@@ -39,56 +42,79 @@ function Themes () {
         fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/themes`,  setValue:setCurrentThemes, auth,  getAccessTokenSilently})
     }, [])
     
-    //ADD AND DELETE SHORTCUT
-    const handleAddTheme = async(newThemes:{name:string, description:string}[]) => {
-        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/themes`, method:'put', auth:auth, requestForm:newThemes, getAccessTokenSilently,  toastMessages:{'works':t('CorrectEditedTheme'), 'failed':t('FailedEditedTheme')}})
-        if (response?.status === 200) {
-            auth.setAuthData({conversation_themes:newThemes?.map(theme => theme.name)})  
-            setCurrentThemes(newThemes)
-        }
-    }
-    
     //ADD SHORTCUT COMPONENT
     const AddThemeComponent = ({index}:{index:number}) => {
+
+        //REFS
+        const emojiButtonRef = useRef<HTMLDivElement>(null)
+        const emojiBoxRef = useRef<HTMLDivElement>(null)
+        const [emojiVisible, setEmojiVisible] = useState<boolean>(false)
+        useOutsideClick({ref1:emojiButtonRef, ref2:emojiBoxRef, onOutsideClick:setEmojiVisible})
+        const handleEmojiClick = (emojiObject: EmojiClickData) => {setNewOption(prev => ({...prev, emoji:emojiObject.emoji}))}
+
+        //WAITING EDIT OR ADD 
         const [waitingAdd, setWaitingAdd] = useState<boolean>(false)
-        const [newOption, setNewOption] = useState<{name:string, description:string}>(index === -1 ? {name:'', description:''}:(currentThemes as {name:string, description:string}[])[index])
+
+        //DATA
+        const [newOption, setNewOption] = useState<{uuid:string, name:string, description:string, emoji:string}>(index === -1 ? {uuid:'', emoji:'',name:'', description:''}:(currentThemes as any)[index])
+        
+        //FUNCTION
         const addTheme = async() => {
-            setWaitingAdd(true)
-            await handleAddTheme(index === -1 ?[...currentThemes as {name:string, description:string}[], newOption ]:(currentThemes?.map((theme, i) => i === index ? newOption : theme) || []))
-            setWaitingAdd(false)
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/themes${index !== -1 ?`/${newOption.uuid}` :''}`, method:index === -1 ? 'post':'put', auth, requestForm:newOption, setWaiting:setWaitingAdd, getAccessTokenSilently,  toastMessages:{'works':t('CorrectEditedTheme'), 'failed':t('FailedEditedTheme')}})
+            if (response?.status === 200) {
+                if (index === -1) newOption.uuid =response.data.uuid
+                setCurrentThemes(prev => ([...prev as any, newOption]))
+            }
             setAddThemeIndex(null)
         }
+
+        //FRONT
         return(<> 
-            <Box p='20px'>
-                <Text fontWeight={'medium'} fontSize={'.9em'}  mb='.5vh'>{t('Name')}</Text>
-                <EditText hideInput={false} placeholder={t('Name')}  value={newOption.name}  setValue={(value:string) => setNewOption(prev => ({...prev, name:value}))}  />
+            <Box p='15px'>
+                <Text fontWeight={'medium'} fontSize={'1.2em'} >{index === -1? t('AddTheme'):t('EditTheme')}</Text>
+
+                <Flex mt='2vh' alignItems={'center'} gap='10px'> 
+                    <Flex cursor={'pointer'} ref={emojiButtonRef} onClick={() => setEmojiVisible(true)} alignItems={'center'} justifyContent={'center'} width={'32px'} height={'32px'} borderWidth={'1px'} borderColor={'gray.200'} borderRadius={'.5rem'}> 
+                        {newOption.emoji ? <Text fontSize={'.9em'}>{newOption.emoji}</Text>:<Icon boxSize={'.9em'} as={FaBookmark}/>}
+                    </Flex>
+                    <EditText placeholder={t('Name')} hideInput={false} value={newOption.name} setValue={(value:string) => setNewOption(prev => ({...prev, name:value}))}/>
+                </Flex>
+
                 <Text  fontWeight={'medium'} fontSize={'.9em'} mt='2vh' mb='.5vh'>{t('Description')}</Text>
-                <Textarea resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('Description')}...`} maxH='300px' value={newOption.description} onChange={(e) => setNewOption((prev) => ({...prev, description:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "rgb(59, 90, 246)", borderWidth: "2px"}}/>
+                <EditText isTextArea placeholder={`${t('Description')}...`} hideInput={false} value={newOption.description} setValue={(value:string) => setNewOption(prev => ({...prev, description:value}))}/>
+                <Flex mt='3vh' gap='15px' flexDir={'row-reverse'}>
+                    <Button  size='sm' variant={'main'} onClick={addTheme}>{waitingAdd?<LoadingIconButton/>:index === -1?t('AddTheme'):t('EditTheme')}</Button>
+                    <Button  size='sm' variant={'common'} onClick={()=> setAddThemeIndex(null)}>{t('Cancel')}</Button>
+                </Flex>  
             </Box>
-            <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'}bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-                <Button  size='sm' variant={'main'} onClick={addTheme}>{waitingAdd?<LoadingIconButton/>:index === -1?t('AddTheme'):t('EditTheme')}</Button>
-                <Button  size='sm' variant={'common'} onClick={()=> setAddThemeIndex(null)}>{t('Cancel')}</Button>
-            </Flex>  
+            {emojiVisible && 
+            <Portal> 
+                <Box position={'fixed'} zIndex={1000000} pointerEvents={emojiVisible?'auto':'none'} transition='opacity 0.2s ease-in-out' opacity={emojiVisible ? 1:0} top={`${(emojiButtonRef?.current?.getBoundingClientRect().bottom || 0) + 5}px`} left={`${(emojiButtonRef?.current?.getBoundingClientRect().left || 0)}px`}  ref={emojiBoxRef}> 
+                <EmojiPicker open={emojiVisible}
+                onEmojiClick={handleEmojiClick}  allowExpandReactions={false}/></Box>
+            </Portal>}
+
             </>)
     }
  
     const DeleteThemeComponent = ({index}:{index:number}) => {
         const [waitingDelete, setWaitingDelete] = useState<boolean>(false)
         const deleteTheme = async() => {
-            setWaitingDelete(true)
-            await handleAddTheme(currentThemes?.filter((_, i) => i !== index) || [] )
-            setWaitingDelete(false)
+             const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/themes/${currentThemes?.[index].uuid}`, method:'delete', auth:auth, setWaiting:setWaitingDelete, getAccessTokenSilently,  toastMessages:{'works':t('CorrectDeletedTheme'), 'failed':t('FailedDeletedTheme')}})
+            if (response?.status === 200) setCurrentThemes(prev => prev?.filter((_, i) => i !== index) || [] )
             setDeleteThemeIndex(null)
         }
        
         return(<> 
-            <Box p='20px'>
-                <Text width={'400px'}>{parseMessageToBold(t('DeleteThemeQuestion', {name:currentThemes?.[index].name}))}</Text>
-            </Box>
-            <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'}bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-                <Button  size='sm' variant={'delete'} onClick={deleteTheme}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
-                <Button  size='sm' variant={'common'} onClick={()=> setAddThemeIndex(null)}>{t('Cancel')}</Button>
-            </Flex>  
+            <Box p='15px'>
+                <Text fontSize={'1.2em'}>{parseMessageToBold(t('DeleteThemeQuestion', {name:currentThemes?.[index].name}))}</Text>
+                <Text fontSize={'.8em'} mt='2vh' color='gray.600'>{t('DeleteThemeWarning')}</Text>
+     
+                <Flex  mt='2vh' gap='15px' flexDir={'row-reverse'} >
+                    <Button  size='sm' variant={'delete'} onClick={deleteTheme}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
+                    <Button  size='sm' variant={'common'} onClick={()=> setAddThemeIndex(null)}>{t('Cancel')}</Button>
+                </Flex> 
+            </Box> 
             </>)
     }
     const memoizedAddThemeBox = useMemo(() => (
@@ -107,24 +133,25 @@ function Themes () {
     {addThemeIndex !== null && memoizedAddThemeBox}
     {deleteThemeIndex !== null && memoizedDeleteThemeBox}
  
-        <Flex justifyContent={'space-between'} alignItems={'end'}> 
-            <Box> 
-                <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Themes')}</Text>
-                <Text color='gray.600' fontSize={'.9em'}>{t('ThemesDes')}</Text>
-            </Box>
-            <Button variant={'main'} leftIcon={<FaPlus/>} size='sm' onClick={() => setAddThemeIndex(-1)}>{t('AddTheme')}</Button>
+        <Box px='2vw' pt='2vh'> 
+            <Flex justifyContent={'space-between'} alignItems={'end'}> 
+                <Box> 
+                    <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('Themes')}</Text>
+                    <Text color='gray.600' fontSize={'.8em'}>{t('ThemesDes')}</Text>
+                </Box>
+                <Button variant={'main'} leftIcon={<FaPlus/>} size='sm' onClick={() => setAddThemeIndex(-1)}>{t('AddTheme')}</Button>
 
-        </Flex>
+            </Flex>
+            <Box width='100%' bg='gray.200' height='1px' mt='2vh' />
+        </Box>
 
-        <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/>
-  
-        <Box flex='1' width={'60%'} mt='2vh' minW={'500px'} pb='2vh'  overflow={'scroll'}> 
+        <Box flex='1' width={'60%'} px='2vw' mt='2vh' minW={'500px'} pb='5vh'  overflow={'scroll'}> 
             <Skeleton isLoaded={currentThemes !== null}> 
                 {currentThemes?.map((theme, index) => (
                     <Box cursor={'pointer'} key={`option-${index}`} mt={index === 0?'0':'1vh'} shadow='sm' p='15px' borderRadius='.5rem' borderColor="gray.200" borderWidth="1px" > 
                         <Flex justifyContent={'space-between'} alignItems={'center'} >
-                            <Text fontWeight={'medium'} fontSize={'1.1em'}>{theme.name}</Text>
-                            <Flex gap='5px'> 
+                             <Text fontWeight={'medium'}>{theme.emoji} {theme.name}</Text>
+                             <Flex gap='5px'> 
                                 <IconButton size='xs' bg='transparent'  variant={'common'} icon={<FaEdit size='14px'/>}  onClick={() => setAddThemeIndex(index)} aria-label="edit-param"/>
                                 <IconButton size='xs' bg='transparent' variant={'delete'} onClick={() => setDeleteThemeIndex(index)} icon={<HiTrash  size='14px'/>} aria-label="delete-param"/>
                             </Flex>

@@ -75,30 +75,30 @@ function HelpCenters ({helpCentersData, setHelpCentersData}:{helpCentersData:{id
 
     
     {showCreate && memoizedAddBox}
-        <Box> 
+        <Box px='2vw' py='2vh'> 
             <Flex justifyContent={'space-between'} alignItems={'end'}> 
                 <Box> 
-                    <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('HelpCenters')}</Text>
-                    <Text color='gray.600' fontSize={'.9em'}>{t('HelpCentersDes')}</Text>
+                    <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('HelpCenters')}</Text>
+                    <Text color='gray.600' fontSize={'.8em'}>{t('HelpCentersDes')}</Text>
                 </Box>
                 <Button  variant='main' size={'sm'} onClick={() => setShowCreate(true)} leftIcon={<FaPlus/>}>{t('CreateHelpCenter')}</Button>
             </Flex>
-            <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/>
+            <Box width='100%' bg='gray.200' height='1px' mt='2vh' mb='2vh'/>
         </Box>
 
         
         <Skeleton flex='1' style={{ overflow:'scroll'}} isLoaded={helpCentersData !== null}>
             {helpCentersData?.length === 0 ?   
-            <Flex height={'100%'} top={0} left={0} width={'100%'} position={'absolute'} alignItems={'center'} justifyContent={'center'}> 
+            <Flex height={'100%'} top={0} left={0} width={'100%'} alignItems={'center'} justifyContent={'center'}> 
                 <Box maxW={'580px'} textAlign={'center'}> 
                     <Text fontWeight={'medium'} fontSize={'2em'} mb='2vh'>{t('NoHelpCenters')}</Text>               
                     <Text fontSize={'1em'} color={'gray.600'} mb='2vh'>{t('NoHelpCentersDes')}</Text>               
                     <Button  variant='main'  onClick={() => setShowCreate(true)} leftIcon={<FaPlus/>}>{t('CreateHelpCenter')}</Button>
                 </Box>
             </Flex> : 
-            <Flex flexWrap={'wrap'} gap='32px'  >
+            <Flex flexWrap={'wrap'} gap='32px' px='2vw' >
                 {helpCentersData?.map((center, index) => (
-                    <Box overflow={'hidden'} onClick={() => navigate(`/settings/help-centers/help-center/${center.id}`)} cursor={'pointer'} borderWidth={'1px'} key={`help-center-${index}`} transition={'box-shadow 0.3s ease-in-out'} _hover={{shadow:'lg'}} borderColor={'gray.300'} shadow={'sm'} borderRadius={'1rem'}>
+                    <Box overflow={'hidden'} onClick={() => navigate(`/settings/help-centers/help-center/${center.id}`)} cursor={'pointer'} borderWidth={'1px'} key={`help-center-${index}`} transition={'box-shadow 0.3s ease-in-out'} _hover={{shadow:'lg'}} borderColor={'gray.200'} shadow={'sm'} borderRadius={'1rem'}>
                         <Box height={'200px'} width={'300px'} bg='brand.text_blue'>
                         </Box>
                         <Box p='20px'>

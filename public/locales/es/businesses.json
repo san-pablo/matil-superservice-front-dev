@@ -23,7 +23,7 @@
     "FailedCreated":"Hubo un error al crear la empresa",
     "Cancel":"Cancelar",
     "ApplyFilters":"Aplicar Filtros",
-    "CreateBusinessAdvice":"Crea una empresa de contacto para organizar tus clientes .",
+    "CreateBusinessAdvice":"Crea una empresa de contacto para categorizar a tus clientes.",
     "NewMessages":"Nuevo mensaje",
     "BusinessFilterMessages":"La empresa se creó",
     "NewMessage":"Nuevo mensaje",
@@ -31,7 +31,10 @@
     "yesterday":"ayer",
     "start_of_week":"a principio de esta semana",
     "start_of_month":"a principio de este mes",
-    "anymoment":"en cualquier momento"
+    "anymoment":"en cualquier momento",
+    "Businesses":"Empresas de contacto",
+    "tags":"Etiquetas",
+    "domain":"Dominio"
 
 
 }

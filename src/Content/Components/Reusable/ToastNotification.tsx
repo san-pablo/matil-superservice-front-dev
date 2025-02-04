@@ -1,7 +1,3 @@
-/* 
-    RENDER A TOAST NOTIFICATION
-*/
-
 //REACT
 import { useState } from 'react'
 //DESKTOP NOTIFICATIONS
@@ -54,9 +50,7 @@ const showToast = ({message, duration = 3000, position = 'top-right', type = 'wo
  
   //TOAST CONTENT
   const ToastContent = ({ message }:{ message:string }) => {
-
       const [showLink, setShowLink] = useState(false)
-
       return(
         <Flex gap='20px' alignItems="center" cursor={linkPath ? 'pointer':'normal'}  onMouseOver={() => setShowLink(true)}  onMouseLeave={() => setShowLink(false)} onClick={() => {if (linkPath) {navigate(`/conversations/conversation/${id}`)}}}>
           <Text fontSize={'.9em'} color='black'>{parseMessageToBold(message, linkPath && showLink)}</Text>

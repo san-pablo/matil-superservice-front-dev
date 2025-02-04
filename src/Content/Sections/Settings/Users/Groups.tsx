@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next'
 //FETCH DATA
 import fetchData from "../../../API/fetchData"
 //FRONT
-import { Flex, Text, Box, Button, Skeleton, IconButton, Textarea, Avatar, chakra, shouldForwardProp } from "@chakra-ui/react"
+import { Flex, Text, Box, Button, Skeleton, IconButton, Portal, Avatar, chakra, shouldForwardProp, Image, Icon } from "@chakra-ui/react"
 import { AnimatePresence, motion, isValidMotionProp } from 'framer-motion'
 //COMPONENTS
 import EditText from '../../../Components/Reusable/EditText'
@@ -15,28 +15,29 @@ import useOutsideClick from '../../../Functions/clickOutside'
 import ConfirmBox from '../../../Components/Reusable/ConfirmBox'
 import showToast from '../../../Components/Reusable/ToastNotification'
 import Table from '../../../Components/Reusable/Table'
+import EmojiPicker, { EmojiClickData } from 'emoji-picker-react'
+import SectionSelector from '../../../Components/Reusable/SectionSelector'
 //ICONS
-import { BsTrash3Fill } from "react-icons/bs"
-import { FaPlus } from 'react-icons/fa6'
+import { FaPlus, FaBookmark } from 'react-icons/fa6'
 import { useAuth0 } from '@auth0/auth0-react'
+import { HiTrash } from 'react-icons/hi2'
+import { FaPerson, FaCircleNodes } from "react-icons/fa6";
+import parseMessageToBold from '../../../Functions/parseToBold'
 
 
 //TYPING
-type UserType = {id:string, name:string, surname:string, email:string, is_admin:boolean, is_active:boolean}
 interface GroupData  {
-    id: number,
+    uuid: string,
     name: string,
-    description: string,
-    users: UserType[],
+    distribution_method:'manual' | 'round_robin', 
+    emoji:string
+    users: string[],
 }
 
 //MOTION BOX
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
 
-const CellStyle = ({column, element}:{column:string, element:any}) => {
- return <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{column === 'users'?element.map((user:any) => user.name).join(' - '):element}</Text>
-}
-
+ 
 //MAIN FUNCTION
 function Groups () {
 
@@ -44,15 +45,23 @@ function Groups () {
     const auth = useAuth()
     const {  getAccessTokenSilently } = useAuth0()
     const { t } = useTranslation('settings')
-    const groupsMapDict:{[key:string]:[string, number]} = {name:[t('Name'), 150], description: [t('Description'), 350], users:[t('Users'), 500]}
+    const groupsMapDict:{[key:string]:[string, number]} = {name:[t('Name'), 150], distribution_method:[t('distribution_method'), 120], users:[t('Users'), 500]}
     const newGroup:GroupData = {
-        id: -1,
+        uuid: '-1',
         name: t('NewGroup'),
-        description: '',
+        distribution_method:'round_robin',
+        emoji:'',
         users: []
     }
+    const CellStyle = ({column, element}:{column:string, element:any}) => {
+        if (column === 'distribution_method') return (
+        <Box boxShadow={`1px 1px 1px rgba(0, 0, 0, 0.15)`} display="inline-flex" fontSize='.9em' py='2px' px='8px' fontWeight={'medium'} color='white'  bg={element === 'manual'?'red.100':'green.100'} borderRadius={'.7rem'}> 
+            <Text  color={element === 'manual'?'red.600':'green.600'}>{t(element)}</Text>
+        </Box>)
+        else return <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{column === 'users'?element.map((user:any) => auth.authData.users?.[user].name).join(' - '):element}</Text>
+    }
+    
 
-     
     //GROUPS DATA
     const [groupsData, setGroupsData] = useState<GroupData[] | null>(null) 
 
@@ -62,26 +71,10 @@ function Groups () {
     //GROUP TO DELETE
     const [groupToDelete, setGroupToDelete] = useState<GroupData | null>(null)
 
-    //FILTER GROUPS DATA
-    const [text, setText]  =useState<string>('')
-    const [filteredGroupsData, setFilteredGroupsData] = useState<GroupData[]>([])
-      useEffect(() => {
-        const filterUserData = () => {
-            if (groupsData) {
-                const filtered = groupsData.filter(user =>
-                    user.name.toLowerCase().includes(text.toLowerCase()) ||
-                    user.description.toLowerCase().includes(text.toLowerCase())
-                )
-                setFilteredGroupsData(filtered)
-            }
-        }
-        filterUserData()
-      }, [text, groupsData])
-
 
     //FETCH INITIAL DATA
     useEffect(() => {
-        fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/groups`, setValue:setGroupsData, getAccessTokenSilently, auth})
+        fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/teams`, setValue:setGroupsData, getAccessTokenSilently, auth})
         document.title = `${t('Settings')} - ${t('Groups')} - ${auth.authData.organizationName} - Matil`
     }, [])
 
@@ -94,11 +87,11 @@ function Groups () {
         //FUNCTION FOR DELETING AN AUTOMATION
         const deleteGroup = async () => {
             setWaitingDelete(true)
-            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/groups/${groupToDelete?.id}`, setWaiting:setWaitingDelete, method:'delete', auth, getAccessTokenSilently, toastMessages:{works:t('CorrectDeletedGroup'), failed:t('FailedDeletedGroup')}})
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/teams/${groupToDelete?.uuid}`, setWaiting:setWaitingDelete, method:'delete', auth, getAccessTokenSilently, toastMessages:{works:t('CorrectDeletedGroup'), failed:t('FailedDeletedGroup')}})
             if (response?.status == 200) {
                 setGroupToDelete(null)
                 setGroupsData(prev => {
-                    if (prev) return prev.filter((group) => group.id !== groupToDelete?.id)
+                    if (prev) return prev.filter((group) => group.uuid !== groupToDelete?.uuid)
                     else return null
                 })
             }             
@@ -106,15 +99,15 @@ function Groups () {
 
         //FRONT
         return(<>
-            <Box p='20px'> 
-                <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('ConfirmDelete')}</Text>
-                <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
-                <Text >{t('ConfirmDeleteGroup')}</Text>
+            <Box p='15px'> 
+                <Text fontWeight={'medium'} fontSize={'1.2em'}>{parseMessageToBold(t('ConfirmDeleteGroup', {name:groupToDelete?.name}))}</Text>
+                <Text mt='2vh' color='gray.600' fontSize={'.8em'}>{t('DeleteGroupWarning')}</Text>
+     
+                <Flex mt='3vh' gap='15px' flexDir={'row-reverse'}>
+                    <Button  size='sm'variant={'delete'} onClick={deleteGroup}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
+                    <Button  size='sm'variant={'common'} onClick={() => setGroupToDelete(null)}>{t('Cancel')}</Button>
+                </Flex>
             </Box>
-            <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-                <Button  size='sm'variant={'delete'} onClick={deleteGroup}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
-                <Button  size='sm'variant={'common'} onClick={() => setGroupToDelete(null)}>{t('Cancel')}</Button>
-            </Flex>
         </>)
     }
 
@@ -132,29 +125,29 @@ function Groups () {
         </ConfirmBox>
     ), [selectedGroup])
     
-    return(<Box>
+    return(
+        <Box px='2vw' py='2vh'>        
+
         {groupToDelete !== null && memoizedDeleteBox}
         {selectedGroup !== null  && memoizedGroupBox}
         <Flex justifyContent={'space-between'} alignItems={'end'}> 
             <Box> 
-                <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('GroupsTable')}</Text>
-                <Text color='gray.600' fontSize={'.9em'}>{t('GroupsDescription')}</Text>
+                <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('GroupsTable')}</Text>
+                <Text color='gray.600' fontSize={'.8em'}>{t('GroupsDescription')}</Text>
             </Box>
             <Button  variant={'main'}size='sm' leftIcon={<FaPlus/>} onClick={() => setSelectedGroup(newGroup)}>{t('CreateGroup')}</Button>
 
         </Flex>
-        <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/> 
-        <Box width={'350px'}> 
-            <EditText value={text} setValue={setText} searchInput={true}/>
-        </Box>
+        <Box width='100%' bg='gray.200' height='1px' mt='2vh' mb='2vh'/> 
+        
         <Flex  mt='2vh' justifyContent={'space-between'} alignItems={'end'}>
             <Skeleton isLoaded={groupsData !== null}> 
-                <Text  fontWeight={'medium'} fontSize={'1.2em'}>{t('GroupsCount', {count:groupsData?.length})}</Text>
+                <Text  fontWeight={'medium'} color='gray.600'>{t('GroupsCount', {count:groupsData?.length})}</Text>
             </Skeleton>
          </Flex>
 
         <Skeleton isLoaded={groupsData !== null}> 
-            <Table data={filteredGroupsData || []} CellStyle={CellStyle} excludedKeys={['id']} noDataMessage={t('NoGroups')} columnsMap={groupsMapDict} onClickRow={(row:any, index:number) => setSelectedGroup(row)} deletableFunction={(row:any, index) => setGroupToDelete(row)}/>
+            <Table data={groupsData || []} CellStyle={CellStyle} excludedKeys={['uuid', 'emoji']} noDataMessage={t('NoGroups')} columnsMap={groupsMapDict} onClickRow={(row:any, index:number) => setSelectedGroup(row)} deletableFunction={(row:any, index) => setGroupToDelete(row)}/>
         </Skeleton>
     </Box>)
 }
@@ -166,9 +159,14 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
     const {  getAccessTokenSilently } = useAuth0()
     const { t } = useTranslation('settings')
 
-    //BOX SCROLL REF
+    //REFS
+    const emojiButtonRef = useRef<HTMLDivElement>(null)
+    const emojiBoxRef = useRef<HTMLDivElement>(null)
+    const [emojiVisible, setEmojiVisible] = useState<boolean>(false)
+    useOutsideClick({ref1:emojiButtonRef, ref2:emojiBoxRef, onOutsideClick:setEmojiVisible})
+    const handleEmojiClick = (emojiObject: EmojiClickData) => {setCurrentGroupData(prev => ({...prev, emoji:emojiObject.emoji}))}
     const scrollRef = useRef<HTMLDivElement>(null)
-
+ 
     //BOOLEAN FOR WAIT TO THE SEND GROUP
     const [waitingSend, setWaitingSend] = useState<boolean>(false)
 
@@ -177,16 +175,16 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
     const [currentGroupData, setCurrentGroupData] = useState<GroupData>(groupData)
 
     //ADD A USER TO A GROUP
-    const addUser = async(user:UserType) => {
+    const addUser = async(user:string) => {
 
-        if (groupData.id !== -1) {
-            const userResponse = await fetchData({endpoint: `${auth.authData.organizationId}/admin/settings/groups/${groupData.id}/${user.id}`, getAccessTokenSilently,  method: 'post', auth})
+        if (groupData.uuid !== '-1') {
+            const userResponse = await fetchData({endpoint: `${auth.authData.organizationId}/admin/settings/teams/${groupData.uuid}/users/${user}`, getAccessTokenSilently,  method: 'post', auth})
             if (userResponse?.status === 200) {
                 setCurrentGroupData(prev => {return {...prev, users:[...prev.users, user ]}})
                 setGroupsData(prev => {
                     if (prev) {
                         return prev?.map((group) => {
-                            if (group.id === groupData.id) return {...group, users:[...group.users, user ]}
+                            if (group.uuid === groupData.uuid) return {...group, users:[...group.users, user ]}
                             else return group
                         })
                     }
@@ -200,8 +198,8 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
     //DELETE A USER FROM A GROUP
     const deleteUser = async(index:number, userId:string) => {
 
-        if (groupData.id !== -1) {
-            const userResponse = await fetchData({endpoint: `${auth.authData.organizationId}/admin/settings/groups/${groupData.id}/${userId}`,  getAccessTokenSilently,method: 'delete', auth})
+        if (groupData.uuid !== '-1') {
+            const userResponse = await fetchData({endpoint: `${auth.authData.organizationId}/admin/settings/teams/${groupData.uuid}/users/${userId}`,  getAccessTokenSilently,method: 'delete', auth})
             if (userResponse?.status === 200) {
                 setCurrentGroupData(prev => {
                     const newUsers = [...prev.users]
@@ -211,7 +209,7 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
                 setGroupsData(prev => {
                     if (prev) {
                         return prev?.map((group) => {
-                            if (group.id === groupData.id) return {...group, users:group.users.splice(index, 1)}
+                            if (group.uuid === groupData.uuid) return {...group, users:group.users.splice(index, 1)}
                             else return group
                         })
                     }
@@ -232,12 +230,12 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
     const sendEditGroup = async () => {
         setWaitingSend(true)    
 
-        if (groupData.id === -1) {
-            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/groups`, requestForm:{name:currentGroupData.name, description:currentGroupData.description}, getAccessTokenSilently, method:'post', auth})
+        if (groupData.uuid === '-1') {
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/teams`, requestForm:{name:currentGroupData.name, emoji:currentGroupData.emoji, distribution_method:currentGroupData.distribution_method}, getAccessTokenSilently, method:'post', auth})
              if (response?.status === 200) {
                 const assignUserPromises = currentGroupData.users.map(async (user) => {
-                    const userResponse = await fetchData({endpoint: `${auth.authData.organizationId}/admin/settings/groups/${response?.data.id}/${user.id}`,  getAccessTokenSilently,method: 'post',auth})
-                    if (userResponse?.status !== 200) throw new Error(`Failed to add user ${user.id}`)
+                    const userResponse = await fetchData({endpoint: `${auth.authData.organizationId}/admin/settings/teams/${response?.data.uuid}/users/${user}`,  getAccessTokenSilently,method: 'post',auth})
+                    if (userResponse?.status !== 200) throw new Error(`Failed to add user ${user}`)
                     return userResponse
                 })
                 try {
@@ -254,13 +252,13 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
             else showToast({message:t('FailedAddedGroup'), type:'failed'})
         } 
         else {
-            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/groups/${groupData.id}`, getAccessTokenSilently, requestForm:{name:currentGroupData.name, description:currentGroupData.description}, method:'put', auth, toastMessages:{'works':t('CorrectEditedGroup'),'failed':t('FailedEditedGroup')}})
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/teams/${groupData.uuid}`, getAccessTokenSilently, requestForm:{name:currentGroupData.name, emoji:currentGroupData.emoji, distribution_method:currentGroupData.distribution_method}, method:'put', auth, toastMessages:{'works':t('CorrectEditedGroup'),'failed':t('FailedEditedGroup')}})
             
             if (response?.status === 200) {
                 setGroupsData(prev => {
                     if (prev) {
                         return prev?.map((group) => {
-                            if (group.id === groupData.id) return currentGroupData
+                            if (group.uuid === groupData.uuid) return currentGroupData
                             else return group
                         })
                     }
@@ -278,7 +276,7 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
     const FindUser = () => {
 
         //OBTAINING A LIST WITH ALL
-        const userList = Object.entries(auth?.authData?.users || {}).map(([id, user]) => {return {id: id,  name: user.name, surname: user.surname, email: user.email_address, is_admin: user.is_admin, is_active: !!user.last_login}})
+        const userList = Object.entries(auth?.authData?.users || {}).map(([id, user]) => {return {id: id,  name: user.name, surname: user.surname, email: user.email_address, profile_picture: user.profile_picture, is_admin: user.is_admin}})
   
         //REFS
         const buttonRef = useRef<HTMLDivElement>(null)
@@ -287,7 +285,7 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
         //FILER USERS LIST
         const [text, setText] = useState<string>('')
         const [showResults, setShowResults] = useState<boolean>(false)
-        const [filteredUsers, setFilteredUsers] = useState<UserType[]>(userList)
+        const [filteredUsers, setFilteredUsers] = useState<{id: string,  name: string, surname: string, email: string, profile_picture:string, is_admin: boolean}[]>(userList)
 
         //BOOLEAN TO CONTROL THE VISIBILITY OF THE LIST AND CLOSE ON OUTSIDE CLICK
         useOutsideClick({ref1:buttonRef, ref2:boxRef, containerRef:scrollRef, onOutsideClick:setShowResults})
@@ -296,9 +294,9 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
             if (text === '') {setShowResults(false)}
             else {
                 setShowResults(true)
-                const filtered = (userList).filter((user:UserType) => {
-                    const fullNameEmail = `${user.name} ${user.email}`.toLowerCase()
-                    const userExistsInGroup = currentGroupData.users.some(groupUser => groupUser.id === user.id)
+                const filtered = (userList).filter((user:any) => {
+                    const fullNameEmail = `${user.name} ${user.surname} ${user.email}`.toLowerCase()
+                    const userExistsInGroup = currentGroupData.users.some(groupUser => groupUser === user.id)
                     return fullNameEmail.includes(text.toLowerCase()) && !userExistsInGroup
                   })
                 setFilteredUsers(filtered)
@@ -319,9 +317,14 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
                             {filteredUsers.length === 0? 
                             <Box p='15px'><Text fontSize={'.9em'} color='gray.600'>{t('NoCoincidence')}</Text></Box>
                             :<> 
-                            {filteredUsers.map((user:UserType, index:number) => (
-                                <Flex _hover={{bg:'gray.50'}} cursor={'pointer'} alignItems={'center'} onClick={() => {setText('');setShowResults(false);addUser(user)}} key={`user-${index}`} p='10px' gap='10px' >
-                                    <Avatar size='sm'/>
+                            {filteredUsers.map((user:{id: string,  name: string, surname: string, email: string, profile_picture:string, is_admin: boolean}, index:number) => (
+                                <Flex _hover={{bg:'gray.50'}} cursor={'pointer'} alignItems={'center'} onClick={() => {setText('');setShowResults(false);addUser(user.id)}} key={`user-${index}`} p='10px' gap='10px' >
+                                    
+                                    {user.profile_picture ? 
+                                        <Image h='20px' w='20px' src={user.profile_picture}/>
+                                        :
+                                        <Avatar size='20px' name={user.name + ' ' + user.surname}/>
+                                    }
                                     <Box>
                                         <Text fontWeight={'medium'} fontSize={'.9em'}>{user.name} {user.surname}</Text>
                                         <Text fontSize={'.9em'}>{user.email}</Text>
@@ -337,42 +340,57 @@ const EditGroup = ({groupData, setGroupData, setGroupsData}:{groupData:GroupData
     }
 
     //FRONT
-    return (
-    <Box>    
-        <Box p='20px'> 
-             <Text mb='.5vh'  fontWeight={'medium'}>{t('Name')}</Text>
+    return (<>    
+        <Box p='15px'> 
+    
+            <Text fontWeight={'medium'} fontSize={'1.2em'}  >{currentGroupData.uuid === '-1'? t('CreateGroup'):t('EditGroup')}</Text>
+            <Flex mt='2vh' alignItems={'center'} gap='10px'> 
+                <Flex cursor={'pointer'} ref={emojiButtonRef} onClick={() => setEmojiVisible(true)} alignItems={'center'} justifyContent={'center'} width={'32px'} height={'32px'} borderWidth={'1px'} borderColor={'gray.200'} borderRadius={'.5rem'}> 
+                    {currentGroupData.emoji ? <Text fontSize={'.9em'}>{currentGroupData.emoji}</Text>:<Icon boxSize={'.9em'} as={FaBookmark}/>}
+                </Flex>
+                <EditText placeholder={t('Name')} hideInput={false} value={currentGroupData.name} setValue={(value:string) => setCurrentGroupData(prev => ({...prev, name:value}))}/>
+            </Flex>
 
-            <Box minW='500px'> 
-                <EditText hideInput={false} value={currentGroupData.name} setValue={(value) => {setCurrentGroupData((prev) => ({...prev, name:value}))}}/>
-            </Box>
-            <Text  mt='2vh' mb='.5vh'  fontWeight={'medium'}>{t('Description')}</Text>
-            <Textarea resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('Description')}...`} maxH='300px' value={currentGroupData.description} onChange={(e) => setCurrentGroupData((prev) => ({...prev, description:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "brand.text_blue", borderWidth: "2px"}}/>
+            <Text mt='2vh' mb='.5vh' fontSize={'.8em'} fontWeight={'medium'}>{t('DistributionMethod')}</Text>
+            <SectionSelector size='xs' sections={['round_robin', 'manual']} selectedSection={currentGroupData.distribution_method} sectionsMap={{'round_robin':[t('round_robin'), <FaCircleNodes/>], 'manual':[t('manual'), <FaPerson/>]}} onChange={(value) => setCurrentGroupData(prev => ({...prev, distribution_method:value}))}/>
 
-            <Box mt='3vh' flex={1} >
-                <Text mb='1vh' fontWeight={'medium'}>{t('AddUsersGroup')}</Text>
+            <Box mt='2vh' flex={1} >
+                <Text mb='1vh' fontSize={'.8em'} fontWeight={'medium'}>{t('AddUsersGroup')}</Text>
                 <FindUser/>
                 <Box maxW={'600px'} mt='2vh'> 
-                    {currentGroupData.users.length === 0 ?<Text mt='2vh'>{t('NoUsers')}</Text>:<>
+                    {currentGroupData.users.length === 0 ?<Text mt='2vh' fontSize={'.8em'} color='gray.600' fontWeight={'medium'}>{t('NoUsers')}</Text>:<>
                     {currentGroupData.users.map((user, index) => (
                     <Flex justifyContent={'space-between'} borderBottomColor={'gray.300'} borderBottomWidth={'1px'} _hover={{bg:'gray.50'}} cursor={'pointer'} alignItems={'center'}  key={`user-selected-${index}`} p='10px' gap='10px' >
-                        <Flex  gap='10px'> 
-                            <Avatar size='sm'/>
+                        <Flex  alignItems={'center'} gap='10px'> 
+                            {auth.authData.users?.[user].profile_picture ? 
+                                <Image h='20px' w='20px' src={auth.authData.users?.[user].profile_picture}/>
+                                :
+                                <Avatar h='28px' size='sm' fontSize={'10px'} w='28px' name={auth.authData.users?.[user].name + ' ' + auth.authData.users?.[user].surname}/>
+                            }
                             <Box>
-                                <Text fontWeight={'medium'} fontSize={'.9em'}>{user.name} {user.surname}</Text>
-                                <Text fontSize={'.9em'}>{user.email}</Text>
+                                <Text fontWeight={'medium'} fontSize={'.8em'}>{auth.authData.users?.[user].name} {auth.authData.users?.[user].surname}</Text>
+                                <Text fontSize={'.75em'} color='gray.600'>{auth.authData.users?.[user].email_address}</Text>
                             </Box>
                         </Flex>
-                        <IconButton aria-label='delete-user' icon={<BsTrash3Fill/>} size='sm' bg='transparent' color='red' onClick={() => deleteUser(index, user.id)}/>
+                        <IconButton aria-label='delete-user' icon={<HiTrash/>} size='sm' bg='transparent' variant={'delete'} onClick={() => deleteUser(index, user)}/>
                     </Flex>
                     ))}</>}
                 </Box>
             </Box>
+    
+            <Flex mt='3vh' gap='15px' flexDir={'row-reverse'}>
+                <Button size='sm' variant={'main'} onClick={sendEditGroup} isDisabled={currentGroupData.name === ''  || currentGroupData.users.length === 0 || ((JSON.stringify(currentGroupData) === JSON.stringify(groupDataRef.current)))}>{waitingSend?<LoadingIconButton/>:groupData.uuid === '-1'?t('CreateGroup'):t('SaveChanges')}</Button>
+                <Button size='sm' variant={'common'} onClick={() => setGroupData(null)}>{t('Cancel')}</Button>
+            </Flex>
         </Box>
-        <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-            <Button size='sm' variant={'main'} onClick={sendEditGroup} isDisabled={currentGroupData.name === ''  || currentGroupData.users.length === 0 || ((JSON.stringify(currentGroupData) === JSON.stringify(groupDataRef.current)))}>{waitingSend?<LoadingIconButton/>:groupData.id === -1?t('CreateGroup'):t('SaveChanges')}</Button>
-            <Button size='sm' variant={'common'} onClick={() => setGroupData(null)}>{t('Cancel')}</Button>
-        </Flex>
-    </Box>)
+
+        {emojiVisible && 
+        <Portal> 
+            <Box id='custom-portal' position={'fixed'} zIndex={1000000} pointerEvents={emojiVisible?'auto':'none'} transition='opacity 0.2s ease-in-out' opacity={emojiVisible ? 1:0} top={`${(emojiButtonRef?.current?.getBoundingClientRect().top || 0)}px`} right={`${window.innerWidth - (emojiButtonRef?.current?.getBoundingClientRect().left || 0) + 5}px`}  ref={emojiBoxRef}> 
+                <EmojiPicker open={emojiVisible} onEmojiClick={handleEmojiClick}  allowExpandReactions={false}/>
+            </Box>
+        </Portal>}
+    </>)
 }
 
 export default Groups

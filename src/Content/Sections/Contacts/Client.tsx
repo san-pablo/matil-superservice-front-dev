@@ -1,14 +1,10 @@
-/*
-    MAIN CLIENT FUNCTION (clients/client/{contact_id} or conversations/conversation/{conversation_id}/client)
-*/
-
-import { useState, useRef, useEffect, KeyboardEvent, Dispatch, SetStateAction, Fragment, lazy, Suspense, useMemo } from "react"
+import { useState, useRef, useEffect, Dispatch, SetStateAction, Fragment, lazy, Suspense, useMemo } from "react"
 import { useAuth } from "../../../AuthContext"
 import { useSession } from "../../../SessionContext"
 import { useLocation, useNavigate } from "react-router-dom"
 import { useTranslation } from 'react-i18next'
 //FRONT
-import { Flex, Box, Text, Icon, Textarea, Avatar, Button, Skeleton, IconButton, Tooltip, chakra, shouldForwardProp } from '@chakra-ui/react'
+import { Flex, Box, Text, Icon, Avatar, Button, Skeleton, Image, Tooltip, chakra, shouldForwardProp } from '@chakra-ui/react'
 import { motion, AnimatePresence, isValidMotionProp } from 'framer-motion'
 //FETCH DATA
 import fetchData from "../../API/fetchData"
@@ -21,6 +17,7 @@ import ConfirmmBox from "../../Components/Reusable/ConfirmBox"
 import StateMap from "../../Components/Reusable/StateMap"
 import CustomAttributes from "../../Components/Reusable/CustomAttributes"
 import CollapsableSection from "../../Components/Reusable/CollapsableSection"
+import TagEditor from "../../Components/Reusable/TagEditor"
 //FUNCTIONS
 import useOutsideClick from "../../Functions/clickOutside"
 import timeAgo from "../../Functions/timeAgo"
@@ -28,25 +25,16 @@ import timeStampToDate from "../../Functions/timeStampToString"
 import parseMessageToBold from "../../Functions/parseToBold"
 //ICONS
 import { FaPlus, FaArrowRight, FaBuilding } from "react-icons/fa6"
-import { RxCross2 } from "react-icons/rx"
 import { TiArrowSortedDown } from "react-icons/ti"
 import { TbArrowMerge, TbKey } from 'react-icons/tb'
 import { MdBlock } from "react-icons/md"
 import { FaExclamationCircle, FaExclamationTriangle, FaInfoCircle, FaCheckCircle } from 'react-icons/fa'
 import { IoIosArrowForward, IoIosArrowBack, IoIosArrowDown } from "react-icons/io"
-import { PiSidebarSimpleBold } from "react-icons/pi"
 //TYPING
-import { ClientData, Conversations, contactDicRegex, ContactChannel, Channels, logosMap, HeaderSectionType, DeleteHeaderSectionType, languagesFlags, ContactBusinessesTable, ConversationColumn, Clients } from "../../Constants/typing"
+import { ClientData, Conversations, contactDicRegex, ContactChannel, Channels, logosMap, languagesFlags, ContactBusinessesTable, ConversationColumn, Clients } from "../../Constants/typing"
 import showToast from "../../Components/Reusable/ToastNotification"
 import { useAuth0 } from "@auth0/auth0-react"
  
-//COMPONENTS    
-const Business = lazy(() => import('./Business'))
-
-//TYPING
-interface ClientProps {
-    socket:any
-}
 type Status = 'new' | 'open' | 'solved' | 'pending' | 'closed'
 const validStatuses: Status[] = ['new', 'open', 'solved', 'pending', 'closed']
 
@@ -89,33 +77,68 @@ const CellStyle = ({column, element}:{column:string, element:any}) => {
     const { t } = useTranslation('conversations')
     const t_formats = useTranslation('formats').t
 
-    if (column === 'local_id') return  <Text fontSize={'.9em'} color='gray' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>#{element}</Text>
-    else if (column === 'user_id') return  <Text fontSize={'.9em'} fontWeight={'medium'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element === 'matilda' ?'Matilda':element === 'no_user' ? t('NoAgent'):(auth?.authData?.users?.[element as string | number].name || '')}</Text>
+    if (column === 'local_id') return  <Text fontSize={'.9em'} color='gray.600' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>#{element}</Text>
+     else if (column === 'user_id' || column === 'created_by')  {
+        const selectedUser = auth?.authData?.users?.[element as string | number]
+        return  (
+            <Flex fontSize={'.9em'} alignItems={'center'} gap='5px'> 
+                {selectedUser?.profile_picture ? <Image src={selectedUser?.profile_picture } h='14px' w='14px' alt={selectedUser.name} /> :
+                <Avatar h='16px' w='16px' size={'xs'} name={selectedUser?.name}/> }
+                <Text fontSize={'.9em'} fontWeight={'medium'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'} >{element === 'matilda' ?'Matilda':element === 'no_user' ? t('NoAgent'):selectedUser?.name}</Text>
+            </Flex>
+        ) 
+    }
     else if (column === 'unseen_changes') 
         return(
-        <Flex color={element?'red':'green'} alignItems={'center'} gap='5px'> 
+        <Flex fontSize={'.9em'} color={element?'red':'green'} alignItems={'center'} gap='5px'> 
             <Icon as={element?FaExclamationCircle:FaCheckCircle} />
-            <Text fontSize={'.9em'}>{element?t('NotRead'):t('Any')}</Text>
+            <Text>{element?t('NotRead'):t('Any')}</Text>
         </Flex>)
     
     else if (column === 'status' && typeof element === 'string' && validStatuses.includes(element as Status)) return  <StateMap state={element as Status}/>
     else if (column === 'urgency_rating' && typeof element === 'number') {return <AlertLevel t={t} rating={element}/>}
     else if (column === 'created_at' || column === 'updated_at' || column === 'solved_at' || column === 'closed_at') {
         return(
-        <Tooltip  label={timeStampToDate(element as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.4rem' fontSize='.8em' p='6px'> 
+        <Tooltip  label={timeStampToDate(element as string, t_formats)}  placement='top' hasArrow bg='white' color='black'  borderRadius='.5rem' fontSize='.8em' p='6px'> 
             <Text fontSize={'.9em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeAgo(element as string, t_formats)}</Text>
         </Tooltip>)
     }
-    else if (column === 'deletion_date'  && typeof element === 'string' ) return <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeStampToDate(element, t_formats)}</Text>
+    else if (column === 'deletion_date'  && typeof element === 'string' ) return <Text fontSize={'.9em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{timeStampToDate(element, t_formats)}</Text>
     else if (column === 'channel_type') {
         return(
-        <Flex gap='7px' alignItems={'center'}>
+        <Flex fontSize={'.9em'} gap='7px' alignItems={'center'}>
             <Icon color='gray.600' as={typeof element === 'string' && element in logosMap ?logosMap[element as Channels][0]:FaInfoCircle}/>
-            <Text fontSize={'.9em'}>{t(element as string)}</Text>
+            <Text >{t(element as string)}</Text>
          </Flex>)
     }     
-    else return ( <Text fontSize={'.9em'}whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element}</Text>)
+    else if (column === 'call_duration') return ( <Text fontSize={'.9em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element?t('Duration', {seconds:element}):''}</Text>)
+    else if (column === 'team_uuid') {
+        const selectedTeam = auth.authData.teams.find((team) => team.uuid === element)
+        return ( <Text fontSize={'.9em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{selectedTeam ? `${selectedTeam?.emoji} ${selectedTeam?.name}` :t('NoTeam')}</Text>)
+    }
+    else if (column === 'theme_uuid') {
+        const selectedTheme = auth.authData.conversation_themes.find((team) => team.uuid === element)
+        return ( <Text fontSize={'.9em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{selectedTheme ? `${selectedTheme?.emoji} ${selectedTheme?.name}` :t('NoTheme')}</Text>)
+    }
+    else if (column === 'tags') {
+        const tags = auth.authData.tags
+        return (
+            <Flex minH={'35px'} alignItems={'center'}> 
+                {element.length === 0? <Text>-</Text>:
+                    <Flex gap='5px' flexWrap={'wrap'}>
+                        {element.map((label:string, index:number) => (
+                            <Flex  bg='brand.gray_1' borderWidth={'1px'} p='4px' borderRadius={'.5rem'} fontSize={'.8em'} key={`client-label-${index}`}>
+                                <Text>{tags?.find(tag => tag.uuid === label)?.name}</Text>
+                            </Flex>
+                        ))}
+                    </Flex>
+                }
+            </Flex>
+        )
+    }
+    else return ( <Text fontSize={'.9em'} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element}</Text>)
 }
+
 
 //MAIN FUNCTION
 function Client ( {socket, fetchClientDataWithFilter}:{socket:any, fetchClientDataWithFilter:any}) {
@@ -141,7 +164,8 @@ function Client ( {socket, fetchClientDataWithFilter}:{socket:any, fetchClientDa
     }
 
     //TABLE MAPPING
-    const columnsConversationsMap:{[key in ConversationColumn]:[string, number]} = {id: [t_con('id'), 50], local_id: [t_con('local_id'), 50], status:  [t_con('status'), 100], channel_type: [t_con('channel_type'), 150], theme:  [t_con('theme'), 200], user_id: [t_con('user_id'), 200], created_at: [t_con('created_at'), 150],updated_at: [t_con('updated_at'), 180], solved_at: [t_con('solved_at'), 150],closed_at: [t_con('closed_at'), 150],title: [t_con('title'), 300], urgency_rating: [t_con('urgency_rating'), 130], deletion_scheduled_at: [t_con('deletion_date'), 180], unseen_changes: [t_con('unseen_changes'), 200],  call_status: [t_con('call_status'), 150], call_duration: [t_con('call_duration'), 150], }
+    const columnsConversationsMap:{[key in ConversationColumn]:[string, number]} = {local_id: [t_con('local_id'), 50], status:  [t_con('status'), 100], channel_type: [t_con('channel_type'), 100], theme_uuid:  [t_con('theme'), 200], team_uuid:[t_con('Team'), 150], tags:[t_con('tags'), 200], user_id: [t_con('user_id'), 200], created_at: [t_con('created_at'), 150],updated_at: [t_con('updated_at'), 180], solved_at: [t_con('solved_at'), 150],closed_at: [t_con('closed_at'), 150],title: [t_con('title'), 300], unseen_changes: [t_con('unseen_changes'), 200],  call_status: [t_con('call_status'), 150], call_duration: [t_con('call_duration'), 150], }
+
     
     //WEBSOCKET ACTIONS, THEY TRIGEGR ONLY IF THE USER IS INSIDE THE SECTION
     useEffect(() =>  {
@@ -161,7 +185,7 @@ function Client ( {socket, fetchClientDataWithFilter}:{socket:any, fetchClientDa
                     else updatedPageData = prev.page_data.map(con => con.id === data.new_data.id ? elementToAdd : con)
                     return {
                       ...prev,
-                      total_conversations: data.is_new ? prev.total_conversations + 1 : prev.total_conversations,
+                      total_items: data.is_new ? prev.total_items + 1 : prev.total_items,
                       page_data: updatedPageData,
                     }
                   })
@@ -222,7 +246,7 @@ function Client ( {socket, fetchClientDataWithFilter}:{socket:any, fetchClientDa
 
                     if (clientElement.data.clientConversations) setClientConversationsEdit(clientElement.data.clientConversations)
                     else {
-                        const reponse = await fetchData({endpoint:`${auth.authData.organizationId}/conversations`,getAccessTokenSilently, params:{page_index:1, view_index:0,view_type:'', retrieve_exclusively_for_contact:true, contact_id:clientId}, setValue:setClientConversationsEdit, auth })         
+                        const reponse = await fetchData({endpoint:`${auth.authData.organizationId}/conversations`,getAccessTokenSilently, params:{page_index:1, filters:{logic:'AND', groups:[{logic:'AND', conditions:[{col:'contact_id', op:'eq', val:clientId}] }] }}, setValue:setClientConversationsEdit, auth })         
                         session.dispatch({type:'UPDATE_HEADER_SECTIONS',payload:{action:'add', data:{id:clientId, type:'client', data:{...clientElement.data ,clientConversations:reponse?.data}}}})
                     }
 
@@ -230,15 +254,15 @@ function Client ( {socket, fetchClientDataWithFilter}:{socket:any, fetchClientDa
                 }
                 
                 //CALL THE API AND REQUEST (CLIENT DATA, CLIENT CONVERSATIONS AND CONTACT BUSINESS)
-                else {
+                else if (!location.endsWith('clients')) {
                     const clientResponse = await fetchData({endpoint:`${auth.authData.organizationId}/contacts/${clientId}`,getAccessTokenSilently, setValue:setClientDataEdit,  auth})
                      
                     if (clientResponse?.status === 200) {
                         clientDataEditRef.current = clientResponse.data
 
-                        const conversationsResponse = await fetchData({endpoint:`${auth.authData.organizationId}/conversations`,getAccessTokenSilently, params:{page_index:1, view_index:0,view_type:'', retrieve_exclusively_for_contact:true, contact_id:clientId}, setValue:setClientConversationsEdit, auth })         
+                        const conversationsResponse = await fetchData({endpoint:`${auth.authData.organizationId}/conversations`,getAccessTokenSilently, params:{page_index:1, filters:{logic:'AND', groups:[{logic:'AND', conditions:[{col:'contact_id', op:'eq', val:clientId}] }]}}, setValue:setClientConversationsEdit, auth })         
                         
-                        let businessDict:ContactBusinessesTable = {id:-1, domain: '',name:'', notes: '', labels:'', created_at:'', last_interaction_at:''}
+                        let businessDict:ContactBusinessesTable = {id:-1, domain: '',name:'', notes: '', tags:[], created_at:'', last_interaction_at:'', cdas:{}}
                         if (clientResponse.data.contact_business_id && clientResponse.data.contact_business_id !== -1)  {
                             const businessResponse = await fetchData({endpoint:`${auth.authData.organizationId}/contact_businesses/${clientResponse.data.contact_business_id}`,getAccessTokenSilently,  setValue:setBusinessDataEdit, auth })
                             businessDict = businessResponse?.data
@@ -296,39 +320,8 @@ function Client ( {socket, fetchClientDataWithFilter}:{socket:any, fetchClientDa
         textarea.style.height = 'auto'
         textarea.style.height = textarea.scrollHeight + 'px'
     }
-    
     useEffect(() =>{if (clientDataEdit) adjustTextareaHeight(textareaNotasRef.current)}, [clientDataEdit?.notes])
 
-    //TAGS LOGIC
-    const [inputValue, setInputValue] = useState<string>('')
-    const handleKeyDown = (event:KeyboardEvent<HTMLDivElement>) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault()
-          const newTag = inputValue.trim()
-          if (newTag) {
-            let newClientData:ClientData | null = null
-            if (clientDataEdit) {
-                const labelsArray = clientDataEdit.labels ? clientDataEdit.labels.split(',') : []
-                labelsArray.push(newTag)
-                newClientData = { ...clientDataEdit, labels: labelsArray.join(',') }
-            }
-            updateData(newClientData)
-            setClientDataEdit(newClientData)
-            setInputValue('')
-          }
-        }
-      } 
-    const removeTag = (index: number) => {
-        let newClientData:ClientData | null = null
-        if (clientDataEdit && clientDataEdit.labels) {
-            const labelsArray = clientDataEdit.labels.split(',')
-            labelsArray.splice(index, 1)
-            newClientData = { ...clientDataEdit, labels: labelsArray.join(',') }
-          }
-        setClientDataEdit(newClientData)
-        updateData(newClientData)
-    }
-        
     //UPDATE LANGUAGE
     const updateLanguage = (element:string) => {
         const newClientData = {...clientDataEdit as ClientData, language:element}
@@ -364,14 +357,14 @@ function Client ( {socket, fetchClientDataWithFilter}:{socket:any, fetchClientDa
         session.dispatch({type:'EDIT_CONTACT_BUSINESS',payload:{data:new_data, id:clientDataEdit?.id}})
     }
 
-    //UPDATE CUSTOMATRIBUTES
+    //UPDATE CUSTOM ATTRIBUTES
     const updateCustomAttributes = ( attributeName:string, newValue:any) => {
 
         const newClientData = { ...clientDataEdit } as ClientData;
-        if (newClientData.custom_attributes) {
-            const updatedCustomAttributes = {...newClientData.custom_attributes}
+        if (newClientData.cdas) {
+            const updatedCustomAttributes = {...newClientData.cdas}
             updatedCustomAttributes[attributeName] = newValue
-            newClientData.custom_attributes = updatedCustomAttributes
+            newClientData.cdas = updatedCustomAttributes
         }
         updateData(newClientData)
         if (clientDataEdit) setClientDataEdit(newClientData)
@@ -517,7 +510,7 @@ function Client ( {socket, fetchClientDataWithFilter}:{socket:any, fetchClientDa
 
             <Flex flex='1' > 
                 <Box flex='1' py='2vh'  ref={scrollRef1} px='1vw' borderRightColor={'gray.200'} borderRightWidth={'1px'}  overflow={'scroll'}  >
-                    <CollapsableSection section={'contact'} isExpanded={sectionsExpanded.includes('contact')} onSectionExpand={onSectionExpand} sectionsMap={{'contact':t('ContactData'), 'info':t('Info'), 'custom-attributes':t('CustomAttributes')}}> 
+                    <CollapsableSection section={'contact'} isExpanded={sectionsExpanded.includes('contact')} onSectionExpand={onSectionExpand} sectionsMap={{'contact':t('ContactData'), 'info':t('Info'),'tags':t('Tags'), 'custom-attributes':t('CustomAttributes')}}> 
                         <Skeleton isLoaded={clientDataEdit !== null}> 
                             {Object.keys(clientDataEdit || {}).map((con, index) => (
                             <Fragment key={`channel-${index}`}> 
@@ -554,7 +547,7 @@ function Client ( {socket, fetchClientDataWithFilter}:{socket:any, fetchClientDa
                         </Box>
                     </CollapsableSection>
 
-                    <CollapsableSection mt='3vh' section={'info'} isExpanded={sectionsExpanded.includes('info')} onSectionExpand={onSectionExpand} sectionsMap={{'contact':t('ContactData'), 'info':t('Info'), 'custom-attributes':t('CustomAttributes')}}> 
+                    <CollapsableSection mt='3vh' section={'info'} isExpanded={sectionsExpanded.includes('info')} onSectionExpand={onSectionExpand} sectionsMap={{'contact':t('ContactData'), 'info':t('Info'), 'tags':t('Tags'), 'custom-attributes':t('CustomAttributes')}}> 
                         <Flex mt='1vh' alignItems={'center'} gap='10px' > 
                             <Text fontSize='.8em' whiteSpace={'nowrap'} flex='1' textOverflow={'ellipsis'} overflow={'hidden'}  fontWeight={'medium'} color='gray.600'>{t('contact_business_id')}</Text>
                             <Skeleton isLoaded={clientDataEdit !== null} style={{flex:2}}> 
@@ -570,7 +563,8 @@ function Client ( {socket, fetchClientDataWithFilter}:{socket:any, fetchClientDa
                             </Skeleton>
                         </Flex>
 
-                        <Flex mt='1vh'  gap='10px' > 
+                        
+                        {/*<Flex mt='1vh'  gap='10px' > 
                             <Text mt='10px' fontSize='.8em' whiteSpace={'nowrap'} flex='1' textOverflow={'ellipsis'} overflow={'hidden'}  fontWeight={'medium'} color='gray.600'>{t('labels')}</Text>
                             <Skeleton isLoaded={clientDataEdit !== null} style={{flex:2}}>
                        
@@ -588,7 +582,7 @@ function Client ( {socket, fetchClientDataWithFilter}:{socket:any, fetchClientDa
                                     <Textarea  maxLength={20} p='2px' placeholder={t('labels') + '...'} resize={'none'} borderRadius='.5rem' rows={1} fontSize={'.8em'}  borderColor='transparent' borderWidth='0px' _hover={{borderColor:'transparent',borderWidth:'0px'}} focusBorderColor={'transparent'}  value={inputValue}  onChange={(event) => {setInputValue(event.target.value)}}/>
                                 </Box>
                             </Skeleton>
-                        </Flex>
+                            </Flex>*/}
 
                         <Flex mt='2vh' alignItems={'center'}  gap='10px'  > 
                             <Text flex='1' fontSize='.8em' whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}  fontWeight={'medium'} color='gray.600'>{t('notes')}</Text>
@@ -609,8 +603,14 @@ function Client ( {socket, fetchClientDataWithFilter}:{socket:any, fetchClientDa
                         </Flex>
                     </CollapsableSection>
 
-                    <CollapsableSection mt='3vh' section={'custom-attributes'} isExpanded={sectionsExpanded.includes('custom-attributes')} onSectionExpand={onSectionExpand} sectionsMap={{'contact':t('ContactData'), 'info':t('Info'), 'custom-attributes':t('CustomAttributes')}}> 
-                        <CustomAttributes motherstructureType="contact" customAttributes={clientDataEdit?.custom_attributes || {}} updateCustomAttributes={updateCustomAttributes}/>
+                    <CollapsableSection mt='3vh' section={'tags'} isExpanded={sectionsExpanded.includes('tags')} onSectionExpand={onSectionExpand} sectionsMap={{'contact':t('ContactData'), 'info':t('Info'), 'tags':t('Tags'), 'custom-attributes':t('CustomAttributes')}}> 
+                        <Box mt='2vh'> 
+                            <TagEditor section="contacts" data={clientDataEdit} setData={setClientDataEdit as any}/>
+                        </Box>
+                    </CollapsableSection>
+
+                    <CollapsableSection mt='3vh' section={'custom-attributes'} isExpanded={sectionsExpanded.includes('custom-attributes')} onSectionExpand={onSectionExpand} sectionsMap={{'contact':t('ContactData'),'tags':t('Tags'), 'info':t('Info'), 'custom-attributes':t('CustomAttributes')}}> 
+                        <CustomAttributes motherstructureType="contacts" customAttributes={clientDataEdit?.cdas || {}} updateCustomAttributes={updateCustomAttributes}/>
                     </CollapsableSection>
                 </Box>
                 
@@ -619,13 +619,9 @@ function Client ( {socket, fetchClientDataWithFilter}:{socket:any, fetchClientDa
                         <Skeleton isLoaded={clientDataEdit !== null}> 
                             <Text fontWeight={'medium'} color='gray.600'>{t('Conversations', {count:clientConversationsEdit?.page_data.length})}</Text>
                         </Skeleton>
-                        <Flex alignItems={'center'}  gap='10px' flexDir={'row-reverse'}>
-                            <IconButton isRound size='xs' variant={'common'} aria-label='next-page' icon={<IoIosArrowForward />} isDisabled={conversationsFilters.page_index > Math.floor((clientConversationsEdit?.total_conversations || 0)/ 25)} onClick={() => updateTable({...conversationsFilters,page_index:conversationsFilters.page_index + 1})}/>
-                            <Text fontWeight={'medium'} fontSize={'.9em'} color='gray.600'>{t('Page')} {conversationsFilters.page_index}</Text>
-                            <IconButton isRound size='xs' variant={'common'} aria-label='next-page' icon={<IoIosArrowBack />} isDisabled={conversationsFilters.page_index === 1} onClick={() => updateTable({...conversationsFilters,page_index:conversationsFilters.page_index - 1})}/>
-                        </Flex>
+                      
                     </Flex>
-                    <Table data={clientConversationsEdit?.page_data || []} CellStyle={CellStyle} noDataMessage={t('NoConversations')} columnsMap={columnsConversationsMap} excludedKeys={['id', 'conversation_id', 'contact_id',  'is_matilda_engaged']} onClickRow={(row:any, index:number) => {navigate(`/conversations/conversation/${row.id}`)}}/>
+                    <Table data={clientConversationsEdit?.page_data || []} CellStyle={CellStyle} noDataMessage={t('NoConversations')} columnsMap={columnsConversationsMap} excludedKeys={['id', 'uuid', 'conversation_id', 'contact_id',  'state', 'is_matilda_engaged', 'organization_id',  'call_sid', 'call_url', 'channel_id', 'cdas' ] }  onClickRow={(row:any, index:number) => {navigate(`/conversations/conversation/${row.id}`)}}/>
                 </Flex>
             </Flex>
         </Flex>
@@ -688,7 +684,7 @@ const MergeBox = ({clientData, setShowMerge, fetchClientDataWithFilter}:MergeBox
                 navigate('/contacts/clients')
                 setShowConfirmMerge(false)
                 setShowMerge(false)
-                fetchClientDataWithFilter(null)
+                fetchClientDataWithFilter(null, null)
             }
         }
 

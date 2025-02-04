@@ -62,18 +62,18 @@ function Tilda ({configData}:{configData:ConfigProps[]}) {
     //FRONT
     return(             
 
-        <Box p='2vw' > 
+        <Box p='2vw' py='2vh' > 
             <Flex alignItems={'end'} justifyContent={'space-between'}> 
                 <Box> 
-                    <Text fontSize={'1.5em'} fontWeight={'medium'}>{t('MatildaConfigs')}</Text>
-                    <Text color='gray.600' fontSize={'.9em'}>{t('AllConfigsDes')}</Text>
+                    <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('MatildaConfigs')}</Text>
+                    <Text color='gray.600' fontSize={'.8em'}>{t('AllConfigsDes')}</Text>
                 </Box>
                 <Button size='sm' leftIcon={<FaPlus/>} variant={'main'} onClick={() => navigate('/settings/tilda/config/new')}>{t('CreateConfig')}</Button>
             </Flex>
              
-            <Box bg='gray.300' h='1px' mt='2vh' mb='2vh' w='100%'/>
+            <Box bg='gray.200' h='1px' mt='2vh' mb='2vh' w='100%'/>
 
-            <Box width={'calc(96vw - 275px)'}> 
+            <Box width={'100%'}> 
                 <Table data={configData} CellStyle={CellStyle} excludedKeys={['uuid']} onClickRow={(row) => navigate(`/settings/tilda/config/${row.uuid}`)} columnsMap={{ 'name':[t('Name'), 200],  'description':[t('Description'), 300], 'channels_ids':[t('EnabledChannels'), 600]}} noDataMessage={t('NoChannels')} />
             </Box>
         </Box>

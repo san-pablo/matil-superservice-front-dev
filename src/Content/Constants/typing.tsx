@@ -5,7 +5,6 @@ import { IoChatboxEllipses, IoLogoGoogle } from "react-icons/io5"
 import { AiFillInstagram } from "react-icons/ai"
 import { FaPhone } from "react-icons/fa"
 import { FaCloud } from "react-icons/fa6"
-
  
 //USER INFO AND ORGANIZATION
 export interface Organization {
@@ -24,43 +23,22 @@ export interface userInfo {
     organizations: Organization[]
 }
 
-//VIEWS
-export interface Condition {
-    column: ConversationColumn
-    operation_type: string
-    value: any
-    is_customizable:boolean
-}
-interface Order {
-    column: ConversationColumn
-    order: string
-}
-export interface View {
-    created_at?:string
-    name?: string
-    columns: ConversationColumn[]
-    all_conditions: Condition[]
-    any_conditions: Condition[]
-    order_by: Order
-}
+//VIEWS DEFINITION 
+export type FilterType = {logic:'AND' | 'OR', groups:{logic:'AND' | 'OR', conditions:{col:string, op:string, val:any}[]}[] }
+
+export type ViewDefinitionType =  {uuid:string, name:string, emoji:string, sort?:{column: string, order:'asc' | 'desc'}, filters:FilterType}
+export type defaultViewsType = 'my_inbox' | 'mentions' |  'all' | 'unassigned' | 'matilda' | 'bin' | 'created_by_me'
 export interface Views {
-    private_views: View[]
-    shared_views: View[]
-    number_of_conversations_per_shared_view?:number[]
-    number_of_conversations_per_private_view?:number[]
-    number_of_conversations_in_bin?:number
+    configuration: {
+        std:{name:defaultViewsType, show:boolean}[]
+        folders:{name:string, show:boolean, content:string[]}[]
+    }
+    count: {std:{[key:string]:number}, teams:{[key:string]:number}, custom:{[key:string]:number}}
+    definitions: ViewDefinitionType[]
 }
-export interface ViewType {type:'private' | 'shared' | 'deleted', index:number, name:string}
- 
-
-//HEADER SECTIONS
-export type HeaderSectionType = (description: string, code: number, section: 'conversation' | 'client' | 'contact-business', local_id?:number) => void
-export type DeleteHeaderSectionType = (element:{description: string, code: number, local_id?:number, type: string}) => void
-
 
 //CONVERSATIONS TABLE
 export type ConversationColumn = 
-    'id'
   | 'local_id'
   | 'user_id'
   | 'channel_type'
@@ -68,37 +46,14 @@ export type ConversationColumn =
   | 'updated_at'
   | 'solved_at'
   | 'title'
-  | 'theme'
-  | 'urgency_rating'
+  | 'theme_uuid'
   | 'status'
-  | 'deletion_scheduled_at'
   | 'unseen_changes'
   | 'closed_at'
   | 'call_status'
   | 'call_duration'
-
-  
-
-type ColumnsConversationsMap = {[key in ConversationColumn]: number}
-  
-export const columnConversationsMap: ColumnsConversationsMap = {
-    id: 50,
-    local_id: 50 ,
-    status:  100,
-    channel_type: 150,
-    theme:  200,
-    user_id: 200,
-    created_at: 150,
-    updated_at: 150,
-    solved_at: 150,
-    closed_at: 150,
-    title: 300,
-    urgency_rating: 130,
-    deletion_scheduled_at: 180,
-    unseen_changes: 250,
-    call_status:100,
-    call_duration:70
-  }
+  | 'tags'
+  | 'team_uuid'
 
 export interface ConversationsTableProps {
     'id': number
@@ -106,17 +61,12 @@ export interface ConversationsTableProps {
     [key:string]: number | string | boolean
  }
 export interface Conversations {
-    'total_conversations':number
+    'total_items':number
     'page_index':number
     'page_data':ConversationsTableProps[]
     'conversations_ids'?:number[]
 }
-export interface ClientConversationsProps{
-    'status':'new' | 'open' |'solved' | 'pending' | 'closed'
-    'created_at':string
-    'title':string
-}
-
+ 
 //CONVERSATIONS SECTION
 export interface ConversationsData {
     id: number
@@ -128,21 +78,24 @@ export interface ConversationsData {
     created_at: string
     updated_at: string
     solved_at: string
-    theme: string
+    theme_uuid: string
     urgency_rating: number
+    tags:string[]
     status: 'new' | 'open' |'solved' | 'pending' | 'closed'
     unseen_changes: boolean
     call_status:'ongoing' | 'completed'
     call_duration:number
     call_url:string
-    custom_attributes:{ [key: string]: any }
+    team_uuid:string
+    created_by:string
+
+    cdas:{ [key: string]: any }
 }
 
 
 //CLIENTS TABLE
 export type ClientColumn = 
   | 'id'
-  | 'organization_id'
   | 'contact_business_id'
   | 'created_at'
   | 'name'
@@ -156,25 +109,9 @@ export type ClientColumn =
   | 'last_interaction_at'
   | 'rating'
   | 'notes'
-  | 'labels'
+  | 'tags'
   | 'is_blocked'
 
-
-interface ColumnsMap {
-    [key:string]: number;
-}
-
-export const columnsClientsMap: ColumnsMap = {
-    name: 200,
-    contact: 150,
-    labels: 350,
-    last_interaction_at: 150,
-    created_at: 150,
-    rating: 60,
-    language: 150,
-    notes: 350,
-    is_blocked: 150
- }
 
  export const languagesFlags: {[key: string]: [string, string]} = {
     "EN": ["English", "🇬🇧"], 
@@ -217,46 +154,38 @@ export interface ClientData {
     last_interaction_at: string
     created_at: string
     notes: string
-    labels: string
+    tags: string[]
     is_blocked:boolean
-    custom_attributes:{ [key: string]: any }
+    cdas:{ [key: string]: any }
   }
 export interface Clients {
-    'total_contacts':number
-    'page_index':number
-    'page_data':ClientData[]
+    total_items:number
+    page_index:number
+    page_data:ClientData[]
 }
 
 //CONTACT BUSINESSSES TABLE
-export const columnsBusinessesMap: ColumnsMap = {
-    name: 200,
-    labels:  350,
-    created_at:  150,
-    last_interaction_at:  150,
-    notes: 350,
- }
-
 export interface ContactBusinessesTable {
-    'id':number
-    'name': string
-    'domain':string
-    'labels': string
-    'created_at':string
-    'last_interaction_at': string
-    'notes': string
-  }
-
+    id:number
+    name: string
+    domain:string
+    tags: string[]
+    created_at:string
+    last_interaction_at: string
+    notes: string
+    cdas:{ [key: string]: any }
+}
 export interface ContactBusinessesProps {
-    'total_contact_businesses':number
-    'page_data':ContactBusinessesTable[]
+    total_items:number
+    page_data:ContactBusinessesTable[]
 }
 export interface ContactBusiness {
     name: string
     notes: string
-    labels: string
+    tags: string[]
     created_at:string
     last_interaction_at: string
-    custom_attributes:{ [key: string]: any }
+    cdas:{ [key: string]: any }
 }
 
  //FUNCTIONS
@@ -280,36 +209,8 @@ export interface ContactBusiness {
 }
 
  
-export type nodeTypesDefinition = 'add' | 'extractor' | 'brancher' | 'sender' | 'function' | 'terminator' | 'transfer' | 'reset' | 'flow_swap' | 'motherstructure_updates'
-export type actionTypesDefinition = 'message' | 'condition' | 'extract' | 'flow_result' | 'edit_fields' | 'function'
-export type Branch = {
-    name:string, 
-    conditions:{variable_index:number, operation:string, value:any}[],
-    next_node_index:number
-  }
-export type FlowMessage = {
-    type:'generative' | 'preespecified',
-    generation_instructions:string,
-    preespecified_messages:{[key: string]:string}
-}
-
-export type FieldAction = {
-    motherstructure:'conversation' | 'contact' | 'contact_business' | 'custom'
-    is_customizable:boolean
-    name:string
-    operation?:string
-    value?:string
-}
-export type FunctionType = {
-    uuid:string
-    variable_args:{[key:string]:number}
-    motherstructure_args:{[key:string]:FieldAction}
-    hardcoded_args:{[key:string]:string}
-    error_nodes_ids:{[key:number]:number | null}
-    next_node_index:string | null
-    outputs_to_variables:{[key:string]:number}
-}
-
+ 
+ 
 //MESSAGES
 export type MessagesProps = {
     id:number
@@ -366,8 +267,7 @@ export type ActionsType = 'email_csat' |  'whatsapp_csat' | 'webchat_csat' | 'ag
 export interface ActionDataType  {
     name: string,
     description: string,
-    all_conditions:FieldAction[]
-    any_conditions:FieldAction[]
+    filters: FilterType
     actions:{type:ActionsType, arguments:any}[]
 }
  
@@ -379,22 +279,25 @@ export interface MatildaConfigProps {
     description:string
     introduce_assistant:boolean
     assistant_name:string
-    base_system_prompt:string 
     tone: string
     allowed_emojis: string[]
     allow_sources:boolean 
-    help_center_id:string 
+
     allow_agent_transfer:boolean
+    direct_transfer:boolean
+    transfer_to:string
+
     business_hours_agent_transfer_message:string
     non_business_hours_agent_transfer_message:string
     delay_response:boolean
     minimum_seconds_to_respond: number
     maximum_seconds_to_respond: number
-    all_conditions: FieldAction[]
-    any_conditions: FieldAction[]
-    channel_ids:string[]
-    functions_uuids:string[]
-    help_centers_ids:string[]
+    conversation_filters: FilterType
+    contact_filters: FilterType
+    contact_business_filters: FilterType
+     channel_ids?:string[]
+    functions_uuids?:string[]
+    help_centers_ids?:string[]
  }
 
 //CONDITIONS TYPES
@@ -444,8 +347,7 @@ export interface MetricType {
     aggregation_type: 'sum' | 'avg' | 'median' | 'count' | 'min' | 'max' 
     legend_label: string
     configurations: {[key:string]:any}
-    filter_conjunction: 'AND' | 'OR'
-    filters: {field_name: string, operator: 'eq' | 'neq' | 'geq' | 'leq' | 'in' | 'nin' | 'l' | 'g', value: any}[]
+    filters: FilterType
 }
 
 export interface ChartType   {
@@ -492,9 +394,6 @@ export interface ConfigProps { 
     description:string 
     channels_ids:string[]
 }
-
-  
- 
 export interface ChannelsType  {
     id: string
     uuid: string
@@ -504,4 +403,30 @@ export interface ChannelsType  {
     is_active: boolean
 }
 
+export interface CDAsType {
+    uuid:string
+    structure: 'conversations' | 'contacts' | 'contact_businesses'
+    type: 'boolean' | 'integer' | 'number' | 'string' | 'array'
+    name: string
+    description: string 
+    allowed_values: any[]
+    created_by: string
+    created_at: string
+    archived_at: string | null,
+    is_archived: boolean
+}
+
+export interface TagsType {
+    uuid: string
+    organization_id: number
+    name:string
+    description:string
+    conversations_affected:number
+    contacts_affected:number
+    contact_businesses_affected:number
+    created_by:string
+    created_at:string
+    archived_at:string | null
+    is_archived:boolean
+}
   

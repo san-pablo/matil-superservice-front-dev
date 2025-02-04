@@ -93,13 +93,13 @@ const Surveys = () => {
         <SaveChanges data={currentSection === 'csat'?csatData:npsData} setData={currentSection === 'csat'?setCsatData:setNpsData} dataRef={currentSection === 'csat'?csatDataRef:npsDataRef} onSaveFunc={sendNewData}/>
 
  
-        <Box px='2vw' pt='2vw' > 
-            <Text fontSize={'1.5em'} fontWeight={'medium'}>{t('Surveys')}</Text>
-            <Text color='gray.600' fontSize={'.9em'}>{t('SurveysDes')}</Text>
+        <Box px='2vw' pt='2vh' > 
+            <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('Surveys')}</Text>
+            <Text color='gray.600' fontSize={'.8em'}>{t('SurveysDes')}</Text>
 
             <Box h='40px' > 
                 <SectionSelector notSection selectedSection={currentSection} sections={sectionsList} sectionsMap={sectionsMap}  onChange={() => setCurrentSection(prev => (prev === 'csat'?'nps':'csat'))}/>
-                <Box bg='gray.300' h='1px' w='100%'/>
+                <Box bg='gray.200' h='1px' w='100%'/>
             </Box>
          </Box>
 

@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from './AuthContext'
 import { BrowserRouter as Router } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
 import { useSession } from './SessionContext'
 import { useAuth0 } from "@auth0/auth0-react"
 //FETCH DATA
@@ -18,10 +17,8 @@ import LoadingIcon from './Content/Components/Once/LoadingIcon'
 //TYPING
 import { userInfo, Organization } from './Content/Constants/typing'
  
-
 //ENVIORMENT VARIABLES
 const URL = import.meta.env.VITE_PUBLIC_API_URL
-const TOKENS_KEY = import.meta.env.VITE_ENCRIPTION_KEY || 'DEFAULT-KEY'
 
 //SKELETON THEME
 const $startColor = cssVar('skeleton-start-color')
@@ -74,14 +71,14 @@ const theme = extendTheme({
       Button: { 
           baseStyle: {fontWeight:600, bg:'#f1f1f1', _hover:{bg:'#e8e8e8'}, height:'30px'},
           sizes: {
-            xs: {h: '28px', minW: '28px',  fontSize: '.9em', px: '8px'},
-            sm: {h: '28px', minW: '28px',  fontSize: '.9em', px: '8px'},
+            xs: {h: '24px', minW: '24px',  fontSize: '.8em', px: '10px'},
+            sm: {h: '28px', minW: '28px',  fontSize: '.9em', px: '12px'},
           },
           variants:{
             main:{bg:'#222', _hover:{bg:'blackAlpha.800'}, color:'white',   _disabled: {bg: '#222', color: 'white', pointerEvents: 'none', cursor: 'not-allowed',opacity: 0.6}},
             delete:{fontWeight:500, bg:'red.100', color:'red.600', _hover:{bg:'red.200'}},
             delete_section:{fontWeight:500, color:'red'},
-            common:{fontWeight:500, _hover:{color:'rgb(59, 90, 246)'}}
+            common:{fontWeight:500,  bg:'brand.gray_2', _hover:{color:'rgb(59, 90, 246)'}}
           }
       },
       Skeleton: skeletonTheme,
@@ -113,29 +110,27 @@ const App: React.FC = () => {
           if (organization) {
              const responseChannels = await axios.get(URL + `${organization.id}/admin/settings/channels`, {headers: {'Authorization': `Bearer ${accessToken}`}})
             session.dispatch({type:'ADD_CHANNELS', payload:responseChannels?.data})
-            setAuthData({ organizationData:{calls_status:organization.calls_status || 'out', avatar_image_url:organization.avatar_image_url || '', is_admin:organization.is_admin, alias:organization.alias || '', groups:organization.groups},
+            setAuthData({ organizationData:{calls_status:organization.calls_status || 'out', avatar_image_url:organization.avatar_image_url || '', is_admin:organization.is_admin, alias:organization.alias || ''},
             organizationId: organization.id, userId:user.id, organizationName:organization.name ,email:email, accessToken:accessToken})
+
             localStorage.setItem('currentOrganization', String(organization.id))
             try{
               const responseOrg = await axios.get(URL + `${organization.id}/user`, {headers: {'Authorization': `Bearer ${accessToken}`}})
-              const responseThemes = await axios.get(URL + `${organization.id}/admin/settings/themes`, {headers: {'Authorization': `Bearer ${accessToken}`}})
-              const responseAtributtes = await  axios.get(URL + `${organization.id}/admin/settings/custom_attributes`, {headers: {'Authorization': `Bearer ${accessToken}`}})
-
-
-               const viewsToAdd = {
-                number_of_conversations_in_bin:responseOrg.data.number_of_conversations_in_bin, 
-                private_views:responseOrg.data.private_views, 
-                number_of_conversations_per_private_view:responseOrg.data.number_of_conversations_per_private_view,
-                shared_views:responseOrg.data.shared_views, 
-                number_of_conversations_per_shared_view:responseOrg.data.number_of_conversations_per_shared_view
+              const viewsToAdd = {
+                configuration:responseOrg.data.views_configuration, 
+                count:responseOrg.data.view_counts, 
+                definitions:responseOrg.data.view_definitions, 
               }
 
-              setAuthData({views: viewsToAdd, users:responseOrg.data.users, shortcuts:responseOrg.data.shortcuts, customAttributes:responseAtributtes.data, conversation_themes:responseThemes.data.map((theme:{name:string, description:string}) => theme.name),  active_integrations:[]})
+              console.log(responseOrg.data)
+              const filteredTeams = responseOrg.data.teams.filter((team:any) => !team.users.includes(user.id))
+
+              setAuthData({views: viewsToAdd, users:responseOrg.data.users, shortcuts:responseOrg.data.shortcuts, customAttributes:responseOrg.data.cdas, tags:responseOrg.data.tags, conversation_themes:responseOrg.data.themes, teams:filteredTeams,   active_integrations:[]})
             }
             catch (error){console.log(error)}
           }
           
-          else setAuthData({ organizationId: null, email:email, userId:user.id, accessToken:accessToken, views:{'private_views':[], 'shared_views':[]}, users:null, shortcuts:[], conversation_themes:[]})
+          else setAuthData({ organizationId: null, email:email, userId:user.id, accessToken:accessToken, views:{configuration:{std:[], folders:[]}, count:{std:{}, teams:{}, custom:{}}, definitions:[]}, teams:[], users:null, shortcuts:[], conversation_themes:[]})
  
           setUserInfo({name:user.name, surname:user.surname, organizations:user.organizations})
           setWaitingInfo(false)
@@ -170,22 +165,25 @@ const App: React.FC = () => {
       //logout({ logoutParams: { returnTo: window.location.origin } })
       const getInitialData = async () => {
         setWaitingInfo(true)
-        const storedMail = user?.email
+        const storedMail = URL.endsWith('v2/') ? 'javioliverperez@gmail.com': user?.email
 
-        const accessToken = await getAccessTokenSilently({
+        
+        const accessToken = URL.endsWith('v2/') ? 'javier_truco' :  await getAccessTokenSilently({
           authorizationParams: {
             audience: 'https://api.matil.ai/',
             scope: "read:current_user"
           },
         })
+  
+        
         if (storedMail && accessToken) {
           if (storedMail !== null && accessToken !== null) fetchInitialData(accessToken, storedMail)
         }
         else setWaitingInfo(false)
       }
 
-      if (!isLoading) {
-        if (isAuthenticated) getInitialData()
+      if (URL.endsWith('v2/') ? true:!isLoading) {
+        if (URL.endsWith('v2/') ? true:isAuthenticated) getInitialData()
         else loginWithRedirect()
       }
     }, [isAuthenticated, isLoading])
@@ -194,12 +192,12 @@ const App: React.FC = () => {
     //APP CONTENT
     return (  
       <ChakraProvider theme={theme}>
-        {(isLoading || waitingInfo) ?   
+        {(URL.endsWith('v2/') ? userInfo.name === '':isLoading || waitingInfo) ?   
           <Flex height={'100vh'}  width={'100vw'} justifyContent={'center'} alignItems={'center'}> 
               <LoadingIcon/>
           </Flex>:
           <>
-            {isAuthenticated && 
+            {(URL.endsWith('v2/') ?userInfo.name :isAuthenticated) && 
               <Router> 
                 <Box fontSize={'.9em'}> 
                   <Content userInfo={userInfo} />

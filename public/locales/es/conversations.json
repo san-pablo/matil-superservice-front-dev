@@ -87,8 +87,9 @@
     "ConfirmDeleteQuestion":"¿Desea eliminar esta conversación?",
     "IDMerge":"Ingrese el ID de una conversación para fusionar",
     "ConfirmMerge":"Confirmar fusión",
-    "ConfirmMergeQuestion_1":"¿Desea fusionar la conversación",
-    "ConfirmMergeQuestion_2":"con la conversación",
+    "ConfirmMergeQuestion":"Fusionar conversación /{#id1}/ con /{#id2}/" ,
+    "ConfirmWarning":"Esta acción no se puede deshacer. La conversación seleccionada se eliminará y se fusionará con la actual.",
+ 
     "CloseAction_1":"Cerrar pestaña",
     "CloseAction_2":"Próxima conversación en la vista",
     "CloseAction_3":"Mantener conversación abierta",
@@ -152,10 +153,32 @@
     "HideViews":"Esconder vistas",
     "More":"Más",
     "ConversationsFilter":"El estado es",
-    "ImportData":"Importar datos"
-
-
-
+    "ImportData":"Importar datos",
+    "InboxFolders":"Bandejas de entrada",
+    "my_inbox":"Mi bandeja",
+    "mentions":"Menciones",
+    "all":"Todas",
+    "unassigned":"Sin asignar",
+    "matilda":"Gestionadas por Tilda",
+    "created_by_me":"Creadas por ti",
+    "CreateFolder":"Crear nueva carpeta",
+    "CreateView":"Crear vista",
+    "CreateViewWarning":"Las vistas te permiten personalizar y guardar filtros para los atributos de conversación y folio de atención (por ejemplo, por canal), mostrando conversaciones coincidentes en tiempo real.",
+    "Filters":"Filtros",
+    "OrderBy":"Ordenar por",
+    "views":"Vistas",
+    "teams":"Equipos",
+    "NoTheme":"Sin tema",
+    "Team":"Equipo",
+    "NoTeam":"Sin equipo",
+    "StatusMessage":"El estado es",
+    "CreateFolderWarning":"Aparecerá una nueva carpeta en la barra, donde podrás añadir vistas y equipos. ",
+    "NoViews":"No hay vistas todavía",
+    "Name":"Nombre",
+    "created_by":"Creado por",
+    "Tags":"Etiquetas",
+    "Info":"Datos",
+    "CustomAttributes":"Campos personalizados"
 
 
 }

@@ -4,12 +4,11 @@ import { Routes, Route, useNavigate, useLocation } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 //FRONT
 import { Flex, Box, Text, Tooltip,Icon, IconButton } from "@chakra-ui/react"
+import SearchSection from "../../Components/Reusable/SearchSection"
 //ICONS
-import { FaBuilding } from "react-icons/fa6"
 import { IoPeopleSharp } from "react-icons/io5"
 import { FaMagnifyingGlass } from "react-icons/fa6" 
-import { BsFillBuildingsFill } from "react-icons/bs"
-import { BiSolidBuildings } from "react-icons/bi";
+import { BiSolidBuildings } from "react-icons/bi"
 
 //SECTIONS
 const ClientsTable = lazy(() => import('./ClientsTable'))
@@ -22,7 +21,8 @@ const Contacts = ({socket}:{socket:any}) => {
     const location = useLocation().pathname
     const section = location.split('/')[2]
     const [selectedSection, setSelectedSection] = useState<'clients' | 'businesses'>(localStorage.getItem('contactsSection')?localStorage.getItem('contactsSection') as 'clients' | 'businesses':'clients')
-    
+    const [showSearch, setShowSearch] = useState<boolean>(false)
+
     //CREATE BUSINESS
     const [hideViews, setHideViews] = useState<boolean>(false)
     const [showCreateBusiness, setShowCreateBusiness] = useState<boolean>(false)
@@ -30,21 +30,21 @@ const Contacts = ({socket}:{socket:any}) => {
  
     useEffect(() => {setSelectedSection(location.split('/')[2] as 'clients' | 'businesses')},[location])
 
-
-
     const tableWidthHideView =`calc(100vw - 45px)`  
     const tableWidthShowView =`calc(100vw - 45px - 220px)`  
 
- 
+    return (<>
+     
+     {showSearch && <SearchSection selectedSection={selectedSection} hideSideBar={hideViews} setHideSideBar={setHideViews}/>}
 
-     return (
+ 
         <Flex h='100vh' flexDir={'column'} w='calc(100vw - 45px)' bg='brand.hover_gray' >
             <Flex zIndex={10} h='100vh' overflow={'hidden'} width={hideViews ? 0:220}transition={'width ease-in-out .2s'}  gap='20px' py='2vh' flexDir={'column'} justifyContent={'space-between'} borderRightColor={'gray.200'} borderRightWidth={'1px'}>
 
                 <Box px='1vw'> 
                 <Flex  alignItems={'center'} justifyContent={'space-between'}> 
                         <Text  fontWeight={'semibold'} fontSize={'1.2em'}>{t('Contacts')}</Text>
-                        <IconButton bg='transparent' _hover={{bg:'brand.gray_1', color:'brand.text_blue'}} borderColor={'gray.200'} borderWidth={'1px'} variant={'common'}  h='28px' w='28px' aria-label="create-function" size='xs'>
+                        <IconButton bg='transparent' _hover={{bg:'brand.gray_1', color:'brand.text_blue'}} onClick={() => setShowSearch(true)} borderColor={'gray.200'} borderWidth={'1px'} variant={'common'}  h='28px' w='28px' aria-label="create-function" size='xs'>
                         <Tooltip  label={t('Search') + '...'}  placement='right'  bg='white' color='black'  borderRadius='.5rem' fontSize='.7em' p='6px'> 
                             <Box display="flex" h='100%' w='100%' alignItems="center" justifyContent="center" transition="transform .5s ease-in-out"  _hover={{ transform: "rotate(90deg)" }} >
                                 <FaMagnifyingGlass size="14px" />
@@ -76,7 +76,7 @@ const Contacts = ({socket}:{socket:any}) => {
                 </Suspense>
             </Flex>
         </Flex>
-    )
+        </>)
 }
  
 export default Contacts

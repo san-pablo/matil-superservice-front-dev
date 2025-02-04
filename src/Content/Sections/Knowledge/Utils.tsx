@@ -108,7 +108,8 @@ export const CreateFolder= ({currentFolder, type, setShowCreate, parentId, onFol
     return(<> 
         <Box p='15px' maxW='450px'> 
             <Text fontWeight={'medium'} fontSize={'1.2em'}>{currentFolder?t('EditFolder'):t('CreateFolder')}</Text>
-             <Flex mt='2vh' alignItems={'center'} gap='10px'> 
+
+            <Flex mt='2vh' alignItems={'center'} gap='10px'> 
                 <Flex cursor={'pointer'} ref={emojiButtonRef} onClick={() => setEmojiVisible(true)} alignItems={'center'} justifyContent={'center'} width={'32px'} height={'32px'} borderWidth={'1px'} borderColor={'gray.200'} borderRadius={'.5rem'}> 
                     {folderEmoji ? <Text fontSize={'.9em'}>{folderEmoji}</Text>:<Icon boxSize={'.9em'} as={FaFolder}/>}
                 </Flex>

@@ -168,16 +168,16 @@ const AllChannels = ({channelsData}:{channelsData:ChannelsType[]}) => {
     return (<> 
         {showCreateChannel && memoizedCreateChannel}
  
-        <Box p='2vw' > 
+        <Box px='2vw' py='2vh' > 
             <Flex alignItems={'end'} justifyContent={'space-between'}> 
                 <Box> 
-                    <Text fontSize={'1.5em'} fontWeight={'medium'}>{t('Channels')}</Text>
-                    <Text color='gray.600' fontSize={'.9em'}>{t('AllChannelsDes')}</Text>
+                    <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('Channels')}</Text>
+                    <Text color='gray.600' fontSize={'.8em'}>{t('AllChannelsDes')}</Text>
                 </Box>
                 <Button size='sm' leftIcon={<FaPlus/>} variant={'main'} onClick={() => setShowCreateChannel(true)}>{t('CreateChannel')}</Button>
             </Flex>
              
-            <Box bg='gray.300' h='1px' mt='2vh' mb='2vh' w='100%'/>
+            <Box bg='gray.200' h='1px' mt='2vh' mb='2vh' w='100%'/>
 
             <Box width={'calc(96vw - 275px)'}> 
                 <Table data={channelsData} CellStyle={CellStyle} excludedKeys={['uuid','id']} onClickRow={(row) => navigate(`/settings/channels/${row.channel_type}/${row.id}`)} columnsMap={{ 'name':[t('Name'), 300], 'channel_type':[t('ChannelType'), 200],  'display_id':[t('Account'), 300], 'is_active':[t('Status'), 200]}} noDataMessage={t('NoChannels')} />

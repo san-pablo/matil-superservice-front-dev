@@ -30,6 +30,8 @@ const startNgrokPlugin = () => {
   const openInSafariWhenReady = async (url:String) => {
     let tunnelActive = false;
 
+    await delay(5000)
+
     while (!tunnelActive) {
       try {
         console.log('Comprobando si el túnel está activo...');
@@ -58,7 +60,7 @@ const startNgrokPlugin = () => {
     configureServer(server:any) {
       if (!isNgrokStarted) {
         server.httpServer?.once('listening', () => {
-          const ngrokCommand = 'ssh -p 443 -R0:localhost:4005 -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -T jKtmHObAcyV@eu.a.pinggy.io x:https x:localServerTls:localhost';
+          const ngrokCommand = 'ssh -p 443 -R0:localhost:4005 -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -T 2XVitBWp4AU@eu.a.pinggy.io x:https x:localServerTls:localhost';
           exec(ngrokCommand, (error, stdout, stderr) => {
             if (error) console.error(`Error al iniciar ngrok: ${error.message}`);
             if (stderr) console.error(`stderr de ngrok: ${stderr}`);
@@ -83,7 +85,7 @@ export default defineConfig(({ command, mode }) => {
       gzipSize: true,
       brotliSize: true,
     }),
-    startNgrokPlugin(),
+    //startNgrokPlugin(),
   ];
 
   if (command === 'serve' && mode === 'hot-reload') {
@@ -91,10 +93,7 @@ export default defineConfig(({ command, mode }) => {
       plugins: commonPlugins,
       server: {
         port: 4005,
-        https: {
-          key: fs.readFileSync('./cert/server.key'),
-          cert: fs.readFileSync('./cert/server.crt'),
-        },
+        host: '192.168.0.227',
         open: false,
         cors: true
       }

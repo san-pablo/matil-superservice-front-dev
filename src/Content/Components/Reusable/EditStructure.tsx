@@ -1,7 +1,3 @@
-/* 
-    CUSTOM SELECTOR
-*/
-
 //REACT
 import { RefObject, useEffect, useState, useRef, CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -18,13 +14,15 @@ import useOutsideClick from '../../Functions/clickOutside'
 import determineBoxStyle from '../../Functions/determineBoxStyle'
 //ICONS
 import { RxCross2 } from 'react-icons/rx'
-//TYPING
-import { FieldAction } from '../../Constants/typing'
+
 //MOTION BOX
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)}) 
 
+//REGEX
+const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const EditStructure = ({data, setData, operationTypesDict, typesMap, scrollRef, isAction, excludedFields, deleteFunc}:{data:FieldAction, setData:(newData:FieldAction) => void, operationTypesDict:{[key:string]:string[]}, typesMap:{[key:string]:string[]}, scrollRef:RefObject<HTMLDivElement> , isAction?:boolean,     excludedFields?:('conversation' | 'contact' | 'contact_business' | 'custom')[], deleteFunc?:() => void}) => {
+//MAIN FUNCTION
+const EditStructure = ({data, setData, operationTypesDict, typesMap, scrollRef, isAction, excludedFields, deleteFunc}:{data:{col:string, op:string, val:any}, setData:(newData:{col:string, op:string, val:any}) => void, operationTypesDict:{[key:string]:string[]}, typesMap:{[key:string]:string[]}, scrollRef:RefObject<HTMLDivElement> , isAction?:boolean, excludedFields?:('conversations' | 'contacts' | 'contact_businesses' | 'custom')[], deleteFunc?:() => void}) => {
 
     //TRANSLATION
     const auth = useAuth()
@@ -34,18 +32,17 @@ const EditStructure = ({data, setData, operationTypesDict, typesMap, scrollRef, 
     //TRANSLATION
     const isInitialRender = useRef<boolean>(true)
     const { t } = useTranslation('settings')
-    const operationLabelsMap = {'set':t('set'), 'add':t('add'), 'substract':t('substract'), 'concatenate':t('concatenate'), 'append':t('append'), 'remove':t('remove'), 'eq':t('eq'), 'exists':t('exists'), 'neq':t('neq'), 'leq':t('leq'), 'geq':t('geq'), 'in':t('in'), 'nin':t('nin'), 'contains':t('contains'), 'ncontains':t('ncontains')}
+    const operationLabelsMap = {'between':t('between'), 'l':t('l'), 'g':t('g'), 'set':t('set'), 'add':t('add'), 'substract':t('substract'), 'concatenate':t('concatenate'), 'append':t('append'), 'remove':t('remove'), 'eq':t('eq'), 'exists':t('exists'), 'neq':t('neq'), 'leq':t('leq'), 'geq':t('geq'), 'in':t('in'), 'nin':t('nin'), 'contains':t('contains'), 'ncontains':t('ncontains')}
 
     //TYPES MAP
-    const isCustom = (data.motherstructure !== 'conversation' && data.motherstructure !== 'contact' && data.motherstructure !== 'contact_business' )
+    const isCustom = uuidRegex.test(data.col)
     const [customType, setCustomType] = useState<string>('') 
 
     //CHANGE DATA ON NAME CHANGE
     useEffect(() => {
-        if (!isInitialRender.current) setData({...data, value:'', operation:isCustom ?typesMap[customType][0]:(operationTypesDict[data.name as keyof typeof operationTypesDict] || [])[0]})
+        if (!isInitialRender.current) setData({...data, val:'', op:isCustom ?typesMap[customType][0]:(operationTypesDict[data.col as keyof typeof operationTypesDict] || [])[0]})
         else isInitialRender.current = false
-    },[data.name])
-
+    },[data.col])
 
     //IS HOVERING
     const [isHovering, setIsHovering] = useState<boolean>(false)
@@ -60,9 +57,7 @@ const EditStructure = ({data, setData, operationTypesDict, typesMap, scrollRef, 
     const [boxStyle, setBoxStyle] = useState<CSSProperties>({})
     determineBoxStyle({buttonRef, setBoxStyle, boxPosition:'none', changeVariable:showList})
 
-     
- 
-
+    
     const getValue = (inputType:string, value:any) => {
         switch(inputType) {
             case 'user_id':
@@ -106,36 +101,36 @@ const EditStructure = ({data, setData, operationTypesDict, typesMap, scrollRef, 
 
    return(
         <>
-            <Flex display={'inline-flex'} position={'relative'} ref={buttonRef} p='7px' borderRadius={'.5rem'} bg='brand.gray_2' cursor={'pointer'} alignItems={'center'} justifyContent={'space-between'} _hover={{color:'brand.text_blue'}} onClick={()=> setShowList(true)} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
+            <Flex display={'inline-flex'} h='28px' position={'relative'} ref={buttonRef} p='7px' borderRadius={'.5rem'} bg='brand.gray_2' cursor={'pointer'} alignItems={'center'} justifyContent={'space-between'} _hover={{color:'brand.text_blue'}} onClick={()=> setShowList(true)} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
                 {isAction ?  
-                    <Text fontWeight={'medium'} fontSize={'.9em'}>{(operationLabelsMap as any)[data.operation as string].toLocaleLowerCase()} {t(data?.name) || ''}  {getValue(data?.name, data?.value)}</Text>
+                    <Text fontWeight={'medium'} fontSize={'.8em'}>{(operationLabelsMap as any)[data.op as string].toLocaleLowerCase()} {t(data?.col) || ''}  {getValue(data?.col, data?.val)}</Text>
                     :
-                    <Text fontWeight={'medium'} fontSize={'.9em'}>{t(data?.name) || ''} {(operationLabelsMap as any)[data.operation as string]?.toLocaleLowerCase()} {getValue(data?.name, data?.value)}</Text>
+                    <Text fontWeight={'medium'} fontSize={'.8em'}>{t(data?.col) || ''} {(operationLabelsMap as any)[data.op as string]?.toLocaleLowerCase()} {getValue(data?.col, data?.val)}</Text>
                 }   
                 {isHovering && 
-                <Flex alignItems={'center'} justifyContent={'center'} bg={'brand.gray_2'} backdropFilter="blur(1px)"  px='5px' position={'absolute'} right={'7px'} > 
-                <Icon boxSize={'16px'} as={RxCross2} onClick={(e) => {e.stopPropagation(); if (deleteFunc) deleteFunc()}}/>
+                    <Flex alignItems={'center'} justifyContent={'center'} bg={'brand.gray_2'} backdropFilter="blur(1px)"  px='5px' position={'absolute'} right={'7px'} > 
+                    <Icon boxSize={'16px'} as={RxCross2} onClick={(e) => {e.stopPropagation(); if (deleteFunc) deleteFunc()}}/>
                 </Flex>}
 
             </Flex>
             <AnimatePresence> 
                 {showList && 
                     <Portal>
-                        <MotionBox initial={{ opacity: 0, marginTop:-10, marginBottom:-10 }} animate={{ opacity: 1, marginTop: 0,marginBottom:0 }}  exit={{ opacity: 0,marginTop:-10,marginBottom:-10}} transition={{ duration: '.2', ease: 'easeOut'}}
+                        <MotionBox id='custom-portal' initial={{ opacity: 0, marginTop:-10, marginBottom:-10 }} animate={{ opacity: 1, marginTop: 0,marginBottom:0 }}  exit={{ opacity: 0,marginTop:-10,marginBottom:-10}} transition={{ duration: '.2', ease: 'easeOut'}}
                         top={boxStyle.top}  onClick={(e) => e.stopPropagation()}  bottom={boxStyle.bottom} marginTop='10px' marginBottom='10px' left={boxStyle.left} width={boxStyle.width} minW={'300px'} maxW={'500px'} maxH='40vh' overflow={'scroll'} gap='10px' ref={boxRef} fontSize={'.9em'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000}   position={'absolute'} borderRadius={'.5rem'} >
                             <Box p='15px' alignItems={'center'} gap='10px' >
                                 <Box mb='2vh' flex='1'> 
-                                 <FieldSelection  excludedFields={excludedFields} containerRef={scrollRef} selectedItem={data} setSelectedItem={setData} setCustomType={setCustomType}/>
+                                    <FieldSelection  excludedFields={excludedFields} containerRef={scrollRef} selectedItem={data} setSelectedItem={setData} setCustomType={setCustomType}/>
                                 </Box>
-                                {((operationTypesDict[data.name as keyof typeof operationTypesDict] || [])).map((op, opIndex) => (
+                                {((operationTypesDict[data.col as keyof typeof operationTypesDict] || [])).map((op, opIndex) => (
                                     <Box mt='1vh' key={`operation-${opIndex}`}>
                                         <Flex mb='.5vh'   gap='10px' alignItems={'center'}>
-                                            <Radio isChecked={data.operation === op}  onClick={() => setData({...data, 'operation':op})}/>
+                                            <Radio isChecked={data.op === op}  onClick={() => setData({...data, 'op':op})}/>
                                             <Text fontWeight={'medium'} color='gray.600' fontSize={'.9em'}>{(operationLabelsMap as any)[op as string]}</Text>
                                         </Flex>
-                                        {data.operation === op && 
+                                        {data.op === op && 
                                         <Box ml='30px'>
-                                            <VariableTypeChanger customType={customType !== ''} inputType={customType !== ''?customType:data.name} value={data.value} setValue={(value) => setData({...data, 'value':value})} operation={data.operation}/>
+                                            <VariableTypeChanger customType={customType !== ''} inputType={customType !== ''?customType:data.col} value={data.val} setValue={(value) => setData({...data, 'val':value})} operation={data.op}/>
                                         </Box>}
                                     </Box>
                                 ))}

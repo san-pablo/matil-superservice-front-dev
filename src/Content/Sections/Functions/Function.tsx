@@ -3,11 +3,12 @@ import { useEffect, useRef, useState, useMemo, Fragment, ReactNode, Dispatch, Se
 import { useAuth } from "../../../AuthContext"
 import { useTranslation } from "react-i18next"
 import { useLocation, useNavigate } from "react-router-dom"
+import { useAuth0 } from "@auth0/auth0-react"
 //FETCH DATA
 import fetchData from "../../API/fetchData"
 //FRONT
 import { motion, isValidMotionProp } from 'framer-motion'
-import { Text, Box, Flex, Button, Skeleton, Tooltip, IconButton, chakra, shouldForwardProp, Icon, Switch, Spinner, Portal } from "@chakra-ui/react"
+import { Text, Box, Flex, Button, Skeleton, IconButton, chakra, shouldForwardProp, Icon, Switch, Spinner } from "@chakra-ui/react"
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 //PYTHON CODE EDITOR
 import CodeMirror from "@uiw/react-codemirror"
@@ -29,23 +30,18 @@ import parseNumber from "../../Functions/parseNumbers"
 import { FaPlus } from "react-icons/fa6"
 import { FaCheckCircle, FaTimesCircle, FaEdit } from "react-icons/fa"
 import { IoIosArrowDown,  } from "react-icons/io"
-import { IoWarning, IoChatbubbleEllipses } from "react-icons/io5"
-import {  BsClipboard2Check, BsThreeDots, BsThreeDotsVertical } from "react-icons/bs"
+import { IoChatbubbleEllipses } from "react-icons/io5"
+import { BsThreeDotsVertical } from "react-icons/bs"
 import { RxCross2 } from "react-icons/rx"
 import { PiSidebarSimpleBold } from "react-icons/pi"
 import { AiOutlineCheckCircle, AiOutlineCalendar } from "react-icons/ai"
 import { FiHash, FiType } from "react-icons/fi"
 import { HiTrash } from "react-icons/hi2"
-import { TbCopyPlusFilled, TbMathFunction } from "react-icons/tb"
+import { TbMathFunction } from "react-icons/tb"
 import { MdOutlineFormatListBulleted } from "react-icons/md"
 //TYPING
-import { FunctionsData, FunctionTableData, ConfigProps } from "../../Constants/typing"
-import { useAuth0 } from "@auth0/auth0-react"
-import { t } from "i18next"
-
+import { FunctionsData, ConfigProps } from "../../Constants/typing"
   
- 
- 
 //TYPING  
 interface FunctionResultType {
     run_successful:boolean
@@ -418,11 +414,12 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
             <Box p='20px' > 
                 <Text fontWeight={'medium'}>{t('NoSavedChanges')}</Text>
                 <Text mt={'.5vh'}>{t('NoSavedChangeAnswer')}</Text>
+           
+                <Flex mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+                    <Button  size='sm' variant={'main'} onClick={() => {handleEditFunctions();navigate('/functions')}}>{waitingEdit?<LoadingIconButton/>:t('SaveAndExit')}</Button>
+                    <Button  size='sm'variant={'delete'} onClick={() => navigate('/functions')}>{t('NoSave')}</Button>
+                </Flex>
             </Box>
-            <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
-                <Button  size='sm' variant={'main'} onClick={() => {handleEditFunctions();navigate('/functions')}}>{waitingEdit?<LoadingIconButton/>:t('SaveAndExit')}</Button>
-                <Button  size='sm'variant={'delete'} onClick={() => navigate('/functions')}>{t('NoSave')}</Button>
-            </Flex>
         </ConfirmBox>    
     </>), [showNoSaveWarning])
 
@@ -430,12 +427,11 @@ const Function = ({setHideFunctions}:{setHideFunctions:Dispatch<SetStateAction<b
     const memoizedDeleteBox = useMemo(() => (
         <ConfirmBox setShowBox={setShowConfirmDelete}> 
                 <Box p='15px'> 
-                    <Text fontSize={'1.2em'}   fontWeight={'medium'}>{t('DeleteFunction')}</Text>
-                    <Box height={'1px'} width={'100%'} bg='gray.300' mt='1vh' mb='1vh'/>
-                    <Text>{parseMessageToBold(t('DeleteFunctionAnswer', {name:functionData?.name}))}</Text>
-                </Box>
+                    <Text fontSize={'1.2em'}>{parseMessageToBold(t('DeleteFunctionAnswer', {name:functionData?.name}))}</Text>
+                    <Text fontSize={'.8em'} mt='2vh' color='gray.600'  fontWeight={'medium'}>{t('DeleteFunctionWarning')}</Text>
+                 </Box>
                  
-                <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+                <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} >
                     <Button size='sm' variant={'delete'}onClick={handleDeleteFunctions}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
                     <Button  size='sm' variant={'common'} onClick={() => setShowConfirmDelete(false)}>{t('Cancel')}</Button>
                 </Flex>
@@ -739,7 +735,7 @@ const CreateVariable = ({variableData,  index, setIndex, editFunctionData}:{vari
             </Flex>  
         </Box>
  
-        <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+        <Flex p='15px' mt='2vh' gap='15px' flexDir={'row-reverse'} >
             <Button variant={'main'}  isDisabled={currentVariable.name === '' || (index !== -1 && JSON.stringify(variableData) === JSON.stringify(currentVariable))} size='sm' onClick={sendVariable}>{index === -1 ? t('CreateParameter'): t('SaveParameter')}</Button>
             <Button variant={'common'}  size='sm' onClick={() => setIndex(null)}>{t('Cancel')}</Button>
         </Flex>
