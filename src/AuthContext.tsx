@@ -5,27 +5,27 @@
 //REACT
 import { createContext, useContext, useState, ReactNode } from 'react'
 //TYPING
-import { Views, CDAsType, TagsType } from './Content/Constants/typing'
+import { CDAsType, TagsType, ViewDefinitionType, Channels } from './Content/Constants/typing'
  
 //TYPING
  
 //AUTH DATA TYPE
 type AuthData = {
     email: string
-    accessToken: string
     organizationId: number | null
+    accessToken:string
     userId: string | null
     organizationName: string
-    views: Views | null
-    users:{[key:string | number]:{name:string, surname:string, email_address:string, profile_picture:string, is_admin:boolean}} | null
-    conversation_themes:{uuid:string, name:string, description:string, emoji:string}[]
-    teams:{uuid:string, name:string, distribution_method:'manual' | 'round_robin', emoji:string, users:string[]}[]
-    shortcuts:string[]
-    userData:{name: string, surname: string, email_address: string, password: string, language:string, shortcuts_activated:boolean} | null
-    organizationData:{calls_status:'connected' | 'out' | 'disconnected', avatar_image_url:string, is_admin:boolean, alias:string} | null
-    customAttributes:CDAsType[] | null
+    userData:{id:string, name: string, surname: string, email: string, language:string, icon:{type: 'image' | 'emoji' | 'icon', data:string}, color_theme:'light' | 'dark', created_at:string, organizations:{id:string, name:string}[], invitations:{id:string, organization_id:string, organization_name:string, role_name:string, status:string}[] } | null
+    views: ViewDefinitionType[] | null
+    preferences: {shortcuts:string[], objects_layout:{[key in 'conversations' | 'persons' | 'businesses']:any} | null} | null
+    users:{id:string, name:string, surname:string, email_address:string, icon:{type:'image' | 'emoji' | 'icon', data:string}}[] | null
+    themes:{id:string, name:string, description:string, icon:{type:'image' | 'emoji' | 'icon', data:string} }[]
+    channels:{display_id:string, id:string, is_active:boolean, name:string, type:Channels}[]
+    teams:{id:string, name:string, distribution_method:'manual' | 'round_robin', icon:{type:'image' | 'emoji' | 'icon', data:string}, users:string[]}[]
+    cdas:CDAsType[] | null
     tags:TagsType[] | null
-    active_integrations:string[]
+    api_keys:{id:string, name:string}[] | null
 }
  
 //AUTH CONTEXT TYPE DEFINITION
@@ -38,7 +38,7 @@ type AuthContextType = {
 
 //CONTEXT TOOLS
 const AuthContext = createContext<AuthContextType>({
-    authData: { email: '', accessToken: '', organizationId: null, userId:null, organizationName:'', views:{configuration:{std:[], folders:[]}, count:{std:{}, teams:{}, custom:{}}, definitions:[]}, teams:[], users:null, conversation_themes:[], shortcuts:[], userData:null, organizationData:null, customAttributes:null, tags:null, active_integrations:[]},
+    authData: { email: '', organizationId: null, userId:null, organizationName:'', accessToken:'', views:null, teams:[], channels:[], users:null, preferences:null, themes:[], userData:null , api_keys:null, cdas:null, tags:null},
     isSignedIn: false, 
     signOut: () => {},
     setAuthData: () => {},
@@ -49,20 +49,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     //AUTHDATA
     const [authData, setAuthData] = useState<AuthData>({
         email: '',
-        accessToken: '',
         organizationId: null,
         userId:null,
         organizationName:'',
         views:null, 
+        channels:[],
         users:null, 
-        conversation_themes:[], 
-        shortcuts:[],
+        themes:[], 
+        preferences:null,
         teams:[],
+        api_keys:[],
         userData:null,
-        organizationData:null,
-        customAttributes:null,
+        cdas:null,
         tags:null,
-        active_integrations:[]
+        accessToken:''
     })
 
     //AUTHENTICATION FUNCTIONALITIES
@@ -73,7 +73,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     //SIGN OUT
     const signOut = () => {
-        setAuthData({ email: '', accessToken: '', organizationId: null, tags:null, userId:null, organizationName:'', views:{configuration:{std:[], folders:[]}, count:{std:{}, teams:{}, custom:{}}, definitions:[]}, teams:[], users:null, conversation_themes:[], shortcuts:[], userData:null,organizationData:null, customAttributes:null, active_integrations:[]})
+        setAuthData({ email: '', organizationId: null, channels:[], tags:null, userId:null, organizationName:'', accessToken:'', views:null, teams:[], users:null, themes:[], preferences:null, userData:null, cdas:null, api_keys:null})
         localStorage.clear()
     }
 

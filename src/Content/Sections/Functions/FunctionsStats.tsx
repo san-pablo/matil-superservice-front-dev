@@ -34,7 +34,7 @@ const FunctionsStats = ({functionsList, setHideFunctions}:{functionsList:Functio
     //FETCH FUNCTION DATA
     useEffect(() => {      
         const fetchInitialData = async() => {
-            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/functions/stats`, getAccessTokenSilently, setValue:setData, auth})
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/functions/stats`, getAccessTokenSilently, setValue:setData, auth})
         }
         fetchInitialData()
     }, [])

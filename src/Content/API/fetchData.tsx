@@ -24,8 +24,6 @@ function paramsSerializer(params:any) {
     return str.join('&')
 }
 
-
-
 //TYPING
 interface fetchDataProps {
     endpoint:string
@@ -57,6 +55,8 @@ const fetchData = async ({endpoint, setValue, setWaiting, getAccessTokenSilently
  
     //API ENDPOINT AND CONFIGURATION
     const URL = import.meta.env.VITE_PUBLIC_API_URL
+    const VERSION = import.meta.env.VITE_VERSION
+
     const config: Config  = {
         method: method, 
         url: URL + endpoint,
@@ -78,11 +78,17 @@ const fetchData = async ({endpoint, setValue, setWaiting, getAccessTokenSilently
         //CONFIG REQUEST
         if (['post', 'put', 'delete'].includes(method.toLowerCase())) config.data = requestForm
         else config.params = {...config.params, ...requestForm}
-  
-
+ 
         //RESPONSE  
-        const response = await axios(config)
 
+        console.log(endpoint)
+         console.log(requestForm)
+
+
+
+        const response = await axios(config)
+        console.log(response.data)
+        
 
         //ACTIONS ON A SUCCESSFUL CALL
         if (setRef)  setRef.current = JSON.parse(JSON.stringify(response.data)) 
@@ -90,18 +96,20 @@ const fetchData = async ({endpoint, setValue, setWaiting, getAccessTokenSilently
         if (setWaiting) setWaiting(false)
         if (toastMessages?.works) showToast({message:toastMessages.works})
 
+ 
         //RETURN THE RESPONSE
         return response
     } 
     //CATCH ERROR
     catch (error) {
-
         console.log(error)
-        //HANDLE ACCESS TOKEN ERROR
+
+         //HANDLE ACCESS TOKEN ERROR
         if (isAxiosError(error) && error.response && error.response.status === 403){
+ 
             try {
                 //REQUEST AND CHANGE NEW ACCESS TOKEN
-                 const accessToken = URL.endsWith('v2/') ? 'javier_truco' :await getAccessTokenSilently({authorizationParams: {audience: `https://api.matil/v2/`, scope: "read:current_user"}})
+                 const accessToken = await getAccessTokenSilently({authorizationParams: {audience: `https://api.matil/v2/`, scope: "read:current_user"}})
 
                 auth.setAuthData({ accessToken: accessToken})
                 config.headers =  {'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' }

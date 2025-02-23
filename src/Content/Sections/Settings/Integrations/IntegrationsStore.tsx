@@ -40,7 +40,7 @@ function IntegrationsStore () {
         <Box flex='1'>     
             <Text fontSize={'1.6em'} fontWeight={'semibold'} >{t('Store')}</Text>
             {Object.keys(categories).map((categorie, index) => (
-                <Text mt='1vh' key={`categorie-${index}`} fontWeight={selectedSection === categorie?'medium':'normal'} _hover={{color:'brand.text_blue'}} onClick={() => setSelectedSection(categorie)} cursor={'pointer'}>{t(categorie)}</Text>
+                <Text mt='1vh' key={`categorie-${index}`} fontWeight={selectedSection === categorie?'medium':'normal'} _hover={{color:'text_blue'}} onClick={() => setSelectedSection(categorie)} cursor={'pointer'}>{t(categorie)}</Text>
             ))}
         </Box> 
                 
@@ -54,7 +54,7 @@ function IntegrationsStore () {
                                 <Image  height={'40px'} w={'40px'} src={`/images/logos/${section.icon}`}/>
                                 <Box> 
                                     <Text fontWeight={'medium'}  >{section.name}</Text>
-                                    <Text color='gray.600' fontSize={'.8em'} >{section.description}</Text>
+                                    <Text color='text_gray' fontSize={'.8em'} >{section.description}</Text>
                                 </Box>
                             </Flex>                
                     </Box>))}

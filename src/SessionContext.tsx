@@ -149,24 +149,7 @@ const sessionReducer = (state: SessionData, action: { type: string; payload: any
             }
             return state
 
-        //UPDATE A CONVERSATION
-        case 'EDIT_HEADER_SECTION_CONVERSATION':
-            let updatedHeaderSectionsConversation =  state.headerSectionsData
-
-            updatedHeaderSectionsConversation = state.headerSectionsData.filter((section) => {
-                if (section.type === 'conversation' && section?.data?.conversationData?.id === action.payload.new_data.id && action.payload.is_deleted) return false              
-                else return true    
-            }).map((section, idx) => {
-                
-            if (action.payload?.is_new && section.type === 'conversation'  && action.payload.client_id === section?.data?.clientData?.id) return { ...section, data:{...section.data, clientConversations:null}}
-            else if (section.type === 'conversation' && section?.data?.conversationData?.id === action.payload.new_data.id) return { ...section, data:{...section.data, conversationData: action.payload.new_data, clientConversations:null}}
-        
-            if (section.type === 'client' && action.payload.client_id === section.id) return { ...section, data:{...section.data, clientConversations:null}}
-            return section
-            })
-            
-            return {...state, headerSectionsData: updatedHeaderSectionsConversation}
-         
+ 
         case 'UPDATE_CONVERSATIONS_VIEWS':
             return {...state, conversationsTable: action.payload}
             
@@ -186,59 +169,8 @@ const sessionReducer = (state: SessionData, action: { type: string; payload: any
             })
         
             return {...state, clientsTable: null, headerSectionsData: updatedHeaderSectionsClient}
-        
-        //UPDATE CONTACT BUSINESS
-        case 'EDIT_HEADER_SECTION_BUSINESS':
-                
-            let updatedHeaderSectionsBusiness =  state.headerSectionsData        
-            if (!action.payload.is_new) {
-                updatedHeaderSectionsBusiness = state.headerSectionsData.map((section, idx) => {
-
-                    if (section.type === 'business' && section?.data?.businessData?.id === action.payload.data.id) return { ...section, data: {...section.data, businessData: action.payload.data}} 
-                    else if (section.type === 'client' && section.data.clientData?.contact_business_id === action.payload.data.id) return { ...section, data: {...section.data, businessData: action.payload.data}}
-                    else if (section.type === 'conversation' && section.data.clientData && section.data.clientData.contact_business_id === action.payload.data.id) {
-                        return { ...section, data: { ...section.data,  businessData: action.payload.data }}
-                    }            
-                    
-                    return section
-                })
-            }
-            return {...state, contactBusinessesTable: null, headerSectionsData: updatedHeaderSectionsBusiness}
-        
-        //CHANGE THE BUSINESS OF A CLIENT
-        case 'EDIT_CONTACT_BUSINESS':
-            let updatedHeaderSectionsChange =  state.headerSectionsData        
-
-            updatedHeaderSectionsChange = state.headerSectionsData.map((section, idx) => {
-                if ((section.type === 'conversation' || section.type === 'client') && section.data.clientData?.id === action.payload.id) return { ...section, data: { ...section.data, businessData:action.payload.data, businessClients:null }}
-                return section
-            })
-            
-            return {...state, contactBusinessesTable: null, headerSectionsData: updatedHeaderSectionsChange}
-            
-        //UPDATE MESSAGES
-        case 'EDIT_HEADER_SECTION_MESSAGES':
-                    
-            let updatedHeaderSectionsMessages =  state.headerSectionsData        
-            updatedHeaderSectionsMessages = state.headerSectionsData.map((section, idx) => {
-                if (section.type === 'conversation' && section.data.conversationData?.id === action.payload.data.id) {
-                    if (action.payload.type === 'message') 
-                        {
-                            action.payload.data.new_messages.forEach((msg:any) => {msg.sender_type = action.payload.data.sender_type})
-                            const newMessages = action.payload.data.new_messages
-                            return { ...section, data: { ...section.data, messagesList:{ ...section.data.messagesList as MessagesData,  scheduled_messages:[], messages:[...section?.data?.messagesList?.messages as MessagesProps[], ...newMessages]} }}
-                        }
-                    else if (action.payload.type === 'scheduled-new') return { ...section, data: { ...section.data, messagesList:{ ...section.data.messagesList as MessagesData, scheduled_messages:[...section?.data?.messagesList?.scheduled_messages as MessagesProps[], ...action.payload.data.new_messages]} }}
-                    
-                    else if (action.payload.type === 'scheduled-canceled'){
-                        return { ...section, data: { ...section.data, messagesList:{ ...section.data.messagesList as MessagesData, scheduled_messages:[]} }}
-                    }              
-                }
-                return section
-            })
-            
-            return {...state, contactBusinessesTable: null, headerSectionsData: updatedHeaderSectionsMessages}
-            
+      
+    
         //DELETE ALL VIEWS
         case 'DELETE_VIEW_FROM_CONVERSATIONS_LIST':         
             return {...state, conversationsTable: []}
@@ -264,26 +196,7 @@ const sessionReducer = (state: SessionData, action: { type: string; payload: any
                 additionalData:{channels:null}
             }
 
-        //CHANGE UNSEEN_CHANGES ON OPEN VIEWS WHEN ENTERING A clientConversations
-        case 'CHANGE_UNSEEN_CHANGES':
-
-            let updatedConversationsTables = state.conversationsTable.map((section) => {
-                let updatedSection = { ...section }
-                if (updatedSection?.data?.page_data) {
-                    let updatedData = section.data.page_data.map((con) => {
-                        if (con.id === action.payload && con.hasOwnProperty('unseen_changes')) {
-                            let updatedCon = { ...con }
-                            updatedCon.unseen_changes = false
-                            return updatedCon
-                        }
-                        return con
-                    })
-                    updatedSection.data.page_data = updatedData
-                }
-                return updatedSection
-            })
-            return { ...state, conversationsTable: updatedConversationsTables }
-            
+ 
         //ADD CHANNELS
         case 'ADD_CHANNELS':
             return { ...state, additionalData: {channels:action.payload} }

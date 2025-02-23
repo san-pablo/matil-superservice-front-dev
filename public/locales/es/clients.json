@@ -36,7 +36,9 @@
     "Search":"Buscar",
     "ConfirmBlock":"Confirmar bloqueo",
     "Block":"Bloquear",
-    "BlockClient":"¿Desea bloquear el cliente/{ {{name_id}}}/?",
+    "BlockClient":"Bloquear el cliente {{name}}",
+    "BlockDes":"Al bloquear el cliente, dejarán de llegar mensajes a través de sus canales registrados. Puedes desbloquearlo cuando quieras.",
+    
     "NoBusiness":"Sin empresa",
     "WebClient":"Cliente de la Web",
     "AddContact":"Añadir contacto",
@@ -62,7 +64,16 @@
     "HideSidebar":"Esconder barra",
     "NewMessage":"Nuevo mensaje",
     "CreateClient":"Crear cliente",
-    "tags":"Etiquetas",
-    "instagram_followers":"Seguidores instagram"
+    "Tags":"Etiquetas",
+    "instagram_followers":"Seguidores Instagram",
+    "updated_at":"Editado hace",
+    "DeleteClient":"Eliminar el cliente {{name}}",
+    "DeleteClientDes":"Esta acción no se puede deshacer. Se eliminará el cliente y todas sus conversaciones.",
+
+    "ClientConversationsDelete_one":"El cliente tiene {{count}} conversación",
+    "ClientConversationsDelete_other":"El cliente tiene {{count}} conversaciones",
+    "DeleteClientWarning":"Esta acción no se puede deshacer. Se eliminará el cliente, así como todas sus conversaciones.",
+    "Delete":"Eliminar",
+    "tags":"Etiquetas"
 
 }

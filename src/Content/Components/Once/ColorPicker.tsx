@@ -50,16 +50,16 @@ const ColorPicker = ({ color, setColor,containerRef }: ColorPickerProps) => {
 
     //UPDATE POSITION
     const [pickerStyle, setPickerStyle] = useState<CSSProperties>({})
-    determineBoxStyle({buttonRef:colorButtonRef, setBoxStyle:setPickerStyle, boxPosition:'right', changeVariable:showColorPicker})
+    determineBoxStyle({buttonRef:colorButtonRef, setBoxStyle:setPickerStyle, changeVariable:showColorPicker})
   
     //FRONT
-    return (
+    return ( 
         <Flex gap='5px'>
             <Box ref={colorInputRef} flex={'1'}>
                 <EditText value={color} setValue={handleInputChange} hideInput={false} />
             </Box>
             <Box position={'relative'}>
-                <Flex ref={colorButtonRef} cursor={'pointer'} borderRadius={'.5rem'} height={'100%'} gap='7px' justifyContent={'center'} alignItems={'center'} borderColor={'gray.200'}  _hover={{borderColor:'gray.300'}} borderWidth={'1px'} px='5px' onClick={() => setShowColorPicker(!showColorPicker)}>
+                <Flex ref={colorButtonRef} cursor={'pointer'} borderRadius={'.5rem'} height={'100%'} gap='7px' justifyContent={'center'} alignItems={'center'} borderColor={'border_color'}  _hover={{borderColor:'border_color'}} borderWidth={'1px'} px='5px' onClick={() => setShowColorPicker(!showColorPicker)}>
                     <Box height={'20px'} width='20px' borderRadius={'.3rem'} bg={color} />
                     <IoIosArrowDown className={showColorPicker ? "rotate-icon-up" : "rotate-icon-down"} />
                 </Flex>

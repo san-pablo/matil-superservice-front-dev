@@ -10,7 +10,7 @@ import ConfirmBox from "../../../Components/Reusable/ConfirmBox"
 import ShopifyLoginButton from "./ShopifyLoginButton"
 import EditText from "../../../Components/Reusable/EditText"
 import LoadingIconButton from "../../../Components/Reusable/LoadingIconButton"
-import ChannelInfo from "../Channels/Components/Channelnfo"
+import ChannelInfo from "../../ExtraSections/Channels/Components/Channelnfo"
 //ICONS
 import { FaPlus } from "react-icons/fa6"
 import { ConfigProps } from "../../../Constants/typing"
@@ -39,14 +39,14 @@ function Shopify () {
     useEffect(() => {
         document.title = `Integraciones - Shopify - ${auth.authData.organizationName} - Matil`
         const fetchInitialData = async() => {
-            const response = await fetchData({ getAccessTokenSilently, endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/whatsapp`,  setValue: setData, auth})   
+            const response = await fetchData({ getAccessTokenSilently, endpoint:`superservice/${auth.authData.organizationId}/settings/channels/whatsapp`,  setValue: setData, auth})   
             if (response?.status === 200) dataRef.current = response.data
         }
         fetchInitialData()
     }, [])
 
     const callNewWhatsapp = async() => {
-        const response = await fetchData({ getAccessTokenSilently, endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/whatsapp`,  setValue: setData, auth})
+        const response = await fetchData({ getAccessTokenSilently, endpoint:`superservice/${auth.authData.organizationId}/settings/channels/whatsapp`,  setValue: setData, auth})
         setShowCreateAccount(false)
     }
 
@@ -65,7 +65,7 @@ function Shopify () {
  
     const sendConfigDict = async (index:number) => {
         setWaitingIndex(index)
-        const response = await fetchData({ getAccessTokenSilently, endpoint:`superservice/${auth.authData.organizationId}/admin/settings/channels/whatsapp`, method:'put', requestForm:data[index], auth, toastMessages:{'works':'Configuración actualizado con éxito', 'failed':'Hubo un error al actualizar la información'}})
+        const response = await fetchData({ getAccessTokenSilently, endpoint:`superservice/${auth.authData.organizationId}/settings/channels/whatsapp`, method:'put', requestForm:data[index], auth, toastMessages:{'works':'Configuración actualizado con éxito', 'failed':'Hubo un error al actualizar la información'}})
         if (response?.status === 200) dataRef.current = data
         setWaitingIndex(null)
     }
@@ -96,7 +96,7 @@ function Shopify () {
                 <Text fontSize={'1.4em'} fontWeight={'medium'}>Cuentas activas (Shopify)</Text>
                 <Button whiteSpace='nowrap'  minWidth='auto'leftIcon={<FaPlus/>} onClick={() =>setShowCreateAccount(true)}>Crear Cuenta</Button>
             </Flex>            
-            <Box height={'1px'} width={'100%'} bg='gray.300' mt='1vh' mb='4vh'/>
+            <Box height={'1px'} width={'100%'} bg='border_color' mt='1vh' mb='4vh'/>
         </Box>
         <Skeleton isLoaded={dataRef.current !== null && data !== null}> 
                 {data.length === 0 ? <Text mt='3vh'>{auth.authData.organizationName} no tiene cuentas activas de Shopify</Text>:
@@ -110,7 +110,7 @@ function Shopify () {
                      
                         <Button isDisabled={JSON.stringify(dataRef.current[index]) === JSON.stringify(data[index]) } onClick={() => sendConfigDict(index)} whiteSpace='nowrap'>{waitingIndex === index?<LoadingIconButton/>:'Guardar cambios'}</Button>
                     </Flex>
-                    <Box height={'1px'} mt='2vh'mb='2vh' width={'100%'} bg='gray.300'/>
+                    <Box height={'1px'} mt='2vh'mb='2vh' width={'100%'} bg='border_color'/>
                     <Flex px='7px' key={`whatsapp-${index}`} width={'100%'} gap='5vw'> 
                     <Box flex='1'> 
                             <ChannelInfo value={bot.access_token} title="Token de acceso" description="Clave de seguridad para la API"/>

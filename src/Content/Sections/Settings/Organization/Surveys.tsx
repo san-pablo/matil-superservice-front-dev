@@ -14,7 +14,6 @@ import SectionSelector from "../../../Components/Reusable/SectionSelector"
 import CustomSelect from "../../../Components/Reusable/CustomSelect"
 import { EditStr, EditBool, EditColor } from "../../../Components/Reusable/EditSettings"
 //ICONS
-import { IoMdArrowRoundForward } from 'react-icons/io'
 import { FaStar, FaComment, FaGaugeHigh, FaCircleExclamation } from "react-icons/fa6"
 import { useAuth0 } from "@auth0/auth0-react"
 
@@ -59,8 +58,8 @@ const Surveys = () => {
     useEffect(() => {        
         document.title = `${t('Settings')} - ${t('Surveys')} - ${auth.authData.organizationId} - Matil`
         const fetchInitialData = async() => {
-            const response1 = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/surveys/csat`, setRef:csatDataRef,  getAccessTokenSilently, setValue:setCsatData, auth})
-            const response2 = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/surveys/nps`, setRef:npsDataRef,setValue:setNpsData,  getAccessTokenSilently, auth})
+            const response1 = await fetchData({endpoint:`${auth.authData.organizationId}/settings/surveys/csat`, setRef:csatDataRef,  getAccessTokenSilently, setValue:setCsatData, auth})
+            const response2 = await fetchData({endpoint:`${auth.authData.organizationId}/settings/surveys/nps`, setRef:npsDataRef,setValue:setNpsData,  getAccessTokenSilently, auth})
         }
         fetchInitialData()
      }, [])
@@ -76,11 +75,11 @@ const Surveys = () => {
     const sendNewData = async() => {
         setWaitingSend(true)
         if (currentSection === 'csat') {
-            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/surveys/csat`, requestForm:csatData as SurveysConfigProps, setWaiting:setWaitingSend, method:'put',  getAccessTokenSilently,auth,  toastMessages:{works:t('CorrectSurvey'), failed:t('FailedSurvey')}})
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/settings/surveys/csat`, requestForm:csatData as SurveysConfigProps, setWaiting:setWaitingSend, method:'put',  getAccessTokenSilently,auth,  toastMessages:{works:t('CorrectSurvey'), failed:t('FailedSurvey')}})
             if (response?.status === 200) csatDataRef.current = csatData
         }
         else {
-            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/surveys/nps`, requestForm:npsData as SurveysConfigProps,method:'put', setWaiting:setWaitingSend,  getAccessTokenSilently,  auth, toastMessages:{works:t('CorrectSurvey'), failed:t('CorrectSurvey')}})
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/settings/surveys/nps`, requestForm:npsData as SurveysConfigProps,method:'put', setWaiting:setWaitingSend,  getAccessTokenSilently,  auth, toastMessages:{works:t('CorrectSurvey'), failed:t('CorrectSurvey')}})
             if (response?.status === 200) npsDataRef.current = npsData
         }
     }
@@ -93,71 +92,71 @@ const Surveys = () => {
         <SaveChanges data={currentSection === 'csat'?csatData:npsData} setData={currentSection === 'csat'?setCsatData:setNpsData} dataRef={currentSection === 'csat'?csatDataRef:npsDataRef} onSaveFunc={sendNewData}/>
 
  
-        <Box px='2vw' pt='2vh' > 
+        <Box p='2vw'> 
             <Text fontSize={'1.2em'} fontWeight={'medium'}>{t('Surveys')}</Text>
-            <Text color='gray.600' fontSize={'.8em'}>{t('SurveysDes')}</Text>
+            <Text color='text_gray' fontSize={'.8em'}>{t('SurveysDes')}</Text>
 
             <Box h='40px' > 
                 <SectionSelector notSection selectedSection={currentSection} sections={sectionsList} sectionsMap={sectionsMap}  onChange={() => setCurrentSection(prev => (prev === 'csat'?'nps':'csat'))}/>
-                <Box bg='gray.200' h='1px' w='100%'/>
+                <Box bg='border_color' h='1px' w='100%'/>
             </Box>
-         </Box>
-
-        <Flex flex='1' overflow={'scroll'}   position='relative'> 
  
-            <Flex flexDir={'column'}  px='2vw' py='3vh'  flex='4'  ref={scrollRef} overflow={'scroll'} > 
-                <Skeleton  isLoaded={(csatData !== null && npsData !== null)} >
-                    <EditStr placeholder={t('ScorePlaceholder')} value={dataToWork?.score_message || ''} setValue={(value) => handleEditKey('score_message', value)} description={t('ScoreMessageDes')} title={t('ScoreMessage')}/>
-                </Skeleton>
+
+            <Flex flex='1' mt='2vh' gap='2vw' overflow={'scroll'}   position='relative'> 
+    
+                <Flex flexDir={'column'}    flex='3'  ref={scrollRef} overflow={'scroll'} > 
+                    <Skeleton  isLoaded={(csatData !== null && npsData !== null)} >
+                        <EditStr placeholder={t('ScorePlaceholder')} value={dataToWork?.score_message || ''} setValue={(value) => handleEditKey('score_message', value)} description={t('ScoreMessageDes')} title={t('ScoreMessage')}/>
+                    </Skeleton>
+                        
+                    <Skeleton  isLoaded={(csatData !== null && npsData !== null)} style={{marginTop:'2vh'}}>
+                        <EditBool title={t('AskForComments')} description={t('AskForCommentsDes')} value={dataToWork?.ask_for_comments || false} setValue={(value:boolean) => handleEditKey('ask_for_comments', value)}/>
+                    </Skeleton>
+    
+                    {dataToWork?.ask_for_comments && <>
+
+                        <Skeleton  isLoaded={(csatData !== null && npsData !== null)} style={{marginTop:'2vh'}} >
+                            <EditStr placeholder={t('CommentsSpacePlaceholder')} value={dataToWork?.comment_message || ''} setValue={(value) => handleEditKey('comment_message', value)} description={t('CommentsDes')} title={t('Comments')}/>
+                        </Skeleton>
+
+                        <Skeleton  isLoaded={(csatData !== null && npsData !== null)} style={{marginTop:'2vh'}} >
+                            <EditStr placeholder={t('CommentsPlaceholderPlaceholder')} value={dataToWork?.comment_placeholder || ''} setValue={(value) => handleEditKey('comment_placeholder', value)} description={t('CommentsPlaceholderDes')} title={t('CommentsPlaceholder')}/>
+                        </Skeleton>
+                    </>}
+
+                    <Skeleton  isLoaded={(csatData !== null && npsData !== null)} style={{marginTop:'2vh'}} >
+                        <EditStr placeholder={t('ThanksMessagePlaceholder')} value={dataToWork?.thank_you_message || ''} setValue={(value) => handleEditKey('thank_you_message', value)} description={t('ThanksMessageDes')} title={t('ThanksMessage')}/>
+                    </Skeleton>
+
+                    <Skeleton  isLoaded={(csatData !== null && npsData !== null)} style={{marginTop:'2vh'}} >
+                        <EditColor isGradient containerRef={scrollRef} value={dataToWork?.background_color || ''} setValue={(value) => handleEditKey('background_color', value as any)} description={t('BackgroundColorSurveyDes')} title={t('BackgroundColorSurvey')}/>
+                    </Skeleton>
+
+                    <Skeleton  isLoaded={(csatData !== null && npsData !== null)} style={{marginTop:'2vh'}} >
+                        <EditColor containerRef={scrollRef} value={dataToWork?.text_color || ''} setValue={(value) => handleEditKey('text_color', value as any)} description={t('TextColorSurveyDes')} title={t('TextColorSurvey')}/>
+                    </Skeleton>
                     
-                <Skeleton  isLoaded={(csatData !== null && npsData !== null)} style={{marginTop:'2vh'}}>
-                    <EditBool title={t('AskForComments')} description={t('AskForCommentsDes')} value={dataToWork?.ask_for_comments || false} setValue={(value:boolean) => handleEditKey('ask_for_comments', value)}/>
-                </Skeleton>
- 
-                {dataToWork?.ask_for_comments && <>
-
                     <Skeleton  isLoaded={(csatData !== null && npsData !== null)} style={{marginTop:'2vh'}} >
-                        <EditStr placeholder={t('CommentsSpacePlaceholder')} value={dataToWork?.comment_message || ''} setValue={(value) => handleEditKey('comment_message', value)} description={t('CommentsDes')} title={t('Comments')}/>
+                        <EditColor isGradient containerRef={scrollRef} value={dataToWork?.buttons_background_color || ''} setValue={(value) => handleEditKey('buttons_background_color', value as any)} description={t('ButtonBackgroundColorDes')} title={t('ButtonBackgroundColor')}/>
                     </Skeleton>
 
+                    
                     <Skeleton  isLoaded={(csatData !== null && npsData !== null)} style={{marginTop:'2vh'}} >
-                        <EditStr placeholder={t('CommentsPlaceholderPlaceholder')} value={dataToWork?.comment_placeholder || ''} setValue={(value) => handleEditKey('comment_placeholder', value)} description={t('CommentsPlaceholderDes')} title={t('CommentsPlaceholder')}/>
+                        <EditColor containerRef={scrollRef} value={dataToWork?.buttons_text_color || ''} setValue={(value) => handleEditKey('buttons_text_color', value as any)} description={t('ButtonColorDes')} title={t('ButtonColor')}/>
                     </Skeleton>
-                </>}
-
-                <Skeleton  isLoaded={(csatData !== null && npsData !== null)} style={{marginTop:'2vh'}} >
-                    <EditStr placeholder={t('ThanksMessagePlaceholder')} value={dataToWork?.thank_you_message || ''} setValue={(value) => handleEditKey('thank_you_message', value)} description={t('ThanksMessageDes')} title={t('ThanksMessage')}/>
-                </Skeleton>
-
-                <Skeleton  isLoaded={(csatData !== null && npsData !== null)} style={{marginTop:'2vh'}} >
-                    <EditColor isGradient containerRef={scrollRef} value={dataToWork?.background_color || ''} setValue={(value) => handleEditKey('background_color', value as any)} description={t('BackgroundColorSurveyDes')} title={t('BackgroundColorSurvey')}/>
-                </Skeleton>
-
-                <Skeleton  isLoaded={(csatData !== null && npsData !== null)} style={{marginTop:'2vh'}} >
-                    <EditColor containerRef={scrollRef} value={dataToWork?.text_color || ''} setValue={(value) => handleEditKey('text_color', value as any)} description={t('TextColorSurveyDes')} title={t('TextColorSurvey')}/>
-                </Skeleton>
-                  
-                <Skeleton  isLoaded={(csatData !== null && npsData !== null)} style={{marginTop:'2vh'}} >
-                    <EditColor isGradient containerRef={scrollRef} value={dataToWork?.buttons_background_color || ''} setValue={(value) => handleEditKey('buttons_background_color', value as any)} description={t('ButtonBackgroundColorDes')} title={t('ButtonBackgroundColor')}/>
-                </Skeleton>
-
-                 
-                <Skeleton  isLoaded={(csatData !== null && npsData !== null)} style={{marginTop:'2vh'}} >
-                    <EditColor containerRef={scrollRef} value={dataToWork?.buttons_text_color || ''} setValue={(value) => handleEditKey('buttons_text_color', value as any)} description={t('ButtonColorDes')} title={t('ButtonColor')}/>
-                </Skeleton>
-            </Flex>
-            <Box px='2vw' flex='3' py='3vh'> 
-                <Flex overflow={'hidden'} h='100%'  flexDir={'column'} alignItems={'center'} justifyContent={'center'} borderRadius={'.7rem'}   bg='brand.gray_2' position={'relative'} > 
-                    <Flex w='100%' borderBottomWidth={'1px'} justifyContent={'space-between'} borderBottomColor={'gray.200'} p='1vw' alignItems={'center'} gap='32px'> 
-                        <Box w={'200px'}> 
-                            <CustomSelect variant='title' hide={false} options={['stars', 'comments', 'thanks']} selectedItem={viewType} setSelectedItem={(value) => setViewType(value)} iconsMap={{'stars':[t('stars'),FaStar], 'comments':[t('comments'),FaComment], 'thanks':[t('thanks'),FaCircleExclamation]}}/>
-                        </Box>
-                    </Flex>
-                    <Main surveyConfig={dataToWork as SurveysConfigProps} viewType={viewType}/>
                 </Flex>
-            </Box>
-        </Flex>
- 
+                <Box flex='4' > 
+                    <Flex overflow={'hidden'} h='100%'  flexDir={'column'} alignItems={'center'} justifyContent={'center'} borderRadius={'.7rem'}   bg='gray_2' position={'relative'} > 
+                        <Flex w='100%' borderBottomWidth={'1px'} justifyContent={'space-between'} borderBottomColor={'border_color'} p='1vw' alignItems={'center'} gap='32px'> 
+                            <Box w={'200px'}> 
+                                <CustomSelect  hide={false} options={['stars', 'comments', 'thanks']} selectedItem={viewType} setSelectedItem={(value) => setViewType(value as any)} iconsMap={{'stars':[t('stars'),<FaStar/>], 'comments':[t('comments'),<FaComment/>], 'thanks':[t('thanks'),<FaCircleExclamation/>]}}/>
+                            </Box>
+                        </Flex>
+                        <Main surveyConfig={dataToWork as SurveysConfigProps} viewType={viewType}/>
+                    </Flex>
+                </Box>
+            </Flex>
+        </Box>
        
         </>)
     }

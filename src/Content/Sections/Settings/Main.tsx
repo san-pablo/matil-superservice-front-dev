@@ -12,7 +12,7 @@ import { IoLogoWhatsapp } from "react-icons/io"
 import { IoChatboxEllipses, IoMail } from "react-icons/io5"
 import { RiInstagramFill } from "react-icons/ri"
 import { FaCloud, FaPhone, FaBookOpen, FaRobot } from "react-icons/fa6"
-import { SiGooglemybusiness } from "react-icons/si"
+import { FaGoogle } from "react-icons/fa6";
 
 //TYPING
 import { IconKey, SubSectionProps } from "../../Constants/typing"
@@ -43,13 +43,13 @@ function Main ({subSections, sectionsList, subSectionsMap}:MainProps) {
     const SectionBox = ({section, subSections}:SectionBoxProps) => {
 
         //CONSTANTS
-        const sectionsMap:SectionsListProps = {'organization':[t('Organization'),'blue.200' ], 'channels': [t('Channels'), 'purple.200'], 'tilda':[t('Tilda'), 'linear(to-tl, rgba(100, 202, 204), rgba(162, 151, 255))'], 'help-centers':[t('HelpCenters'), 'cyan.200'], 'users':[t('Users'), 'green.200'],  'workflows':[t('Workflows'), 'orange.200'],  'actions':[t('Actions'), 'yellow.200'],'integrations':[t('Integrations'), 'red.200'], 'main':[t('Main'), '#FF69B4']}
+        const sectionsMap:SectionsListProps = {'organization':[t('Organization'),'blue.200' ], 'channels': [t('Channels'), 'purple.200'], 'tilda':[t('Tilda'), 'linear(to-tl, rgba(100, 202, 204), rgba(162, 151, 255))'], 'help-centers':[t('HelpCenters'), 'cyan.200'], 'user':[t('Personal'), 'green.200'],  'workflows':[t('Workflows'), 'orange.200'],  'actions':[t('Actions'), 'yellow.200'],'integrations':[t('Integrations'), 'red.200'], 'main':[t('Main'), '#FF69B4']}
         const navigate = useNavigate()
         const channelsDict = {
             'webchat':IoChatboxEllipses,
             'whatsapp':IoLogoWhatsapp,
             'instagram':RiInstagramFill,
-            'google-business':SiGooglemybusiness,
+            'google-business':FaGoogle,
             'email':IoMail,
             'phone': FaPhone,
             'voip': FaCloud,
@@ -70,7 +70,7 @@ function Main ({subSections, sectionsList, subSectionsMap}:MainProps) {
                             </Flex>
                             <Box> 
                                 <Text fontWeight={'medium'}  >{((section === 'help-centers' || section === 'channels' || section === 'tilda' ) && index !== 0) ?  sec.name :sec[0]}</Text>
-                                <Text color='gray.600' fontSize={'.8em'} >{((section === 'help-centers' && index !== 0)) ? t('HelpCenterEdit') : ((section === 'channels' && index !== 0)) ?  t('NewChannel'):((section === 'tilda' && index !== 0))?t('ConfigEdit') : subSectionsMap[sec[1]][0]}</Text>
+                                <Text color='text_gray' fontSize={'.8em'} >{((section === 'help-centers' && index !== 0)) ? t('HelpCenterEdit') : ((section === 'channels' && index !== 0)) ?  t('NewChannel'):((section === 'tilda' && index !== 0))?t('ConfigEdit') : subSectionsMap[sec[1]][0]}</Text>
                             </Box>
                         </Flex>)
                     })}

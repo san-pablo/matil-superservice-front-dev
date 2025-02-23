@@ -3,10 +3,10 @@
 */
 
 const timeStampToDate = (timestampString: string, t: (key: string, options?: any) => string) => { 
+ 
     const dateObj = new Date(timestampString)
     
-    const offset = dateObj.getTimezoneOffset() * 60000
-    const localDateObj = new Date(dateObj.getTime() + offset + (3600000 * 4))
+     const localDateObj = new Date(dateObj.getTime())
     
     const day = localDateObj.getDate()
     const month = t(`months.${localDateObj.getMonth()}`)

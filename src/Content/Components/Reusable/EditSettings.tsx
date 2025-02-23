@@ -19,7 +19,7 @@ export const EditStr = ({ title, value, setValue, description, placeholder, isTe
     return (<> 
         <Flex  gap='5px'> 
             <Text fontWeight={'medium'} fontSize={'.9em'}>{title}</Text>
-            {description && <Tooltip isOpen={hoverDescription} label={description} mt='-4px' placement='right' hasArrow bg='brand.black_button'  borderRadius='.4rem'  fontSize='.7em' color='white' p='6px' >
+            {description && <Tooltip isOpen={hoverDescription} label={description} mt='-4px' placement='right' hasArrow bg='black_button'  borderRadius='.4rem'  fontSize='.7em' color='white' p='6px' >
                 <Box onMouseEnter={() => setHoverDescription(true)} onMouseLeave={() => setHoverDescription(false)}> 
                     <Icon as={FaQuestionCircle} mt='3px' color='#222'  />
                 </Box>
@@ -40,7 +40,7 @@ export const EditBool = ({value, setValue, title, description}:{value:boolean, s
             <Switch isChecked={value}  onChange={(e) => setValue(e.target.checked)} />
             <Flex mt='3px'  gap='5px'> 
                 <Text fontWeight={'medium'} fontSize={'.9em'}>{title}</Text>
-                {description && <Tooltip isOpen={hoverDescription} label={description} mt='-4px' placement='right' hasArrow bg='brand.black_button'  borderRadius='.4rem' fontSize='.7em' color='white' p='6px' >
+                {description && <Tooltip isOpen={hoverDescription} label={description} mt='-4px' placement='right' hasArrow bg='black_button'  borderRadius='.4rem' fontSize='.7em' color='white' p='6px' >
                     <Box onMouseEnter={() => setHoverDescription(true)} onMouseLeave={() => setHoverDescription(false)}> 
                         <Icon as={FaQuestionCircle} mt='3px' color='#222'  />
                     </Box>
@@ -57,7 +57,7 @@ export const EditColor = ({title, value, setValue,description, isGradient = fals
     return(<>
         <Flex  gap='5px'> 
             <Text fontWeight={'medium'} fontSize={'.9em'}>{title}</Text>
-            {description &&<Tooltip isOpen={hoverDescription} label={description} mt='-4px' placement='right' hasArrow bg='brand.black_button'  borderRadius='.4rem' fontSize='.7em' color='white' p='6px' >
+            {description &&<Tooltip isOpen={hoverDescription} label={description} mt='-4px' placement='right' hasArrow bg='black_button'  borderRadius='.4rem' fontSize='.7em' color='white' p='6px' >
                 <Box onMouseEnter={() => setHoverDescription(true)} onMouseLeave={() => setHoverDescription(false)}> 
                     <Icon as={FaQuestionCircle} mt='3px' color='#222'  />
                 </Box>
@@ -87,7 +87,7 @@ export const EditImage = ({title, value, setValue, description, maxImageSize = 2
     return(<>
         <Flex  gap='5px'> 
             <Text fontWeight={'medium'}fontSize={'.9em'}>{title}</Text>
-            {description && <Tooltip isOpen={hoverDescription} label={description} mt='-4px' placement='right' hasArrow bg='brand.black_button'  borderRadius='.4rem' fontSize='.7em' color='white' p='6px' >
+            {description && <Tooltip isOpen={hoverDescription} label={description} mt='-4px' placement='right' hasArrow bg='black_button'  borderRadius='.4rem' fontSize='.7em' color='white' p='6px' >
                 <Box onMouseEnter={() => setHoverDescription(true)} onMouseLeave={() => setHoverDescription(false)}> 
                     <Icon as={FaQuestionCircle} mt='3px' color='#222'  />
                 </Box>
@@ -104,9 +104,9 @@ export const EditInt = ({title,value, setValue, description, max, min, unit = 'p
     const [hoverDescription, setHoverDescription] = useState<boolean>(false)
 
     return(<>
-        <Flex  gap='5px'> 
+        <Flex gap='5px'> 
             <Text fontWeight={'medium'} fontSize={'.9em'}>{title}</Text>
-            {description && <Tooltip isOpen={hoverDescription} label={description} mt='-4px' placement='right' hasArrow bg='brand.black_button'  borderRadius='.4rem' fontSize='.7em' color='white' p='6px' >
+            {description && <Tooltip isOpen={hoverDescription} label={description} mt='-4px' placement='right' hasArrow bg='black_button'  borderRadius='.4rem' fontSize='.7em' color='white' p='6px' >
                 <Box onMouseEnter={() => setHoverDescription(true)} onMouseLeave={() => setHoverDescription(false)}> 
                     <Icon as={FaQuestionCircle} mt='3px' color='#222'  />
                 </Box>
@@ -114,13 +114,13 @@ export const EditInt = ({title,value, setValue, description, max, min, unit = 'p
         </Flex>
         <Flex alignItems={'center'} fontWeight={'medium'} gap='10px'> 
             <NumberInput width={'200px'} size='sm' mt='.5vh'  value={String(value)} onChange={(val) => setValue(val)}  min={min} max={max}>
-                <NumberInputField  fontSize={'.9em'} borderRadius='.5rem'   borderColor={'gray.300'} _hover={{ border: '1px solid #CBD5E0' }} _focus={{ borderColor: 'rgb(77, 144, 254)', borderWidth: '2px', px:'6px' }} px='7px' />
+                <NumberInputField  fontSize={'.9em'} borderRadius='.5rem'   borderColor={'border_color'} _hover={{ border: '1px solid #CBD5E0' }} _focus={{ borderColor: 'rgb(77, 144, 254)', borderWidth: '2px', px:'6px' }} px='7px' />
                     <NumberInputStepper>
                     <NumberIncrementStepper />
                     <NumberDecrementStepper />
                 </NumberInputStepper>
             </NumberInput>
-            <Text color='gray.600' >{unit}</Text>
+            <Text color='text_gray' >{unit}</Text>
         </Flex>
     </>)
 }

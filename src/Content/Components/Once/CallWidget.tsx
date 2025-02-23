@@ -47,7 +47,7 @@ const CallBox = memo(({inCall, setInCall, setEntryCall, handleMouseDown}:{inCall
 
  
     return (
-        <Box  position={'relative'}  textAlign={'center'} overflow={'hidden'} minW='300px' boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white'  borderRadius={'.7rem'} borderWidth={'1px'} borderColor={'gray.300'}>            
+        <Box  position={'relative'}  textAlign={'center'} overflow={'hidden'} minW='300px' boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white'  borderRadius={'.7rem'} borderWidth={'1px'} borderColor={'border_color'}>            
             <Box userSelect={'none'} cursor={'move'}  paddingTop='20px' onMouseDown={handleMouseDown} >
 
                 {inCall ? 
@@ -61,22 +61,22 @@ const CallBox = memo(({inCall, setInCall, setEntryCall, handleMouseDown}:{inCall
                 <Text fontSize={'.9em'} >Responder en: <Countdown time={30} onEnd={() => setEntryCall(false)}/></Text>
                 }
                 <Text mt='1vh' fontSize={'1.2em'} fontWeight={'medium'}>{clientName?clientName:'Nuevo cliente'}</Text>
-                <Text color='gray.600' fontSize={'.75em'} fontWeight={'medium'} >{clientPhone}</Text>
+                <Text color='text_gray' fontSize={'.75em'} fontWeight={'medium'} >{clientPhone}</Text>
             </Box>
 
 
             <Box   p='2vh 20px 20px 20px' > 
                 {inCall ? 
                 <Flex gap='10px'  justifyContent={'space-between'}>
-                    <IconButton flex='1' size='sm' aria-label="mute" onClick={(e) => {e.stopPropagation(); setIsMuted(!isMuted)}} color={isMuted?'white':'black'} bg={isMuted?'brand.gradient_blue':'gray.100'} _hover={{bg:isMuted?'brand.gradient_blue_hover':'gray.200'}} icon={isMuted?<FaMicrophoneSlash/>:<FaMicrophone/>}/>
-                    <IconButton flex='1' size='sm' aria-label="pause" color={isPaused?'white':'black'} bg={isPaused?'brand.gradient_blue':'gray.100'} _hover={{bg:isPaused?'brand.gradient_blue_hover':'gray.200'}} onClick={() => setIsPaused(!isPaused)} icon={<MdPhonePaused/>}/>
+                    <IconButton flex='1' size='sm' aria-label="mute" onClick={(e) => {e.stopPropagation(); setIsMuted(!isMuted)}} color={isMuted?'white':'black'} bg={isMuted?'gradient_blue':'gray.100'} _hover={{bg:isMuted?'gradient_blue_hover':'border_color'}} icon={isMuted?<FaMicrophoneSlash/>:<FaMicrophone/>}/>
+                    <IconButton flex='1' size='sm' aria-label="pause" color={isPaused?'white':'black'} bg={isPaused?'gradient_blue':'gray.100'} _hover={{bg:isPaused?'gradient_blue_hover':'border_color'}} onClick={() => setIsPaused(!isPaused)} icon={<MdPhonePaused/>}/>
                     <IconButton flex='1' size='sm' aria-label="redirect" onClick={() => {}} icon={<MdPhoneForwarded/>}/>
                     <IconButton flex='1' size='sm' bg='red.600'  _hover={{bg:'red.700'}} color='white'aria-label="hang-up" onClick={(e) => {e.stopPropagation();setEntryCall(false)}} icon={<MdPhone/>}/>
                 </Flex>
                 :
                 <Flex gap='10px'>
                     <Button flex='1' size='sm' bg='red.600' leftIcon={<ImPhoneHangUp/>} _hover={{bg:'red.700'}} color='white' onClick={(e) => {e.stopPropagation();setEntryCall(false)}}>Rechazar</Button>
-                    <Button flex='1' size='sm' color='white' leftIcon={<ImPhone/>}  bg='brand.gradient_blue' onClick={(e) => {setInCall(true)}} _hover={{bg:'brand.gradient_blue_hover'}}>Aceptar</Button>
+                    <Button flex='1' size='sm' color='white' leftIcon={<ImPhone/>}  bg='gradient_blue' onClick={(e) => {setInCall(true)}} _hover={{bg:'gradient_blue_hover'}}>Aceptar</Button>
                 </Flex>}
             </Box>
         </Box>

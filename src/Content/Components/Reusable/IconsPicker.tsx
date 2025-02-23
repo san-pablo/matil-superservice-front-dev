@@ -1,276 +1,260 @@
-
 //REACT
-import { useState, useRef } from "react"
+import { useState, useRef, CSSProperties, useEffect, Fragment } from "react"
 import { useTranslation } from "react-i18next"
 //FRONT
-import { Box, Text, Icon, Flex, Grid, Portal, chakra, shouldForwardProp } from "@chakra-ui/react"
-import { motion, isValidMotionProp } from 'framer-motion'
+import { Box, Flex, Portal, chakra, shouldForwardProp, Text } from "@chakra-ui/react"
+import { FixedSizeGrid as Grid } from "react-window"
+import { motion, AnimatePresence, isValidMotionProp  } from 'framer-motion'
+//COMPONENTS
+import SectionSelector from "./SectionSelector"
 //COMPONENTS
 import EditText from "./EditText"
+import RenderIcon from "./RenderIcon"
+import '../styles.css'
 //FUNCTIONS
 import useOutsideClick from "../../Functions/clickOutside"
-//ICONS
-import { IconType } from "react-icons"
-import { 
-    FaArrowRight, FaArrowLeft, FaArrowUp, FaArrowDown,  FaLongArrowAltRight, FaLongArrowAltLeft, FaLongArrowAltUp, FaLongArrowAltDown, FaCaretRight, FaCaretLeft, FaCaretUp,
-    FaArrowCircleRight, FaArrowCircleLeft, FaArrowCircleUp, FaArrowCircleDown, FaCaretDown, FaChevronLeft, FaChevronRight,FaChevronDown,FaChevronUp,
-    FaChartLine, FaMoneyBill, FaBriefcase, FaCreditCard, FaPiggyBank,FaFileContract, FaBriefcaseMedical,FaClipboardList,FaUserTie,FaHandHoldingUsd,FaMoneyCheck,FaStore,
-    FaBusinessTime, FaDollarSign, FaFileInvoice, FaComments, FaVideo, FaVolumeUp,  FaVolumeMute, FaVolumeDown, FaHeadset,
-    FaChartBar, FaChartPie, FaChartArea, FaPoll,  FaListUl, FaListOl, FaStrikethrough, FaTextHeight, FaFile, FaTextWidth,
-    FaPhone, FaEnvelope, FaFax, FaCommentDots, FaPaperPlane, FaMobileAlt, FaFilePowerpoint, FaFileImage, FaFileVideo, FaFileAudio, FaFileCode, FaFileCsv, FaFileDownload,
-    FaPen, FaAlignLeft, FaAlignRight, FaBold, FaItalic, FaQuoteLeft, FaClipboard, FaMouse,
-    FaFileAlt, FaFolder, FaFileArchive, FaFilePdf, FaFileWord, FaFileExcel, FaWind, FaCloudRain, FaDog, FaCat, FaSnowflake,
-    FaTree, FaLeaf, FaSun, FaCloud, FaMountain, FaWater, FaSeedling, FaGamepad, FaKeyboard, FaPrint, FaSatelliteDish, 
-    FaDesktop, FaLaptop, FaTabletAlt, FaHeadphones, FaCamera, FaTv, FaFrown, FaGrin, FaFemale,FaMale, FaUserNinja, FaUserShield,
-    FaUser, FaSmile, FaHandPaper, FaUserFriends, FaUsers, FaChild, FaEye, FaTrash, FaGlobe, FaQuestionCircle,
-    FaTools, FaCogs, FaHeart, FaStar, FaExclamationTriangle, FaLightbulb, FaUnlock, FaShieldAlt, FaCode
-} from 'react-icons/fa'
-import { IoSettingsSharp } from "react-icons/io5"
+import determineBoxStyle from "../../Functions/determineBoxStyle"
+//ICONS AND EMOJIS
+import data from "@emoji-mart/data"
+import { init } from "emoji-mart"
+init({ data })
+import allIcons from './icons.json'
+const categories:any[] = (data as any)?.categories.filter((ca:any) => ca.id !== 'frequent')
+const allEmojis = Object.values((data as any)?.emojis).map(({ id, name, search, skins }:any) => ({id, name, search, emoji: skins[0].native}))
+const emojisByCategory = categories.reduce((acc: any, category: any) => {
+    acc[category.id] = category.emojis.map((emojiId: string) => {return allEmojis.find(emoji => emoji.id === emojiId) || null}).filter(Boolean) 
+    return acc
+}, {})
+//TYPING
 
-
-//ICONS MAP
-const iconsMap = {FaArrowRight, FaArrowLeft, FaArrowUp, FaArrowDown,  FaLongArrowAltRight, FaLongArrowAltLeft, FaLongArrowAltUp, FaLongArrowAltDown, FaCaretRight, FaCaretLeft, FaCaretUp,
-    FaArrowCircleRight, FaArrowCircleLeft, FaArrowCircleUp, FaArrowCircleDown, FaCaretDown, FaChevronLeft, FaChevronRight,FaChevronDown,FaChevronUp,
-    FaChartLine, FaMoneyBill, FaBriefcase, FaCreditCard, FaPiggyBank,FaFileContract, FaBriefcaseMedical,FaClipboardList,FaUserTie,FaHandHoldingUsd,FaMoneyCheck,FaStore,
-    FaBusinessTime, FaDollarSign, FaFileInvoice, FaComments, FaVideo, FaVolumeUp,  FaVolumeMute, FaVolumeDown, FaHeadset,
-    FaChartBar, FaChartPie, FaChartArea, FaPoll,  FaListUl, FaListOl, FaStrikethrough, FaTextHeight, FaFile, FaTextWidth,
-    FaPhone, FaEnvelope, FaFax, FaCommentDots, FaPaperPlane, FaMobileAlt, FaFilePowerpoint, FaFileImage, FaFileVideo, FaFileAudio, FaFileCode, FaFileCsv, FaFileDownload,
-    FaPen, FaAlignLeft, FaAlignRight, FaBold, FaItalic, FaQuoteLeft, FaClipboard, FaMouse,
-    FaFileAlt, FaFolder, FaFileArchive, FaFilePdf, FaFileWord, FaFileExcel, FaWind, FaCloudRain, FaDog, FaCat, FaSnowflake,
-    FaTree, FaLeaf, FaSun, FaCloud, FaMountain, FaWater, FaSeedling, FaGamepad, FaKeyboard, FaPrint, FaSatelliteDish, 
-    FaDesktop, FaLaptop, FaTabletAlt, FaHeadphones, FaCamera, FaTv, FaFrown, FaGrin, FaFemale,FaMale, FaUserNinja, FaUserShield,
-    FaUser, FaSmile, FaHandPaper, FaUserFriends, FaUsers, FaChild, FaEye, FaTrash, FaGlobe, FaQuestionCircle,
-    FaTools, FaCogs, FaHeart, FaStar, FaExclamationTriangle, FaLightbulb, FaUnlock, FaShieldAlt, FaCode, IoSettingsSharp}
-
+ 
 //MOTION BOX
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)})
+
+
+const IconsPicker = ({selectedEmoji, excludedSections, onSelectEmoji, size = 'md', viewSelect = false, standardView}:{selectedEmoji:any, excludedSections?:('emoji' | 'icon' | 'upload')[], onSelectEmoji:(elment:any) => void, size?:string, viewSelect?:boolean, standardView?:string}) => {
+
+    //REFS
+    const buttonRef = useRef<HTMLDivElement>(null)
+    const boxRef = useRef<HTMLDivElement>(null)
+
+    //BOOLEAN TO CONTROL THE VISIBILITY OF THE LIST AND CLOSE ON OUTSIDE CLICK
+    const [showList, setShowList] = useState<boolean>(false)
+    useOutsideClick({ref1:buttonRef, ref2:boxRef, onOutsideClick:setShowList,})
+
+    const [boxStyle, setBoxStyle] = useState<CSSProperties>({})
+    determineBoxStyle({buttonRef, setBoxStyle, alwaysTop:true, changeVariable:showList})
+
+    return (
+        <Box >
+
+            <Flex ref={buttonRef}cursor={standardView ? 'auto':'pointer'} onClick={() => {if (!standardView) setShowList(prev => !prev)}}  justifyContent={'center'} alignItems={'center'}  transition={'background-color .2s ease-in-out'} _hover={{bg:(viewSelect && !standardView) ? 'gray_2':''}} w={viewSelect? '36px': size === 'sm' ?'24px' :'28px' }h={viewSelect? '36px':size === 'sm' ?'24px' :'28px'} borderRadius={'.5rem'} borderColor={viewSelect ? 'transparent':'border_color'} borderWidth={viewSelect ? '0px':'1px'}>
+                <RenderIcon standardView={standardView} icon={selectedEmoji} size={viewSelect ? 25 :18}  />
+            </Flex>
+            <AnimatePresence> 
+                {(showList) && 
+                    <Portal>
+                        <MotionBox onClick={(e) => e.stopPropagation()} id='custom-portal'  mt='37px' initial={{ opacity: 0, scale:0.95 }} animate={{ opacity: 1,scale:1 }}  exit={{ opacity: 0, scale:0.95 }} transition={{ duration: '.2', ease: 'easeOut'}}
+                        style={{ transformOrigin: (boxStyle.top ? 'top ':'bottom ') + 'left' }} top={boxStyle.top}  right={boxStyle.right} left={boxStyle.left} minW={'250px'} maxH='60vh' overflow={'scroll'} gap='10px' ref={boxRef} boxShadow={'rgba(20, 20, 20, 0.2) 0px 16px 32px 0px'}bg='white' zIndex={100000}   position={'fixed'} borderRadius={'.5rem'} borderWidth={'1px'} borderColor={'border_color'}>
+                           <IconSelector selectedEmoji={selectedEmoji} excludedSections={excludedSections} onSelectEmoji={(emoji) => {onSelectEmoji(emoji);setShowList(false)}}/>
+                        </MotionBox>
+                    </Portal>
+                }
+            </AnimatePresence>
+        </Box>
+    )
+}
  
-//MAIN FUNCTION
-const IconsPicker = ({selectedIcon, setSelectedIcon, scrollRef, disabled = false}:{selectedIcon:string, setSelectedIcon:(value:string) => void, scrollRef?:any, disabled?:boolean}) => {
+export default IconsPicker
 
-    //CONSTANTS
-    const { t } = useTranslation('settings')
-
-    //ICONS CATEGORIES DEFINITIONS
-    const iconCategories: { [key: string]: { name: string, icon: IconType, description: string }[] } = {
-        'ArrowIcons': [
-            { name: 'FaArrowRight', icon: FaArrowRight, description: t('FaArrowRight') },
-            { name: 'FaArrowLeft', icon: FaArrowLeft, description: t('FaArrowLeft') },
-            { name: 'FaArrowUp', icon: FaArrowUp, description: t('FaArrowUp') },
-            { name: 'FaArrowDown', icon: FaArrowDown, description: t('FaArrowDown') },
-            { name: 'FaArrowCircleRight', icon: FaArrowCircleRight, description: t('FaArrowCircleRight') },
-            { name: 'FaArrowCircleLeft', icon: FaArrowCircleLeft, description: t('FaArrowCircleLeft') },
-            { name: 'FaArrowCircleUp', icon: FaArrowCircleUp, description: t('FaArrowCircleUp') },
-            { name: 'FaArrowCircleDown', icon: FaArrowCircleDown, description: t('FaArrowCircleDown') },
-            { name: 'FaLongArrowAltRight', icon: FaLongArrowAltRight, description: t('FaLongArrowAltRight') },
-            { name: 'FaLongArrowAltLeft', icon: FaLongArrowAltLeft, description: t('FaLongArrowAltLeft') },
-            { name: 'FaLongArrowAltUp', icon: FaLongArrowAltUp, description: t('FaLongArrowAltUp') },
-            { name: 'FaLongArrowAltDown', icon: FaLongArrowAltDown, description: t('FaLongArrowAltDown') },
-            { name: 'FaCaretRight', icon: FaCaretRight, description: t('FaCaretRight') },
-            { name: 'FaCaretLeft', icon: FaCaretLeft, description: t('FaCaretLeft') },
-            { name: 'FaCaretUp', icon: FaCaretUp, description: t('FaCaretUp') },
-            { name: 'FaCaretDown', icon: FaCaretDown, description: t('FaCaretDown') },
-            { name: 'FaChevronRight', icon: FaChevronRight, description: t('FaChevronRight') },
-            { name: 'FaChevronLeft', icon: FaChevronLeft, description: t('FaChevronLeft') },
-            { name: 'FaChevronUp', icon: FaChevronUp, description: t('FaChevronUp') },
-            { name: 'FaChevronDown', icon: FaChevronDown, description: t('FaChevronDown') }
-        ],
-        'BusinessIcons': [
-            { name: 'FaChartLine', icon: FaChartLine, description: t('FaChartLine') },
-            { name: 'FaMoneyBill', icon: FaMoneyBill, description: t('FaMoneyBill') },
-            { name: 'FaBriefcase', icon: FaBriefcase, description: t('FaBriefcase') },
-            { name: 'FaCreditCard', icon: FaCreditCard, description: t('FaCreditCard') },
-            { name: 'FaPiggyBank', icon: FaPiggyBank, description: t('FaPiggyBank') },
-            { name: 'FaBusinessTime', icon: FaBusinessTime, description: t('FaBusinessTime') },
-            { name: 'FaDollarSign', icon: FaDollarSign, description: t('FaDollarSign') },
-            { name: 'FaFileInvoice', icon: FaFileInvoice, description: t('FaFileInvoice') },
-            { name: 'FaFileContract', icon: FaFileContract, description: t('FaFileContract') },
-            { name: 'FaBriefcaseMedical', icon: FaBriefcaseMedical, description: t('FaBriefcaseMedical') },
-            { name: 'FaChartPie', icon: FaChartPie, description: t('FaChartPie') },
-            { name: 'FaChartBar', icon: FaChartBar, description: t('FaChartBar') },
-            { name: 'FaClipboardList', icon: FaClipboardList, description: t('FaClipboardList') },
-            { name: 'FaLaptop', icon: FaLaptop, description: t('FaLaptop') },
-            { name: 'FaUserTie', icon: FaUserTie, description: t('FaUserTie') },
-            { name: 'FaHandHoldingUsd', icon: FaHandHoldingUsd, description: t('FaHandHoldingUsd') },
-            { name: 'FaMoneyCheck', icon: FaMoneyCheck, description: t('FaMoneyCheck') },
-            { name: 'FaStore', icon: FaStore, description: t('FaStore') }
-        ],
-        'ChartIcons': [
-            { name: 'FaChartBar', icon: FaChartBar, description: t('FaChartBar') },
-            { name: 'FaChartPie', icon: FaChartPie, description: t('FaChartPie') },
-            { name: 'FaChartArea', icon: FaChartArea, description: t('FaChartArea') },
-            { name: 'FaChartLine', icon: FaChartLine, description: t('FaChartLine') },
-            { name: 'FaPoll', icon: FaPoll, description: t('FaPoll') },
-        ],
-        'CommunicationIcons': [
-            { name: 'FaPhone', icon: FaPhone, description: t('FaPhone') },
-            { name: 'FaEnvelope', icon: FaEnvelope, description: t('FaEnvelope') },
-            { name: 'FaFax', icon: FaFax, description: t('FaFax') },
-            { name: 'FaCommentDots', icon: FaCommentDots, description: t('FaCommentDots') },
-            { name: 'FaPaperPlane', icon: FaPaperPlane, description: t('FaPaperPlane') },
-            { name: 'FaMobileAlt', icon: FaMobileAlt, description: t('FaMobileAlt') },
-            { name: 'FaComments', icon: FaComments, description: t('FaComments') },
-            { name: 'FaVideo', icon: FaVideo, description: t('FaVideo') },
-            { name: 'FaVolumeUp', icon: FaVolumeUp, description: t('FaVolumeUp') },
-            { name: 'FaVolumeMute', icon: FaVolumeMute, description: t('FaVolumeMute') },
-            { name: 'FaVolumeMute', icon: FaVolumeDown, description: t('FaVolumeDown') },
-            { name: 'FaHeadset', icon: FaHeadset, description: t('FaHeadset') },
-        ],  
-        'ContentIcons': [
-            { name: 'FaPen', icon: FaPen, description: t('FaPen') },
-            { name: 'FaAlignLeft', icon: FaAlignLeft, description: t('FaAlignLeft') },
-            { name: 'FaAlignRight', icon: FaAlignRight, description: t('FaAlignRight') },
-            { name: 'FaBold', icon: FaBold, description: t('FaBold') },
-            { name: 'FaItalic', icon: FaItalic, description: t('FaItalic') },
-            { name: 'FaQuoteLeft', icon: FaQuoteLeft, description: t('FaQuoteLeft') },
-            { name: 'FaClipboard', icon: FaClipboard, description: t('FaClipboard') },
-            { name: 'FaListUl', icon: FaListUl, description: t('FaListUl') },
-            { name: 'FaListOl', icon: FaListOl, description: t('FaListOl') },
-            { name: 'FaStrikethrough', icon: FaStrikethrough, description: t('FaStrikethrough') },
-            { name: 'FaTextHeight', icon: FaTextHeight, description: t('FaTextHeight') },
-            { name: 'FaTextWidth', icon: FaTextWidth, description: t('FaTextWidth') },
-            { name: 'FaFile', icon: FaFile, description: t('FaFile') }
-        ],      
-        'FolderIcons': [
-            { name: 'FaFileAlt', icon: FaFileAlt, description: t('FaFileAlt') },
-            { name: 'FaFolder', icon: FaFolder, description: t('FaFolder') },
-            { name: 'FaFileArchive', icon: FaFileArchive, description: t('FaFileArchive') },
-            { name: 'FaFilePdf', icon: FaFilePdf, description: t('FaFilePdf') },
-            { name: 'FaFileWord', icon: FaFileWord, description: t('FaFileWord') },
-            { name: 'FaFileExcel', icon: FaFileExcel, description: t('FaFileExcel') },
-            { name: 'FaFilePowerpoint', icon: FaFilePowerpoint, description: t('FaFilePowerpoint') },
-            { name: 'FaFileImage', icon: FaFileImage, description: t('FaFileImage') },
-            { name: 'FaFileVideo', icon: FaFileVideo, description: t('FaFileVideo') },
-            { name: 'FaFileAudio', icon: FaFileAudio, description: t('FaFileAudio') },
-            { name: 'FaFileCode', icon: FaFileCode, description: t('FaFileCode') },
-            { name: 'FaFileCsv', icon: FaFileCsv, description: t('FaFileCsv') },
-            { name: 'FaFileDownload', icon: FaFileCsv, description: t('FaFileDownload') }
-        ],
-        'NatureIcons': [
-            { name: 'FaTree', icon: FaTree, description: t('FaTree') },
-            { name: 'FaLeaf', icon: FaLeaf, description: t('FaLeaf') },
-            { name: 'FaSun', icon: FaSun, description: t('FaSun') },
-            { name: 'FaCloud', icon: FaCloud, description: t('FaCloud') },
-            { name: 'FaMountain', icon: FaMountain, description: t('FaMountain') },
-            { name: 'FaWater', icon: FaWater, description: t('FaWater') },
-            { name: 'FaSeedling', icon: FaSeedling, description: t('FaSeedling') },
-             { name: 'FaWind', icon: FaWind, description: t('FaWind') },
-            { name: 'FaRain', icon: FaCloudRain, description: t('FaCloudRain') },
-            { name: 'FaSnowflake', icon: FaSnowflake, description: t('FaSnowflake') },
-            { name: 'FaMountain', icon: FaMountain, description: t('FaMountain') },
-            { name: 'FaDog', icon: FaDog, description: t('FaDog') },
-            { name: 'FaTreeHouse', icon: FaCat, description: t('FaCat') }
-        ],
-        'DevicesIcons': [
-            { name: 'FaMobileAlt', icon: FaMobileAlt, description: t('FaMobileAlt') },
-            { name: 'FaTabletAlt', icon: FaTabletAlt, description: t('FaTabletAlt') },
-            { name: 'FaLaptop', icon: FaLaptop, description: t('FaLaptop') },
-            { name: 'FaDesktop', icon: FaDesktop, description: t('FaDesktop') },
-            { name: 'FaHeadphones', icon: FaHeadphones, description: t('FaHeadphones') },
-            { name: 'FaCamera', icon: FaCamera, description: t('FaCamera') },
-            { name: 'FaTv', icon: FaTv, description: t('FaTv') },
-            { name: 'FaGamepad', icon: FaGamepad, description: t('FaGamepad') },
-            { name: 'FaKeyboard', icon: FaKeyboard, description: t('FaKeyboard') },
-            { name: 'FaMouse', icon: FaMouse, description: t('FaMouse') },
-            { name: 'FaPrinter', icon: FaPrint, description: t('FaPrinter') },
-            { name: 'FaSatelliteDish', icon: FaSatelliteDish, description: t('FaSatelliteDish') },
-        ],
-        'PeopleIcons': [
-            { name: 'FaUser', icon: FaUser, description: t('FaUser') },
-            { name: 'FaSmile', icon: FaSmile, description: t('FaSmile') },
-            { name: 'FaHandPaper', icon: FaHandPaper, description: t('FaHandPaper') },
-            { name: 'FaCommentDots', icon: FaCommentDots, description: t('FaComments') },
-            { name: 'FaUserFriends', icon: FaUserFriends, description: t('FaUserFriends') },
-            { name: 'FaUsers', icon: FaUsers, description: t('FaUsers') },
-            { name: 'FaChild', icon: FaChild, description: t('FaChild') },
-            { name: 'FaFrown', icon: FaFrown, description: t('FaFrown') },
-            { name: 'FaGrin', icon: FaGrin, description: t('FaGrin') },
-            { name: 'FaFemale', icon: FaFemale, description: t('FaFemale') },
-            { name: 'FaMale', icon: FaMale, description: t('FaMale') },
-            { name: 'FaUserNinja', icon: FaUserNinja, description: t('FaUserNinja') },
-            { name: 'FaUserShield', icon: FaUserShield, description: t('FaUserShield') },
-        ],
-        'Otros': [
-            { name: 'FaTools', icon: FaTools, description: t('FaTools') },
-            { name: 'FaCogs', icon: FaCogs, description: t('FaCogs') },
-            { name: 'FaHeart', icon: FaHeart, description: t('FaHeart') },
-            { name: 'FaStar', icon: FaStar, description: t('FaStar') },
-            { name: 'FaExclamationTriangle', icon: FaExclamationTriangle, description: t('FaExclamationTriangle') },
-            { name: 'FaLightbulb', icon: FaLightbulb, description: t('FaLightbulb') },
-            { name: 'FaUnlock', icon: FaUnlock, description: t('FaUnlock') },
-            { name: 'FaShieldAlt', icon: FaShieldAlt, description: t('FaShieldAlt') },
-            { name: 'FaEye', icon: FaEye, description: t('FaEye') },
-            { name: 'FaTrash', icon: FaTrash, description: t('FaTrash') },
-            { name: 'FaGlobe', icon: FaGlobe, description: t('FaGlobe') },
-            { name: 'FaQuestionCircle', icon: FaQuestionCircle, description: t('FaQuestionCircle') },
-            { name: 'FaCode', icon: FaCode, description: t('FaCode') },
-
-        ],
-        
-    }
+  //ICON SELECTOR COMPONENT
+const IconSelector = ({selectedEmoji, excludedSections, onSelectEmoji}:{selectedEmoji:any, excludedSections?:('emoji' | 'icon' | 'upload')[], onSelectEmoji:(elment:any) => void }) => {
  
-    const [searchTerm, setSearchTerm] = useState('')
-    const filteredIcons: [string, {name:string, icon:IconType, description:string}[]][] = 
-    Object.entries(iconCategories).reduce(
-        (acc, [category, icons]) => {
-          const matchedIcons = icons.filter(icon => 
-            icon.description.toLowerCase().includes(searchTerm.toLowerCase())
-          )
-          if (matchedIcons.length > 0) {
-            acc.push([category, matchedIcons])
-          }
-          return acc
-        },
-        [] as [string, {name:string, icon:IconType, description:string}[]][] 
-      )
+    const { t } = useTranslation('settings')
 
-    const iconsBoxRef = useRef<HTMLDivElement>(null)
-    const iconsSelectorRef = useRef<HTMLDivElement>(null)
-    const [settingsIconsBoxPosition, setSettingsIconsBoxPosition] = useState<{top?:number, bottom?:number, left:number} | null>(null)
-    useOutsideClick({ref1:iconsBoxRef, ref2:iconsSelectorRef, onOutsideClick:(b:boolean) => setSettingsIconsBoxPosition(null), containerRef:scrollRef})
-    const determineBoxPosition = (e:any) => {
-        if (!disabled) e.stopPropagation()
-        const boxLeft = (iconsBoxRef.current?.getBoundingClientRect().left || 0) 
-        const isTop = (iconsBoxRef.current?.getBoundingClientRect().bottom || 0) > window.innerHeight/2 
-        if (!isTop) setSettingsIconsBoxPosition({top:(iconsBoxRef.current?.getBoundingClientRect().bottom || 0) + 5, left:boxLeft})
-        else setSettingsIconsBoxPosition({bottom:window.innerHeight - (iconsBoxRef.current?.getBoundingClientRect().top || 0) + 5, left:boxLeft})
-    }    
+    const filteredSections:('emoji' | 'icon' | 'upload')[] = ['emoji', 'icon','upload'].filter((sec:any) => !(excludedSections || []).includes(sec)) as any
 
-    return (<>
-
-        <Flex onClick={determineBoxPosition} ref={iconsBoxRef} justifyContent={'center'} alignItems={'center'} p='15px' bg='brand.gray_1' borderRadius={'.5rem'}> 
-            <Icon boxSize={'20px'}  as={(iconsMap as any)[selectedIcon]}/>
-        </Flex>
-
-        {(settingsIconsBoxPosition && !disabled) && 
-        <Portal> 
-            <MotionBox  onClick={(e) => e.stopPropagation()} ref={iconsSelectorRef} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.95 }}  transition={{ duration: '0.1', ease: 'easeOut'}}
-                style={{ transformOrigin: settingsIconsBoxPosition.top ? 'top left':'bottom left' }} overflow={'scroll'} left={settingsIconsBoxPosition.left}  top={settingsIconsBoxPosition.top || undefined}  bottom={settingsIconsBoxPosition.bottom ||undefined} position='absolute' bg='white'  zIndex={100000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.200' borderWidth='1px' borderRadius='.7rem'>
-                    <Box width={'350px'} p='20px' bg='white' borderRadius={'.7rem'} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' >
-                        <Text mb='.5vh' fontSize={'.9em'} color='gray.600' fontWeight={'medium'}>{t('Search')}</Text>
-                        <EditText value={searchTerm} setValue={setSearchTerm} searchInput placeholder={t('SearchIcons')}/>
-                        <Box mt='2vh' mb='2vh' width={'100%'} height={'1px'} bg='gray.300'/>
-                        <Box maxH='35vh' overflow={'scroll'}> 
-                            {filteredIcons.map(([category, icons]) => (
-                                <Box key={`category-${category}`} mb={4}>
-                                <Text fontWeight="medium" fontSize={'.9em'} color='gray.600' mb={'.5vh'}>{t(category)}</Text>
-                                <Grid gap={'0'} templateColumns={'repeat(6, 1fr)'}>
-                                    {icons.map((icon:{name:string, icon:IconType, description:string}, index2) => (
-                                        <Box key={`icons-${category}-${index2}`}> 
-                                        <Flex onClick={(e) => {setSelectedIcon(icon.name);setSettingsIconsBoxPosition(null)}} alignItems={'center'} justifyContent={'center'} key={icon.name} textAlign="center" bg={selectedIcon === icon.name?'rgba(59, 90, 246, 0.3)':'transparent'} cursor={'pointer'} p='10px' display={'inline-flex'} borderRadius={'.5rem'} _hover={{bg:selectedIcon === icon.name?'rgba(59, 90, 246, 0.3)':'brand.gray_1', color:'brand.text_blue'}}>
-                                            <Icon boxSize={'25px'} as={icon.icon}/>
-                                        </Flex>
-                                        </Box>
-                                    ))}
-                                </Grid>
-                                </Box>
-                            ))}
-                        </Box>
-                    </Box>
-            </MotionBox >
-        </Portal>}
-
-    </>)
+    const [text, setText] = useState<string>('')
+    const [selectedSection, setSelectedSection] = useState<'emoji' | 'icon' | 'upload' >(filteredSections[0])
+    
+ 
+    return (
+        <Box bg='white' p='15px'>
+            
+            {filteredSections.length > 1 && <Box   h='30px' fontSize={'.8em'} borderBottomWidth={'1px'} borderBottomColor={'border_color'}> 
+                <SectionSelector  notSection selectedSection={selectedSection} sections={filteredSections} onChange={(section) => setSelectedSection(section)} sectionsMap={{'emoji':[t('Emoji'), <></>], 'icon':[t('Icon'), <></>], 'upload':[t('Upload'), <></>]}}/>
+            </Box>}
+            <Box mb='1vh' mt='2vh'> 
+                <EditText focusOnOpen placeholder={t('Search') + '...'} fontSize=".8em" hideInput={false} value={text} setValue={setText}/>
+            </Box>
+    
+            {selectedSection === 'emoji' ? 
+            <EmojiSelector onSelectEmoji={onSelectEmoji} selectedEmoji={selectedEmoji} search={text} />
+            :<>
+            {selectedSection === 'icon' ? 
+            
+            <CustomIconSelector  onSelectEmoji={onSelectEmoji} selectedEmoji={selectedEmoji} search={text} /> 
+         
+                    :
+                    <></>
+                }
+            </>
+        }
+        </Box>
+    )
 }
 
-export default IconsPicker
+//ICONS SELECTOR
+const CustomIconSelector = ({selectedEmoji, onSelectEmoji, search}:{selectedEmoji:any, onSelectEmoji:(elment:any) => void, search:string }) => {
+
+    const icons:{[key:string]:{dark:{[key:string]:string}, light:{[key:string]:string}, tooltip:string, tags:string[]}} | null = allIcons as any
+    const [filteredIcons, setFilteredIcons] = useState<string[]>([])    
+    
+    useEffect(() => {
+        const result = Object.keys(icons).filter((key) => {
+          const icon = icons[key]
+          const tooltipMatch = icon.tooltip.toLowerCase().includes(search.toLowerCase());
+          const tagsMatch = icon.tags.some((tag: string) =>
+            tag.toLowerCase().includes(search.toLowerCase())
+          )
+          return tooltipMatch || tagsMatch;
+        }).map((key) => key)
+        
+        setFilteredIcons(result)
+    }, [search])
+    
+      
+    return (
+        <Grid columnCount={10} columnWidth={35}  height={window.innerHeight *0.35} rowCount={Math.ceil(filteredIcons.length / 10)} rowHeight={35} width={350}>
+            {({ columnIndex, rowIndex, style }) => {
+                const iconIndex = rowIndex * 6 + columnIndex;
+                if (iconIndex >= Object.keys(filteredIcons).length) return null
+                const iconImage = icons[filteredIcons[iconIndex]]
+                return (
+                    <IconItem key={`icon-${iconIndex}`} iconName={filteredIcons[iconIndex]} iconData={iconImage} style={style} onSelectEmoji={onSelectEmoji} selectedEmoji={selectedEmoji}/>
+                )
+            }}
+        </Grid>
+    )
+}
+
+const IconItem = ({iconName, iconData, style, onSelectEmoji, selectedEmoji }:any) => {
+    
+    const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(iconData.light.gray)}`
+
+    //TOOLTIP LOGIC
+    const [tooltip, setTooltip] = useState<{ x: number; y: number } | null>(null);
+    const buttonRef = useRef<HTMLDivElement>(null)
+    const tooltipTimeout = useRef<NodeJS.Timeout | null>(null);
+    const handleMouseEnter = () => {
+      tooltipTimeout.current = setTimeout(() => {
+        if (buttonRef.current) {
+          const rect = buttonRef.current.getBoundingClientRect()
+          setTooltip({ x: rect.x + 18, y: rect.y - 25 })
+        }
+      }, 600)
+    }
+  
+    const handleMouseLeave = () => {
+      if (tooltipTimeout.current) clearTimeout(tooltipTimeout.current)
+      setTooltip(null)
+    }
+    
+     return (
+      <Flex pos="relative" ref={buttonRef} style={style} borderRadius=".5rem"   bg={selectedEmoji.value === iconData.light.gray ? 'gray_2':'transparent'}  _hover={{ bg: "gray_2" }} onClick={() => onSelectEmoji({type:'icon', data:iconData.light.gray})} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} cursor="pointer" justifyContent="center" alignItems="center">
+        <AnimatePresence> 
+            {tooltip &&
+            <Portal> 
+                <MotionBox display={'flex'} initial={{opacity:0, scale:0.95,translateX:'-50%'}}  animate={{opacity:1, scale:1, translateX:'-50%'}}  exit={{opacity:0, scale:0.95, translateX:'-50%'}} transition={{duration:'.15', ease:'easeOut'}}  pos="fixed" left={`${tooltip.x}px`}  top={`${tooltip.y}px`} zIndex="99999999999999999"  pointerEvents="none"bg="black_button" p="4px" borderRadius=".3rem" >
+                    <Text whiteSpace="nowrap" fontWeight="medium" color='white' fontSize=".7em">
+                        {iconData.tooltip}
+                    </Text>
+                </MotionBox>
+            </Portal>
+            }
+        </AnimatePresence>
+        <img src={svgDataUrl} alt={iconData.tooltip} style={{ width: 20, height: 20 }} />
+      </Flex>
+      )
+}
+//EMOJI SELECTOR
+const EmojiSelector = ({selectedEmoji, onSelectEmoji, search}:{selectedEmoji:any, onSelectEmoji:(elment:any) => void, search:string } ) => {
+
+    const { t } = useTranslation('settings')
+ 
+    const filterEmojis = (categoryId: string) => {
+        const emojis = emojisByCategory[categoryId] || []
+        if (!search) return emojis
+        return emojis.filter((emoji: any) =>emoji.name.toLowerCase().includes(search.toLowerCase()) || emoji.search.toLowerCase().includes(search.toLowerCase()))
+    }
+
+    return (<>
+       
+        <Box maxH='35vh' overflow={'scroll'}> 
+            {Object.values(categories).map((category, index) => {
+                const categoryEmojis = filterEmojis(category.id) 
+                
+                return (
+                <Fragment key={`categoty-${index}`}>
+                    {categoryEmojis.length > 0 && 
+                        <div key={category.id}>
+                            <Text fontSize={'.7em'} mt='1vh' mb='.5vh' fontWeight={'medium'} color='text_gray'>{t(category.id)}</Text>
+                            <Grid columnCount={10} columnWidth={35} height={Math.ceil(categoryEmojis.length / 10) * 35} rowCount={Math.ceil(categoryEmojis.length / 10)} rowHeight={35} width={350}>
+                                {({ columnIndex, rowIndex, style }) => {
+                                    const iconIndex = rowIndex * 10 + columnIndex;
+                                    if (iconIndex >= categoryEmojis.length) return null
+                                    return (
+                                        <EmojiItem style={style} emojiData={categoryEmojis[iconIndex]} selectedEmoji={selectedEmoji} onSelectEmoji={onSelectEmoji} />
+                                    )
+                                }}
+                            </Grid>
+                        </div>
+                    }
+                    </Fragment>)
+            })}
+        </Box>
+
+      
+    </>)
+
+}
+
+//EMOJI ITEM
+const EmojiItem = ({ emojiData, style, onSelectEmoji, selectedEmoji }:any) => {
+    const [tooltip, setTooltip] = useState<{ x: number; y: number } | null>(null);
+  
+    const buttonRef = useRef<HTMLDivElement>(null)
+
+    const tooltipTimeout = useRef<NodeJS.Timeout | null>(null);
+
+    const handleMouseEnter = () => {
+      tooltipTimeout.current = setTimeout(() => {
+        if (buttonRef.current) {
+          const rect = buttonRef.current.getBoundingClientRect()
+          setTooltip({ x: rect.x + 18, y: rect.y - 25 })
+        }
+      }, 600)
+    }
+  
+    const handleMouseLeave = () => {
+      if (tooltipTimeout.current) clearTimeout(tooltipTimeout.current)
+      setTooltip(null)
+    }
+    
+    return (
+      <Flex pos="relative" ref={buttonRef} style={style} borderRadius=".5rem"  bg={selectedEmoji === emojiData.emoji ? 'gray_2':'transparent'}  _hover={{ bg: "gray_2" }} onClick={() => onSelectEmoji( {type:'emoji', data:emojiData.emoji})} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} cursor="pointer" justifyContent="center" alignItems="center">
+        <AnimatePresence> 
+            {tooltip &&
+            <Portal> 
+                <MotionBox display={'flex'} initial={{opacity:0, scale:0.95,translateX:'-50%'}}  animate={{opacity:1, scale:1, translateX:'-50%'}}  exit={{opacity:0, scale:0.95, translateX:'-50%'}} transition={{duration:'.15', ease:'easeOut'}}  pos="fixed" left={`${tooltip.x}px`}  top={`${tooltip.y}px`} zIndex="99999999999999999"  pointerEvents="none"bg="black_button" p="4px" borderRadius=".3rem" >
+                    <Text whiteSpace="nowrap" fontWeight="medium" color='white' fontSize=".7em">
+                        {emojiData.name}
+                    </Text>
+                </MotionBox>
+            </Portal>
+            }
+        </AnimatePresence>
+        {emojiData.emoji}
+      </Flex>
+    )
+}

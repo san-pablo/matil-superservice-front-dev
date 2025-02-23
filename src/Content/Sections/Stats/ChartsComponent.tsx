@@ -1,7 +1,6 @@
 //REACT
 import { useTranslation } from "react-i18next"
-import { useSession } from "../../../SessionContext"
-//FRONT
+ //FRONT
 import { Box, Text, Flex } from "@chakra-ui/react"
 
 import { ChartType} from "../../Constants/typing" 
@@ -13,7 +12,7 @@ import PieChartComponent from "./Charts/PieChart"
 import LineChartComponent from "./Charts/LineChart"
 import Table from "../../Components/Reusable/Table"
 //TYPING
-import { logosMap, statesMap } from "../../Constants/typing"
+import { logosMap } from "../../Constants/typing"
 import { useRef } from "react"
 import parseNumber from "../../Functions/parseNumbers"
 
@@ -22,15 +21,12 @@ const ChartComponent = ({chartData}:{chartData:ChartType}) => {
 
     const { t, i18n } = useTranslation('stats')
     const t_formats = useTranslation('formats').t
-    const t_con = useTranslation('conversations').t
-    const session = useSession()
-
-    //TRANSLATION
-    const channels:any[] = session.sessionData?.additionalData?.channels || []
-
     const auth = useAuth()
+    //TRANSLATION
+    const channels:any[] = auth.authData.channels
 
-    const parseXAxis = (type:null | 'time' | 'channel_type' |  'theme' | 'user_id' | 'channel_id' | 'status' | 'urgency_rating' | 'is_transferred'):[Array<any>,Array<any>] => {
+ 
+    const parseXAxis = (type:null | 'time' | 'channel_type' |  'theme_id' | 'user_id' | 'channel_id' | 'is_transferred'):[Array<any>,Array<any>] => {
         
         switch (type) {
             case 'time':
@@ -55,18 +51,14 @@ const ChartComponent = ({chartData}:{chartData:ChartType}) => {
         
             case 'channel_type':
                 return [(Object.keys(logosMap)).map(channel => t(channel)), Object.keys(logosMap)]
-            case 'theme':
-              return [[...auth.authData.conversation_themes, t('NoTheme')], [...auth.authData.conversation_themes, null]]
             case 'channel_id': 
                 return [channels.map((channel:any) => channel.name), channels.map((channel:any) => t(channel.id))]
-            case 'status':
-                return [ Object.keys(statesMap).map(status => t_con(status)), Object.keys(statesMap).map(status => status)]
-            case 'urgency_rating':
-                return [Array.from({length:5}).map((value, index) => t_con(`Priority_${index}`)), Array.from({length:5})]
+            case 'theme_id':
+              return [[...auth.authData.themes.map(theme => theme.name), t('NoTheme')], [...auth.authData.themes.map(theme => theme.id), null]]
             case 'is_transferred':
                 return [[t('Transfered'), t('NoTransfered')], ['transferred', 'notransferred']]
             case 'user_id':
-                return [[...Object.keys(auth?.authData?.users || []).map(user => auth?.authData?.users?.[user]?.name), 'Tilda'], [...Object.keys(auth?.authData?.users || []), 'matilda']]
+                return [[...(auth?.authData?.users || []).map(user => user?.name), 'Tilda'], [...Object.keys(auth?.authData?.users || []), 'matilda']]
             case null:
                 return [[],[]]
         }
@@ -76,7 +68,8 @@ const ChartComponent = ({chartData}:{chartData:ChartType}) => {
 
     const boxRef = useRef<HTMLDivElement>(null)
     const textRef = useRef<HTMLDivElement>(null)
-   switch(chartData.type)  {
+   
+    switch(chartData.type)  {
     case 'KPI':
         const metricName = chartData.metrics[0]?.metric_name
         const metricAgregation = chartData.metrics[0]?.aggregation_type
@@ -100,7 +93,7 @@ const ChartComponent = ({chartData}:{chartData:ChartType}) => {
             value = chartData.data.reduce((min, element) => {
                 const val = typeof(element[metricName]) === 'string' ? parseInt(element[metricName], 10) : element[metricName]
                 return Math.min(min, val || Infinity)
-            }, Infinity);
+            }, Infinity)
         }
         else if (metricAgregation === 'max') {
             value = chartData.data.reduce((max, element) => {
@@ -115,9 +108,9 @@ const ChartComponent = ({chartData}:{chartData:ChartType}) => {
         }
 
         return (
-            <Flex   alignItems="start" flexDir={'column'} justifyContent={'center'} minW={0} width={'100%'} height={'100%'} borderRadius={'.5rem'} p='20px' boxShadow={'0 0 10px rgba(0, 0, 0, 0.2)'}> 
+            <Flex   alignItems="start" flexDir={'column'} justifyContent={'center'} minW={0} width={'100%'} height={'100%'} borderRadius={'.5rem'} px='20px' > 
                 
-                <Text whiteSpace={'nowrap'}  minW="0" textOverflow={'ellipsis'} overflow={'hidden'} fontSize={'1.2rem'} fontWeight={'medium'}>{t(chartData.metrics[0].legend_label)}</Text>
+                <Text whiteSpace={'nowrap'}  minW="0" textOverflow={'ellipsis'} overflow={'hidden'} fontSize={'1rem'}  >{t(chartData.metrics[0].legend_label)}</Text>
                 <Box  width={'100%'} > 
                     <KPI configuration={chartData.configuration} value={value}/>
                 </Box>
@@ -129,44 +122,47 @@ const ChartComponent = ({chartData}:{chartData:ChartType}) => {
         const segmentxAxis = parseXAxis(chartData?.segment_by?.type || null)[0]
         const segmentxFindAxis = parseXAxis(chartData?.segment_by?.type || null)[1]
 
-        const uniqueKeys = new Set<string>()
-        const metricsNameArray:string[] = chartData.metrics.map((metric) => {return metric.legend_label})
-        chartData.data.forEach(item => {Object.keys(item).forEach(key => {if (key !== "view_by" && key !== 'segment') uniqueKeys.add(key)})})
-        const uniqueKeysArray:string[] = Array.from(uniqueKeys)
 
-        const valuesList = uniqueKeysArray.map((metric) => {
-            return xFindAxis.map((x:string) => {
-                let barList:number[] = []
- 
+         const uniqueKeys = chartData.metrics.map(metric => metric.metric_name);
+
+        // Obtener los nombres de las métricas en el orden definido en chartData.metrics
+        const metricsNameArray: string[] = chartData.metrics.map(metric => metric.legend_label);
+        
+        // Construcción de valuesList asegurando el orden correcto
+        const valuesList = uniqueKeys.map((metric) => {
+            return xFindAxis.map((x: string) => {
+                let barList: number[] = [];
+        
                 if (segmentxFindAxis.length !== 0) {
-                    segmentxFindAxis.map((segment:string) => {
-                        const foundElement = chartData.data.find((item) => item.view_by === x && item.segment === segment)
-                        if (foundElement) barList.push(foundElement[metric] || 0)
-                        else barList.push(0)
-
-                    })
+                    segmentxFindAxis.forEach((segment: string) => {
+                        const foundElement = chartData.data.find((item) => item.view_by === x && item.segment === segment);
+                        barList.push(foundElement ? (foundElement[metric] || 0) : 0);
+                    });
+                } else {
+                    const foundElement = chartData.data.find((item) => item.view_by === x);
+                    barList.push(foundElement ? (foundElement[metric] || 0) : 0);
                 }
-                else {
-                    const foundElement = chartData.data.find((item) => item.view_by === x)
-                    if (foundElement) barList.push(foundElement[metric] || 0)
-                    else barList.push(0)
-                }
-                return barList
-            })
-        })
-
-         const totalPerXAxis = xFindAxis.map((x, xIndex) => {
+                return barList;
+            });
+        });
+        
+        // Calcular el total por cada x en xFindAxis
+        const totalPerXAxis = xFindAxis.map((x, xIndex) => {
             return valuesList.reduce((acc, metricValues) => {
-              const sumForXAxis = metricValues[xIndex].reduce((sum, value) => sum + (parseNumber(i18n, value, true) as number), 0)
-              return acc + sumForXAxis;
-            }, 0)
-          })
-
-        const yaxis = uniqueKeysArray.map((key:string, index:number) => {return metricsNameArray[index] || t(key.replace(/_\d+$/, ''))})
+                const sumForXAxis = metricValues[xIndex].reduce((sum, value) => sum + (parseNumber(i18n, value, true) as number), 0);
+                return acc + sumForXAxis;
+            }, 0);
+        });
+        
+        // Construcción del eje Y asegurando que siga el orden de las métricas
+        const yaxis = uniqueKeys.map((key: string, index: number) => {
+            return metricsNameArray[index] || t(key.replace(/_\d+$/, ''));
+        });
+        
 
         return (
-        <Flex flexDir={'column'} width={'100%'} height={'100%'} borderRadius={'.5rem'} p='20px' boxShadow={'0 0 10px rgba(0, 0, 0, 0.2)'}> 
-            <Text fontSize={'1.2rem'} fontWeight={'medium'}>{chartData.title}</Text>
+        <Flex flexDir={'column'} width={'100%'} height={'100%'} borderRadius={'.5rem'} p='20px' > 
+            <Text fontSize={'1rem'} >{chartData.title}</Text>
             <Box height={'calc(100% - 20px)'}  width={'100%'} > 
                 <ColumnChart  segmentxAxis={segmentxAxis} key={chartData.type} xaxis={xAxis} yaxis={valuesList} ytitle={yaxis} yaxisSum={totalPerXAxis} chartType={chartData.type} configuration={chartData.configuration}/>
             </Box>
@@ -179,8 +175,8 @@ const ChartComponent = ({chartData}:{chartData:ChartType}) => {
         })
 
         return (
-        <Flex flexDir={'column'} width={'100%'} height={'100%'}  borderRadius={'.5rem'} p='20px' boxShadow={'0 0 10px rgba(0, 0, 0, 0.2)'}> 
-            <Text fontSize={'1.2rem'} fontWeight={'medium'}>{chartData.title}</Text>
+        <Flex flexDir={'column'} width={'100%'} height={'100%'}  borderRadius={'.5rem'} p='20px'  > 
+            <Text fontSize={'1rem'} >{chartData.title}</Text>
             <Box height={'calc(100% - 20px)'} width={'100%'} > 
                 <PieChartComponent configuration={chartData.configuration}  xaxis={xAxis} values={valuesList} />
             </Box>
@@ -230,8 +226,8 @@ const ChartComponent = ({chartData}:{chartData:ChartType}) => {
  
 
         return (
-            <Flex flexDir={'column'} width={'100%'} height={'100%'} borderRadius={'.5rem'} p='20px' boxShadow={'0 0 10px rgba(0, 0, 0, 0.2)'}> 
-                <Text fontSize={'1.2rem'} fontWeight={'medium'}>{chartData.title}</Text>
+            <Flex flexDir={'column'} width={'100%'} height={'100%'} borderRadius={'.5rem'} p='20px' > 
+                <Text fontSize={'1rem'}  >{chartData.title}</Text>
                 <Box height={'calc(100% - 20px)'} width={'100%'} > 
                     <LineChartComponent chartType={chartData.type}  xaxis={xAxis} segmentxAxis={segmentxAxis} yaxis={valuesList} ytitle={yaxis} configuration={chartData.configuration} yaxisSum={totalPerXAxis}/>
                 </Box>
@@ -255,15 +251,12 @@ const ChartComponent = ({chartData}:{chartData:ChartType}) => {
                             }
                             else return <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{t_formats(`months.${(new Date(element)).getMonth()}`)}</Text>                   
                         case 'channel_type':
-                        case 'status':
-                            return  <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{t(element)}</Text>
-                        case 'theme':
+                      
+                        case 'theme_id':
                           return <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}> {element}</Text>
                         case 'channel_id': 
                             return <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{channels.find((channel: any) => channel.id === element).name}</Text>
-                        case 'urgency_rating':
-                            return <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}> {t_con(`Priority_${element}`)}</Text>
-                        case 'is_transferred':
+                       case 'is_transferred':
                             return <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element ? t('Transfered'):t('NoTransfered')}</Text>
                         case 'user_id': 
                             return  <Text whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{element === 'matilda' ? 'Tilda': element === 'no_user' ? t('NoAgent'): auth?.authData?.users?.[element].name || ''}</Text>
@@ -273,7 +266,7 @@ const ChartComponent = ({chartData}:{chartData:ChartType}) => {
                 }
                 else return element
             }
-            const getFirstRow = (type:null | 'time' | 'channel_type' |  'theme' | 'user_id' | 'channel_id' | 'status' | 'urgency_rating' | 'is_transferred') => {
+            const getFirstRow = (type:null | 'time' | 'channel_type' |  'theme_id' | 'user_id' | 'channel_id' | 'is_transferred') => {
                 switch (type) {
                     case 'time':
                         return t(chartData.view_by.configuration.granularity)
@@ -304,9 +297,9 @@ const ChartComponent = ({chartData}:{chartData:ChartType}) => {
             const boxHeight = (boxRef.current?.getBoundingClientRect().height || 0) - (textRef.current?.getBoundingClientRect().height || 0) - 30
 
             return(
-                <Flex flexDir={'column'} width={'100%'} height={'100%'}  borderRadius={'.5rem'} p='20px' boxShadow={'0 0 10px rgba(0, 0, 0, 0.2)'}> 
+                <Flex flexDir={'column'} width={'100%'} height={'100%'}  borderRadius={'.5rem'} p='20px'> 
                     <Box ref={textRef}> 
-                        <Text fontSize={'1.2rem'} fontWeight={'medium'}>{chartData.title}</Text>
+                        <Text fontSize={'1rem'} fontWeight={'medium'}>{chartData.title}</Text>
                     </Box>
                     <Box height={'calc(100% - 20px)'} ref={boxRef} width={'100%'} > 
                         <Table noDataMessage={t('NoData')} CellStyle={CellStyle} height={boxHeight} data={chartData.data} columnsMap={columnsMap} excludedKeys={[]} showAccRow={chartData.configuration.show_acc_row} accMessage={t('Total')} accColumn={'view_by'}/>

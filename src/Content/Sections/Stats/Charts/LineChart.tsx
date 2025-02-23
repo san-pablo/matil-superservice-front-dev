@@ -24,7 +24,7 @@ interface ColumnChartProps {
 //CREATE A MUI THEME
 const muiTheme = createTheme({
   palette: { mode: 'light' },
-  typography: { fontFamily: 'Jost, sans-serif', fontSize: 12 }
+  typography: { fontFamily: 'Poppins, sans-serif', fontSize: 12 }
 })
 
 //HOOK TO OBSERVE RESIZES
@@ -98,7 +98,7 @@ const LineChartComponent = ({ chartType,xaxis, yaxis, ytitle, segmentxAxis, conf
                 {ytitle.map((label, index) => (
                     <Flex key={`label-${index}`} gap='5px' mt='10px' alignItems={'center'}>
                       <Box bg={colors[index % 6]} borderRadius={'3px'} minW={'10px'} height={'10px'} width={'10px'}/>
-                      <Text whiteSpace={'nowrap'} fontSize={'.8em'} color='gray.600' fontWeight={'medium'}>{label}</Text>
+                      <Text whiteSpace={'nowrap'} fontSize={'.8em'} color='text_gray' fontWeight={'medium'}>{label}</Text>
                     </Flex>
                   ))}
                 </Flex>}
@@ -129,18 +129,23 @@ const LineChartComponent = ({ chartType,xaxis, yaxis, ytitle, segmentxAxis, conf
 
               //XAXIS CONFIGURATION
               bottomAxis={{
-                tickSize: 0,
+                disableTicks:true, 
                 tickLabelStyle: {
+                  fontFamily:'Poppins', 
+                  fontSize:'.8em', 
+                  fontWeight:500,
                   angle: 0,
-                  fontSize: 12,
                 }
               }}
 
               //YAXIS CONFIGURATION
               leftAxis={{
-                tickSize: 0,
+                disableTicks:true, 
+                tickLabelStyle:{fontFamily:'Poppins', fontSize:'.8em', fontWeight:500}
               }}
-              slotProps={{ legend: { hidden: true },  popper: {
+              slotProps={{ legend: { hidden: true }, 
+              axisLine:{strokeOpacity:0}, 
+              popper: {
                 sx: {
                   [`& .${chartsTooltipClasses.mark}`]: {
                     display: 'none',

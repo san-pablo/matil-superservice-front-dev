@@ -7,8 +7,8 @@ const KPI = ({ value, configuration }:{value:string | number, configuration:any 
 
     return (
     <Box height={'100%'} width={'100%'} minW={0}>
-         <Text    fontSize={'2rem'}  fontWeight={'semibold'}>{parseNumber(i18n, value)} {configuration.show_unit && configuration.unit}</Text>
-         {configuration.show_objective && <Text color='gray.600'>{t('ObjectiveValue')}: {configuration.objective_value} {configuration.show_unit && configuration.unit}</Text>}
+         <Text fontSize={'1.8rem'}  fontWeight={'semibold'}>{parseNumber(i18n, value)} {configuration.show_unit && configuration.unit}</Text>
+         {configuration.show_objective && <Text color='text_gray'>{t('ObjectiveValue')}: {configuration.objective_value} {configuration.show_unit && configuration.unit}</Text>}
     </Box>  
     )
 }

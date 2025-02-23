@@ -1,6 +1,6 @@
 // IMPORTS
-import { startOfWeek, subDays, startOfMonth, subMinutes, subHours, formatISO } from 'date-fns';
-import { ConversationsData, ViewDefinitionType } from "../Constants/typing";
+import { startOfWeek, subDays, startOfMonth, subMinutes, subHours } from 'date-fns'
+import { ConversationsData, ViewDefinitionType } from "../Constants/typing"
 
 // Define UUID regex for matching UUIDs
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -262,7 +262,7 @@ const DetermineConversationViews = (
 
         const matchesView = evaluateGroups(ticketData, filters, userId);
         if (matchesView) {
-            results.push(view.uuid);
+            results.push(view.id);
         }
     });
 

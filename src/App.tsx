@@ -1,7 +1,7 @@
 //REACT
 import { useEffect, useState } from 'react'
 import { useAuth } from './AuthContext'
-import { BrowserRouter as Router } from 'react-router-dom'
+import { BrowserRouter as Router, useNavigate } from 'react-router-dom'
 import { useSession } from './SessionContext'
 import { useAuth0 } from "@auth0/auth0-react"
 //FETCH DATA
@@ -19,14 +19,15 @@ import { userInfo, Organization } from './Content/Constants/typing'
  
 //ENVIORMENT VARIABLES
 const URL = import.meta.env.VITE_PUBLIC_API_URL
+const VERSION = import.meta.env.VITE_VERSION
 
 //SKELETON THEME
 const $startColor = cssVar('skeleton-start-color')
 const $endColor = cssVar('skeleton-end-color')
 const customVariant = {
   [$startColor.variable]: 'colors.transparent',
-  [$endColor.variable]: 'colors.gray.200'}
-const skeletonTheme = defineStyleConfig({baseStyle: customVariant})
+  [$endColor.variable]: 'colors.border_color'}
+const skeletonTheme = defineStyleConfig({baseStyle: {...customVariant, borderRadius:'.5rem'}})
 
 //CUSTOM THEME
 const theme = extendTheme({
@@ -36,49 +37,98 @@ const theme = extendTheme({
       lg: '960px',
       xl: '1200px'
     },
-    colors: {
-      brand: {
-        black_button:'#222',
-        black_button_hover:'RGBA(0, 0, 0, 0.80)',
-        text_blue:'rgb(59, 90, 246)',
-        blue_hover:'#EBF8FF',
-        blue_hover_2:'#DDF1FC',
-
-        gray_1:"#e8e8e8",
-        gray_2:"#eeeeee",
-        hover_gray:'#F6F6F6',
-        hover_gray_white:'#FAFAFA',
-        gradient_blue:'linear-gradient(to right, rgba(0, 102, 204, 1),rgba(51, 153, 255, 1))',
-        gradient_blue_hover:'linear-gradient(to right, rgba(0, 72, 204, 1),rgba(51, 133, 255, 1))'
-       }
-     },
-    styles: {
-      global: {body: {bg: 'white', fontFamily: 'Poppins'}}
+    config: {
+      initialColorMode: "light",
+      useSystemColorMode: true, 
     },
-    fontWeights: { normal: 400, medium: 500, semibold: 600,bold: 700},
+
+    semanticTokens: {
+      colors: {
+  
+          white: {
+            _light: "#FFFFFF",
+            _dark: "#1A202C",
+          },
+          clear_white: {
+            _light: "#FBFBFB",
+            _dark: "#2D3748",
+          },
+          black: {
+            _light: "#000000",
+            _dark: "#FFFFFF",
+          },
+          
+          text_gray: {
+            _light: "#4A5568",
+            _dark: "#CBD5E0",
+          },
+          black_button: {
+            _light: "#222",
+            _dark: "#A0AEC0",
+          },
+          black_button_hover: {
+            _light: "RGBA(0, 0, 0, 0.80)",
+            _dark: "RGBA(255, 255, 255, 0.50)",
+          },
+          text_blue: {
+            _light: "rgb(59, 90, 246)",
+            _dark: "rgb(144, 202, 249)",
+          },
+          gray_1: {
+            _light: "#e8e8e8",
+            _dark: "#4A5568",
+          },
+          gray_2: {
+            _light: "#efefef",
+            _dark: "#2D3748",
+          },
+          hover_gray: {
+            _light: "#F5F5F5",
+            _dark: "#1A202C",
+          },
+          border_color: {
+            _light: "#E2E8F0",
+            _dark: "#E2E8F0",
+        },
+      
+      }
+    },
+     styles: {
+      global: (props:any) => ({
+        body: {
+          bg: props.colorMode === "dark" ? "black" : "white",
+          color: props.colorMode === "dark" ? "white" : "black",
+          fontFamily: 'Poppins'
+        }
+      })
+    },
+    fontWeights: { normal: 400, medium: 500, semibold: 600, bold: 700},
+    fontSizes: { xxs: '.7em', xs: '.8em', sm: '.9em', section: '1.2em', title:'1.4em'},
+
     components: {
       Switch: {
         baseStyle: {
-          track: {bg: 'brand.gray_1', _checked: {bg: 'brand.text_blue'},},
+          track: {bg: 'gray_1', _checked: {bg: 'text_blue'},},
           thumb: {bg: 'white'}
         },
       },
       Radio: {
         baseStyle: {
           control:{_checked:{bg:'rgb(59, 90, 246)', _hover:{bg:'rgb(59, 90, 246)'}}}
-        }
+        },
+      
       },
       Button: { 
           baseStyle: {fontWeight:600, bg:'#f1f1f1', _hover:{bg:'#e8e8e8'}, height:'30px'},
           sizes: {
-            xs: {h: '24px', minW: '24px',  fontSize: '.8em', px: '10px'},
-            sm: {h: '28px', minW: '28px',  fontSize: '.9em', px: '12px'},
+            xs: {h: '24px', minW: '24px', borderRadius:'.5rem',  fontSize: '.8em', px: '10px'},
+            sm: {h: '28px', minW: '28px', borderRadius:'.5rem',  fontSize: '1em', px: '12px'},
           },
           variants:{
-            main:{bg:'#222', _hover:{bg:'blackAlpha.800'}, color:'white',   _disabled: {bg: '#222', color: 'white', pointerEvents: 'none', cursor: 'not-allowed',opacity: 0.6}},
+            main:{bg:'black_button', _hover:{bg:'black_button_hover'}, color:'white',   _disabled: {bg: 'black_button', color: 'white', pointerEvents: 'none', cursor: 'not-allowed',opacity: 0.6}},
             delete:{fontWeight:500, bg:'red.100', color:'red.600', _hover:{bg:'red.200'}},
             delete_section:{fontWeight:500, color:'red'},
-            common:{fontWeight:500,  bg:'brand.gray_2', _hover:{color:'rgb(59, 90, 246)'}}
+            common:{fontWeight:500,  bg:'gray_2', _hover:{color:'rgb(59, 90, 246)'}}
           }
       },
       Skeleton: skeletonTheme,
@@ -86,12 +136,15 @@ const theme = extendTheme({
     }
   })
    
+ 
 //MAIN FUNCTION
 const App: React.FC = () => { 
 
-    const { user, loginWithRedirect, isAuthenticated, logout, isLoading, getAccessTokenSilently } = useAuth0()
+    const { user, loginWithRedirect, isAuthenticated, isLoading, getAccessTokenSilently } = useAuth0()
+
 
     //AUTH DATA
+    const navigate = useNavigate()
     const session = useSession()
     const { setAuthData, signOut } = useAuth()
 
@@ -103,53 +156,52 @@ const App: React.FC = () => {
     //FUNCTION TO FETCH INITIAL USER DATA
     const fetchInitialData = async ( accessToken:string,  email:string ) => {
 
+        //FETCH ORGANIZATION DATA
         const fetchInitialOrgData = async (user:{id:string, name:string, surname:string, organizations:Organization[]}, accessToken:string) => {
           let organization
+
+
           if (currentOrganizationName) {organization = user.organizations.find((org: Organization) =>  org.id === parseInt(currentOrganizationName))}
-          if (!organization) {organization = user.organizations[0]}
+          if (!organization && user.organizations.length > 0) {organization = user.organizations[0]}
           if (organization) {
-             const responseChannels = await axios.get(URL + `${organization.id}/admin/settings/channels`, {headers: {'Authorization': `Bearer ${accessToken}`}})
-            session.dispatch({type:'ADD_CHANNELS', payload:responseChannels?.data})
-            setAuthData({ organizationData:{calls_status:organization.calls_status || 'out', avatar_image_url:organization.avatar_image_url || '', is_admin:organization.is_admin, alias:organization.alias || ''},
-            organizationId: organization.id, userId:user.id, organizationName:organization.name ,email:email, accessToken:accessToken})
-
+            //const responseChannels = await axios.get(URL + `${organization.id}/settings/channels`, {headers: {'Authorization': `Bearer ${accessToken}`}})
+            //session.dispatch({type:'ADD_CHANNELS', payload:responseChannels?.data})
+            
+            setAuthData({ organizationId: organization.id, userId:user.id, organizationName:organization.name ,email:email,accessToken })
             localStorage.setItem('currentOrganization', String(organization.id))
+
             try{
-              const responseOrg = await axios.get(URL + `${organization.id}/user`, {headers: {'Authorization': `Bearer ${accessToken}`}})
-              const viewsToAdd = {
-                configuration:responseOrg.data.views_configuration, 
-                count:responseOrg.data.view_counts, 
-                definitions:responseOrg.data.view_definitions, 
-              }
-
+              const responseOrg = await axios.get(URL + `${organization.id}/user_access`, {headers: {'Authorization': `Bearer ${accessToken}`}})
               console.log(responseOrg.data)
-              const filteredTeams = responseOrg.data.teams.filter((team:any) => !team.users.includes(user.id))
 
-              setAuthData({views: viewsToAdd, users:responseOrg.data.users, shortcuts:responseOrg.data.shortcuts, customAttributes:responseOrg.data.cdas, tags:responseOrg.data.tags, conversation_themes:responseOrg.data.themes, teams:filteredTeams,   active_integrations:[]})
+               setAuthData({...responseOrg.data})
             }
             catch (error){console.log(error)}
           }
           
-          else setAuthData({ organizationId: null, email:email, userId:user.id, accessToken:accessToken, views:{configuration:{std:[], folders:[]}, count:{std:{}, teams:{}, custom:{}}, definitions:[]}, teams:[], users:null, shortcuts:[], conversation_themes:[]})
+          else {
+            setAuthData({ organizationId: null, email:email, userId:user.id, teams:[], users:null, themes:[], accessToken})
+          }
  
           setUserInfo({name:user.name, surname:user.surname, organizations:user.organizations})
           setWaitingInfo(false)
         }
 
+        //FETCH USER DATA
         try {
           const response = await axios.get(URL + `user`, {headers: {'Authorization': `Bearer ${accessToken}`}})
-          setAuthData({userData:{name: response.data.name, surname: response.data.surname, email_address: response.data.email_address, password: '', language:response.data.language, shortcuts_activated:true}})
+ 
+          setAuthData({userData:{...response.data}})
           fetchInitialOrgData(response.data, accessToken)
-          
         } 
         catch (error) {
           if (isAxiosError(error) && error.response && error.response.status === 403){
             try {
                 const accessToken = await getAccessTokenSilently({authorizationParams: {audience: `https://api.matil/v2/`, scope: "read:current_user"}})
-                setAuthData({accessToken:accessToken})
-
                 const new_response = await axios.get(URL + `user`, {headers: {'Authorization': `Bearer ${accessToken}`}})
-                setAuthData({userData:{name: new_response.data.name, surname: new_response.data.surname, email_address: new_response.data.email_address, password: '', language:new_response.data.language, shortcuts_activated:true}})
+ 
+                setAuthData({userData:{...new_response.data}})
+
                 fetchInitialOrgData(new_response.data, accessToken)
             }
             catch (error) {
@@ -162,49 +214,44 @@ const App: React.FC = () => {
       
     //INITIAL REQUEST TO CLIENT DATA IF MAIL IS STORED IN LOCALSOTRAGE, ELSE WILL SEND YOU TO LOGIN
     useEffect(() => {
+      
       //logout({ logoutParams: { returnTo: window.location.origin } })
       const getInitialData = async () => {
         setWaitingInfo(true)
-        const storedMail = URL.endsWith('v2/') ? 'javioliverperez@gmail.com': user?.email
+        localStorage.clear()
+        navigate('/')
 
-        
-        const accessToken = URL.endsWith('v2/') ? 'javier_truco' :  await getAccessTokenSilently({
-          authorizationParams: {
-            audience: 'https://api.matil.ai/',
-            scope: "read:current_user"
-          },
-        })
+        //GET CREDENTIALS
+        const storedMail = user?.email
+        const accessToken = await getAccessTokenSilently({authorizationParams: { audience: 'https://api.matil.ai/', scope: "read:current_user"}})
   
-        
-        if (storedMail && accessToken) {
-          if (storedMail !== null && accessToken !== null) fetchInitialData(accessToken, storedMail)
-        }
+         
+        if (storedMail && accessToken) if (storedMail !== null && accessToken !== null) fetchInitialData(accessToken, storedMail)
         else setWaitingInfo(false)
       }
 
-      if (URL.endsWith('v2/') ? true:!isLoading) {
-        if (URL.endsWith('v2/') ? true:isAuthenticated) getInitialData()
+      if (!isLoading) {
+        if (isAuthenticated) getInitialData()
         else loginWithRedirect()
       }
     }, [isAuthenticated, isLoading])
       
 
-    //APP CONTENT
+     //APP CONTENT
     return (  
       <ChakraProvider theme={theme}>
-        {(URL.endsWith('v2/') ? userInfo.name === '':isLoading || waitingInfo) ?   
-          <Flex height={'100vh'}  width={'100vw'} justifyContent={'center'} alignItems={'center'}> 
+        {(isLoading || waitingInfo) ?   
+          <Flex height={'100vh'} bg='clear_white'  width={'100vw'} justifyContent={'center'} alignItems={'center'}> 
               <LoadingIcon/>
           </Flex>:
           <>
-            {(URL.endsWith('v2/') ?userInfo.name :isAuthenticated) && 
-              <Router> 
-                <Box fontSize={'.9em'}> 
-                  <Content userInfo={userInfo} />
+            {(isAuthenticated) && 
+        
+                <Box color='black'bg='clear_white'  > 
+                  <Content />
                   <ToastContainer />
                 </Box>
-              </Router> 
-           }
+            }
           </>}         
       </ChakraProvider>
     ) 
