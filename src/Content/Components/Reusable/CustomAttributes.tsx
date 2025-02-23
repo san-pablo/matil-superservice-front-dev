@@ -85,10 +85,17 @@ const InputType = ({allowedValues,  inputType, motherstructureId, value, setValu
         changeAttribute(value)
     }, [value])
   
-    let allowedValuesMap:{[key:string]:string} = {}
-    allowedValues.map((val) => allowedValuesMap[val] = val)
+    console.log(allowedValues);
 
-
+    let allowedValuesMap: { [key: string]: string } = {};
+    
+    // Verifica que allowedValues es un array antes de intentar mapearlo
+    if (Array.isArray(allowedValues)) {
+        allowedValues.forEach((val) => {
+            allowedValuesMap[val] = val;
+        });
+    }
+    
      switch(inputType) {
    
         case 'integer': 
