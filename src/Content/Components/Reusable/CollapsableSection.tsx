@@ -9,8 +9,8 @@ import { IoIosArrowDown } from "react-icons/io"
 const CollapsableSection = ({ section, isExpanded, onSectionExpand, children, sectionsMap, mt}:{section:string, isExpanded:boolean, onSectionExpand:(key:string) => void ,children:ReactNode, sectionsMap:{[key:string]:string},  mt?:string}) => {
 
     return (
-        <Box pb='3vh' mt={mt} borderBottomColor={'gray.200'} borderBottomWidth={'1px'}> 
-            <Flex cursor={'pointer'} alignItems={'center'} justifyContent={'space-between'} onClick={() => onSectionExpand(section)} _hover={{color:'brand.text_blue'}}>
+        <Box pb='3vh' mt={mt} borderBottomColor={'border_color'} borderBottomWidth={'1px'}> 
+            <Flex cursor={'pointer'} alignItems={'center'} justifyContent={'space-between'} onClick={() => onSectionExpand(section)} _hover={{color:'text_blue'}}>
                 <Text fontWeight={'semibold'}  fontSize={'.9em'}>{sectionsMap[section]}</Text>
                 <IoIosArrowDown  className={isExpanded ? "rotate-icon-up" : "rotate-icon-down"}/>
             </Flex>

@@ -18,12 +18,10 @@ import ConfirmBox from "../../Components/Reusable/ConfirmBox"
 //FUNCTIONS
 import parseMessageToBold from "../../Functions/parseToBold"
 //ICONS
-import { RxCross2, RxCheck } from "react-icons/rx"
-import { BiWorld } from "react-icons/bi"
 import { HiTrash } from "react-icons/hi2"
 import { PiSidebarSimpleBold } from "react-icons/pi"
 //TYPING
-import { ContentData, languagesFlags, Folder } from "../../Constants/typing"
+import { ContentData } from "../../Constants/typing"
 import { useAuth0 } from "@auth0/auth0-react"
 
  
@@ -31,8 +29,8 @@ import { useAuth0 } from "@auth0/auth0-react"
 const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)}) 
  
 
-const Website = ({folders,  setHideFunctions}:{folders:Folder[],setHideFunctions:Dispatch<SetStateAction<boolean>>}) => {
-
+const Website = () => {
+    {/*
      //CONSTANTS
     const { t } = useTranslation('knowledge')
     const { getAccessTokenSilently } = useAuth0()
@@ -40,16 +38,15 @@ const Website = ({folders,  setHideFunctions}:{folders:Folder[],setHideFunctions
     const location = useLocation().pathname
     const columnsContentMap:{ [key: string]: [string, number] } = {content:[t('Url'), 300],type: [t('type'), 150], language: [t('language'), 150], is_available_to_tilda:[t('is_available_to_tilda'), 150]}
 
-    const webDataRef = useRef<any>(null)
+    const webDataRef = useRef<ContentData<'webpage'>>(null)
     const [webData, setWebData] = useState<ContentData[] | null>(null)
     const [text, setText] = useState<string>('')
     
     const [selectedWebsite, setSelectedWebsite] = useState<ContentData | null>(null)
     useEffect(() => {        
-        const webId = location.split('/')[3]
-        
+         
         const fetchInitialData = async() => {
-            const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`,getAccessTokenSilently, params:{page_index:1, website_uuid:webId}, auth})
+            const response = await fetchData({endpoint:`${auth.authData.organizationId}/knowledge/sources`,getAccessTokenSilently, params:{page_index:1, website_uuid:webId}, auth})
             if (response?.status === 200) {
                 setWebData(response?.data.page_data)
                 webDataRef.current = response?.data.page_data
@@ -59,20 +56,20 @@ const Website = ({folders,  setHideFunctions}:{folders:Folder[],setHideFunctions
         fetchInitialData()
     }, [])
 
-
+*/}
     return (<>
-        {selectedWebsite ? <SubWebsite folders={folders} selectedWebsite={selectedWebsite}/> :
+    {/*
+        {selectedWebsite ? <SubWebsite selectedWebsite={selectedWebsite}/> :
         <Box> 
             <Flex justifyContent={'space-between'} alignItems={'end'}> 
                
                 <Flex  alignItems={'center'} gap='10px' >
-                    <IconButton  aria-label="open-tab" variant={'common'} bg='transparent' size='sm' icon={<PiSidebarSimpleBold transform="rotate(180deg)" size={'18px'}/>}  h='28px' w='28px'  onClick={() =>setHideFunctions(prev => (!prev))}/>
-                    <Text fontSize={'1.2em'} fontWeight={'medium'}>{(webData && webData.length > 0)? webData[0]?.title :''}</Text>
+                     <Text fontSize={'1.2em'} fontWeight={'medium'}>{(webData && webData.length > 0)? webData[0]?.title :''}</Text>
                 </Flex>   
 
                  
             </Flex>
-            <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/>
+            <Box width='100%' bg='border_color' height='1px' mt='2vh' mb='3vh'/>
             
             <Box width={'350px'}> 
                 <EditText value={text} setValue={setText} searchInput={true}/>
@@ -88,13 +85,14 @@ const Website = ({folders,  setHideFunctions}:{folders:Folder[],setHideFunctions
                 <Table data={webData as ContentData[]} CellStyle={CellStyle} columnsMap={columnsContentMap}  excludedKeys={['uuid', 'created_at', 'created_by','description', 'folder_uuid', 'is_ingested', 'public_article_common_uuid','public_article_help_center_collections','public_article_status', 'title', 'updated_at', 'updated_by', 'public_article_uuid']} noDataMessage={t('NoContent')} onClickRow={(row, index) => setSelectedWebsite(row)} />  
             </Skeleton>
         </Box>
-    }
+    */}
+    
     </>)
 }
 
 export default Website
 
-const SubWebsite = ({folders, selectedWebsite}:{folders:Folder[], selectedWebsite:ContentData}) => {
+const SubWebsite = ({selectedWebsite}:{selectedWebsite:ContentData}) => {
  
      //CONSTANTS
      const { t } = useTranslation('knowledge')
@@ -114,8 +112,8 @@ const SubWebsite = ({folders, selectedWebsite}:{folders:Folder[], selectedWebsit
      const saveChanges = async () => {
          const articleId = location.split('/')[3]
          let response
-         if (articleId.startsWith('create') && firstSendedRef.current) response =  await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources`, method:'post',getAccessTokenSilently, setWaiting:setWaitingSave, requestForm:articleData  as ContentData, auth, toastMessages:{works:t('CorrectSavedInfo'), failed:t('FailedSavedInfo')} }) 
-         else response = response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources/${articleData?.uuid}`, method:'put', setWaiting:setWaitingSave,getAccessTokenSilently, requestForm:articleData as ContentData, auth, toastMessages:{works:t('CorrectSavedInfo'), failed:t('FailedSavedInfo')} })
+         if (articleId.startsWith('create') && firstSendedRef.current) response =  await fetchData({endpoint:`${auth.authData.organizationId}/knowledge/sources`, method:'post',getAccessTokenSilently, setWaiting:setWaitingSave, requestForm:articleData  as ContentData, auth, toastMessages:{works:t('CorrectSavedInfo'), failed:t('FailedSavedInfo')} }) 
+         else response = response = await fetchData({endpoint:`${auth.authData.organizationId}/knowledge/sources/${articleData?.id}`, method:'put', setWaiting:setWaitingSave,getAccessTokenSilently, requestForm:articleData as ContentData, auth, toastMessages:{works:t('CorrectSavedInfo'), failed:t('FailedSavedInfo')} })
  
          if (response?.status === 200) articleDataRef.current = articleData
          firstSendedRef.current = false
@@ -135,16 +133,16 @@ const SubWebsite = ({folders, selectedWebsite}:{folders:Folder[], selectedWebsit
          //FUNCTION FOR CREATE A NEW BUSINESS
          const deleteArticle= async () => {
              const articleId = location.split('/')[3]
-             const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/knowledge/sources/${articleId}`, getAccessTokenSilently, method:'delete',  auth, toastMessages:{works:t('CorrectSavedInfo'), failed:t('FailedSavedInfo')} })
+             const response = await fetchData({endpoint:`${auth.authData.organizationId}/knowledge/sources/${articleId}`, getAccessTokenSilently, method:'delete',  auth, toastMessages:{works:t('CorrectSavedInfo'), failed:t('FailedSavedInfo')} })
              if (response?.status === 200) navigate('/knowledge/content')
          }
          return(<> 
                <Box p='20px'> 
                      <Text fontWeight={'medium'} fontSize={'1.2em'}>{parseMessageToBold(t('DeleteArticleAnswer', {name:articleData?.title}))}</Text>
-                     <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
+                     <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='border_color'/>
                      <Text >{parseMessageToBold(t('DeleteFolderWarning'))}</Text>
                  </Box>
-                 <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'gray.200'}>
+                 <Flex p='20px' mt='2vh' gap='15px' flexDir={'row-reverse'} bg='gray.50' borderTopWidth={'1px'} borderTopColor={'border_color'}>
                      <Button  size='sm' variant='delete' onClick={deleteArticle}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
                      <Button size='sm'  variant={'common'} onClick={() => setShowDeleteBox(false)}>{t('Cancel')}</Button>
                  </Flex>
@@ -161,8 +159,8 @@ const SubWebsite = ({folders, selectedWebsite}:{folders:Folder[], selectedWebsit
     
      <Flex flex='1'  width={'100%'} height={'100vh'} top={0} left={0} bg='white'>
          <MotionBox   initial={{ width: sendBoxWidth  }} animate={{ width: sendBoxWidth}} exit={{ width: sendBoxWidth }} transition={{ duration: '.2' }}  
-         width={sendBoxWidth} overflowY={'hidden'}  borderRightWidth={'1px'} borderRightColor='gray.200' >
-             <Flex px='1vw' height={'70px'} alignItems={'center'} justifyContent={'space-between'}  borderBottomWidth={'1px'} borderBottomColor={'gray.200'}>
+         width={sendBoxWidth} overflowY={'hidden'}  borderRightWidth={'1px'} borderRightColor='border_color' >
+             <Flex px='1vw' height={'70px'} alignItems={'center'} justifyContent={'space-between'}  borderBottomWidth={'1px'} borderBottomColor={'border_color'}>
                  <Skeleton isLoaded={articleData !== null}> 
                      <Text fontSize={'1.5em'} fontWeight={'medium'}>{t('subwebsite')}</Text>
                  </Skeleton>
@@ -181,7 +179,7 @@ const SubWebsite = ({folders, selectedWebsite}:{folders:Folder[], selectedWebsit
              </Flex>
          </MotionBox>
          <MotionBox display={'flex'} flexDir={'column'} h='100vh' width={clientBoxWidth + 'px'}  whiteSpace={'nowrap'} initial={{ width: clientBoxWidth + 'px' }} animate={{ width: clientBoxWidth + 'px' }} exit={{ width: clientBoxWidth + 'px' }} transition={{ duration: '.2'}}> 
-             <SourceSideBar clientBoxWidth={clientBoxWidth} setClientBoxWidth={setClientBoxWidth} sourceData={articleData} setSourceData={setArticleData} folders={folders}/>
+             <SourceSideBar clientBoxWidth={clientBoxWidth} setClientBoxWidth={setClientBoxWidth} sourceData={articleData} setSourceData={setArticleData}/>
          </MotionBox>
 
      </Flex>
@@ -211,7 +209,7 @@ const EditorComponent = ({articleData, setArticleData}:{articleData:ContentData 
     </Box>
     <Flex flex='1' mt='30px' px='20px' overflow={'scroll'}  flexDir={'column'} position='relative' alignItems={'center'}> 
         <Text>
-            {(articleData?.content.text || '').split('\n').map((line:string, index:number) => (
+            {((articleData?.data as any).text || '').split('\n').map((line:string, index:number) => (
                 <Text key={index}>
                 {line}
                 {'\n'}

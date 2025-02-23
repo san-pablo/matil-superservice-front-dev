@@ -73,7 +73,13 @@
     "NotDetected":"No detectado",
     "AddArticle":"Añadir artículo",
     "Sincronize":"Sincronizar",
-    "AddContent":"Añadir contenido",
+    "AddContent":"Crear contenido",
+    "AddContentDes":"Crea fuentes de conocimiento para alimentar a Tilda y que las use en sus respuestas.",
+    "Website":"Página web",
+    "WebsiteDes":"Sincronizar un sitio web",
+    "PdfDes":"Cargar un archivo PDF",
+
+
     "Hide":"Ocultar",
     "Information":"Información",
     "Data":"Datos",
@@ -122,7 +128,9 @@
     "Cancel":"Cancelar",
     "Processed":"Procesado",
     "Create":"Crear",
-    "MoveToFolder":"Mover"
+    "MoveToFolder":"Mover",
+    "Search":"Buscar"
+
 
   } 
 

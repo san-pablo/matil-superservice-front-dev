@@ -10,6 +10,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { BarChart } from '@mui/x-charts/BarChart'
 //FUNCTIONS
 import parseNumber from '../../../Functions/parseNumbers'
+import '../../../Components/styles.css'
 
 //TYPING
 interface ColumnChartProps {
@@ -25,7 +26,7 @@ interface ColumnChartProps {
 //CREATE A MUI THEME
 const muiTheme = createTheme({
   palette: { mode: 'light' },
-  typography: { fontFamily: 'Jost, sans-serif', fontSize: 12 }
+  typography: { fontFamily: 'Poppins, sans-serif', fontSize: 12 }
 })
  
 //HOOK TO OBSERVE RESIZES
@@ -101,7 +102,7 @@ const ColumnChart = ({ xaxis, segmentxAxis, yaxis, ytitle, chartType, configurat
                 {ytitle.map((label, index) => (
                     <Flex key={`label-${index}`} gap='5px' mt='10px' alignItems={'center'}>
                       <Box bg={colors[index % 6]} borderRadius={'3px'} minW={'10px'} height={'10px'} width={'10px'}/>
-                      <Text whiteSpace={'nowrap'} fontSize={'.8em'} color='gray.600' fontWeight={'medium'}>{label}</Text>
+                      <Text whiteSpace={'nowrap'} fontSize={'.8em'} color='text_gray' fontWeight={'medium'}>{label}</Text>
                     </Flex>
                   ))}
                 </Flex>}
@@ -145,15 +146,16 @@ const ColumnChart = ({ xaxis, segmentxAxis, yaxis, ytitle, chartType, configurat
                 // Series de datos
                 series={parseYAxis()}
               
-        
                 //BORDER-RADIUS OF BARS
-                borderRadius={4}
+                borderRadius={configuration?.border_radius || 3}
                 tooltip={{ trigger: 'item' }} 
+
                 //HORIZONTAL GRID
-                grid={{ horizontal: chartType ==='bar'?false:true, vertical:chartType ==='bar'?true:false }}
+                grid={{horizontal:chartType ==='bar'?false:true, vertical:chartType ==='bar'?true:false}}
+
                 //CUSTOM MARGINS
                 margin={{
-                  left: 30,
+                  left: chartType ==='bar'?60 : 30,
                   right: 20,
                   top: 20,
                   bottom: 20,
@@ -161,21 +163,20 @@ const ColumnChart = ({ xaxis, segmentxAxis, yaxis, ytitle, chartType, configurat
 
                 //XAXIS CONFIGURATION
                 bottomAxis={{
-                  tickSize: 0,
+                  disableTicks:true,
                   tickLabelStyle: {
+                    fontFamily:'Poppins', 
+                    fontSize:'.8em', 
+                    fontWeight:500,
                     angle: 0,
-                    fontSize: 12,
                   }
                 }}
                 layout={chartType ==='bar'?'horizontal':'vertical'}
 
                 //YAXIS CONFIGURATION
-                leftAxis={{
-                  tickSize: 0,
-                }}
-                slotProps={{ legend: { hidden: true },  popper: {
-        
-                },}}
+                leftAxis={{disableTicks:true, tickLabelStyle:{fontFamily:'Poppins', fontSize:'.8em', fontWeight:500} }}
+                
+                slotProps={{ legend: { hidden: true }, axisLine:{strokeOpacity:0}, }}
               />   
               </> 
             )}

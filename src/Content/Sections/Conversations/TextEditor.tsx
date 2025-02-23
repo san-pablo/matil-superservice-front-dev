@@ -8,18 +8,19 @@ import { useAuth } from '../../../AuthContext'
 import { useNavigate } from 'react-router-dom'
 import { useSession } from '../../../SessionContext'
 import { useTranslation } from 'react-i18next'
+//FETCH DATA
+import fetchData from '../../API/fetchData'
 //FRONT
 import { Box, Flex, Button, IconButton, Icon, Text, Avatar, Image, Portal, chakra, shouldForwardProp, Progress } from '@chakra-ui/react'
 import { AnimatePresence, motion, isValidMotionProp } from 'framer-motion'
 import '../../Components/styles.css'
-import EmojiPicker, { EmojiClickData } from 'emoji-picker-react'
-//FETCH DATA
-import fetchData from '../../API/fetchData'
-import LoadingIconButton from '../../Components/Reusable/LoadingIconButton'
 //EDIT PURE HTML COMPONENTS
 import ReactQuill, { Quill } from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
 import '../../Components/styles.css'
+//COMPONENTS
+import LoadingIconButton from '../../Components/Reusable/LoadingIconButton'
+import IconsPicker from '../../Components/Reusable/IconsPicker'
 //FUNCTION
 import useOutsideClick from '../../Functions/clickOutside'
 import formatFileSize from '../../Functions/formatFileSize'
@@ -28,12 +29,11 @@ import { HiOutlinePaperClip, HiOutlineEmojiHappy } from "react-icons/hi"
 import { IoArrowUndoSharp } from "react-icons/io5" 
 import { IoIosArrowDown } from 'react-icons/io'
 import { PiTextTBold } from "react-icons/pi"
-import { FaRegEdit } from "react-icons/fa"
-import { FaLockOpen, FaPause, FaPlay, FaDownload,  } from "react-icons/fa6"
+import { FaPause, FaPlay, FaDownload, FaLink } from "react-icons/fa6"
 import { FaRedo } from 'react-icons/fa'
 import { RxCross2 } from "react-icons/rx"
-import { BsStars } from "react-icons/bs"
 import { MdNoteAlt } from "react-icons/md"
+import { BsTypeItalic, BsTypeBold, BsTypeUnderline } from 'react-icons/bs'
 //TYPING
 import { ConversationsTableProps, statesMap,  ConversationsData } from '../../Constants/typing'
 import downloadFile from '../../Functions/downloadFile'
@@ -43,8 +43,6 @@ import { useAuth0 } from '@auth0/auth0-react'
 interface TextEditorProps {
     clientName:string | undefined
     conversationData:ConversationsData
-    updateData:(section:'conversation' | 'client', newData?:ConversationsData | null) => {}
-    takeConversationControl:() => void
 }
 
 //MOTION BOX
@@ -52,7 +50,7 @@ const MotionBox = chakra(motion.div, {shouldForwardProp: (prop) => isValidMotion
 
 
 //MAIN FUNCTION
-function TextEditor({clientName, conversationData, updateData, takeConversationControl }:TextEditorProps) {
+function TextEditor({clientName, conversationData}:TextEditorProps) {
 
     //TRANSLATION
     const { t } = useTranslation('conversations')
@@ -135,7 +133,7 @@ function TextEditor({clientName, conversationData, updateData, takeConversationC
     //SHOW THE SHORTCUTS BOX
     const handleShortcuts = (content:string, selection:{index:number}) => {
         
-        const shortCutsList = auth.authData.shortcuts
+        const shortCutsList = auth.authData?.preferences?.shortcuts || []
         const cursorIndex = selection.index
         const textBeforeCursor = content.slice(0, cursorIndex) || ''
         const lastWord = textBeforeCursor.split(' ').pop() || ''
@@ -225,11 +223,11 @@ function TextEditor({clientName, conversationData, updateData, takeConversationC
     }
 
     //MAIL MESSAGES LOGIC 
-     const handleEmojiClick = (emojiObject: EmojiClickData, event: any) => {
+     const handleEmojiClick = (emoji: string, event: any) => {
         if (channel?.channel_type  === 'email'  && quillRef.current) {
             const quill = quillRef.current.getEditor()
             const range = quill.getSelection(true)
-            if (range) quill.insertText(range.index, emojiObject.emoji)
+            if (range) quill.insertText(range.index, emoji)
         }
         else if (channel?.channel_type !== 'email'  && textAreaRef.current) {
             const start = textAreaRef.current.selectionStart
@@ -237,37 +235,31 @@ function TextEditor({clientName, conversationData, updateData, takeConversationC
             const text = htmlValue
             const before = text.substring(0, start)
             const after  = text.substring(end, text.length)
-            setHtmlValue(before + emojiObject.emoji + after)
+            setHtmlValue(before + emoji + after)
         }
     }
 
-    //SHOW AND HIDE TOOLBARS    
-    const emojiBoxRef = useRef<HTMLDivElement>(null)
-    const emojiButtonRef = useRef<HTMLButtonElement>(null)
-    const [toolbarVisible, setToolbarVisible] = useState<boolean>(false)
-    const [emojiVisible, setEmojiVisible] = useState<boolean>(false)
-    useOutsideClick({ref1:emojiBoxRef, ref2:emojiButtonRef,onOutsideClick:setEmojiVisible })
-
-    const fontSizeArr = ['8px','9px','10px','12px','14px','16px','20px','24px','32px','42px','54px','68px','84px','98px']
-    var Size = Quill.import('attributors/style/size')
-    Size.whitelist = fontSizeArr;
-    Quill.register(Size, true)
+   
     const modules = {
-        toolbar: [
-        [{ 'size': fontSizeArr}],  
-        ['bold', 'italic', 'underline'], 
-        ['blockquote', 'code-block'],
-        [{'list': 'ordered'}, {'list': 'bullet'}],
-        ['link']
-        ]
+        toolbar:  {
+            container: "#toolbar"
+          },
     }
+    const icons = Quill.import('ui/icons') as any
+    icons.bold = null
+    icons.italic = null
+    icons.underline = null
+    icons['code-block'] = null
+    icons.align = null
+    icons.header = null
+    icons.link = null
 
     //SEND A MESSAGE
     const sendMessage = async (type:string, content:any)=> {
 
-        let messageContent = {type:type, content:content}
-        if (type === 'plain') messageContent = {type, content:{text:textValueRef.current}}
-        else if (type === 'internal_note') messageContent = {type, content:{text:textValueRef.current}}
+        let messageContent:any = {type:type, content:content}
+        if (type === 'plain') messageContent = {type, is_internal_note:false, content:{text:textValueRef.current}}
+        else if (type === 'internal_note') messageContent = {type, is_internal_note:true, content:{text:textValueRef.current}}
 
         else if (type === 'email') {
             const sendAttachments = await Promise.all(
@@ -276,8 +268,8 @@ function TextEditor({clientName, conversationData, updateData, takeConversationC
                     return urlInfo
                 })
             )
-            messageContent = {type, content: {theme:'', html:htmlValueRef.current, text:textValueRef.current, attachments:sendAttachments} }
-            setHtmlValue('')
+            messageContent = {type, is_internal_note: false, content: {theme:'', html:htmlValueRef.current, text:textValueRef.current, attachments:sendAttachments} }
+            setHtmlValue('') 
             setAttachmentsFiles([])
         }
         else {
@@ -290,7 +282,6 @@ function TextEditor({clientName, conversationData, updateData, takeConversationC
         if (response?.status === 200) {
             if (sendAction === 'close') {
                 navigate('/conversations')
-                //deleteHeaderSection({description:'', code:conversationData?.id || -1, local_id:conversationData?.local_id, type:'conversation' })
             }
             else if (sendAction === 'next') {
                 const currentView =  JSON.parse(localStorage.getItem('currentView') || 'null')
@@ -334,7 +325,7 @@ function TextEditor({clientName, conversationData, updateData, takeConversationC
             const responseUpload = await fetch(response.data.upload_url, {method: "PUT", headers: {}, body: file})
             if (responseUpload.ok) {
                 if (isMail) return {url: response.data.access_url, file_name: file.name, size:file.size, type:file.type}       
-                else return {url: response.data.access_url, object_uuid: response.data.object_uuid, file_name: file.name, file_size:file.size}
+                else return {url: response.data.access_url, object_id: response.data.object_id, file_name: file.name, file_size:file.size}
             }
             else  new Error('Failed to upload file.')
         }
@@ -348,7 +339,7 @@ function TextEditor({clientName, conversationData, updateData, takeConversationC
 
         //STYLES CONSTANTS
         const fileTypeColors:{[key: string]: string} = {'PDF':'red.500', 'DOCX':'blue.600', 'ZIP':'orange.500'}
-        const fileType = file.name.split('.')[1].toUpperCase()
+        const fileType = (file?.name || '').split('.')[1].toUpperCase()
         const imageUrl = useMemo(() => URL.createObjectURL(file), [file])
 
         //IS HOVERING BOOLEAN
@@ -359,17 +350,17 @@ function TextEditor({clientName, conversationData, updateData, takeConversationC
 
         return (
 
-            <Flex  bg={fileTypeColors[fileType] || 'gray.100'} color={fileType in fileTypeColors?'white':'black'} position='relative' onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} key={`attachment-file-${index}`} cursor={'pointer'} height={'100px'} width={'140px'}  borderColor={'gray.200'} borderWidth={'1px'} justifyContent={'center'} alignItems={'center'}>
+            <Flex  bg={fileTypeColors[fileType] || 'gray.100'} color={fileType in fileTypeColors?'white':'black'} position='relative' onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)} key={`attachment-file-${index}`} cursor={'pointer'} height={'100px'} width={'140px'}  borderColor={'border_color'} borderWidth={'1px'} justifyContent={'center'} alignItems={'center'}>
                 {file.type.startsWith('image/') ? 
                     <Image objectFit='cover' objectPosition='center' src={imageUrl} height={'100%'} width={'100%'} />
                     :
-                    <Text fontWeight={'medium'} fontSize='1.2em'>{file.name.split('.')[1].toUpperCase()}</Text>
+                    <Text fontWeight={'medium'} fontSize='1.2em'>{(file?.name || '').split('.')[1].toUpperCase()}</Text>
                 }
                 <AnimatePresence> 
                     {isHovering && 
                         <MotionBox p='5px'  overflow={'hidden'} alignItems={'center'} position='absolute' bottom={0} width={'100%'} display={'flex'} gap='5px' bg='blackAlpha.700' color='white' initial={{bottom:-50}} animate={{bottom:0}} exit={{bottom:-50}}  transition={{ duration: '0.2',  ease: 'easeOut'}} >
                             <Text fontWeight={'medium'} fontSize={'.8em'} flex='1' minW={0} whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow={'hidden'}>{file.name}</Text>
-                            <Icon boxSize='16px' onClick={removeFileAtIndex} as={RxCross2} color='white' borderRadius={'.2rem'} p='2px' _hover={{bg:'gray.600'}}/>
+                            <Icon boxSize='16px' onClick={removeFileAtIndex} as={RxCross2} color='white' borderRadius={'.2rem'} p='2px' _hover={{bg:'text_gray'}}/>
                         </MotionBox>}
                 </AnimatePresence>
             </Flex>
@@ -378,12 +369,10 @@ function TextEditor({clientName, conversationData, updateData, takeConversationC
 
     //HANDLE CHANGE OF TEXT AND HTML VALUE
     const handleChange = (content:any, delta:any, source:any, editor:any) => {
-        const cursorIndex = editor.getSelection().index
-        const text = editor.getText()
-
+        const cursorIndex = editor.getSelection()?.index || 0
+        const text = editor.getText() 
         handleShortcuts(text, {index: cursorIndex}) 
         setHtmlValue(content)
-
         setTextValue(text)
     }
 
@@ -391,7 +380,6 @@ function TextEditor({clientName, conversationData, updateData, takeConversationC
     const handleButtonClick = (state:'new' | 'open' | 'pending' |  'solved' | 'closed') => {
         
         setShowSendLike(false)
-        updateData('conversation', {...conversationData as ConversationsData, 'status':state})
 
         if (totalSize < 10 * 1024 * 1024 && (textValueRef.current.trim() !== '')) {
             if (channel?.channel_type !== 'email') sendMessage(isInternalNote ? 'internal_note':'plain', textValueRef.current)
@@ -403,35 +391,12 @@ function TextEditor({clientName, conversationData, updateData, takeConversationC
     useEffect(() => {
         const handleKeyPress = (event:KeyboardEvent) => {
              if (!showShortcuts) {
-                if (event.key === 'Enter' && !(event.metaKey || event.ctrlKey)) {
+               if ((event.shiftKey  || event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+                   
                     handleButtonClick('pending')
                     event.preventDefault()
                     event.stopPropagation()
-                } 
-                else if (event.shiftKey  && event.key === 'Enter') {
-                 
-                    event.preventDefault()
-                    event.stopPropagation()
-                    if (channel?.channel_type !== 'email' && textAreaRef.current) {
-                        const start = textAreaRef.current.selectionStart
-                        const end = textAreaRef.current.selectionEnd
-                        const text = textValueRef.current
-                        const before = text.substring(0, start)
-                        const after = text.substring(end, text.length)
-                        setTextValue(before + '\n' + after)
-                        setTimeout(() => {
-                            if (textAreaRef.current) {
-                                textAreaRef.current.selectionStart = start + 1;
-                                textAreaRef.current.selectionEnd = start + 1;
-                            }
-                        }, 0)
-                    } else if (channel?.channel_type === 'email' && quillRef.current) {
-                        const quill = quillRef.current.getEditor();
-                        const range = quill.getSelection(true);
-                        if (range) {
-                            quill.insertText(range.index, '\n');
-                        }
-                    }
+                   
                 }
                 else if (event.metaKey || event.ctrlKey) {
                     if (event.code === 'KeyR'){
@@ -476,10 +441,10 @@ function TextEditor({clientName, conversationData, updateData, takeConversationC
         }, [])
 
         return(
-            <Box position={'fixed'}fontSize={'.85em'} left={position.left} bottom={position.bottom} maxH='40vh' maxW={'400px'} overflow={'scroll'}  boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
-                {shortcuts.length === 0 ? <Text color='gray.600'>No hay atajos definidos</Text>:<>
+            <Box position={'fixed'}fontSize={'.85em'} left={position.left} bottom={position.bottom} maxH='40vh' maxW={'400px'} overflow={'scroll'}  boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={100000} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'border_color'}>
+                {shortcuts.length === 0 ? <Text color='text_gray'>No hay atajos definidos</Text>:<>
                 {shortcuts.map((shorcut, index) => (
-                    <Flex key={`shorcut-${index}`} bg={selectedItem === index?'brand.hover_gray':'white'} cursor={'pointer'} p='5px' _hover={{bg:'brand.hover_gray'}} onClick={() => onSelect(shorcut)} alignItems={'center'}>
+                    <Flex key={`shorcut-${index}`} bg={selectedItem === index?'hover_gray':'white'} cursor={'pointer'} p='5px' _hover={{bg:'hover_gray'}} onClick={() => onSelect(shorcut)} alignItems={'center'}>
                         {shorcut}
                     </Flex>
                 ))}</>}
@@ -487,40 +452,44 @@ function TextEditor({clientName, conversationData, updateData, takeConversationC
         )
     }
     
-
-    const showBox = (conversationData?.user_id === 'matilda' && conversationData?.status !== 'closed'  && conversationData?.call_status !== 'completed'  )
+    const activeFormatsRef = useRef<any>({})
+    const showBox = (conversationData?.is_matilda_engaged && conversationData?.status !== 'closed'  && conversationData?.call_status !== 'completed'  )
+     
     
+
+
     //FRONT
     return (<> 
-    {((conversationData?.status !== 'closed'  && conversationData?.user_id !== 'matilda')   || ( conversationData?.call_status === 'completed')) && 
-        <Box p={showBox ? '0':'0 15px 15px 15px'} > 
+    {((conversationData?.status !== 'closed'  && !conversationData?.is_matilda_engaged)   || ( conversationData?.call_status === 'completed')) && 
+        <Box   p={showBox ? '0':'0 15px 15px 15px'} > 
             {showShortcuts && (<ShortCutsBox shortcuts={filteredShortcuts} onSelect={handleSelectShortcut} position={cursorPosition}/>)}
             <input id='selectFile' type="file" multiple={channel?.channel_type === 'email'} style={{display:'none'}}   onChange={(e) =>  handleFileSelect(e)} accept=".pdf, .doc, .docx, image/*" />
-            <Box borderRadius={showBox?'0':'1rem'} overflow={'hidden'} borderColor={showBox?'':'gray.200'} borderWidth={showBox?'0':'1px'} transition={'box-shadow 0.2s ease-in-out'}  boxShadow={showBox?'':   isFocused ? '0 0 0 2px rgb(59, 90, 246, 0.6)' : '0 0 10px 0px rgba(0, 0, 0, 0.1)'}> 
-               
+            
+            <Flex  flexDir={'column'}  borderRadius={showBox?'0':'1rem'} overflow={'hidden'} borderColor={showBox?'':'border_color'} borderWidth={showBox?'0':'1px'} transition={'box-shadow 0.2s ease-in-out'}  boxShadow={showBox?'':   isFocused ? '0 0 0 2px rgb(59, 90, 246, 0.6)' : '0 0 10px 0px rgba(0, 0, 0, 0.1)'}>    
                 <> 
                 {conversationData?.call_status === 'completed'  ? 
                     <Flex flexDir={'column'} alignItems={'center'} justifyContent={'center'} h='150px'> 
                     <AudioRecord url={conversationData?.call_url} />
                     </Flex>
                 :
-                <Box position={'relative'} transition={'background ease-in-out 0.1s'} bg={isInternalNote?'yellow.100':''} minH={'150px'} maxH={'600px'} height={`${height}px`} > 
+                <Flex  flexDir={'column'}  position={'relative'} transition={'background ease-in-out 0.1s'} bg={isInternalNote?'yellow.100':''} minH={'150px'} maxH={'600px'} height={`${height}px`} > 
                     {conversationData?.status === 'closed' && 
                         <Flex alignItems={'center'} justifyContent={'center'} position={'absolute'} zIndex={10000} height={'100%'} w='100%' bg='rgba(200, 200, 200, 0.4)' backdropFilter={'blur(0.8px)'}>
                             <Text fontSize={'1.2em'} fontWeight={'medium'} maxW={'60%'} textAlign={'center'}>{t('ClosedConversation')}</Text>
                         </Flex>}
-                    <Box height={'10px'}  onMouseDown={handleMouseDown} cursor='ns-resize'/>
+                    
+                        <Box height={'10px'}  onMouseDown={handleMouseDown} cursor='ns-resize'/>
                         <Flex pt='5px' gap='10px' pb='15px' px='15px' alignItems={'center'} justifyContent={'space-between'}> 
                             <Flex alignItems={'center'} gap='9px' maxW={'100%'}>
                                 <Portal > 
                                     {showSelector &&
-                                        <MotionBox ref={boxRef} initial={{ opacity: 0, marginBottom: -10}} animate={{ opacity: 1, marginBottom: 0 }}  exit={{ opacity: 0, marginBottom: -10}} transition={{ duration: '0.2',  ease: 'easeOut'}} 
-                                        fontSize={'.8em'} overflow={'hidden'} bottom={window.innerHeight -  (noteRef.current?.getBoundingClientRect().top || 0) + 10}  left={noteRef.current?.getBoundingClientRect().left} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.1)'} bg='white' zIndex={100000}   position={'absolute'} borderRadius={'.5rem'} borderWidth={'1px'} borderColor={'gray.200'}>
-                                            <Flex p='10px' alignItems={'center'} gap='7px' cursor={'pointer'} _hover={{bg:'brand.hover_gray'}} onClick={() => {setIsInternalNote(true);setShowSelector(false)}}>
+                                        <MotionBox ref={boxRef} id='custom-portal' initial={{ opacity: 0, marginBottom: -10}} animate={{ opacity: 1, marginBottom: 0 }}  exit={{ opacity: 0, marginBottom: -10}} transition={{ duration: '0.2',  ease: 'easeOut'}} 
+                                        fontSize={'.8em'} overflow={'hidden'} bottom={window.innerHeight -  (noteRef.current?.getBoundingClientRect().top || 0) + 10}  left={noteRef.current?.getBoundingClientRect().left} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.1)'} bg='white' zIndex={100000}   position={'absolute'} borderRadius={'.5rem'} borderWidth={'1px'} borderColor={'border_color'}>
+                                            <Flex p='10px' alignItems={'center'} gap='7px' cursor={'pointer'} _hover={{bg:'hover_gray'}} onClick={() => {setIsInternalNote(true);setShowSelector(false)}}>
                                                 <Icon as={MdNoteAlt}/>
                                                 <Text whiteSpace={'nowrap'}>{t('InternalNote')}</Text>
                                             </Flex>
-                                            <Flex p='10px' alignItems={'center'} gap='7px' cursor={'pointer'} _hover={{bg:'brand.hover_gray'}} onClick={() => {setIsInternalNote(false);setShowSelector(false)}}>
+                                            <Flex p='10px' alignItems={'center'} gap='7px' cursor={'pointer'} _hover={{bg:'hover_gray'}} onClick={() => {setIsInternalNote(false);setShowSelector(false)}}>
                                                 <Icon as={IoArrowUndoSharp}/>
                                                 <Text whiteSpace={'nowrap'}>{t('Public')}</Text>
                                             </Flex>
@@ -529,79 +498,64 @@ function TextEditor({clientName, conversationData, updateData, takeConversationC
                                 </Portal> 
                                 <Flex ref={noteRef} cursor={'pointer'} gap='5px' alignItems={'center'} onClick={() => setShowSelector(!showSelector)}> 
                                     <Icon as={isInternalNote?MdNoteAlt:IoArrowUndoSharp} color='gray.400' boxSize={'16px'}/>
-                                    <Text color='gray.600' fontSize={'.8em'} fontWeight={'medium'} whiteSpace={'nowrap'}>{isInternalNote?t('InternalNote'):t('Public')}</Text>
-                                    <Icon  color='gray.600'className={ showSelector? "rotate-icon-up" : "rotate-icon-down"} as={IoIosArrowDown} boxSize={'14px'}/>
+                                    <Text color='text_gray' fontSize={'.8em'} fontWeight={'medium'} whiteSpace={'nowrap'}>{isInternalNote?t('InternalNote'):t('Public')}</Text>
+                                    <Icon  color='text_gray'className={ showSelector? "rotate-icon-up" : "rotate-icon-down"} as={IoIosArrowDown} boxSize={'14px'}/>
                                 </Flex>
                             </Flex>
                         </Flex>
-                        {channel?.channel_type === 'email' ? 
-                        <> 
-                        {attachmentsFiles.length > 0 && <>
-                            <Box px='20px'  > 
-                                <Flex  overflowX={'scroll'} width={'100%'}> 
-                                    <Flex  gap='10px' >
-                                        {attachmentsFiles.map((file, index) => (<Fragment key={`attachment-${index}`}> <AttachmentFilesComponent file={file} index={index}/></Fragment>))}
+                        <Flex flex='1'> 
+                            {channel?.channel_type === 'email' ? 
+                            <> 
+                            {attachmentsFiles.length > 0 && <>
+                                <Box px='20px'  > 
+                                    <Flex  overflowX={'scroll'} width={'100%'}> 
+                                        <Flex  gap='10px' >
+                                            {attachmentsFiles.map((file, index) => (<Fragment key={`attachment-${index}`}> <AttachmentFilesComponent file={file} index={index}/></Fragment>))}
+                                        </Flex>
                                     </Flex>
-                                </Flex>
-                                <Text mt='1vh' color={totalSize > 10 * 1024 * 1024 ? 'red':'black'} mb='1vh' fontSize={'.9em'}>Tamaño del correo: <span style={{fontWeight:'500'}}> {formatFileSize(totalSize)}</span> {totalSize > 10 * 1024 * 1024 && '(sólo se permite enviar un máximo de 10 MB)'}</Text>
-                            </Box>
-                            <Box height={'1px'} bg='gray.300' width={'100%'}/>
-                        </>}
-                        <ReactQuill modules={modules} onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)} ref={quillRef} theme="snow" value={htmlValue} onChange={handleChange} className={toolbarVisible ? '' : 'hidden-toolbar'} style={{ height: '100%', display: 'flex', flexDirection: 'column-reverse'}} />
-                        </>
-                        :
-                        <textarea ref={textAreaRef} placeholder={t('PlaceholderShortcuts')} value={textValue} onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)} onChange={(e) => {setTextValue(e.target.value); handleShortcuts(e.target.value, {index: e.target.selectionStart}) }}  style={{ height: '100%', width: '100%', padding:'20px', background:'transparent', outline: 'none', border:'none', resize:'none', fontSize:'.9em'}} />
-                        }
+                                    <Text mt='1vh' color={totalSize > 10 * 1024 * 1024 ? 'red':'black'} mb='1vh' fontSize={'.9em'}>Tamaño del correo: <span style={{fontWeight:'500'}}> {formatFileSize(totalSize)}</span> {totalSize > 10 * 1024 * 1024 && '(sólo se permite enviar un máximo de 10 MB)'}</Text>
+                                </Box>
+                                <Box height={'1px'} bg='border_color' width={'100%'}/>
+                            </>}
+                            <ReactQuill placeholder={t('PlaceholderShortcuts')} modules={modules} onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)} ref={quillRef} theme="snow" value={htmlValue} onChange={handleChange} className={''} style={{ height: '100%', width:'100%', display: 'flex', flexDirection: 'column-reverse'}} />
+                            </>
+                            :
+                            <textarea ref={textAreaRef} placeholder={t('PlaceholderShortcuts')} value={textValue} onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)} onChange={(e) => {setTextValue(e.target.value); handleShortcuts(e.target.value, {index: e.target.selectionStart}) }}  style={{ width: '100%', padding:'15px', background:'transparent', outline: 'none', border:'none', resize:'none', fontSize:'.9em'}} />
+                            }
+                        </Flex>
 
-                        <Flex overflowX={'scroll'}  ref={sendPanelRef} maxW={'100%'} justifyContent={'space-between'} position={'absolute'} bottom={0} px='15px' py='10px' gap='15px' alignItems={'center'}  width={'100%'}>
+                        <Flex ref={sendPanelRef} maxW={'100%'} justifyContent={'space-between'} px='15px' py='10px' gap='15px' alignItems={'center'}  width={'100%'}>
                             <Flex gap='10px'> 
-                                {channel?.channel_type === 'email' && <IconButton aria-label='edit-text' bg='transparent' icon={<PiTextTBold/>} size='sm' onClick={() => {setEmojiVisible(false);setToolbarVisible(!toolbarVisible)}} />}
-                                <IconButton aria-label='edit-text' icon={<HiOutlinePaperClip/>} size='sm' bg='transparent' variant={'common'} onClick={() => document.getElementById('selectFile')?.click()}/>
-                                <IconButton ref={emojiButtonRef} aria-label='edit-text' icon={<HiOutlineEmojiHappy/>} size='sm'  bg='transparent'  variant={'common'} onClick={()=>{setToolbarVisible(false);setEmojiVisible(!emojiVisible)}}  />
+                                {channel?.channel_type === 'email' && <CustomToolbar quillRef={quillRef} activeFormatsRef={activeFormatsRef}/>}
+                                 <IconButton aria-label='edit-text' icon={<HiOutlinePaperClip/>} size='sm' bg='transparent' variant={'common'} onClick={() => document.getElementById('selectFile')?.click()}/>
+                                
+                                {/*<IconButton ref={emojiButtonRef} aria-label='edit-text' icon={<HiOutlineEmojiHappy/>} size='sm'  bg={emojiVisible ? 'gray_2':'transparent' } color={emojiVisible ? 'text_blue':black }  _hover={{color:'text_blue'}}  onClick={()=>{setToolbarVisible(false);setEmojiVisible(!emojiVisible)}}  />*/}
                             </Flex>
                             <Flex gap='10px' alignItems={'center'}  > 
                             
 
                                 <Box position={'relative'} >  
-                                    {showSendLike &&  
-                                        <Portal > 
-                                            <MotionBox bottom={window.innerHeight - (sendLikeButtonRef.current?.getBoundingClientRect().top || 0) + 10}  right={window.innerWidth - (sendLikeButtonRef.current?.getBoundingClientRect().right || 0)} ref={sendLikeBoxRef} initial={{ opacity: 0, marginBottom: -10}} animate={{ opacity: 1, marginBottom: 0 }}  exit={{ opacity: 0, marginBottom: -10}} transition={{ duration: '0.2',  ease: 'easeOut'}} 
-                                                fontSize={'.8em'} overflow={'hidden'} boxShadow={'0px 0px 10px rgba(0, 0, 0, 0.2)'} bg='white' zIndex={1000}   position={'absolute'} borderRadius={'.3rem'} borderWidth={'1px'} borderColor={'gray.300'}>
-                                            {Object.keys(statesMap).filter((state) => {if (channel?.channel_type !== 'voip') return state !== 'completed' && state !== 'ongoing';return true}).map((state, index) => (
-                                                (state !== 'closed' && state !== 'new') && 
-                                                    <Flex alignItems='center' key={`state-${index}`}  onClick={() => handleButtonClick(state as 'new' | 'open' | 'pending' | 'solved' | 'closed')} py='7px' px='20px' gap='10px' cursor={'pointer'} _hover={{bg:'brand.hover_gray'}} >
-                                                        <Box height={'10px'} width={'10px'} borderRadius={'.1rem'} bg={statesMap[state as 'new' | 'open' | 'pending' | 'solved' | 'closed'][1]}/>
-                                                        <Text fontWeight={'medium'} whiteSpace={'nowrap'}>{t(state)}</Text>
-                                                    </Flex>
-                                                ))}
-                                            </MotionBox>
-                                        </Portal > }
-
+                                
                                     <Flex cursor={'pointer'} gap='1px' >
-                                        <Flex  onClick={() => handleButtonClick('pending')} bg={'#222'} px='10px' py='5px' borderRadius={'.5em 0 0 .5em'} color='white' _hover={{bg:'blackAlpha.800'}}>
+                                        <Flex gap='10px'   alignItems={'center'} onClick={() => handleButtonClick('pending')} bg={'#222'} px='12px' py='5px' borderRadius={'.5em'} color='white' _hover={{bg:'blackAlpha.800'}}>
                                             {waitingSend?<LoadingIconButton/> :
-                                            <Flex alignItems={'center'} gap='10px'>
-                                                <Text whiteSpace={'nowrap'}  fontWeight={'medium'} fontSize={'.9em'} color='gray.200'>{t('SendLike')} <span style={{fontWeight:'500', color:'white'}}>{t(conversationData.status)}</span></Text>
+                                            <Flex alignItems={'center'} gap='10px' >
+                                                <Text whiteSpace={'nowrap'} fontWeight={'semibold'} >{t('Send')}</Text>
                                             </Flex>}
+                                            <Flex bg='rgba(256, 256, 256, 0.03)' alignItems={'center'} h='18px' fontSize={'.8em'} px='5px' borderColor={'white'} borderWidth={'1px'} borderRadius={'.3rem'}>
+                                                ⌘⏎
+                                            </Flex>
                                         </Flex>
-                                        <Flex ref={sendLikeButtonRef} onClick={() => {setShowSendLike(!showSendLike)}}bg={'#222'} justifyContent={'center'} px='7px'  borderRadius={'0 .5rem .5rem 0'} alignItems={'center'} color='white' _hover={{bg:'blackAlpha.800'}}>
-                                            <Icon className={ showSendLike? "rotate-icon-up" : "rotate-icon-down"} as={IoIosArrowDown} boxSize={'13px'}/>
-                                        </Flex>         
                                     </Flex>
-
                                 </Box>
                                 </Flex>
                         </Flex>
-                </Box>}
+                </Flex>}
                 </>
                 
-            </Box>
+            </Flex>
 
-            <Portal> 
-                <Box position={'fixed'} pointerEvents={emojiVisible?'auto':'none'} transition='opacity 0.2s ease-in-out' opacity={emojiVisible ? 1:0} bottom={`${window.innerHeight - (emojiButtonRef?.current?.getBoundingClientRect().top || 0) + 5}px`} left={`${emojiButtonRef?.current?.getBoundingClientRect().left}px`} zIndex={1000} ref={emojiBoxRef}> 
-                    <EmojiPicker onEmojiClick={handleEmojiClick} open={emojiVisible} allowExpandReactions={false}/>
-                </Box>
-            </Portal>
+             
         </Box>}
     </>)
 }
@@ -704,21 +658,76 @@ const AudioRecord = ({url}:{url:string}) => {
     }, [isDragging])
 
     return (
-        <Box maxW="500px" width={'100%'} p="4" bg="brand.gray_2" borderRadius="md" boxShadow="md" textAlign="center">
+        <Box maxW="500px" width={'100%'} p="4" bg="gray_2" borderRadius="md" boxShadow="md" textAlign="center">
             <audio ref={audioRef} src={url} onTimeUpdate={updateProgress} />
             
             <Flex gap='10px' alignItems={'center'}>
                 <Text fontWeight={'medium'} fontSize={'.9em'}>{formatTime(currentTime)}</Text>
-                <Box cursor='pointer' ref={progressBarRef} id="progress-bar" flex="1" height="8px" borderRadius="md" bg="gray.300" onClick={handleProgressClick} position="relative" onMouseDown={handleMouseDown}>
-                    <Box position="absolute" height="8px"borderRadius="md"bg="brand.text_blue"width={`${progress}%`}/>
+                <Box cursor='pointer' ref={progressBarRef} id="progress-bar" flex="1" height="8px" borderRadius="md" bg="border_color" onClick={handleProgressClick} position="relative" onMouseDown={handleMouseDown}>
+                    <Box position="absolute" height="8px"borderRadius="md"bg="text_blue"width={`${progress}%`}/>
                 </Box>
                 <Text fontWeight={'medium'} fontSize={'.9em'}>{formatTime(duration)}</Text>
             </Flex>
             <Flex gap='32px' justifyContent={'center'} mt='1vh' alignItems="center">
                 <IconButton icon={<FaDownload />} onClick={() => downloadFile(url)} isRound aria-label="Descargar MP3"  bg="transparent"  variant={'common'}/>
-                <IconButton icon={isPlaying ? <FaPause /> : <FaPlay />} onClick={togglePlay} aria-label="Reproducir/Pausar"  color='white' bg={'brand.text_blue'} _hover={{bg:'brand.text_blue'}} isRound size="lg"/>
+                <IconButton icon={isPlaying ? <FaPause /> : <FaPlay />} onClick={togglePlay} aria-label="Reproducir/Pausar"  color='white' bg={'text_blue'} _hover={{bg:'text_blue'}} isRound size="lg"/>
                 <IconButton icon={<FaRedo />} onClick={() => updateAudioProgress(0)} aria-label="Volver a reproducir" isRound bg="transparent"  variant={'common'}/>
             </Flex>
       </Box>
     )
 }
+
+const CustomToolbar = ({quillRef, activeFormatsRef}:{quillRef:any, activeFormatsRef:any}) => {
+    
+    const [activeFormats, setActiveFormats] = useState<any>(activeFormatsRef.current)
+    useEffect(() => {activeFormatsRef.current = activeFormats},[activeFormats])
+
+    useEffect(() => {
+
+            const editor = quillRef.current.getEditor()
+            const handleSelectionChange = () => {
+                const selection = editor.getSelection()
+                if (selection) {
+                    const formats = editor.getFormat(selection)
+                    setActiveFormats(formats)
+                }
+            }
+            editor.on('selection-change', handleSelectionChange)
+    
+            return () => {editor.off('selection-change', handleSelectionChange)}
+        
+    }, [quillRef])
+
+    const toolbarButtonRef = useRef<HTMLDivElement>(null)
+    const toolbarBoxRef = useRef<HTMLDivElement>(null)
+    const [toolbarVisible, setToolbarVisible] = useState<boolean>(false)
+    useOutsideClick({ref1:toolbarButtonRef, ref2:toolbarBoxRef,  onOutsideClick:setToolbarVisible })
+
+    const formatText = (format:string, value:any) => {
+        const editor = quillRef.current.getEditor()
+        editor.format(format, value)
+        const formats = editor.getFormat(editor.getSelection())
+        setActiveFormats(formats)
+    }
+    
+    return (
+    <Box position={'relative'} >
+        <Box ref={toolbarButtonRef}> 
+            <IconButton aria-label='edit-text' bg={toolbarVisible ? 'gray_1':'transparent' } color={toolbarVisible ? 'text_blue':'black' }   variant={'common'} icon={<PiTextTBold/>} size='sm' onClick={() => {setToolbarVisible(!toolbarVisible)}} />
+        </Box>
+        <Flex id="toolbar" ref={toolbarBoxRef} opacity={toolbarVisible ? 1:0} transform={`scale(${toolbarVisible ? 1: 0.95})`} pointerEvents={toolbarVisible?'auto':'none'} transition={'all .1s ease-in-out'}
+            style={{ transformOrigin: 'bottom left' }}  position='fixed' bg='white'  left={toolbarButtonRef?.current?.getBoundingClientRect()?.left || 0} bottom={`${window.innerHeight - (toolbarButtonRef?.current?.getBoundingClientRect()?.top || 0)+ 5}px`} zIndex={100000} >
+            
+            <Flex zIndex={1000} bg='white' alignItems={'center'} borderRadius={'.5rem'} p='5px' boxShadow='0 2px 5px rgba(0, 0, 0, 0.2)' >
+                <IconButton onClick={(e) => {e.stopPropagation() ;formatText('bold', !activeFormats.bold)}}  bg={activeFormats.bold ? 'gray_1' : 'transparent'} color={activeFormats.bold? 'rgba(59, 90, 246)' : 'black'}  
+                className="ql-bold"  _hover={{bg:activeFormats.bold ? 'gray_1' :'gray_2'}}  icon={<BsTypeBold/>} size='sm' aria-label="bold" />
+                <IconButton onClick={() => formatText('italic', !activeFormats.italic)} bg={activeFormats.italic ? 'gray_1' : 'transparent'} color={activeFormats.italic? 'rgba(59, 90, 246)' : 'black'}  
+                className="ql-italic" _hover={{bg:activeFormats.italic ? 'gray_1' :'gray_2'}} ml='5px' variant={'common'} icon={<BsTypeItalic/>} size='sm' aria-label="italic" />
+                <IconButton onClick={() => formatText('underline', !activeFormats.underline)}  bg={activeFormats.underline ? 'gray_1' : 'transparent'} color={activeFormats.underline? 'rgba(59, 90, 246)' : 'black'} 
+                className="ql-underline" ml='5px' variant={'common'} _hover={{bg:activeFormats.underline ? 'gray_1' :'gray_2'}}  icon={<BsTypeUnderline/>} size='sm' aria-label="underline" />
+                <IconButton  onClick={() => formatText('link', !activeFormats.link)}  bg={activeFormats.link ? 'gray_1' : 'transparent'} color={activeFormats.link? 'rgba(59, 90, 246)' : 'black'} 
+                className="ql-link" ml='5px' variant={'common'}  _hover={{bg:activeFormats.link ? 'gray_1' :'gray_2'}} icon={<FaLink/>} size='sm' aria-label="link" />
+            </Flex>
+        </Flex>
+        </Box>)
+    }

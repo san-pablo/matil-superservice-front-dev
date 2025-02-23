@@ -3,10 +3,11 @@
 */
 
 function timeAgo(timestamp: string | undefined, t: (key: string, options?: any) => string) {
-    const UTCDate = new Date();
-    const now = new Date(UTCDate.getTime() + UTCDate.getTimezoneOffset() * 60000)
-  
-    const past = timestamp !== undefined ? new Date(timestamp) : new Date()
+    
+    if (!timestamp) return '-'
+
+    const now = new Date()
+    const past = new Date(timestamp)
     const diff = now.getTime() - past.getTime()
   
     const seconds = diff / 1000
@@ -14,7 +15,7 @@ function timeAgo(timestamp: string | undefined, t: (key: string, options?: any) 
     const hours = minutes / 60
     const days = hours / 24
     const weeks = days / 7
-    const months = days / 30
+    const months = days / 30 
   
     if (seconds < 60) {
       return t('timeAgo.lessThanMinute')

@@ -95,15 +95,15 @@ const ActionsButton = ({items, view, section}:ButtonProps) =>{
         {showList &&  
             <Portal> 
                 <MotionBox   ref={boxRef} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.95 }}  transition={{ duration: '0.1', ease: 'easeOut'}}
-                    style={{ transformOrigin: 'top' }}  minW={buttonRef.current?.getBoundingClientRect().width } right={section === 'conversations'?'2vw':undefined} left={section === 'conversations'?undefined:(buttonRef.current?.getBoundingClientRect().left || 0)} mt='5px'  top={(buttonRef.current?.getBoundingClientRect().bottom ) + 'px'}  position='fixed' bg='white' p='5px'  zIndex={10000000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='gray.200' borderWidth='1px' borderRadius='.5rem'>
+                    style={{ transformOrigin: 'top' }}  minW={buttonRef.current?.getBoundingClientRect().width } right={section === 'conversations'?'2vw':undefined} left={section === 'conversations'?undefined:(buttonRef.current?.getBoundingClientRect().left || 0)} mt='5px'  top={(buttonRef.current?.getBoundingClientRect().bottom ) + 'px'}  position='fixed' bg='white' p='5px'  zIndex={10000000} boxShadow='0 0 10px 1px rgba(0, 0, 0, 0.15)' borderColor='border_color' borderWidth='1px' borderRadius='.5rem'>
                 
-                   <Flex fontSize={'.8em'} p='7px' gap='10px'  borderRadius='.5rem'  cursor={'pointer'} onClick={handleDownloadCSV}  alignItems={'center'} _hover={{bg:'brand.gray_2'}}>
-                        <Icon color='gray.600' as={FaFileCsv}/>
+                   <Flex fontSize={'.8em'} p='7px' gap='10px'  borderRadius='.5rem'  cursor={'pointer'} onClick={handleDownloadCSV}  alignItems={'center'} _hover={{bg:'gray_2'}}>
+                        <Icon color='text_gray' as={FaFileCsv}/>
                         <Text whiteSpace={'nowrap'}>{t('CSV')}</Text>
                     </Flex>
                     {section === 'contacts' &&
-                    <Flex fontSize={'.8em'} p='7px' gap='10px'  borderRadius='.5rem'  cursor={'pointer'} onClick={() => {}}  alignItems={'center'} _hover={{bg:'brand.gray_2'}}>
-                        <Icon color='gray.600' as={FaCloudArrowUp}/>
+                    <Flex fontSize={'.8em'} p='7px' gap='10px'  borderRadius='.5rem'  cursor={'pointer'} onClick={() => {}}  alignItems={'center'} _hover={{bg:'gray_2'}}>
+                        <Icon color='text_gray' as={FaCloudArrowUp}/>
                         <Text whiteSpace={'nowrap'}>{t('ImportData')}</Text>
                     </Flex>}
              

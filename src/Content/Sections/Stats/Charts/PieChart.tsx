@@ -20,7 +20,7 @@ interface PieChartProps {
 //CREATE A MUI THEME
 const muiTheme = createTheme({
   palette: { mode: 'light' },
-  typography: { fontFamily: 'Jost, sans-serif', fontSize: 12 }
+  typography: { fontFamily: 'Poppins, sans-serif', fontSize: 12 }
 })
 
 //HOOK TO OBSERVE RESIZES
@@ -64,7 +64,7 @@ const PieChartComponent = ({ configuration, xaxis, values }: PieChartProps) => {
       {labels.map((label, index) => (
         <Flex key={`label-${index}`} gap='10px' mt='10px'>
           <Box borderRadius={'3px'}  mt='5px'bg={colors[index % 6]} minW={'10px'} height={'10px'} width={'10px'}/>
-          <Text fontSize={'.8em'} color='gray.600' fontWeight={'medium'}>{label}</Text>
+          <Text fontSize={'.8em'} color='text_gray' fontWeight={'medium'}>{label}</Text>
         </Flex>
       ))}
     </Flex>

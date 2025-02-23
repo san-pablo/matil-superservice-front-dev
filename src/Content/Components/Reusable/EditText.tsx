@@ -3,14 +3,13 @@
 */
 
 //REACT
-import { useRef, useEffect, ChangeEvent, KeyboardEvent, useState } from 'react'
+import { useRef, useEffect, ChangeEvent, KeyboardEvent, useState, RefObject } from 'react'
 import DOMPurify from 'dompurify'
 //FRONT
-import { Box, Input, Icon, Spinner, Textarea } from '@chakra-ui/react'
+import { Box, Input, Icon, Spinner, Textarea, Flex } from '@chakra-ui/react'
 import '../styles.css'
 //ICONS
 import { IconType } from 'react-icons'
-import { FaMagnifyingGlass } from 'react-icons/fa6'
 import { RxCross2 } from 'react-icons/rx'
   
 //TYPING
@@ -35,13 +34,18 @@ interface EditTextProps {
     className?:string | null
     filterData?:(text:string) => void
     isTextArea?:boolean
+    showDeleteIcon?:boolean
+    isCustomSelect?:boolean
+    catchEnter?:boolean
+
 }
 
 //MAIN FUNCTION
-const EditText  = ({ value = '', setValue, hideInput = true, maxLength, regex, type='text', placeholder='', size='sm', searchInput=false, searchIcon, updateData=() => {}, isDisabled = false, nameInput=false, waitingResult = false, focusOnOpen = false, fontSize = '.8em', borderRadius = '.5rem', className = null, filterData, isTextArea}: EditTextProps) => {
+const EditText  = ({ value = '', setValue, hideInput = true, maxLength, regex, type='text', placeholder='', size='md', searchInput=false, searchIcon, updateData=() => {}, isDisabled = false, nameInput=false, waitingResult = false, focusOnOpen = false, fontSize = '.8em', borderRadius = '.5rem', className = null, filterData, isTextArea, showDeleteIcon = false, isCustomSelect = false, catchEnter = false}: EditTextProps) => {
     
     //INPUT REF
-    const inputRef = useRef<HTMLInputElement>(null)
+    const searchTextAreaRef = useRef<HTMLTextAreaElement>(null)
+    const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null)
     const [tempValue, setTempValue] = useState<string>(value || '');
     useEffect(() => {setTempValue(value || '')}, [value])
 
@@ -67,9 +71,22 @@ const EditText  = ({ value = '', setValue, hideInput = true, maxLength, regex, t
 
         return () => clearTimeout(timeoutId)
     }, [tempValue])
-    //FOCUS ON OPEN IF ITS ENABLED
-    useEffect(() => {if (focusOnOpen && inputRef.current) inputRef.current.focus()}, [])
 
+    //FOCUS ON OPEN IF ITS ENABLED
+    useEffect(() => {
+         const focusTextarea = () => {
+            if (searchTextAreaRef.current) {
+                searchTextAreaRef.current.focus()
+                searchTextAreaRef.current.setSelectionRange(value.length, value.length)
+            }
+            else if (inputRef.current) {
+                inputRef.current.focus()
+                inputRef.current.setSelectionRange(value.length, value.length)
+            }
+        }
+        if (focusOnOpen) focusTextarea()
+    }, [])
+    
     //SANITIZE AND CHANGE THE INPUT
     const handleInputChange = (event: ChangeEvent<HTMLTextAreaElement> | ChangeEvent<HTMLInputElement> ) => {
         if (!isDisabled) {
@@ -81,7 +98,17 @@ const EditText  = ({ value = '', setValue, hideInput = true, maxLength, regex, t
     }
 
     //BLUR ON ENTER KEY PRESS
-    const handleKeyPress = (event:KeyboardEvent<HTMLInputElement>) => {if (event.key === 'Enter' && inputRef.current) inputRef.current.blur()}
+    const handleKeyPress = (event:KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        
+        if (!searchInput) {
+            if (catchEnter) event.stopPropagation()
+            if (event.key === 'Enter' && inputRef.current) inputRef.current.blur()
+        }
+        else {
+            if (event.key === 'Enter' && catchEnter) {event.preventDefault();event.stopPropagation()}
+            else if (event.key === ' ') event.stopPropagation()
+        }
+    }
 
     //FRONT
     return (
@@ -97,7 +124,7 @@ const EditText  = ({ value = '', setValue, hideInput = true, maxLength, regex, t
             maxH={'300px'}
             rows={1}
             resize={'none'}
-            borderColor={(regex && value !== undefined) && !regex.test(value) && value !== '' ? 'red':hideInput?'transparent':'gray.200'}
+            borderColor={(regex && value !== undefined) && !regex.test(value) && value !== '' ? 'red':hideInput?'transparent':'border_color'}
             _hover={{ border: ((regex && value) ? regex.test(value) : true)?'1px solid #CBD5E0':'2px solid red' }}
             px='7px'
             fontWeight={nameInput?'medium':'normal'}
@@ -109,32 +136,33 @@ const EditText  = ({ value = '', setValue, hideInput = true, maxLength, regex, t
             sx={{'&:focus:hover': {border: '1px solid rgb(59, 90, 246)'}}} 
             borderRadius={borderRadius}
             fontSize={fontSize}
-            bg={isDisabled?'brand.gray_1':'transparent'}
+            bg={isDisabled?'gray_1':'transparent'}
             onChange={handleInputChange}
-            isDisabled={isDisabled}/>
+            isDisabled={isDisabled}
+            onKeyDown={handleKeyPress}
+            />
     :
     <>
     {className ?  
-        <textarea value={tempValue}className={className} onChange={handleInputChange} placeholder={placeholder} rows={1} onBlur={() => {if ((regex && value) ? regex.test(value) : true) {updateData(tempValue as string)} }} style={{borderColor:(regex && value !== undefined) && !regex.test(value) && value !== '' ? 'red':''}}/>
-
+        <textarea ref={searchTextAreaRef} value={tempValue}className={className} onChange={handleInputChange} placeholder={placeholder} rows={1} onBlur={() => {if ((regex && value) ? regex.test(value) : true) {updateData(tempValue as string)} }} style={{borderColor:(regex && value !== undefined) && !regex.test(value) && value !== '' ? 'red':''}}/>
     :<>   
         {searchInput ?    
-        <Box  position="relative" width={'100%'} alignItems={'center'} >
-            <Box left="0" top="0" bottom="0" px='8px'  color='gray.600'  position='absolute'>
-                {waitingResult ?<Spinner mt='10px' size='xs'/> :<Icon  as={searchIcon ? searchIcon:FaMagnifyingGlass} height='13px' mt='9px' color='gray.600' cursor={'pointer'} />}
-            </Box> 
-            <Input pl='40px' placeholder={placeholder} size='sm' bg='transparent' outline='none' borderBottom="1px solid" borderColor={'gray.200'} value={tempValue} onChange={handleInputChange}/>
-            {(value && value !== '') && <Icon mt='8px' ml='-22px' zIndex={100} as={RxCross2} position='absolute' color='gray.600' cursor={'pointer'} onClick={() => setTempValue('')} />}
-        </Box> :
+        <Flex  position="relative" h={isCustomSelect?fontSize:'auto'} overflow={'auto'} width={'100%'}alignItems={'center'} >
+            {searchIcon && <Box left="0" top="0%"  px='8px' h='60px'   zIndex={10000} color='text_gray'  position='absolute'>
+                {waitingResult ?<Spinner mt='10px' size='xs'/> :<Icon  zIndex={10000} as={searchIcon} height='13px'  color='text_gray' cursor={'pointer'} />}
+            </Box>}
+            <textarea rows={1} ref={searchTextAreaRef} placeholder={placeholder}  onKeyDown={handleKeyPress} style={{display:'block',   marginLeft:searchIcon?'30px':'',   caretColor: 'black', resize:'none', padding:'0', lineHeight:2.5, fontSize, borderColor:'transparent', border:'none', outline:'none', background:'transparent' }} value={tempValue} onChange={handleInputChange}/>
+            {showDeleteIcon && <Icon right={0}  opacity={(value && value !== '') ? 1:0} transform={`scale(${(value && value !== '') ?1:0.5})`} transition={'opacity .1s ease-in-out, transform .1s ease-in-out'} zIndex={100} as={RxCross2} position='absolute' color='text_gray' cursor={'pointer'} onClick={() => {if ((value && value !== '')) setValue('')}} />}
+        </Flex> : 
         <Box width={'100%'}>
             
             <Input
-                ref={inputRef}
+                ref={inputRef as RefObject<HTMLInputElement>}
                 placeholder={placeholder}
                 type={type?type:'text'}
                 size={size}
-                height={'32px'}
-                borderColor={(regex && value !== undefined) && !regex.test(value) && value !== '' ? 'red':hideInput?'transparent':'gray.200'}
+                height={size === 'sm' ? '24px':'28px'}
+                borderColor={(regex && value !== undefined) && !regex.test(value) && value !== '' ? 'red':hideInput?'transparent':'border_color'}
                 _hover={{ border: ((regex && value) ? regex.test(value) : true)?'1px solid #CBD5E0':'2px solid red' }}
                 px='7px'
                 fontWeight={nameInput?'medium':'normal'}
@@ -146,7 +174,7 @@ const EditText  = ({ value = '', setValue, hideInput = true, maxLength, regex, t
                 sx={{'&:focus:hover': {border: '1px solid rgb(59, 90, 246)'}}} 
                 borderRadius={borderRadius}
                 fontSize={fontSize}
-                bg={isDisabled?'brand.gray_1':'transparent'}
+                bg={isDisabled?'gray_1':'transparent'}
                 onChange={handleInputChange}
                 onKeyDown={handleKeyPress}/>
         </Box>}

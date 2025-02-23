@@ -7,7 +7,7 @@ import { useAuth0 } from '@auth0/auth0-react'
 //FETCH DATA
 import fetchData from "../../../API/fetchData"
 //FRONT
-import { Flex, Text, Box, Button, Skeleton, IconButton, Textarea, Icon, SliderMark, Slider, SliderFilledTrack, SliderTrack, SliderThumb } from "@chakra-ui/react"
+import { Flex, Text, Box, Button, Skeleton, Textarea, Icon, SliderMark, Slider, SliderFilledTrack, SliderTrack, SliderThumb } from "@chakra-ui/react"
 //COMPONENTS
 import CodeMirror from "@uiw/react-codemirror"
 import { html } from "@codemirror/lang-html"
@@ -75,7 +75,7 @@ function Automations ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
     //FETCH INITIAL DATA
     useEffect(() => {
         const fetchTriggerData = async () => {
-            const response  = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/automations`, getAccessTokenSilently, setValue:setAutomationData, auth})
+            const response  = await fetchData({endpoint:`${auth.authData.organizationId}/settings/automations`, getAccessTokenSilently, setValue:setAutomationData, auth})
         }
         document.title = `${t('Settings')} - ${t('Automations')} - ${auth.authData.organizationName} - Matil`
         fetchTriggerData()
@@ -92,7 +92,7 @@ function Automations ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
         const deleteTrigger= async () => {
             setWaitingDelete(true)
             const newTriggers = automationData?.filter((_, index) => index !== automationToDeleteIndex)
-            const response = await fetchData({endpoint: `${auth.authData.organizationId}/admin/settings/automations`,getAccessTokenSilently, requestForm: newTriggers, method: 'put', setWaiting: setWaitingDelete, auth, toastMessages: {works: t('CorrectDeletedAutomation'), failed: t('FailedDeletedAutomation')}})
+            const response = await fetchData({endpoint: `${auth.authData.organizationId}/settings/automations`,getAccessTokenSilently, requestForm: newTriggers, method: 'put', setWaiting: setWaitingDelete, auth, toastMessages: {works: t('CorrectDeletedAutomation'), failed: t('FailedDeletedAutomation')}})
             if (response?.status === 200) {
                 setAutomationData(newTriggers as ActionDataType[])
                 setAutomationToDeleteIndex(null)
@@ -103,10 +103,10 @@ function Automations ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
         return(<>
             <Box p='20px' > 
                 <Text fontWeight={'medium'} fontSize={'1.2em'}>{t('ConfirmDelete')}</Text>
-                <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='gray.300'/>
+                <Box width={'100%'} mt='1vh' mb='2vh' height={'1px'} bg='border_color'/>
                 <Text >{parseMessageToBold(t('ConfirmDeleteTrigger', {name:automationData?.[automationToDeleteIndex as number].name}))}</Text>
             </Box>
-            <Flex bg='gray.50' p='20px' borderTopColor={'gray.200'} borderTopWidth={'1px'} gap='10px' flexDir={'row-reverse'}>
+            <Flex bg='gray.50' p='20px' borderTopColor={'border_color'} borderTopWidth={'1px'} gap='10px' flexDir={'row-reverse'}>
                 <Button  size='sm' variant={'delete'} onClick={deleteTrigger}>{waitingDelete?<LoadingIconButton/>:t('Delete')}</Button>
                 <Button  size='sm' variant={'common'}onClick={() => setAutomationToDeleteIndex(null)}>{t('Cancel')}</Button>
             </Flex>
@@ -129,12 +129,12 @@ function Automations ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
             <Flex justifyContent={'space-between'} alignItems={'end'}> 
                 <Box> 
                     <Text fontSize={'1.4em'} fontWeight={'medium'}>{t('Automations')}</Text>
-                    <Text color='gray.600' fontSize={'.9em'}>{t('AutomationsDes')}</Text>
+                    <Text color='text_gray' fontSize={'.9em'}>{t('AutomationsDes')}</Text>
                 </Box>
                 <Button size='sm' variant={'main'} leftIcon={<FaPlus/>} onClick={() => {setSelectedIndex(-1)}}>{t('CreateAutomation')}</Button>
 
             </Flex>
-            <Box width='100%' bg='gray.300' height='1px' mt='2vh' mb='3vh'/>
+            <Box width='100%' bg='border_color' height='1px' mt='2vh' mb='3vh'/>
             
             <Box width={'350px'}> 
                 <EditText value={text} setValue={setText} searchInput={true}/>
@@ -147,7 +147,7 @@ function Automations ({scrollRef}:{scrollRef:RefObject<HTMLDivElement>}) {
             
             </Flex>
             <Skeleton isLoaded={automationData !== null}> 
-                <Table data={filteredAutomationData} CellStyle={CellStyle} columnsMap={{'name':[t('Name'), 150], 'description':[t('Description'), 350]}}  excludedKeys={['all_conditions', 'any_conditions', 'actions']} noDataMessage={t('NoAutomations')} onClickRow={(row, index) => setSelectedIndex(index)} deletableFunction={(row:any, index:number) => setAutomationToDeleteIndex(index)}/>  
+                <Table data={filteredAutomationData} CellStyle={CellStyle} columnsMap={{'name':[t('Name'), 150], 'description':[t('Description'), 350]}}  excludedKeys={['all_conditions', 'any_conditions', 'actions']} noDataMessage={t('NoAutomations')} onClickRow={(row, index) => setSelectedIndex(index)} />  
             </Skeleton>
         </Box>
         </>}
@@ -179,7 +179,7 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
             updatedAutomations[selectedIndex] = currentAutomationData
             newAutomations = updatedAutomations
         }
-        const response = await fetchData({endpoint:`${auth.authData.organizationId}/admin/settings/automations`,getAccessTokenSilently, requestForm:newAutomations, method:'put', setWaiting:setWaitingSend, auth, toastMessages:{works:selectedIndex === -1?t('CorrectCreatedAutomation'):t('CorrectUpdatedAutomation'), failed: selectedIndex === -1?t('FailedCreatedAutomation'):t('FailedUpdatedAutomation')}})
+        const response = await fetchData({endpoint:`${auth.authData.organizationId}/settings/automations`,getAccessTokenSilently, requestForm:newAutomations, method:'put', setWaiting:setWaitingSend, auth, toastMessages:{works:selectedIndex === -1?t('CorrectCreatedAutomation'):t('CorrectUpdatedAutomation'), failed: selectedIndex === -1?t('FailedCreatedAutomation'):t('FailedUpdatedAutomation')}})
         if (response?.status === 200) {
             setSelectedIndex(-2)
             setAllTriggers(newAutomations)
@@ -245,14 +245,14 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
 
             <Flex alignItems={'end'} justifyContent={'space-between'}>
                 <Flex fontWeight={'medium'} fontSize={'1.4em'} gap='10px' alignItems={'center'}> 
-                    <Text onClick={() => setSelectedIndex(-2)}  color='brand.text_blue' cursor={'pointer'}>{t('Automations')}</Text>
+                    <Text onClick={() => setSelectedIndex(-2)}  color='text_blue' cursor={'pointer'}>{t('Automations')}</Text>
                     <Icon as={IoIosArrowForward}/>
                     <Text>{currentAutomationData.name}</Text>
                 </Flex>
                 {selectedIndex === -1 && <Button variant={'main'} onClick={sendTrigger} size={'sm'} leftIcon={<FaPlus/>}>{waitingSend ? <LoadingIconButton/>: t('Create')}</Button>}
 
             </Flex>
-            <Box width='100%' bg='gray.300' height='1px' mt='2vh'/>
+            <Box width='100%' bg='border_color' height='1px' mt='2vh'/>
 
             <Box flex='1' overflow={'scroll'} pt='3vh'> 
                 <Text mb='.5vh' fontSize={'1.1em'}  fontWeight={'medium'}>{t('Name')}</Text>
@@ -261,26 +261,26 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
                 </Box>
 
                 <Text fontSize={'1.1em'} mt='3vh' mb='.5vh'  fontWeight={'medium'}>{t('Description')}</Text>
-                <Textarea maxW={'500px'} resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('Description')}...`} maxH='300px' value={currentAutomationData.description} onChange={(e) => setCurrentAutomationData((prev) => ({...prev, description:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "brand.text_blue", borderWidth: "2px"}}/>
+                <Textarea maxW={'500px'} resize={'none'} maxLength={2000} height={'auto'} placeholder={`${t('Description')}...`} maxH='300px' value={currentAutomationData.description} onChange={(e) => setCurrentAutomationData((prev) => ({...prev, description:e.target.value}))} p='8px'  borderRadius='.5rem' fontSize={'.9em'}  _hover={{border: "1px solid #CBD5E0" }} _focus={{p:'7px',borderColor: "text_blue", borderWidth: "2px"}}/>
 
             
                 <Text fontWeight={'medium'} fontSize={'1.1em'} mt='3vh'>{t('Conditions')}</Text>
-                <Text fontSize={'.8em'} color='gray.600'>{t('ConditionsDes')}</Text>
+                <Text fontSize={'.8em'} color='text_gray'>{t('ConditionsDes')}</Text>
 
-                <FilterManager filters={currentAutomationData.filters} setFilters={(filters) => setCurrentAutomationData(prev => ({...prev, filters}))} operationTypesDict={operationTypesDict} typesMap={typesMap} scrollRef={scrollRef} />
+                <FilterManager filters={currentAutomationData.filters} setFilters={(filters) => setCurrentAutomationData(prev => ({...prev, filters}))} scrollRef={scrollRef} />
 
                 <Text fontWeight={'medium'} fontSize={'1.1em'} mt='3vh'>{t('ActionsToDo')}</Text>
-                <Text fontSize={'.8em'} color='gray.600'>{t('ActionsToDoDes')}</Text>
+                <Text fontSize={'.8em'} color='text_gray'>{t('ActionsToDoDes')}</Text>
 
                 {currentAutomationData.actions.map((action, index) => (
-                    <Box shadow='md' maxW={'1000px'} mt='2vh'  borderColor={'gray.200'} borderWidth={'1px'} p='15px' borderRadius={'.5rem'} key={`arg-${index}`}>
+                    <Box shadow='md' maxW={'1000px'} mt='2vh'  borderColor={'border_color'} borderWidth={'1px'} p='15px' borderRadius={'.5rem'} key={`arg-${index}`}>
 
                         <Flex alignItems={'center'} justifyContent={'space-between'}> 
                             <Text mb='.3vh' fontSize={'.9em'} fontWeight={'medium'}>{t('ActionType')}</Text>
                             <Button size='xs' leftIcon={<HiTrash/>} variant={'delete'} onClick={() => removeActionsElement( index)}>{t('Delete')}</Button>
                         </Flex>
                         <Box maxW='350px' mb='2vh'> 
-                            <CustomSelect containerRef={scrollRef} hide={false} selectedItem={action.type} setSelectedItem={(value) => {editActions(index, value)}} options={actionsList} labelsMap={actionsMap} />
+                            <CustomSelect containerRef={scrollRef} hide={false} selectedItem={action.type} setSelectedItem={(value) => {editActions(index, value as any)}} options={actionsList} labelsMap={actionsMap} />
                         </Box>
                         {(() => {
                             switch (action.type){
@@ -289,7 +289,7 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
                                         <Text mb='.5vh' fontSize={'.9em'} fontWeight={'medium'}>{t('EditTemplate')}</Text>
                                         <CodeMirror value={action.arguments.content} height="100%" maxHeight={`300px`} extensions={[html()]} onChange={(value) => editActions(index, 'email_csat', 'content', value)} theme={oneDark}/>
                                         <Text mt='3vh' mb='.5vh' fontSize={'.9em'} fontWeight={'medium'}>{t('CSATProbability')}</Text>
-                                        <Text fontSize={'.8em'} color='gray.600'>{t('CSATProbabilityDes')}</Text>
+                                        <Text fontSize={'.8em'} color='text_gray'>{t('CSATProbabilityDes')}</Text>
                                         <Slider value={action.arguments.probability} mb='1vh' mt='5vh' aria-label='slider-ex' onChange={(value) => editActions(index, 'email_csat', 'probability', value)}>
                                             <SliderMark ml='-4' value={25} mt='1vh' fontWeight={'medium'}>25%</SliderMark>
                                             <SliderMark ml='-4'value={50}  mt='1vh'  fontWeight={'medium'}>50%</SliderMark>
@@ -298,7 +298,7 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
                                                 {action.arguments.probability} %
                                             </SliderMark>
                                             <SliderTrack>
-                                                <SliderFilledTrack  bg="brand.text_blue" />
+                                                <SliderFilledTrack  bg="text_blue" />
                                             </SliderTrack>
                                             <SliderThumb />
                                         </Slider>
@@ -316,7 +316,7 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
                                         <EditText placeholder={t('CTAPlaceholder')}  value={action.arguments.cta} setValue={(value) => editActions( index, 'whatsapp_csat', 'cta', value)} hideInput={false}/>
                                     </Box>
                                         <Text mt='3vh' mb='.5vh' fontSize={'.9em'} fontWeight={'medium'}>{t('CSATProbability')}</Text>
-                                        <Text fontSize={'.8em'} color='gray.600'>{t('CSATProbabilityDes')}</Text>
+                                        <Text fontSize={'.8em'} color='text_gray'>{t('CSATProbabilityDes')}</Text>
                                         <Slider  value={action.arguments.probability} width={'100%'}  mb='1vh' mt='5vh' aria-label='slider-ex-1' onChange={(value) => editActions(index, 'whatsapp_csat', 'probability', value)}>
                                             <SliderMark ml='-4' value={25} mt='1vh' fontWeight={'medium'}>25%</SliderMark>
                                             <SliderMark ml='-4'value={50} mt='1vh'  fontWeight={'medium'}>50%</SliderMark>
@@ -325,7 +325,7 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
                                                 {action.arguments.probability} %
                                             </SliderMark>
                                             <SliderTrack>
-                                                <SliderFilledTrack  bg="brand.text_blue"/>
+                                                <SliderFilledTrack  bg="text_blue"/>
                                             </SliderTrack>
                                             <SliderThumb />
                                         </Slider>
@@ -333,7 +333,7 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
                                 case 'webchat_csat':
                                     return <>
                                         <Text mt='3vh' mb='.5vh' fontSize={'.9em'} fontWeight={'medium'}>{t('CSATProbability')}</Text>
-                                        <Text fontSize={'.8em'} color='gray.600'>{t('CSATProbabilityDes')}</Text>
+                                        <Text fontSize={'.8em'} color='text_gray'>{t('CSATProbabilityDes')}</Text>
                                         <Slider  value={action.arguments.probability} mb='1vh' mt='5vh' aria-label='slider-ex-2' onChange={(value) => editActions(index, 'webchat_csat', 'probability', value)}>
                                             <SliderMark ml='-4'value={25} mt='1vh' fontWeight={'medium'}>25%</SliderMark>
                                             <SliderMark ml='-4'value={50} mt='1vh'  fontWeight={'medium'}>50%</SliderMark>
@@ -342,7 +342,7 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
                                                 {action.arguments.probability} %
                                             </SliderMark>
                                             <SliderTrack>
-                                                <SliderFilledTrack  bg="brand.text_blue"/>
+                                                <SliderFilledTrack  bg="text_blue"/>
                                             </SliderTrack>
                                             <SliderThumb />
                                         </Slider>
@@ -364,7 +364,7 @@ const EditAutomation= ({triggerData, selectedIndex, setSelectedIndex, allTrigger
                                         }
                                         const typesMap2 = {'bool':['set'], 'int':['set', 'add', 'substract'], 'float':['set', 'add', 'substract'],'str': ['set', 'concatenate'], 'timestamp':['set', 'add', 'substract']}
 
-                                        return (<EditStructure data={action.arguments} setData={(newCondition) => {editActions(index, 'motherstructure_update', 'new', newCondition)}} scrollRef={scrollRef} operationTypesDict={operationTypesDict} typesMap={typesMap2}/>)
+                                        //return (<EditStructure data={action.arguments} setData={(newCondition) => {editActions(index, 'motherstructure_update', 'new', newCondition)}} scrollRef={scrollRef} operationTypesDict={operationTypesDict} typesMap={typesMap2}/>)
                                     }
                             }
                         })()}

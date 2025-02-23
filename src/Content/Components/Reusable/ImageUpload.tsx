@@ -76,15 +76,15 @@ const ImageUpload = ({ id, initialImage, onImageUpdate, maxImageSize = 100}:Imag
     //FRONT
     return (<> 
         <input type="file" accept="image/jpeg, image/png, image/gif, image/svg+xml" onChange={handleImageChange} style={{display:'none'}} id={`image-upload-${id}`} />
-        <Flex onClick={handleContainerClick} width="100%" alignItems="center" justifyContent="space-between" height="100px" borderRadius=".5em"   bg='brand.gray_2' borderColor={'gray.200'} borderWidth={'1px'} cursor="pointer" position="relative" p='20px'>
-          {!image && <Text textAlign={'center'} fontSize={'.9em'} color='brand.text_blue'>{t('DragImage')}</Text>}
+        <Flex onClick={handleContainerClick} width="100%" alignItems="center" justifyContent="space-between" height="100px" borderRadius=".5em"   bg='gray_2' borderColor={'border_color'} borderWidth={'1px'} cursor="pointer" position="relative" p='20px'>
+          {!image && <Text textAlign={'center'} fontSize={'.9em'} color='text_blue'>{t('DragImage')}</Text>}
           {image && (
             <>
               <Flex gap={'20px'}>
                 <Image src={imagePreview || ''} alt="Preview" boxSize="50px" objectFit="cover"  />
                 <Box>
-                    <Text fontSize=".9em" fontWeight={'medium'} color='gray.600'>{typeof(image) === 'string' ?'MATIL.png':image.name}</Text>
-                    <Text fontSize=".8em" color='gray.600'>{((typeof(image) === 'string' ?2200:image.size) / 1024).toLocaleString('es-ES', {minimumFractionDigits:0 ,maximumFractionDigits:2})} KB</Text>
+                    <Text fontSize=".9em" fontWeight={'medium'} color='text_gray'>{typeof(image) === 'string' ?'MATIL.png':image.name}</Text>
+                    <Text fontSize=".8em" color='text_gray'>{((typeof(image) === 'string' ?2200:image.size) / 1024).toLocaleString('es-ES', {minimumFractionDigits:0 ,maximumFractionDigits:2})} KB</Text>
                 </Box>
               </Flex>
               <IconButton aria-label="Remove image" icon={<RxCross2  size='20px'/>} variant={'common'} size="sm" border='none' bg='transparent' onClick={handleRemoveImage} />

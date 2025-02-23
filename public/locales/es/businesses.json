@@ -34,7 +34,14 @@
     "anymoment":"en cualquier momento",
     "Businesses":"Empresas de contacto",
     "tags":"Etiquetas",
-    "domain":"Dominio"
-
-
+    "domain":"Dominio",
+    "CustomAttributes":"Campos personalizados",
+    "Block":"Bloquear",
+    "Delete":"Eliminar",
+    "Info":"Datos",
+    "DeleteBusiness":"Eliminar le empresa de contacto {{name}}",
+    "DeleteBusinessDes":"Esta acción no se puede deshacer. Se eliminará la empresa de contacto y todos sus clientes.",
+    "BlockBusiness":"Bloquear la empresa {{name}}",
+    "BlockDes":"Al bloquear la empresa, dejarán de llegar mensajes de todos los clientes asociados a ésta. Puedes desbloquearla cuando quieras."
+    
 }

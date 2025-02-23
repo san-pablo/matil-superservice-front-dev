@@ -2,7 +2,7 @@
 import { useState, useRef, CSSProperties } from "react"
 import { useTranslation } from "react-i18next"
  //FRONT
-import { Box, Input, InputGroup, InputRightElement, Icon, Portal, chakra, shouldForwardProp, Flex, IconButton, Text } from "@chakra-ui/react"
+import { Icon, Portal, chakra, shouldForwardProp, Flex, IconButton, Text } from "@chakra-ui/react"
 import "../styles.css"
 //COMPONENTS
 import Calendar from 'react-calendar'
@@ -23,7 +23,6 @@ const DateRangePicker = ({ dateRangeString, onDateChange }: { dateRangeString: s
 
     //CONSTANTS
     const { i18n } = useTranslation()
-    const { t } = useTranslation('settings')
     const t_formats = useTranslation('formats').t
  
     //REFERENCE DAY
@@ -67,35 +66,35 @@ const DateRangePicker = ({ dateRangeString, onDateChange }: { dateRangeString: s
     const endBoxRef = useRef<HTMLDivElement>(null)
     const [endCalendarOpen, setEndCalendarOpen] = useState<boolean>(false)
     const [endBoxStyle, setEndBoxStyle] = useState<CSSProperties>({})
-    determineBoxStyle({buttonRef:endButtonRef, setBoxStyle:setEndBoxStyle, boxPosition:'right', changeVariable:endCalendarOpen})
+    determineBoxStyle({buttonRef:endButtonRef, setBoxStyle:setEndBoxStyle,  changeVariable:endCalendarOpen})
     useOutsideClick({ref1:endButtonRef, ref2:endBoxRef, onOutsideClick:setEndCalendarOpen})
- 
+  
     return (
-      <Box display="flex" gap="4">
+      <>
         <AnimatePresence> 
           {endCalendarOpen && 
             <Portal> 
                 <MotionBox id="custom-portal"  ref={endBoxRef} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}    exit={{ opacity: 0, scale: 0.95 }}  transition={{ duration: '0.1', ease: 'easeOut'}}
-                    style={{ transformOrigin: endBoxStyle.top ? 'top right':'bottom right' }} mt='10px' mb='10px' bg='white' boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.15)'} borderRadius={'.5rem'} zIndex={100000000} overflow={'scroll'} left={endBoxStyle.left  || undefined} right={endBoxStyle.right  || undefined} top={endBoxStyle.top || undefined}  bottom={endBoxStyle.bottom ||undefined} position='fixed' >
+                    style={{ transformOrigin: endBoxStyle.top ? 'top right':'bottom right' }}w='300px'  mt='33px' mb='33px' bg='white' boxShadow={'0 0 10px 1px rgba(0, 0, 0, 0.15)'} borderRadius={'.5rem'} zIndex={100000000} overflow={'scroll'} left={endBoxStyle.left  || undefined} right={endBoxStyle.right  || undefined} top={endBoxStyle.top || undefined}  bottom={endBoxStyle.bottom ||undefined} position='fixed' >
                         <Flex alignItems={'center'} p='10px' justifyContent={'space-between'}>
-                            <IconButton isRound onClick={handlePreviousMonth} variant={'common'} size={'sm'} bg='transparent'  aria-label="month-back" icon={<IoIosArrowBack/>}/>
-                            <Text>{t_formats(`months.${activeStartDate.getMonth()}`)} {activeStartDate.getFullYear()}</Text>
-                            <IconButton isRound onClick={handleNextMonth}  variant={'common'} size={'sm'} bg='transparent'aria-label="month-forward" icon={<IoIosArrowForward/>}/>
+                            <IconButton isRound onClick={handlePreviousMonth} variant={'common'} size={'xs'} bg='transparent'  aria-label="month-back" icon={<IoIosArrowBack/>}/>
+                            <Text fontSize={'.9em'}>{t_formats(`months.${activeStartDate.getMonth()}`)} {activeStartDate.getFullYear()}</Text>
+                            <IconButton isRound onClick={handleNextMonth}  variant={'common'} size={'xs'} bg='transparent'aria-label="month-forward" icon={<IoIosArrowForward/>}/>
                         </Flex>
                     <Calendar onChange={handleCalendarChange}   showNavigation={false}  allowPartialRange goToRangeStartOnSelect={false} activeStartDate={activeStartDate} locale={i18n.language} className={'react-calendar-2'} selectRange/>
                 </MotionBox>
             </Portal>
             }
           </AnimatePresence>
-          <InputGroup position={'relative'} width={'300px'}>
-              <Box ref={endButtonRef}  onClick={() => setEndCalendarOpen(true)}> 
-                  <Input fontSize={'1em'} userSelect="none" height={'37px'}  placeholder={t('EndDate')} value={`${dateRange[0] ? dateRange[0].toLocaleDateString() : ""} - ${dateRange[1] ? dateRange[1].toLocaleDateString() : ""}`} readOnly cursor="pointer" px='7px' _focus={{ px:'6px', borderColor: "brand.text_blue", borderWidth: "2px" }}/>
-              </Box>
-              <InputRightElement pointerEvents="none" right={'9px'} mt='-2px' position={'absolute'}  >
-                  <Icon as={FaCalendar} color={"gray.600"} />
-              </InputRightElement>
-        </InputGroup>
-      </Box>
+        
+          <Flex justifyContent={'space-between'} ref={endButtonRef}  alignItems={'center'} borderRadius={'.5rem'} onClick={() => setEndCalendarOpen(true)} fontSize={'.8em'} userSelect="none" height={'28px'} boxShadow={endCalendarOpen ? '0 0 0 2px rgb(59, 90, 246)':''} borderWidth={'1px'} borderColor={endCalendarOpen ? 'text_blue':'border_color'} w='100%' cursor="pointer" px='7px' transition={'border-color .2s ease-in-out, box-shadow .2s ease-in-out'}>
+            <Text>{`${dateRange[0] ? dateRange[0].toLocaleDateString() : ""} - ${dateRange[1] ? dateRange[1].toLocaleDateString() : ""}`}</Text>
+            <Icon boxSize={'12px'} color={endCalendarOpen?'text_blue':'text_gray'} as={FaCalendar}/>
+          </Flex>
+ 
+ 
+  
+      </>
     )
 }
 

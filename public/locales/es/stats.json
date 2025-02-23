@@ -9,15 +9,18 @@
     "CorrectCreatedReport":"Informe creado con éxito",
     "FailedCreatedReport":"Hubo un error al crear el informe",
     "Actions":"Acciones",
+    "CreateReportDes":"Crea un reporte personalizado, para visualizar las métricas que más te interesen.",
     "Delete":"Eliminar",
     "Double":"Duplicar",
     "DeleteReport":"Eliminar informe",
-    "DeleteReportAnswer":"¿Estás segiro de que deseas eliminar el informe/{ {{name}}}/?",
+    "DeleteReportName":"Eliminar el reporte {{name}}",
     "CorrectDeletedReport":"Informe eliminado con éxito",
+    "DeleteReportDes":"Esta acción no se puede deshacer. Se perderán todos los gráficos creados.",
     "FailedDeletedReport":"Hubo un error al eliminar el informe",
     "NewChart":"Nuevo gráfico",
     "DeleteChart":"Eliminar gráfico",
-    "DeleteChartAnswer":"¿Estás seguro de que desea eliminar el gráfico/{ {{name}}}/?",
+    "DeleteChartName":"Eliminar el gráfico {{name}}",
+    "DeleteChartDes":"Esta acción no se puede deshacer. El gráfico desaparecerá del reporte y se perderán todos los cambios.",
     "Close":"Cerrar",
     "CorrectDeletedChart":"Gráfico elmiminado con éxito",
     "FailedDeletedChart":"Hubo un error al eliminar el gráfico",
@@ -213,6 +216,12 @@
     "ScoreDistribution":"Distribución de las Puntuaciones",
     "ScoreOverTime":"Evolución de las Puntuaciones CSAT",
 
-    "Created_by":"Creado por: {{user}}" 
+    "Created_by":"Creado por: {{user}}" ,
+    "NoCoincidence":"No hay coincidencias",
+    "Search":"Buscar",
+    "BorderRadius":"Radio del borde",
+    "BorderRadiusDes":"Radio de curvatura que tendrña el borde de las barras"
+
+    
 
 }

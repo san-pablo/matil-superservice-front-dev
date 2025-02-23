@@ -23,19 +23,13 @@ export interface userInfo {
     organizations: Organization[]
 }
 
+export type sectionsType = 'conversations' | 'persons' | 'businesses' | 'functions' | 'reports' | 'sources'
+
 //VIEWS DEFINITION 
 export type FilterType = {logic:'AND' | 'OR', groups:{logic:'AND' | 'OR', conditions:{col:string, op:string, val:any}[]}[] }
-
-export type ViewDefinitionType =  {uuid:string, name:string, emoji:string, sort?:{column: string, order:'asc' | 'desc'}, filters:FilterType}
+export type ViewDefinitionType =  {id:string, name:string, is_standard?:boolean, icon:{type:'emoji' | 'icon' | 'image', data:string}, model:sectionsType, sort?:{column: string, order:'asc' | 'desc'}[], filters:FilterType, superconditions?:{col:string, op:string, val:any}[]}
 export type defaultViewsType = 'my_inbox' | 'mentions' |  'all' | 'unassigned' | 'matilda' | 'bin' | 'created_by_me'
-export interface Views {
-    configuration: {
-        std:{name:defaultViewsType, show:boolean}[]
-        folders:{name:string, show:boolean, content:string[]}[]
-    }
-    count: {std:{[key:string]:number}, teams:{[key:string]:number}, custom:{[key:string]:number}}
-    definitions: ViewDefinitionType[]
-}
+export type sectionPathType = { id: string; name?: string; icon?: { type: 'emoji' | 'icon' | 'image'; data: string } }[] 
 
 //CONVERSATIONS TABLE
 export type ConversationColumn = 
@@ -46,14 +40,19 @@ export type ConversationColumn =
   | 'updated_at'
   | 'solved_at'
   | 'title'
-  | 'theme_uuid'
-  | 'status'
+  | 'theme_id'
   | 'unseen_changes'
   | 'closed_at'
   | 'call_status'
   | 'call_duration'
   | 'tags'
-  | 'team_uuid'
+  | 'team_id'
+  | 'created_by'
+  | 'deletion_scheduled_at'
+  | 'move_to_bin_at'
+
+
+
 
 export interface ConversationsTableProps {
     'id': number
@@ -76,9 +75,10 @@ export interface ConversationsData {
     title: string
     channel_id: string
     created_at: string
+    is_matilda_engaged:boolean
     updated_at: string
     solved_at: string
-    theme_uuid: string
+    theme_id: string
     urgency_rating: number
     tags:string[]
     status: 'new' | 'open' |'solved' | 'pending' | 'closed'
@@ -86,9 +86,9 @@ export interface ConversationsData {
     call_status:'ongoing' | 'completed'
     call_duration:number
     call_url:string
-    team_uuid:string
+    team_id:string
     created_by:string
-
+    is_closed:boolean
     cdas:{ [key: string]: any }
 }
 
@@ -96,7 +96,7 @@ export interface ConversationsData {
 //CLIENTS TABLE
 export type ClientColumn = 
   | 'id'
-  | 'contact_business_id'
+  | 'business_id'
   | 'created_at'
   | 'name'
   | 'language'
@@ -105,12 +105,14 @@ export type ClientColumn =
   | 'email_address'
   | 'instagram_username'
   | 'google_business_review_id'
-  | 'webchat_uuid'
+  | 'webchat_id'
   | 'last_interaction_at'
   | 'rating'
   | 'notes'
   | 'tags'
   | 'is_blocked'
+  | 'updated_at'
+
 
 
  export const languagesFlags: {[key: string]: [string, string]} = {
@@ -142,13 +144,13 @@ export type ClientColumn =
 
 export interface ClientData {
     id:number
-    contact_business_id: number
+    business_id: number
     name: string
     language: string
     phone_number?: string
     email_address?: string
     instagram_username?: string
-    webchat_uuid?:string
+    webchat_id?:string
     google_business_id?:string
     rating: number
     last_interaction_at: string
@@ -173,6 +175,7 @@ export interface ContactBusinessesTable {
     created_at:string
     last_interaction_at: string
     notes: string
+    is_blocked:boolean
     cdas:{ [key: string]: any }
 }
 export interface ContactBusinessesProps {
@@ -185,29 +188,92 @@ export interface ContactBusiness {
     tags: string[]
     created_at:string
     last_interaction_at: string
+    is_blocked:boolean
     cdas:{ [key: string]: any }
 }
 
  //FUNCTIONS
  export interface FunctionTableData  {
-    uuid:string
+    id:string
     name:string
     description:string
-    number_of_errors:number
     is_active:boolean
-    icon:string
- }
+  }
  export interface FunctionsData {
-    uuid:string
+    id:string
     name:string
     description:string
     code:string
+    is_compiled:boolean
+    parameters:parameterType[]
+    created_by:string
+    updated_by:string
+    created_at:string
+    updated_at:string
+}
+export interface FlowData { 
+    id:string
+    matilda_configurations_ids:string[]
+    name:string
+    description:string
+    organization_id:number
+    created_by:string
+    updated_by:string
+    created_at:string
+    updated_at:string
     is_active:boolean
-    parameters:{confirm: boolean, description:string, name: string, required: boolean, type: string, default:any, enum:any[]}[]
-    matilda_configurations_uuids:string[]
-    errors: {message: string, line: number, timestamp: string, arguments: {name: string, type: string, value: any}[]}[] 
+    versions:{id:string, name:string, is_production:boolean}[]
+}
+export interface VersionData { 
+    id:string
+    name:string
+    function_id:string
+    description:string
+    created_by:string
+    updated_by:string
+    created_at:string
+    updated_at:string
+    is_flow_valid:boolean
+    flow_errors:string[]
+    is_production:boolean
+    blocks:any
+    flow:any
 }
 
+
+export type nodeTypesDefinition = 'function' | 'add'
+export type actionTypesDefinition = 'function' | 'flow' | 'condition' | 'param' | 'code' | 'variable'
+export type parameterType = {confirm: boolean, description:string, name: string, required: boolean, type: string, enum:any[]}
+export interface LogsType  {
+    function_id: string
+    occurred_at: string
+    successful: boolean
+    execution_time_ms: number
+    memory_usage_kb: number
+    result: any
+    arguments:any
+}
+export interface ErrorsType {
+    function_id: string
+    occurred_at: string
+    id:string
+    description: string
+    line:number
+    arguments:any
+}
+
+export type Branch = {name:string, next_node_index:number, group:{logic:'AND' | 'OR', conditions:{var:string, op:string, val:any}[]} }
+export type FunctionNodeData = {   
+    id:string 
+    name:string
+    description:string
+    code:string
+    is_compiled:boolean
+    parameters:parameterType[]
+    variables:{name:string, type:string}[]
+    errors:ErrorsType[]
+    logs:LogsType[]
+}
  
  
  
@@ -233,7 +299,7 @@ export const statesMap:{[key in 'new' | 'open' |'solved' | 'pending' | 'closed
     'open':['red.200', '#C53030'],
     'pending':['blue.100', '#00A3C4',],
     'solved':['#B7F1CB', '#2F855A'],
-    'closed':['gray.200', '#4A5568']
+    'closed':['border_color', '#4A5568']
 }
 
 //FILTERS AND MAPPING
@@ -249,17 +315,17 @@ export const logosMap:{[key in Channels]: [IconType, string]} =
         'voip':[ FaCloud, 'blue.400']
 
     }
-export type ContactChannel = 'email_address' | 'phone_number' |  'instagram_username' | 'webchat_uuid' |  'google_business_id'
-export const contactDicRegex:{[key in ContactChannel]:[RegExp, number, Channels]} = {
-    'email_address': [ /^[\w\.-]+@[\w\.-]+\.\w+$/, 50, 'email'],
-    'phone_number': [/^\+?\d{1,15}$/, 16, 'whatsapp'],
-    'instagram_username': [ /^[a-zA-Z0-9._]{1,30}$/, 30, 'instagram'],
-    'webchat_uuid': [/^[a-zA-Z0-9._-]{1,40}$/, 40, 'webchat'],
-    'google_business_id':[ /^[a-zA-Z0-9._-]{1,40}$/, 40, 'google_business']
+export type ContactChannel = 'email_address' | 'phone_number' |  'instagram_username' | 'webchat_id' |  'google_business_id'
+export const contactDicRegex:{[key in ContactChannel]:[RegExp, number, Channels, IconType]} = {
+    'email_address': [ /^[\w\.-]+@[\w\.-]+\.\w+$/, 50, 'email', IoMdMail],
+    'phone_number': [/^\+?\d{1,15}$/, 16, 'whatsapp', IoLogoWhatsapp],
+    'instagram_username': [ /^[a-zA-Z0-9._]{1,30}$/, 30, 'instagram', AiFillInstagram],
+    'webchat_id': [/^[a-zA-Z0-9._-]{1,40}$/, 40, 'webchat', IoChatboxEllipses],
+    'google_business_id':[ /^[a-zA-Z0-9._-]{1,40}$/, 40, 'google_business', IoLogoGoogle]
   }
 
 //SETTINGS
-export type IconKey = 'organization' | 'users' | 'help-centers' | 'workflows' | 'actions' | 'channels' | 'tilda' | 'integrations' | 'main' 
+export type IconKey = 'organization' | 'user' | 'help-centers' | 'workflows' | 'actions' | 'channels' | 'tilda' | 'integrations' | 'main' 
 export type SubSectionProps = (string[][] | any)
 export type SectionsListProps = {[key in IconKey]: string}
 
@@ -274,7 +340,7 @@ export interface ActionDataType  {
 //MATILDA CONFIGURATION PROPS
  
 export interface MatildaConfigProps {
-    uuid:string 
+    id:string 
     name:string 
     description:string
     introduce_assistant:boolean
@@ -293,22 +359,38 @@ export interface MatildaConfigProps {
     minimum_seconds_to_respond: number
     maximum_seconds_to_respond: number
     conversation_filters: FilterType
-    contact_filters: FilterType
-    contact_business_filters: FilterType
-     channel_ids?:string[]
-    functions_uuids?:string[]
+    person_filters: FilterType
+    business_filters: FilterType
+    channel_ids?:string[]
+    functions_ids?:string[]
     help_centers_ids?:string[]
+    sources_description:string
  }
 
 //CONDITIONS TYPES
 export type DataTypes = 'bool' | 'int' | 'float' | 'str' | 'timestamp' | 'list'
 
 //CONTENT TYPES
-export interface ContentData {
-    uuid: string 
-    type: 'internal_article' | 'public_article' | 'folder' | 'pdf' | 'snippet' | 'website' | 'subwebsite'
+export type InternalArticleSource = { raw_text: string; text: string };
+export type PublicArticleSource = { status: 'draft' | 'published';  raw_text: string; text: string };
+type WebsiteSource = { url: string; webpage_count: number };
+type WebpageSource = { website_url: string; url: string; raw_text: string; text: string };
+type SnippetSource = { text: string; raw_text: string };
+type DocumentSource = { url: string; file_name: string; file_size: number; text: string };
+type SourceTypeMap = {
+    internal_article: InternalArticleSource
+    public_article: PublicArticleSource
+    website: WebsiteSource
+    webpage: WebpageSource
+    snippet: SnippetSource
+    document: DocumentSource
+}
+type SourceType = {status:'draft' | 'published', raw_text:string, text:string} | {raw_text:string, text:string} | {url:string, webpage_count:number} | {website_url:string, url:string, raw_text:string, text:string} | {text:string, raw_text:string} | {url:string, file_name:string, file_size:number,  text:string}
+export interface ContentData<T extends keyof SourceTypeMap = keyof SourceTypeMap> {
+    id: string 
+    common_id:string,
+    type: 'internal_article' | 'public_article' | 'document' | 'snippet' | 'website' | 'webpage'
     title: string
-    folder_uuid?:string | null
     description?: string
     language: string
     is_available_to_tilda: boolean
@@ -316,33 +398,17 @@ export interface ContentData {
     updated_at: string
     created_by: string
     updated_by: string
-    tags: string[]
     is_ingested?:boolean
-    public_article_help_center_collections:string[]
-    public_article_common_uuid?: string
-    public_article_status: 'published' | 'draft'
-    content?: any,
-    public_article_content?: {text: string}
-    internal_article_content?: {text: string},
-    pdf_content?: {url: string, text: string},
-    website_content?: {pages: {url: string, text: string}}
-    
+    tags: string[]
+    data: SourceTypeMap[T]
 }
-
-//FOLDERS
-export interface Folder {
-    uuid: string
-    name: string
-    emoji:string
-    disabled?:boolean
-    children: Folder[]
-}
+ 
 
 /*STATS */
 export type metrics = 'total_conversations' | 'average_response_time' | 'total_messages' | 'csat_score' | 'nps_score' | 'conversations_with_tilda_involvement' | 'tilda_messages_sent' | 'tilda_words_sent' | 'total_solved_conversations' 
 export interface MetricType {
-    uuid: string
-    report_chart_uuid: string
+    id: string
+    report_chart_id: string
     metric_name: metrics
     aggregation_type: 'sum' | 'avg' | 'median' | 'count' | 'min' | 'max' 
     legend_label: string
@@ -351,14 +417,14 @@ export interface MetricType {
 }
 
 export interface ChartType   {
-    uuid: string
-    report_uuid: string
+    id: string
+    report_id: string
     type: 'KPI' | 'column' | 'bar' | 'donut' | 'line' | 'area' | 'table'
     title: string
     date_range_type: 'relative' | 'fixed'
     date_range_value: string
-    view_by: {type: 'time' | 'channel_type' |  'theme' | 'user_id' | 'channel_id' | 'status' | 'urgency_rating' | 'is_transferred', configuration:any}
-    segment_by: {type:null | 'time' | 'channel_type' |  'theme' | 'user_id' | 'channel_id' | 'status' | 'urgency_rating' | 'is_transferred',  configuration:any}
+    view_by: {type: 'time' | 'channel_type' |  'theme_id' | 'user_id' | 'channel_id' |  'is_transferred', configuration:any}
+    segment_by: {type:null | 'time' | 'channel_type' |  'theme_id' | 'user_id' | 'channel_id' | 'is_transferred',  configuration:any}
     timezone?: string
     configuration: {x:number, y:number, h:number, w:number, [key:string]:any},
     metrics: MetricType[]
@@ -367,7 +433,7 @@ export interface ChartType   {
 
 
 export interface ReportDataType {
-    uuid: string
+    id: string
     name: string
     icon:string
     description: string
@@ -377,7 +443,7 @@ export interface ReportDataType {
     updated_at: string
   }
 export interface ReportType {
-    uuid: string
+    id: string
     name: string
     description: string
     user_id: string
@@ -389,14 +455,13 @@ export interface ReportType {
   }
 
 export interface ConfigProps { 
-    uuid:string 
+    id:string 
     name:string 
     description:string 
     channels_ids:string[]
 }
 export interface ChannelsType  {
     id: string
-    uuid: string
     display_id: string
     name: string
     channel_type: string
@@ -404,8 +469,8 @@ export interface ChannelsType  {
 }
 
 export interface CDAsType {
-    uuid:string
-    structure: 'conversations' | 'contacts' | 'contact_businesses'
+    id:string
+    structure: 'conversations' | 'persons' | 'businesses'
     type: 'boolean' | 'integer' | 'number' | 'string' | 'array'
     name: string
     description: string 
@@ -417,16 +482,65 @@ export interface CDAsType {
 }
 
 export interface TagsType {
-    uuid: string
+    id: string
     organization_id: number
     name:string
     description:string
     conversations_affected:number
-    contacts_affected:number
-    contact_businesses_affected:number
+    persons_affected:number
+    businesses_affected:number
     created_by:string
     created_at:string
     archived_at:string | null
     is_archived:boolean
 }
   
+export interface SectionType  {
+    allowed_urls:string[]
+    allowed_devices:string[]
+    lure_by_seconds:boolean 
+    seconds_to_lure_in:number 
+    lure_by_click:boolean 
+    show_incoming_messages:boolean,
+    reference_to_lure_in:string 
+    pages_references:{[key:string]:string}
+    initial_message:{[key:string]:string} 
+    options:{[key:string]:string[]}
+}
+
+
+export interface ChatBotData  {
+    welcome_message:{[key:string]:string}
+    chat_position:'right' | 'left'
+    actions_color:string
+    messages_opacity:number | string
+    bot_name:string
+    mesh_colors:[string, string]
+    ai_message:{[key:string]:string}
+    header_background: [string, string]
+    header_color: string
+    chat_avatar: string
+    client_background: [string, string]
+    client_color: string
+    options: {[key:string]:string[]}
+    sections: SectionType[]
+}
+
+
+ 
+//ALL FILTERS LOGIC
+export const allowedConversationFilters = ['local_id', 'user_id', 'contact_id', 'theme_id', 'team_id', 'created_at', 'updated_at', 'solved_at', 'closed_at', 'created_by', 'channel_type', 'channel_id', 'title', 'tags', 'unseen_changes','is_matilda_engaged','is_csat_offered']
+export const allowedContactsFilters = ['id', 'business_id', 'created_at', 'last_interaction_at', 'name', 'language', 'phone_number','email_address','instagram_username','instagram_followers','webchat_id','notes','tags','is_blocked']
+export const allowedBusinessFilters = ['id', 'created_at', 'last_interaction_at', 'name', 'domain', 'notes', 'tags', 'is_blocked']
+ 
+export const typesMap = {
+    'boolean':['eq', 'neq', 'exists'], 
+    'integer':['eq','neq', 'leq', 'geq',  'exists'], 
+    'number':['eq','neq', 'leq', 'geq',   'exists'],
+    'string': ['eq','neq', 'contains', 'ncontains','starts_with', 'ends_with', 'exists'], 
+    'array': ['in', 'nin',  'exists'], 
+    'timestamp':['eq', 'neq', 'leq', 'geq', 'between', 'exists']
+}
+
+ 
+export type searchSectionType = 'conversations' | 'persons' | 'businesses' | 'reports' | 'functions' | 'sources' | 'navigate' | 'assign' | null

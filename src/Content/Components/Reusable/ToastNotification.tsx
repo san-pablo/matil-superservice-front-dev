@@ -1,5 +1,6 @@
 //REACT
 import { useState } from 'react'
+import { useLocation } from 'react-router-dom'
 //DESKTOP NOTIFICATIONS
 import showNotification from '../Once/DesktopNotification'
 //FRONT
@@ -51,8 +52,10 @@ const showToast = ({message, duration = 3000, position = 'top-right', type = 'wo
   //TOAST CONTENT
   const ToastContent = ({ message }:{ message:string }) => {
       const [showLink, setShowLink] = useState(false)
+      const currentSearch = useLocation().search
+
       return(
-        <Flex gap='20px' alignItems="center" cursor={linkPath ? 'pointer':'normal'}  onMouseOver={() => setShowLink(true)}  onMouseLeave={() => setShowLink(false)} onClick={() => {if (linkPath) {navigate(`/conversations/conversation/${id}`)}}}>
+        <Flex id='custom-portal' gap='20px' alignItems="center" cursor={linkPath ? 'pointer':'normal'}  onMouseOver={() => setShowLink(true)}  onMouseLeave={() => setShowLink(false)} onClick={() => {if (linkPath) {navigate(`/conversations/conversation/${id}${currentSearch}`)}}}>
           <Text fontSize={'.9em'} color='black'>{parseMessageToBold(message, linkPath && showLink)}</Text>
         </Flex>
     )}

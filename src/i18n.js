@@ -11,8 +11,10 @@ i18n
     ns: ['bussinesses', 'clients', 'conversations', 'formats', 'knowledge', 'login', 'main', , 'settings', 'stats'],
     defaultNS: 'main',
     backend: {
-      loadPath: '/locales/{{lng}}/{{ns}}.json',
-    },
+      backend: {
+        loadPath: `${window.location.origin}/locales/{{lng}}/{{ns}}.json`,
+      },
+          },
     interpolation: {
       escapeValue: false,
     },
